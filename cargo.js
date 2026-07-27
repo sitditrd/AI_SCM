@@ -16,6 +16,29 @@
     '023': ['FedEx', 'https://www.fedex.com/ko-kr/tracking.html'],
     '406': ['UPS Air Cargo', 'https://www.ups.com/track']
   };
+  /* 해상 MBL 프리픽스(SCAC) → 선사 트래킹 딥링크 (컨테이너 리스트·ETD/ETA/ATD/ATA는 선사 화면 제공) */
+  var OCEAN = {
+    MAEU: ['Maersk', 'https://www.maersk.com/tracking/'],
+    MSCU: ['MSC', 'https://www.msc.com/en/track-a-shipment'],
+    HLCU: ['Hapag-Lloyd', 'https://www.hapag-lloyd.com/en/online-business/track/track-by-booking-solution.html?blno='],
+    CMDU: ['CMA CGM', 'https://www.cma-cgm.com/ebusiness/tracking/search?SearchBy=BL&Reference='],
+    ONEY: ['ONE', 'https://ecomm.one-line.com/one-ecom/manage-shipment/cargo-tracking?trakNoParam='],
+    EGLV: ['Evergreen', 'https://ct.shipmentlink.com/servlet/TDB1_CargoTracking.do'],
+    COSU: ['COSCO', 'https://elines.coscoshipping.com/ebusiness/cargoTracking'],
+    OOLU: ['OOCL', 'https://www.oocl.com/eng/ourservices/eservices/cargotracking/'],
+    HDMU: ['HMM', 'https://www.hmm21.com/e-service/general/trackNTrace/TrackNTrace.do'],
+    YMLU: ['Yang Ming', 'https://www.yangming.com/e-service/Track_Trace/track_trace_cargo_tracking.aspx'],
+    WHLC: ['Wan Hai', 'https://www.wanhai.com/views/cargoTrack/CargoTrack.xhtml'],
+    SMLM: ['SM상선', 'https://esvc.smlines.com/smline/CUP_HOM_3301.do']
+  };
+  function oceanInfo(no) {
+    var m = /^([A-Za-z]{4})[0-9]{6,}$/.exec(String(no).replace(/[^A-Za-z0-9]/g, ''));
+    if (!m) return null;
+    var scac = m[1].toUpperCase();
+    var c = OCEAN[scac];
+    return { scac: scac, name: c ? c[0] : null, url: c ? (c[1].indexOf('=') > 0 || /\/$/.test(c[1]) ? c[1] + encodeURIComponent(no) : c[1]) : null };
+  }
+
   var type = 'mbl';
 
   function el(id) { return document.getElementById(id); }
@@ -71,6 +94,7 @@
         '<div style="display:flex; gap:8px; flex-wrap:wrap;">' +
         '<a class="btn btn-primary" target="_blank" rel="noopener" href="https://unipass.customs.go.kr/csp/index.do">유니패스에서 직접 조회 ↗</a>' +
         (awb && awb.url ? '<a class="btn btn-ghost" target="_blank" rel="noopener" href="' + awb.url + '">' + esc(awb.name) + ' AWB 추적 ↗</a>' : '') +
+        (function () { var oc2 = oceanInfo(no); return oc2 && oc2.url ? '<a class="btn btn-ghost" target="_blank" rel="noopener" href="' + oc2.url + '">' + esc(oc2.name) + ' 선사 트래킹 ↗</a>' : ''; })() +
         '</div></div>';
       return;
     }
@@ -107,10 +131,14 @@
     var no = el('blNo').value.trim();
     if (no.length < 6) return;
     var awb = awbInfo(no);
+    var oc = oceanInfo(no);
     el('awbHint').innerHTML = awb
       ? ('AWB 감지 (프리픽스 ' + awb.prefix + (awb.name ? ' · ' + esc(awb.name) : '') + ') — 항공 수입은 MBL 탭으로 조회됩니다.' +
          (awb.url ? ' <a target="_blank" rel="noopener" href="' + awb.url + '">항공사 추적 페이지 ↗</a>' : ''))
-      : '';
+      : (oc && oc.name
+        ? ('해상 선사 감지 (' + oc.scac + ' · ' + esc(oc.name) + ') — 컨테이너 리스트·ETD/ETA/ATD/ATA는 선사 트래킹에서 확인. ' +
+           '<a target="_blank" rel="noopener" href="' + oc.url + '">' + esc(oc.name) + ' 트래킹 ↗</a>')
+        : '');
     el('traceOut').innerHTML = '<div class="card reveal in"><div class="sc-sub">관세청 유니패스 조회 중…</div></div>';
     fetch('/api/track?type=' + type + '&no=' + encodeURIComponent(no) + '&year=' + el('blYear').value)
       .then(function (r) { return r.json(); })
