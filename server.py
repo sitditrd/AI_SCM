@@ -65,6 +65,25 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
+        if parsed.path == '/api/searoute':
+            q = urllib.parse.parse_qs(parsed.query)
+            try:
+                olng, olat = float(q['olng'][0]), float(q['olat'][0])
+                dlng, dlat = float(q['dlng'][0]), float(q['dlat'][0])
+                import searoute as sr
+                rt = sr.searoute((olng, olat), (dlng, dlat), units='naut')
+                body = {'nm': round(rt['properties']['length'], 1),
+                        'coords': rt['geometry']['coordinates']}
+                data = json.dumps(body).encode('utf-8')
+                self.send_response(200)
+            except Exception as e:
+                data = json.dumps({'error': '경로 계산 실패: %s' % e}, ensure_ascii=False).encode('utf-8')
+                self.send_response(502)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Length', str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+            return
         if parsed.path == '/api/track':
             q = urllib.parse.parse_qs(parsed.query)
             kind = (q.get('type', ['mbl'])[0] or 'mbl').lower()
