@@ -1,6 +1,6 @@
 /* =========================================================
    TWL 데이터 현황 — 파이프라인 운영 보드
-   (종합 판정 배너 · 흐름도 · 신선도 게이지 · 7일 타임라인)
+   (종합 판정 배너 · 흐름도 · 최신성 게이지 · 7일 타임라인)
    ========================================================= */
 (function () {
   'use strict';
@@ -43,7 +43,7 @@
       '<div class="sc-top"><b>' + o.name + '</b>' +
       '<span class="lv-badge" style="color:' + st.color + '; background:color-mix(in srgb, ' + st.color + ' 13%, transparent);"><i class="lv-dot"></i>' + st.ko + '</span></div>' +
       '<div class="sc-big">' + o.big + '</div>' +
-      '<div class="fresh-bar" title="갱신 주기 대비 데이터 나이"><div class="fb-fill" style="width:' + fill + '%; background:' + st.color + ';"></div></div>' +
+      '<div class="fresh-bar" title="갱신 주기 대비 경과 시간"><div class="fb-fill" style="width:' + fill + '%; background:' + st.color + ';"></div></div>' +
       '<div class="sc-sub">' + o.sub + '</div>' +
       '<div class="sc-next">다음 갱신 예정 · ' + o.next + '</div>' +
       '</div>';
@@ -93,7 +93,7 @@
   function render(r, today) {
     var now = Date.now();
 
-    /* ---- 소스별 신선도 ---- */
+    /* ---- 데이터 소스 최신성 ---- */
     var cards = [];
     var berthState = 'off', berthOnTime = false;
     if (r.berth) {
@@ -104,7 +104,7 @@
         name: '선석배정', state: berthState,
         big: r.berth.count + '건 <small>/ ' + r.berth.date + '</small>',
         freshPct: age / (26 * 3600000) * 100,
-        sub: '터미널 9곳 · ' + ageText(age) + ' 수집 · 주기 24시간',
+        sub: '9개 터미널 · ' + ageText(age) + ' 수집 · 갱신 주기 24시간',
         next: '내일 06:00 수집 → 06시대 적재'
       }));
     } else cards.push(srcCard({ name: '선석배정', state: 'off', big: '—', freshPct: 100, sub: '연결 실패', next: '—' }));
@@ -117,7 +117,7 @@
         name: 'Port Insight (TW-PFS)', state: piState,
         big: 'TW-PFS ' + r.pi.tpfs + ' <small>/ 기준일 ' + r.pi.period_end + '</small>',
         freshPct: piAge / (26 * 3600000) * 100,
-        sub: '마지막 산출 ' + ageText(piAge) + ' · 산출 주기 24시간 (원천은 주 1회)',
+        sub: '최종 산출 ' + ageText(piAge) + ' · 산출 주기 24시간 (원천 데이터는 주간 갱신)',
         next: '내일 06시대 자동 산출'
       }));
     } else cards.push(srcCard({ name: 'Port Insight', state: 'off', big: '—', freshPct: 100, sub: '연결 실패', next: '—' }));
@@ -129,7 +129,7 @@
         name: '해상운임지수 (SCFI·CCFI)', state: fxState,
         big: (r.fx.scfi != null ? 'SCFI ' + Number(r.fx.scfi).toLocaleString('ko-KR') : '—') + ' <small>/ ' + r.fx.date + ' 발표</small>',
         freshPct: fxAge / (9 * 86400000) * 100,
-        sub: ageText(fxAge) + ' 발표 · 주기 1주 (매주 금요일)',
+        sub: ageText(fxAge) + ' 발표분 · 주간 공표 (매주 금요일)',
         next: '월요일 07시 수집'
       }));
     } else cards.push(srcCard({ name: '해상운임지수', state: 'off', big: '—', freshPct: 100, sub: '데이터 없음', next: '월요일 07시' }));
@@ -139,7 +139,7 @@
         name: '항만 기상 (Open-Meteo)', state: 'ok',
         big: '부산신항 파고 ' + r.wx.wave + 'm',
         freshPct: 8,
-        sub: '실시간 API 응답 정상 · 화면에서 직접 호출',
+        sub: '실시간 조회 정상 · 관측 주기 1시간',
         next: '상시 (30분 간격 갱신)'
       }));
     } else cards.push(srcCard({ name: '항만 기상', state: 'off', big: '—', freshPct: 100, sub: 'API 응답 없음', next: '상시' }));
@@ -155,7 +155,7 @@
       : overall === 'warn' ? '일부 파이프라인 확인 필요' : '파이프라인 점검 필요';
     el('hbSub').textContent = overall === 'ok'
       ? '— 선석배정 금일분 적재 완료, Port Insight 24시간 내 산출'
-      : '— 아래 신선도 카드에서 주의/지연 항목을 확인하십시오';
+      : '— 아래 최신성 카드에서 주의/지연 항목을 확인하십시오';
 
     /* ---- 파이프라인 흐름도 ---- */
     var okAll = berthOnTime;
