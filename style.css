@@ -798,3 +798,6 @@ body.hero-page {
 
 /* 운임지수 앵커: 히어로 상단 지표와 함께 보이도록 착지점을 높게 */
 #freightStrip { scroll-margin-top: 340px; }
+
+/* ===== 2026.3a — 분할선 제거: 스트립·카드의 상단 장식 라인 전부 삭제 ===== */
+.live-strip::before, .kpi::before { display: none; }
