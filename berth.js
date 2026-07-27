@@ -9,6 +9,50 @@
   var lastUpdateTs = null;
   var CCT_SOON_MS = 12 * 3600 * 1000;   /* 반입마감 임박 기준 12시간 (PRD FR-07) */
 
+  /* ---------- ETA 지연 리스크 모델 (몬테카를로) ----------
+     실측 접안편차(실제 작업시작 - 접안예정, 시간)로 터미널별 로그정규 분포 적합.
+     표본 3건 미만 터미널은 기본 분포(중앙값 2h) 사용 — 이력 축적 시 자동 보정. */
+  var SUPABASE_URL = 'https://kvmyiualdodcvreoqfin.supabase.co';
+  var SB_KEY = 'sb_publishable_jo6oBar-JbfKY3IfhPyBbQ_gH1Lvwsv';
+  var delayModel = { def: { mu: Math.log(2), sigma: 0.9, n: 0 }, byTerm: {} };
+
+  function randn() {
+    var u = 1 - Math.random(), v = Math.random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+  function calibrateDelayModel() {
+    return fetch(SUPABASE_URL + '/rest/v1/bs_vessel_calls?select=terminal_cd,eta,work_start' +
+      '&work_start=not.is.null&eta=not.is.null&order=collected_date.desc&limit=800',
+      { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } })
+      .then(function (r) { return r.json(); })
+      .then(function (rows) {
+        var byTerm = {};
+        rows.forEach(function (r) {
+          var d = (new Date(r.work_start) - new Date(r.eta)) / 3600000;
+          if (!isFinite(d)) return;
+          d = Math.max(0.1, Math.min(72, d));            /* 조기접안은 0.1h로 절단 */
+          (byTerm[r.terminal_cd] = byTerm[r.terminal_cd] || []).push(Math.log(d));
+        });
+        Object.keys(byTerm).forEach(function (t) {
+          var a = byTerm[t];
+          if (a.length < 3) return;
+          var mu = a.reduce(function (x, y) { return x + y; }, 0) / a.length;
+          var va = a.reduce(function (x, y) { return x + (y - mu) * (y - mu); }, 0) / a.length;
+          delayModel.byTerm[t] = { mu: mu, sigma: Math.max(0.35, Math.sqrt(va)), n: a.length };
+        });
+      }).catch(function () { /* 보정 실패 시 기본 분포 유지 */ });
+  }
+  function termRisk(t) {
+    var m = delayModel.byTerm[t] || delayModel.def;
+    var late = 0, sum = 0, N = 4000;
+    for (var i = 0; i < N; i++) {
+      var d = Math.exp(m.mu + m.sigma * randn());
+      sum += d;
+      if (d > 6) late++;
+    }
+    return { p6: Math.round(late / N * 100), meanH: sum / N, n: m.n };
+  }
+
   var STATUS_ORDER = ['PLANNED', 'ARRIVED', 'WORKING', 'DEPARTED'];
   var STATUS_COLOR = { PLANNED: '#2a78d6', ARRIVED: '#fab219', WORKING: '#0ca30c', DEPARTED: '#8493ac' };
 
@@ -24,6 +68,7 @@
     if (!B) return;
 
     B.init().then(function () {
+      calibrateDelayModel().then(function () { renderTerminalSummary(); });
       renderAll(true);
       initPortChips();
       initStatusChips();
@@ -260,6 +305,11 @@
       var dis = list.reduce(function (s, r) { return s + r.dis; }, 0);
       var lod = list.reduce(function (s, r) { return s + r.lod; }, 0);
       var sh = list.reduce(function (s, r) { return s + r.shift; }, 0);
+      var rk = termRisk(c);
+      var rkColor = rk.p6 >= 40 ? 'var(--lv-congested)' : (rk.p6 >= 20 ? 'var(--lv-busy)' : 'var(--lv-low)');
+      var rkCell = rk.n >= 3
+        ? '<span style="color:' + rkColor + '; font-weight:800;">' + rk.p6 + '%</span> <small style="color:var(--muted);">(표본 ' + rk.n + ')</small>'
+        : '<span style="color:var(--muted);">' + rk.p6 + '%</span> <small style="color:var(--muted);">기본모델</small>';
       return '<tr>' +
         '<td><div class="port-cell"><b>' + c + '</b><small>' + esc(B.TERMINALS[c].name) + '</small></div></td>' +
         '<td>' + esc(B.TERMINALS[c].port) + '</td>' +
@@ -268,6 +318,7 @@
         '<td class="num">' + fmt(dis) + '</td>' +
         '<td class="num">' + fmt(lod) + '</td>' +
         '<td class="num">' + fmt(sh) + '</td>' +
+        '<td class="num">' + rkCell + '</td>' +
         '</tr>';
     }).join('');
   }
