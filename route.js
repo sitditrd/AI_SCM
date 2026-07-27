@@ -1,6 +1,6 @@
 /* =========================================================
-   TWL 경로 분석 — searoute 항로 + 몬테카를로 소요일 시뮬레이터
-   거리: 백엔드 /api/searoute (searoute-py) · 분포: 브라우저 1만 회
+   TWL 경로 분석 — 사전계산 항로(정적 JSON) + 몬테카를로 소요일 시뮬레이터
+   거리: routes/<origin>.json (searoute로 8,556개 구간 사전계산 — 배포판에서도 동작)
    ========================================================= */
 (function () {
   'use strict';
@@ -8,6 +8,7 @@
   var map = null, routeLayer = null, ports = [];
 
   function el(id) { return document.getElementById(id); }
+  function slugOf(en) { return en.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
 
   /* ---------- 난수: 정규(Box-Muller)·로그정규 ---------- */
   function randn() {
@@ -66,10 +67,11 @@
     var kn = parseFloat(el('speedKn').value) || 16.5;
     if (!o || !d || o === d) return;
     el('simKpis').innerHTML = '<div class="src-card"><div class="sc-sub">항로 계산 중… (searoute)</div></div>';
-    fetch('/api/searoute?olng=' + o.lng + '&olat=' + o.lat + '&dlng=' + d.lng + '&dlat=' + d.lat)
-      .then(function (r) { return r.json(); })
-      .then(function (res) {
-        if (res.error) throw new Error(res.error);
+    fetch('routes/' + slugOf(o.en) + '.json')
+      .then(function (r) { if (!r.ok) throw new Error('항로 데이터를 찾을 수 없습니다 (HTTP ' + r.status + ')'); return r.json(); })
+      .then(function (all) {
+        var res = all[slugOf(d.en)];
+        if (!res) throw new Error('해당 구간의 사전계산 항로가 없습니다');
         var r = simulate(res.nm, kn);
         el('simKpis').innerHTML =
           kpi('항로 거리', Number(res.nm).toLocaleString('ko-KR') + ' <small>해리(nm)</small>', o.ko + ' → ' + d.ko + ' · 항로망 최단경로') +
@@ -79,7 +81,7 @@
         drawHisto(r);
         if (map) {
           routeLayer.clearLayers();
-          var latlngs = res.coords.map(function (c) { return [c[1], c[0]]; });
+          var latlngs = res.line;   /* 사전계산 시 [lat,lng]로 저장됨 */
           L.polyline(latlngs, { color: '#3987e5', weight: 3, opacity: 0.85 }).addTo(routeLayer);
           L.circleMarker([o.lat, o.lng], { radius: 6, color: '#00b8a9', fillOpacity: 0.9 }).bindPopup(o.ko).addTo(routeLayer);
           L.circleMarker([d.lat, d.lng], { radius: 6, color: '#d03b3b', fillOpacity: 0.9 }).bindPopup(d.ko).addTo(routeLayer);
@@ -87,8 +89,7 @@
         }
       })
       .catch(function (e) {
-        var hint = /Unexpected token|JSON/.test(e.message) ? ((location.hostname.indexOf('netlify') >= 0 || location.hostname.indexOf('github.io') >= 0) ? '배포판에서는 이 기능의 백엔드가 제공되지 않습니다 — 사내 로컬 포털(start_server.bat)에서 이용하십시오.' : '백엔드 없는 서버가 응답했습니다 — 기존 서버 창을 모두 닫고 start_server.bat(server.py)로 다시 실행하십시오.') : e.message;
-        el('simKpis').innerHTML = '<div class="src-card"><b>계산 실패</b><div class="sc-sub">' + hint + '</div></div>';
+        el('simKpis').innerHTML = '<div class="src-card"><b>계산 실패</b><div class="sc-sub">' + e.message + '</div></div>';
       });
   }
 
