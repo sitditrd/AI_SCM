@@ -6,4 +6,4 @@ rem 종료: 이 창에서 Ctrl+C 또는 창 닫기
 rem =====================================================
 cd /d C:\Temp\AI_SCM
 start "" http://localhost:8090/index.html
-python -m http.server 8090 --directory C:\Temp\AI_SCM
+python C:\Temp\AI_SCM\server.py

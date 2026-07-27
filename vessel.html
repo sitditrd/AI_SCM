@@ -22,6 +22,7 @@
         <a href="insight.html">Port Insight</a>
         <a href="berth.html">선석배정</a>
         <a href="vessel.html" class="active">선박 위치</a>
+        <a href="cargo.html">화물 추적</a>
         <a href="status.html">데이터 현황</a>
         <a href="index.html#contact">문의</a>
       </nav>
@@ -46,8 +47,20 @@
     </div>
   </section>
 
+  <!-- ============ 선박 검색 ============ -->
+  <section class="dash-section" id="findship" style="padding-bottom:0;">
+    <div class="container">
+      <div class="berth-toolbar reveal" style="margin-bottom:6px;">
+        <input type="search" class="focus-search" id="shipSearch" placeholder="선명 / 모선항차 검색 (예: MSC, HMM DIAMOND)" style="max-width:340px;">
+        <button class="btn btn-primary" id="shipSearchBtn" type="button">선박 찾기</button>
+        <span style="color:var(--muted); font-size:12.5px;">선석배정 DB 기준 · MBL/HBL/AWB는 <a href="cargo.html">화물 추적</a>에서 조회</span>
+      </div>
+      <div id="shipResults" class="src-grid" style="margin-bottom:14px;"></div>
+    </div>
+  </section>
+
   <!-- ============ 항만 선택 + 지도 ============ -->
-  <section class="dash-section" id="livemap">
+  <section class="dash-section" id="livemap" style="padding-top:14px;">
     <div class="container">
       <div class="chip-row reveal" id="portSel"></div>
       <div class="card map-card reveal" style="padding:6px;">
@@ -107,14 +120,6 @@
   </footer>
 
   <script src="common.js"></script>
-  <script>
-    /* 항만 선택 칩 (선택 변경 = 파라미터로 재로드) */
-    document.addEventListener('DOMContentLoaded', function () {
-      var P = window.__VF_PORTS, cur = window.__VF_KEY;
-      document.getElementById('portSel').innerHTML = Object.keys(P).map(function (k) {
-        return '<a class="f-chip' + (k === cur ? '' : ' off') + '" href="vessel.html?port=' + k + '">' + P[k].ko + '</a>';
-      }).join('');
-    });
-  </script>
+  <script src="vessel.js"></script>
 </body>
 </html>
