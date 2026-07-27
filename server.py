@@ -19,7 +19,7 @@ if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-PORT = 8090
+PORT = int(os.environ.get('PORT', '8090'))  # 기본 8090, 병행 실행 시 PORT 환경변수로 변경 가능
 UNIPASS_KEY = os.environ.get('UNIPASS_API_KEY', '')
 UNIPASS_URL = 'https://unipass.customs.go.kr:38010/ext/rest/cargCsclPrgsInfoQry/retrieveCargCsclPrgsInfo'
 

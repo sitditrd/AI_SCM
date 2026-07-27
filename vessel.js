@@ -9,15 +9,15 @@
   var KEY = 'sb_publishable_jo6oBar-JbfKY3IfhPyBbQ_gH1Lvwsv'; /* 읽기 전용(RLS) */
   /* 터미널별 확대 뷰 (부산신항 북컨/남컨/서컨 클러스터 기준) */
   var TERMINAL_VIEW = {
-    PNIT: { port: 'busan', lat: 35.083, lng: 128.826, zoom: 14 },
-    PNC:  { port: 'busan', lat: 35.079, lng: 128.821, zoom: 14 },
-    HJNC: { port: 'busan', lat: 35.064, lng: 128.815, zoom: 14 },
-    HPNT: { port: 'busan', lat: 35.058, lng: 128.807, zoom: 14 },
-    BNCT: { port: 'busan', lat: 35.054, lng: 128.798, zoom: 14 },
-    DGT:  { port: 'busan', lat: 35.075, lng: 128.775, zoom: 14 },
-    GWCT: { port: 'gwangyang', lat: 34.887, lng: 127.700, zoom: 14 },
-    E1CT: { port: 'incheon', lat: 37.443, lng: 126.607, zoom: 13 },
-    ICON: { port: 'incheon', lat: 37.420, lng: 126.615, zoom: 12 }
+    PNIT: { port: 'busan', lat: 35.083, lng: 128.826, zoom: 15 },
+    PNC:  { port: 'busan', lat: 35.079, lng: 128.821, zoom: 15 },
+    HJNC: { port: 'busan', lat: 35.064, lng: 128.815, zoom: 15 },
+    HPNT: { port: 'busan', lat: 35.058, lng: 128.807, zoom: 15 },
+    BNCT: { port: 'busan', lat: 35.054, lng: 128.798, zoom: 15 },
+    DGT:  { port: 'busan', lat: 35.075, lng: 128.775, zoom: 15 },
+    GWCT: { port: 'gwangyang', lat: 34.887, lng: 127.700, zoom: 15 },
+    E1CT: { port: 'incheon', lat: 37.443, lng: 126.607, zoom: 14 },
+    ICON: { port: 'incheon', lat: 37.420, lng: 126.615, zoom: 13 }
   };
   var STATUS_KO = { PLANNED: '예정', ARRIVED: '접안', WORKING: '작업중', DEPARTED: '출항' };
 
@@ -25,11 +25,47 @@
   function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function dt(v) { return v ? String(v).slice(5, 16).replace('T', ' ') : '—'; }
 
+  /* ---------- 확대 이동 도착 처리: 지도 스크롤 + 터미널 위치 마커 ----------
+     지도는 VesselFinder iframe이라 내부에 마커를 못 찍는다.
+     대신 지도 중심 = 터미널 좌표이므로, 지도 위 정중앙에 오버레이 핀을 띄운다. */
+  var FQ = new URLSearchParams(location.search);
+  var focusCd = FQ.get('focus');
+  var hasFocus = !!(focusCd && FQ.get('lat'));
+  var wantsMapScroll = hasFocus || location.hash === '#livemap';
+  var focusFresh = wantsMapScroll; /* 도착 직후 렌더 보정 1회용 — 이후 수동 검색 시 지도로 끌려가지 않게 */
+  var pinDone = false;
+
+  function focusMap() {
+    if (!wantsMapScroll) return;
+    var sec = el('livemap');
+    if (sec) {
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      sec.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    }
+    if (!hasFocus || pinDone) return;
+    pinDone = true;
+    var wrap = el('vfWrap');
+    if (!wrap) return;
+    var vsl = FQ.get('vsl'), berth = FQ.get('berth');
+    var pin = document.createElement('div');
+    pin.className = 'map-focus-pin';
+    pin.setAttribute('aria-hidden', 'true');
+    pin.innerHTML =
+      '<span class="mfp-dot"><i class="mfp-ring"></i></span>' +
+      '<span class="mfp-label"><b>' + esc(focusCd) + ' 터미널</b>' +
+      (vsl ? '<span>' + esc(vsl) + (berth ? ' · 선석 ' + esc(berth) : '') + '</span>' : '') +
+      '<small>지도 정중앙 = 터미널 위치 · 표시는 잠시 후 사라집니다</small></span>';
+    wrap.appendChild(pin);
+    setTimeout(function () { pin.classList.add('hide'); }, 9000);
+    setTimeout(function () { if (pin.parentNode) pin.parentNode.removeChild(pin); }, 10000);
+  }
+
   function search(q) {
     var box = el('shipResults');
     if (!q || q.length < 2) { box.innerHTML = ''; return; }
     box.innerHTML = '<div class="src-card"><div class="sc-sub">검색 중…</div></div>';
-    var enc = encodeURIComponent('*' + q + '*');
+    /* 쉼표·괄호·따옴표는 PostgREST or=() 필터 문법을 깨뜨리므로 제거 (예: "HMM (DIAMOND)" 검색 시 400 방지) */
+    var enc = encodeURIComponent('*' + q.replace(/[,()"'\\]/g, ' ').trim() + '*');
     var url = SUPABASE_URL + '/rest/v1/bs_vessel_calls' +
       '?select=collected_date,terminal_cd,berth,vessel_name,voyage,carrier,eta,etd,status' +
       '&or=(vessel_name.ilike.' + enc + ',voyage.ilike.' + enc + ')' +
@@ -51,22 +87,30 @@
         }
         box.innerHTML = list.map(function (r) {
           var tv = TERMINAL_VIEW[r.terminal_cd] || { port: 'busan' };
-          var focus = tv.lat ? '&lat=' + tv.lat + '&lng=' + tv.lng + '&zoom=' + tv.zoom : '';
+          var focus = tv.lat
+            ? '&lat=' + tv.lat + '&lng=' + tv.lng + '&zoom=' + tv.zoom +
+              '&focus=' + encodeURIComponent(r.terminal_cd) +
+              '&vsl=' + encodeURIComponent(r.vessel_name) +
+              (r.berth ? '&berth=' + encodeURIComponent(r.berth) : '')
+            : '';
           var vfUrl = 'https://www.vesselfinder.com/vessels?name=' + encodeURIComponent(r.vessel_name);
           return '<div class="src-card">' +
             '<div class="sc-top"><b>' + esc(r.vessel_name) + '</b>' +
-            '<span class="st-badge st-' + String(r.status || 'PLANNED').toLowerCase() + '"><i class="lv-dot"></i>' + (STATUS_KO[r.status] || r.status) + '</span></div>' +
+            '<span class="st-badge st-' + (STATUS_KO[r.status] ? String(r.status).toLowerCase() : 'planned') + '"><i class="lv-dot"></i>' + esc(STATUS_KO[r.status] || r.status) + '</span></div>' +
             '<div class="sc-sub">' + esc(r.terminal_cd) + ' · 선석 ' + esc(r.berth || '—') + ' · ' + esc(r.carrier || '—') +
             (r.voyage ? ' · ' + esc(r.voyage) : '') + '</div>' +
             '<div class="sc-sub">접안 ' + dt(r.eta) + ' → 출항 ' + dt(r.etd) + ' <small>(' + esc(r.collected_date) + ' 수집)</small></div>' +
             '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">' +
-            '<a class="btn btn-primary" style="padding:7px 12px; font-size:12.5px;" href="vessel.html?port=' + tv.port + focus + '&q=' + encodeURIComponent(q) + '">터미널 위치로 확대 이동</a>' +
+            '<a class="btn btn-primary" style="padding:7px 12px; font-size:12.5px;" href="vessel.html?port=' + tv.port + focus + '&q=' + encodeURIComponent(q) + '#livemap">터미널 위치로 확대 이동</a>' +
             '<a class="btn btn-ghost" style="padding:7px 12px; font-size:12.5px;" target="_blank" rel="noopener" href="' + vfUrl + '">실시간 위치(VesselFinder) ↗</a>' +
             '</div></div>';
         }).join('');
+        /* 검색 결과가 지도 위에 삽입되며 레이아웃이 밀리므로, 도착 직후 1회만 착지점 재보정 */
+        if (focusFresh) { focusFresh = false; setTimeout(focusMap, 120); }
       })
       .catch(function () {
         box.innerHTML = '<div class="src-card"><div class="sc-sub">검색 실패 — 네트워크 확인 후 다시 시도하십시오.</div></div>';
+        if (focusFresh) { focusFresh = false; setTimeout(focusMap, 120); }
       });
   }
 
@@ -83,5 +127,6 @@
     el('shipSearchBtn').addEventListener('click', function () { search(input.value.trim()); });
     input.addEventListener('keydown', function (e) { if (e.key === 'Enter') search(input.value.trim()); });
     if (q0) { input.value = q0; search(q0); }
+    if (wantsMapScroll) setTimeout(focusMap, 300);
   });
 })();
