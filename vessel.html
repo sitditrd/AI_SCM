@@ -73,15 +73,18 @@
                 gwangyang: { ko: '광양항',   lat: 34.88, lng: 127.72, zoom: 12 },
                 incheon:   { ko: '인천항',   lat: 37.42, lng: 126.60, zoom: 11 }
               };
-              var key = new URLSearchParams(location.search).get('port') || 'busan';
+              var qs = new URLSearchParams(location.search);
+              var key = qs.get('port') || 'busan';
               if (!P[key]) key = 'busan';
               window.__VF_PORTS = P; window.__VF_KEY = key;
+              /* 검색 결과에서 넘어온 포커스 좌표/줌 (터미널 확대 이동) */
+              var fLat = parseFloat(qs.get('lat')), fLng = parseFloat(qs.get('lng')), fZoom = parseInt(qs.get('zoom'), 10);
               /* VesselFinder 임베드 전역 파라미터 */
               window.width = '100%';
               window.height = '560';
-              window.latitude = P[key].lat;
-              window.longitude = P[key].lng;
-              window.zoom = P[key].zoom;
+              window.latitude = isFinite(fLat) ? fLat : P[key].lat;
+              window.longitude = isFinite(fLng) ? fLng : P[key].lng;
+              window.zoom = isFinite(fZoom) ? fZoom : P[key].zoom;
               window.names = true;
             })();
           </script>

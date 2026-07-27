@@ -7,9 +7,17 @@
 
   var SUPABASE_URL = 'https://kvmyiualdodcvreoqfin.supabase.co';
   var KEY = 'sb_publishable_jo6oBar-JbfKY3IfhPyBbQ_gH1Lvwsv'; /* 읽기 전용(RLS) */
-  var PORT_OF_TERMINAL = {
-    PNIT: 'busan', PNC: 'busan', HJNC: 'busan', HPNT: 'busan', BNCT: 'busan', DGT: 'busan',
-    GWCT: 'gwangyang', E1CT: 'incheon', ICON: 'incheon'
+  /* 터미널별 확대 뷰 (부산신항 북컨/남컨/서컨 클러스터 기준) */
+  var TERMINAL_VIEW = {
+    PNIT: { port: 'busan', lat: 35.083, lng: 128.826, zoom: 14 },
+    PNC:  { port: 'busan', lat: 35.079, lng: 128.821, zoom: 14 },
+    HJNC: { port: 'busan', lat: 35.064, lng: 128.815, zoom: 14 },
+    HPNT: { port: 'busan', lat: 35.058, lng: 128.807, zoom: 14 },
+    BNCT: { port: 'busan', lat: 35.054, lng: 128.798, zoom: 14 },
+    DGT:  { port: 'busan', lat: 35.075, lng: 128.775, zoom: 14 },
+    GWCT: { port: 'gwangyang', lat: 34.887, lng: 127.700, zoom: 14 },
+    E1CT: { port: 'incheon', lat: 37.443, lng: 126.607, zoom: 13 },
+    ICON: { port: 'incheon', lat: 37.420, lng: 126.615, zoom: 12 }
   };
   var STATUS_KO = { PLANNED: '예정', ARRIVED: '접안', WORKING: '작업중', DEPARTED: '출항' };
 
@@ -42,7 +50,8 @@
           return;
         }
         box.innerHTML = list.map(function (r) {
-          var portKey = PORT_OF_TERMINAL[r.terminal_cd] || 'busan';
+          var tv = TERMINAL_VIEW[r.terminal_cd] || { port: 'busan' };
+          var focus = tv.lat ? '&lat=' + tv.lat + '&lng=' + tv.lng + '&zoom=' + tv.zoom : '';
           var vfUrl = 'https://www.vesselfinder.com/vessels?name=' + encodeURIComponent(r.vessel_name);
           return '<div class="src-card">' +
             '<div class="sc-top"><b>' + esc(r.vessel_name) + '</b>' +
@@ -51,7 +60,7 @@
             (r.voyage ? ' · ' + esc(r.voyage) : '') + '</div>' +
             '<div class="sc-sub">접안 ' + dt(r.eta) + ' → 출항 ' + dt(r.etd) + ' <small>(' + esc(r.collected_date) + ' 수집)</small></div>' +
             '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">' +
-            '<a class="btn btn-primary" style="padding:7px 12px; font-size:12.5px;" href="vessel.html?port=' + portKey + '&q=' + encodeURIComponent(q) + '">해당 항만 지도로 이동</a>' +
+            '<a class="btn btn-primary" style="padding:7px 12px; font-size:12.5px;" href="vessel.html?port=' + tv.port + focus + '&q=' + encodeURIComponent(q) + '">터미널 위치로 확대 이동</a>' +
             '<a class="btn btn-ghost" style="padding:7px 12px; font-size:12.5px;" target="_blank" rel="noopener" href="' + vfUrl + '">실시간 위치(VesselFinder) ↗</a>' +
             '</div></div>';
         }).join('');
