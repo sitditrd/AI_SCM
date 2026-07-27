@@ -133,10 +133,10 @@
       b.classList.add('live');
       b.title = '데이터 소스: Supabase (bs_vessel_calls)';
     } else {
-      b.textContent = '내장 시드';
+      b.textContent = '내장 샘플 데이터';
       b.classList.remove('live');
       var err = B.getLastError();
-      b.title = '데이터 소스: 내장 시드 (' + B.getCollectedDate() + ' 수집분)' + (err ? ' — ' + err.message : '');
+      b.title = '데이터 소스: 내장 샘플 데이터 (' + B.getCollectedDate() + ' 수집분)' + (err ? ' — ' + err.message : '');
     }
   }
 

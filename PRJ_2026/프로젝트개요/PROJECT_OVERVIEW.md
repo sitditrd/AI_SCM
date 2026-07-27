@@ -18,14 +18,14 @@
 | 단계 | 내용 | 산출물 |
 |---|---|---|
 | 1. 선석배정 파이프라인 | 통합 엑셀(9개 터미널, 시트별 이질 스키마) 분석 → 공통 스키마 정규화 → Supabase 적재 → 대시보드 | berth.html, scripts/collect_upload_berth.py, PRD |
-| 2. Port Insight 실데이터 전환 | 오픈 API 6종 비교(멀티에이전트, 실호출 검증) → IMF PortWatch 선정 → Focus 93개 항만 매핑(93/93) → TW-PFS v2 산출 | scripts/collect_portinsight_api.py, 개발계획서 |
+| 2. Port Insight 실데이터 전환 | 오픈 API 6종 비교(멀티에이전트, 실호출 검증) → IMF PortWatch 선정 → Focus 93개 항만 매핑(93/93) → PCI v2 산출 | scripts/collect_portinsight_api.py, 개발계획서 |
 | 3. 실운용 재가공 | 전 파일 감사(89건) → 데모 문구·가짜 난수 분석 제거, 공식 CI 로고 적용, 실서비스 기준 개편 | 전 페이지 |
 | 4. 오픈 데이터 확장 | 6개 영역 전수 조사(41건) → 선박 위치(AIS)·운임지수(SCFI/CCFI)·항만 기상(Open-Meteo) 구현 | vessel.html, scripts/collect_freight_index.py, weather.js |
 | 5. 운영 체계 | 데이터 현황 운영 보드(판정 배너·흐름도·신선도·7일 타임라인), 자동화 스케쥴 5종 | status.html |
 
 ## 3. 제공 기능 (전부 실데이터)
 
-- **Port Insight** (insight.html) — Focus Port 93개 혼잡도. IMF PortWatch(위성 AIS) 기반 TW-PFS v2 지수, 매일 06시대 산출. 게이지·분포·권역·지도·순위.
+- **Port Insight** (insight.html) — Focus Port 93개 혼잡도. IMF PortWatch(위성 AIS) 기반 항만 혼잡도 지수 PCI(Port Congestion Index) v2, 매일 06시대 산출. 게이지·분포·권역·지도·순위.
 - **선석배정** (berth.html) — 부산신항·광양·인천 9개 터미널, 매일 06:00 수집. 항만/터미널/상태 필터, 검색, 반입마감 12시간 임박 강조, 터미널 소계, 항만 기상 카드.
 - **선박 위치** (vessel.html) — VesselFinder 공개 AIS 실시간 지도. 부산신항/북항/광양/인천 전환.
 - **운임지수** (index.html 스트립) — SCFI/CCFI 종합·항로별, 주간 자동 수집.

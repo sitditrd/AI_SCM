@@ -47,15 +47,15 @@ RLS: 전 테이블 활성화, 익명은 select 정책만. 쓰기는 service_role
   - ICON의 sub='E1' 행 제외 (E1CT 시트와 중복 방지)
 - 출력: REST upsert 또는 `sql\upload_berth.sql`
 
-### 3.2 TW-PFS v2 — scripts/collect_portinsight_api.py
+### 3.2 PCI v2 — scripts/collect_portinsight_api.py
 - 원천: `Daily_Ports_Data` FeatureServer (services9.arcgis.com/weJ1QsnbMYJlCHdG, 무인증)
   - 쿼리: portid 8개 청크 × 최근 120일, `date >= DATE 'YYYY-MM-DD'`, 페이징(maxRecordCount 1000)
 - 매핑: `scripts\portwatch_mapping.json` — Focus 93 ↔ portid (93/93, LA·롱비치 port664 공유)
-- **산식**: TW-PFS = 0.60×활동량백분위 + 0.25×물동량백분위 + 0.15×모멘텀
+- **산식**: PCI = 0.60×활동량백분위 + 0.25×물동량백분위 + 0.15×모멘텀
   - 활동량: 최근 7일 평균 portcalls가 120일 7일-이동평균 분포에서 차지하는 백분위
   - 물동량: (import+export) 동일 방식
   - 모멘텀: (최근7일−직전7일)/직전7일 → 시그모이드(k=6) 0~100
-  - delay_h = (TPFS/100)^1.5 × 48 (추정치), berthed = 최근 7일 평균 기항
+  - delay_h = (PCI/100)^1.5 × 48 (추정치), berthed = 최근 7일 평균 기항
   - **국내 보정**: 부산/광양/인천의 waiting·berthed는 bs_vessel_calls 실측으로 교체
 - 스냅샷: 93개 집계(평균 tpfs, CONGESTED 수, 분포+전기대비 delta, 리스크 규칙: critical≥15 or avg≥60 → HIGH / ≥8 or ≥50 → MEDIUM / else LOW)
 - 유의: PortWatch는 주 1회(화 09:00 ET) 배치, lag 약 7~10일
@@ -66,7 +66,7 @@ RLS: 전 테이블 활성화, 익명은 select 정책만. 쓰기는 service_role
 - KCCI: 미지원(KOBC 그리드 비동기 로딩) — 보완 과제
 
 ### 3.4 브라우저 직접 호출 (배치 불필요)
-- 항만 기상: `marine-api.open-meteo.com/v1/marine?latitude=..&current=wave_height,wave_period` + `api.open-meteo.com/v1/forecast?...wind_speed_10m` (무키·CORS 허용, 30분 갱신)
+- 항만 기상: `marine-api.open-meteo.com/v1/marine?latitude=..&current=wave_height,wave_period` + `api.open-meteo.com/v1/forecast?...wind_speed_10m` (API 키 불필요·CORS 허용, 30분 갱신)
 - 선박 위치: `vesselfinder.com/aismap.js` 임베드 — 전역 변수(latitude/longitude/zoom/names) 설정 후 스크립트 로드 → iframe 생성
 
 ## 4. 프런트엔드 구조
@@ -93,6 +93,6 @@ RLS: 전 테이블 활성화, 익명은 select 정책만. 쓰기는 service_role
 
 ## 6. 검증 이력 (2026-07-27)
 - 선석배정 224건(중복 제거 후 223) 적재·표시 검증, 필터/검색/마감강조 E2E 통과
-- PortWatch 실데이터 10,212행 → TW-PFS v2 93개 산출·반영, 화면 배지/게이지/기간 확인
+- PortWatch 실데이터 10,212행 → PCI v2 93개 산출·반영, 화면 배지/게이지/기간 확인
 - Supabase 보안 어드바이저 0건, 콘솔 오류 0건, 라이트/다크·회사명·이메일(itt@twsc.co.kr) 통일
 - 방법론 사전 검증: UNCTAD BOR+Erlang C(PNIT ρ=0.86, Wq≈65h 등), CPPI형 생산성(HJNC 83.6 moves/h 등) — v3 후보

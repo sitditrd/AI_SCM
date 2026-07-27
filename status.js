@@ -114,8 +114,8 @@
       var piAge = now - new Date(r.pi.updated_at).getTime();
       piState = piAge < 26 * 3600000 ? 'ok' : (piAge < 50 * 3600000 ? 'warn' : 'late');
       cards.push(srcCard({
-        name: 'Port Insight (TW-PFS)', state: piState,
-        big: 'TW-PFS ' + r.pi.tpfs + ' <small>/ 기준일 ' + r.pi.period_end + '</small>',
+        name: 'Port Insight (PCI)', state: piState,
+        big: 'PCI ' + r.pi.tpfs + ' <small>/ 기준일 ' + r.pi.period_end + '</small>',
         freshPct: piAge / (26 * 3600000) * 100,
         sub: '최종 산출 ' + ageText(piAge) + ' · 산출 주기 24시간 (원천 데이터는 주간 갱신)',
         next: '내일 06시대 자동 산출'

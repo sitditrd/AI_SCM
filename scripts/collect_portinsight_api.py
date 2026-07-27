@@ -3,19 +3,19 @@
 TWL Port Insight — IMF PortWatch 오픈 API 수집기
 =====================================================
 IMF PortWatch(portwatch.imf.org, ArcGIS 오픈데이터)에서 Focus Port 93개의
-일별 항만 활동(port calls·물동량)을 수집해 TW-PFS 지수를 산출하고
+일별 항만 활동(port calls·물동량)을 수집해 항만 혼잡도 지수 PCI(Port Congestion Index)를 산출하고
 Supabase pi_ports / pi_snapshot 을 갱신한다.
 
   데이터 소스 : Daily_Ports_Data FeatureServer (무료·인증 불필요, 주간 배치 갱신, lag 약 7~10일)
   항만 매핑   : portwatch_mapping.json (Focus 93 ↔ PortWatch portid, 93/93 매칭)
 
-TW-PFS 산출 (프록시 모델 v2):
+PCI 산출 (프록시 모델 v2):
   - 활동량 백분위 60% : 최근 7일 평균 portcalls가 지난 120일 7일-이동평균 분포에서 차지하는 백분위
   - 물동량 백분위 25% : 최근 7일 평균 (import+export)의 동일 방식 백분위
   - 모멘텀      15% : (최근 7일 - 직전 7일)/직전 7일 변화율을 시그모이드로 0~100 매핑
-  - delay_h  = (TPFS/100)^1.5 * 48        (접안 지연 추정치, 시간)
+  - delay_h  = (PCI/100)^1.5 * 48        (접안 지연 추정치, 시간)
   - berthed  = 최신 7일 평균 portcalls     (일평균 기항 척수)
-  - waiting  = berthed * max(0, TPFS-50)/100 * 0.8 (대기 척수 추정치)
+  - waiting  = berthed * max(0, PCI-50)/100 * 0.8 (대기 척수 추정치)
   ※ PortWatch에는 대기시간 필드가 없어 위 값들은 활동량 기반 추정치다.
   ※ v2: 부산·광양·인천은 선석배정 실측(bs_vessel_calls)으로 접안/대기 척수를 덮어쓴다.
 
@@ -38,7 +38,7 @@ MAPPING = r'C:\Temp\AI_SCM\scripts\portwatch_mapping.json'
 SQL_OUT = r'C:\Temp\AI_SCM\sql\update_portinsight.sql'
 SUPABASE_URL = 'https://kvmyiualdodcvreoqfin.supabase.co'
 SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
-PUBLISHABLE_KEY = 'sb_publishable_jo6oBar-JbfKY3IfhPyBbQ_gH1Lvwsv'  # 읽기 전용(전기 대비 delta 계산용)
+PUBLISHABLE_KEY = 'sb_publishable_jo6oBar-JbfKY3IfhPyBbQ_gH1Lvwsv'  # 읽기 전용(전주 대비 delta 계산용)
 
 WINDOW_DAYS = 120      # 백분위 산출 기간
 CHUNK = 8              # 쿼리당 portid 수 (8개 x 120일 ≈ 960행 < maxRecordCount 1000)
@@ -97,7 +97,7 @@ def sigmoid100(m, k=6.0):
 
 
 def compute_metrics(daily_rows, mapping):
-    """portid별 시계열 → 항만별 TW-PFS v2/지연/대기/접안 산출"""
+    """portid별 시계열 → 항만별 PCI v2/지연/대기/접안 산출"""
     by_pid = {}
     for r in daily_rows:
         by_pid.setdefault(r['portid'], []).append(r)
@@ -175,7 +175,7 @@ def korea_enrich(port_rows):
 
 
 def read_previous_levels():
-    """전기 대비 delta 계산용 — 현재 pi_ports 레벨 분포 조회 (publishable key, 실패해도 무방)"""
+    """전주 대비 delta 계산용 — 현재 pi_ports 레벨 분포 조회 (publishable key, 실패해도 무방)"""
     try:
         r = requests.get(SUPABASE_URL + '/rest/v1/pi_ports?select=name_en,tpfs',
                          headers={'apikey': PUBLISHABLE_KEY, 'Authorization': 'Bearer ' + PUBLISHABLE_KEY}, timeout=15)
@@ -258,7 +258,7 @@ def main():
             "avg_delay_h=%s, distribution=%s::jsonb, period_start='%s', period_end='%s', updated_at=now() where id=1;"
             % (FOCUS_TOTAL, avg_tpfs, critical, risk, avg_delay, q(dist_json)[0:], p_start, p_end))
         open(SQL_OUT, 'w', encoding='utf-8').write('\n'.join(lines))
-        print('[OK] %s 생성 — 항만 %d건, 평균 TW-PFS %s, CONGESTED %d, 리스크 %s, 기준 %s~%s%s'
+        print('[OK] %s 생성 — 항만 %d건, 종합 PCI %s, CONGESTED %d, 리스크 %s, 기준 %s~%s%s'
               % (SQL_OUT, n, avg_tpfs, critical, risk, p_start, p_end,
                  (' | 데이터 부족 제외: ' + ','.join(missing)) if missing else ''))
         return
@@ -278,7 +278,7 @@ def main():
         'period_start': p_start, 'period_end': p_end}, timeout=30)
     if resp.status_code >= 300:
         sys.exit('[FAIL] pi_snapshot → HTTP %d: %s' % (resp.status_code, resp.text[:200]))
-    print('[OK] Supabase 갱신 — 항만 %d건, 평균 TW-PFS %s, CONGESTED %d, 리스크 %s, 기준 %s~%s'
+    print('[OK] Supabase 갱신 — 항만 %d건, 종합 PCI %s, CONGESTED %d, 리스크 %s, 기준 %s~%s'
           % (n, avg_tpfs, critical, risk, p_start, p_end))
 
 

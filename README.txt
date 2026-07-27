@@ -12,11 +12,11 @@
   berth.html    선석배정현황 대시보드 (부산신항·광양·인천 9개 터미널)
   status.html   데이터 현황 — 파이프라인 수집·적재 모니터링 (+ status.js)
   vessel.html   선박 위치 — 실시간 AIS 지도 (VesselFinder 임베드, 부산/광양/인천)
-  weather.js    항만 기상 카드 (Open-Meteo Marine, 무키·브라우저 직접 호출)
+  weather.js    항만 기상 카드 (Open-Meteo Marine, API 키 불필요·브라우저 직접 호출)
   scripts\collect_freight_index.py  주간 해상운임지수 수집기 (SCFI/CCFI 무인증 JSON)
   style.css     공통 스타일 (라이트/다크 테마 토큰)
   data.js       데모 데이터 레이어 (Focus Port 93개 + 실시간 변동 시뮬레이션)
-  data_berth.js 선석배정 데이터 레이어 (Supabase + 내장 시드 폴백)
+  data_berth.js 선석배정 데이터 레이어 (Supabase + 내장 샘플 데이터 폴백)
   common.js     공통 스크립트 (로고/테마/애니메이션/툴팁)
   landing.js    랜딩 전용 스크립트
   insight.js    대시보드 렌더러 (45초 자동 갱신)
@@ -26,7 +26,7 @@
   - 데이터 흐름: 매일 06:00 Claude 스케쥴러가 9개 터미널 사이트를 수집해
     "터미널 스케쥴 수집\터미널_선석배정현황_통합_YYYYMMDD.xlsx" 저장
     → 06:05 scripts\collect_upload_berth.py 가 파싱하여 Supabase 적재
-    → berth.html 이 REST로 조회 (45초 폴링, 실패 시 내장 시드 폴백)
+    → berth.html 이 REST로 조회 (45초 폴링, 실패 시 내장 샘플 데이터 폴백)
   - 최초 1회: Supabase SQL Editor에서 sql\setup_supabase_berth.sql 실행
     (bs_terminals / bs_vessel_calls / bs_collect_log 생성 + 2026-07-27 시드 224건)
   - 일일 적재 (2가지 경로, 하나만 있으면 됨):
@@ -49,7 +49,7 @@
 ■ Port Insight 오픈 API 연동 (2026-07-27 추가)
   - 원천: IMF PortWatch 오픈 API (portwatch.imf.org, 위성 AIS, 무료·인증 불필요)
   - 수집기: scripts\collect_portinsight_api.py — Focus 93개 항만의 일별 port calls로
-    TW-PFS v2(활동량 60%+물동량 25%+모멘텀 15%) 산출 → pi_ports/pi_snapshot 갱신
+    PCI v2(활동량 60%+물동량 25%+모멘텀 15%) 산출 → pi_ports/pi_snapshot 갱신
     (부산·광양·인천 접안/대기 척수는 선석배정 bs_vessel_calls 실측으로 교체)
   - 매핑: scripts\portwatch_mapping.json (Focus 93 ↔ PortWatch portid, 93/93)
   - 스케쥴: Claude 작업 "portinsight-open-api-update"(06:27, 키 불필요) +
@@ -58,8 +58,8 @@
   - 문서: PRJ_2026\개발계획서\개발계획서_PortInsight_오픈API연계.docx
 
 ■ 신규 연동 (2026-07-27 2차 추가)
-  - 선박 위치: VesselFinder 공개 AIS 임베드 (무료·무키) — vessel.html
-  - 항만 기상: Open-Meteo Marine API (무료·무키·CORS) — 선석배정 페이지 카드
+  - 선박 위치: VesselFinder 공개 AIS 임베드 (무료·API 키 불필요) — vessel.html
+  - 항만 기상: Open-Meteo Marine API (무료·API 키 불필요·CORS 허용) — 선석배정 페이지 카드
   - 운임지수: SCFI/CCFI (상하이해운거래소 무인증 JSON) → freight_index 테이블
     · Claude 스케쥴 작업 "freight-index-update" (월 07시, 주간 갱신)
     · KCCI(KOBC)는 그리드 비동기 로딩으로 미지원 — 추후 보완

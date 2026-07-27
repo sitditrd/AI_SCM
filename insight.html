@@ -42,7 +42,7 @@
       <div class="dash-title-row">
         <div>
           <h1>Port Insight <span style="font-weight:300; opacity:.75;">— 글로벌 항만 혼잡도</span></h1>
-          <p class="dash-sub">전 세계 Focus Port <b>93개</b>의 혼잡도를 IMF PortWatch 오픈데이터(위성 AIS)로 산출합니다</p>
+          <p class="dash-sub">전 세계 중점 모니터링 항만(Focus Port) <b>93개</b>의 혼잡도를 IMF PortWatch 오픈데이터(위성 AIS)로 산출합니다</p>
         </div>
         <div class="live-status">
           <span class="pulse-dot" aria-hidden="true"></span>
@@ -79,14 +79,14 @@
       <div class="dash-head reveal">
         <span class="no">SECTION 01</span>
         <h2>글로벌 혼잡도 스냅샷</h2>
-        <span class="hint">최근 7일 활동량 기준 · 전기 대비</span>
+        <span class="hint">최근 7일 활동량 기준 · 전주 대비</span>
       </div>
 
       <div class="kpi-grid">
         <div class="kpi reveal" id="kpiTpfs">
-          <div class="k"><span class="pulse-dot" aria-hidden="true"></span>TW-PFS (Taewoong Port Flow Score)</div>
+          <div class="k"><span class="pulse-dot" aria-hidden="true"></span>종합 PCI (Port Congestion Index)</div>
           <div class="gauge-wrap">
-            <svg id="gaugeSvg" width="150" height="92" viewBox="0 0 150 92" role="img" aria-label="TW-PFS 게이지"></svg>
+            <svg id="gaugeSvg" width="150" height="92" viewBox="0 0 150 92" role="img" aria-label="종합 PCI 게이지"></svg>
             <div class="gauge-meta">
               <div class="v"><span id="vTpfs">—</span><small>/100</small></div>
               <div class="sub" id="vTpfsGrade">—</div>
@@ -101,7 +101,7 @@
         <div class="kpi reveal" id="kpiRisk">
           <div class="k">글로벌 리스크</div>
           <div class="risk-badge risk-high" id="vRisk">—</div>
-          <div class="sub">TW-PFS·혼잡 항만 수·추세 종합 판정</div>
+          <div class="sub">종합 PCI·혼잡 항만 수·추세 종합 판정</div>
         </div>
         <div class="kpi reveal" id="kpiDelay">
           <div class="k">평균 접안 지연</div>
@@ -117,7 +117,7 @@
         <div class="tbl-scroll" style="margin-top:16px;">
           <table class="tw" id="distTable">
             <thead>
-              <tr><th>레벨</th><th class="num">비율</th><th class="num">항만 수</th><th class="num">전기 대비</th></tr>
+              <tr><th>레벨</th><th class="num">비율</th><th class="num">항만 수</th><th class="num">전주 대비</th></tr>
             </thead>
             <tbody></tbody>
           </table>
@@ -126,7 +126,7 @@
 
       <div class="grid-3" style="margin-top:14px; grid-template-columns: 2fr 1fr;">
         <div class="formula-card reveal">
-          <b>TW-PFS v2</b> — <b>활동량 백분위 60%</b> + <b>물동량 백분위 25%</b> + <b>추세 모멘텀 15%</b>
+          <b>PCI v2</b> — <b>활동량 백분위 60%</b> + <b>물동량 백분위 25%</b> + <b>추세 모멘텀 15%</b>
           (IMF PortWatch 위성 AIS · 120일 기준선). 부산·광양·인천의 접안·대기 척수는 선석배정 실측을 사용하며,
           그 외 항만의 지연·대기는 지수 기반 추정치입니다.
         </div>
@@ -157,7 +157,7 @@
       <div class="dash-head reveal">
         <span class="no">SECTION 03</span>
         <h2>최고 혼잡 Top 10</h2>
-        <span class="hint">TW-PFS 상위 · Focus Port 93개 기준</span>
+        <span class="hint">PCI 상위 · Focus Port 93개 기준</span>
       </div>
 
       <div class="tbl-card reveal" id="tabCongested">
@@ -176,8 +176,8 @@
     <div class="container">
       <div class="dash-head reveal">
         <span class="no">SECTION 04</span>
-        <h2>주요 항만 전체 TW-PFS 현황 — 글로벌 지도</h2>
-        <span class="hint">마커 크기 = TW-PFS · 2주 이동평균 기준</span>
+        <h2>주요 항만 전체 PCI 현황 — 글로벌 지도</h2>
+        <span class="hint">마커 크기 = PCI · 2주 이동평균 기준</span>
       </div>
       <div class="chip-row reveal" id="levelChips" aria-label="레벨 필터"></div>
       <div class="card map-card reveal" id="mapCard" style="padding:6px;">
@@ -215,7 +215,7 @@
       <div class="dash-head reveal">
         <span class="no">SECTION 06</span>
         <h2>병목 현상 심각 항만</h2>
-        <span class="hint">Tw/Ts 모델 추정 — 하역 대비 '순번 대기' 비중이 높은 항만</span>
+        <span class="hint">선박 대기율(Tw/Ts) 모델 추정 — 하역 대비 '순번 대기' 비중이 높은 항만</span>
       </div>
       <div class="card reveal">
         <div class="legend-row" style="margin-bottom:18px;">
@@ -244,8 +244,8 @@
       </div>
 
       <p class="notice">
-        본 대시보드의 TW-PFS 지수는 IMF PortWatch 오픈데이터(portwatch.imf.org, 위성 AIS 기반 일별 기항·물동량)를
-        원천으로 매일 자동 산출됩니다. PortWatch 원천 데이터는 주 1회 배치 갱신되며 약 7~10일의 지연이 있습니다.
+        본 대시보드의 항만 혼잡도 지수 PCI(Port Congestion Index)는 IMF PortWatch 오픈데이터(portwatch.imf.org, 위성 AIS 기반 일별 기항·물동량)를
+        원천으로 TWL이 매일 자체 산출합니다. PortWatch 원천 데이터는 주 1회 배치 갱신되며 약 7~10일의 지연이 있습니다.
         접안 지연 시간·대기 척수는 활동량 기반 추정치로 실제 터미널 상황과 다를 수 있습니다.
       </p>
 
@@ -277,6 +277,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="data.js"></script>
   <script src="common.js?v=2026-4"></script>
-  <script src="insight.js"></script>
+  <script src="insight.js?v=2026-5"></script>
 </body>
 </html>

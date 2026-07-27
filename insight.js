@@ -73,7 +73,7 @@
       b.textContent = '내장 시뮬레이션';
       b.classList.remove('live');
       var err = DATA.getLastError();
-      b.title = '데이터 소스: 내장 시드' + (err ? ' — ' + err.message : '');
+      b.title = '데이터 소스: 내장 샘플 데이터' + (err ? ' — ' + err.message : '');
     }
   }
 
@@ -147,7 +147,7 @@
     var bar = el('distBar');
     bar.innerHTML = s.distribution.map(function (d) {
       return '<div class="dist-seg seg-' + d.level.toLowerCase() + '" style="flex:' + d.ratio + ' 1 0;" ' +
-        'data-tip="<b>' + d.level + ' · ' + UI.LEVEL_KO[d.level] + '</b><br>' + d.count + '개 항만 (' + d.ratio + '%)<br>전기 대비 ' + (d.delta > 0 ? '▲' : '▼') + Math.abs(d.delta) + '">' +
+        'data-tip="<b>' + d.level + ' · ' + UI.LEVEL_KO[d.level] + '</b><br>' + d.count + '개 항만 (' + d.ratio + '%)<br>전주 대비 ' + (d.delta > 0 ? '▲' : '▼') + Math.abs(d.delta) + '">' +
         '<span>' + d.level + ' ' + d.ratio + '%</span></div>';
     }).join('');
 
@@ -199,8 +199,8 @@
   function renderRegional() {
     var max = Math.max.apply(null, state.regional.map(function (r) { return r.busyConRatio; })) || 1;
     el('rgList').innerHTML = state.regional.map(function (r) {
-      var tr = r.trend === 'up' ? '<span class="trend-up" data-tip="전기 대비 악화">▲ 악화</span>'
-        : r.trend === 'down' ? '<span class="trend-down" data-tip="전기 대비 개선">▼ 개선</span>'
+      var tr = r.trend === 'up' ? '<span class="trend-up" data-tip="전주 대비 악화">▲ 악화</span>'
+        : r.trend === 'down' ? '<span class="trend-down" data-tip="전주 대비 개선">▼ 개선</span>'
         : '<span class="trend-flat">— 유지</span>';
       return '<div class="rg-item" data-tip="<b>' + r.ko + '</b><br>Focus Port ' + r.portCount + '개<br>BUSY+CON 비율 ' + r.busyConRatio + '%<br>평균 접안 지연 ' + r.avgDelayH + 'h">' +
         '<div class="rg-top"><b>' + r.ko + '</b><span class="cnt">' + r.portCount + '개항</span>' + tr +
@@ -291,7 +291,7 @@
       m.bindPopup(
         '<div class="map-pop"><b>' + p.ko + '</b> <small style="opacity:.65">' + p.en + '</small><br>' +
         '<div class="row"><span>레벨</span><span><b>' + p.level + ' · ' + UI.LEVEL_KO[p.level] + '</b></span></div>' +
-        '<div class="row"><span>TW-PFS</span><span>' + p.tpfs + '</span></div>' +
+        '<div class="row"><span>PCI</span><span>' + p.tpfs + '</span></div>' +
         '<div class="row"><span>접안 지연</span><span>' + p.delayH + 'h</span></div>' +
         '<div class="row"><span>대기/접안</span><span>' + p.waiting + ' / ' + p.berthed + '척</span></div></div>',
         { closeButton: false }
