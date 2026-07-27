@@ -1,0 +1,14 @@
+# Netlify 배포 설정 — 정적 사이트 (빌드 불필요, 저장소 루트 그대로 게시)
+[build]
+  publish = "."
+
+# 주의: /api/* 백엔드(server.py — 유니패스 화물추적, searoute 경로계산)는
+# 로컬 실행 전용이라 Netlify 배포판에서는 동작하지 않는다.
+# 해당 페이지는 백엔드 미연결 시 안내 문구를 표시하도록 이미 처리되어 있음.
+# (필요 시 Netlify Functions(Node) 포팅으로 유니패스 프록시 이관 가능)
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
