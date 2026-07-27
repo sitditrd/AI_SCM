@@ -506,7 +506,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
   html { scroll-behavior: auto; }
 }
 
@@ -886,3 +886,59 @@ body.hero-page {
 .mfp-label b { color: var(--brand-accent-2); }
 :root[data-theme='light'] .mfp-label b { color: var(--brand-accent); }
 .mfp-label small { color: var(--ink-2); font-weight: 500; font-size: 11px; }
+
+/* =========================================================
+   Design 2026.5 — Card & Band Cohesion
+   Stat Deck 문법을 히어로 밖으로 확장:
+   카드 호버 시에만 드러나는 그라디언트 헤어라인 · 브랜드 틴트 글로우 ·
+   CTA 앰비언트 오브 · 푸터 그라디언트 헤어라인
+   ========================================================= */
+
+/* 랜딩 카드: 평시 무장식 유지, 호버 시 상단 헤어라인이 왼쪽에서 스치듯 등장 */
+.card { position: relative; }
+.card.hover { overflow: hidden; } /* 헤어라인이 둥근 모서리 밖으로 새지 않게 */
+.card.hover::before {
+  content: ''; position: absolute; inset: 0 0 auto 0; height: 2px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: linear-gradient(90deg, var(--brand-accent), var(--brand-accent-2) 55%, var(--brand-point));
+  opacity: 0; transform: scaleX(0.35); transform-origin: left center;
+  transition: opacity .28s ease, transform .4s cubic-bezier(.2,.7,.2,1);
+}
+.card.hover:hover::before { opacity: .9; transform: scaleX(1); }
+.card.hover:hover {
+  background: color-mix(in srgb, var(--brand-accent) 3%, var(--surface));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 14%, transparent),
+              0 16px 44px color-mix(in srgb, var(--brand-accent) 16%, transparent);
+}
+
+/* 대시보드 링크 카드: 꼬리표(↳)가 살짝 전진하며 포인트 색으로 */
+.card .tagline { transition: transform .22s ease, color .22s ease; }
+.card.hover:hover .tagline { transform: translateX(5px); color: var(--brand-point); }
+:root[data-theme='light'] .card.hover:hover .tagline { color: color-mix(in srgb, var(--brand-point) 60%, var(--ink)); }
+
+/* CTA 밴드: 히어로와 같은 앰비언트 오브 + 유리 상단 하이라이트 */
+.cta-band {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), var(--shadow);
+}
+.cta-band::before,
+.cta-band::after {
+  content: ''; position: absolute; border-radius: 50%; pointer-events: none;
+}
+.cta-band::before {
+  width: 440px; height: 440px; left: -130px; top: -190px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--brand-accent) 36%, transparent), transparent 70%);
+}
+.cta-band::after {
+  width: 400px; height: 400px; right: -120px; bottom: -200px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--brand-point) 24%, transparent), transparent 70%);
+}
+.cta-band > * { position: relative; z-index: 1; }
+
+/* 푸터: 실선 → 좌우로 잦아드는 그라디언트 헤어라인 */
+.site-footer { border-top: 0; position: relative; }
+.site-footer::before {
+  content: ''; position: absolute; inset: 0 0 auto 0; height: 1px;
+  background: linear-gradient(90deg, transparent 4%,
+    color-mix(in srgb, var(--brand-accent) 40%, var(--border)) 30%,
+    color-mix(in srgb, var(--brand-point) 34%, var(--border)) 70%, transparent 96%);
+}
