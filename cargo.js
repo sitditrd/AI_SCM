@@ -144,7 +144,8 @@
       .then(function (r) { return r.json(); })
       .then(function (res) { render(res, no); })
       .catch(function () {
-        el('traceOut').innerHTML = '<div class="card reveal in"><b>백엔드 연결 실패</b><p class="sc-sub">start_server.bat(server.py)로 실행 중인지 확인하십시오 — file:// 로 열면 조회가 동작하지 않습니다.</p></div>';
+        var hint = (location.hostname.indexOf('netlify') >= 0 || location.hostname.indexOf('github.io') >= 0) ? '배포판에서는 이 기능의 백엔드가 제공되지 않습니다 — 사내 로컬 포털(start_server.bat)에서 이용하십시오.' : '백엔드 없는 서버가 응답했습니다 — 기존 서버 창을 모두 닫고 start_server.bat(server.py)로 다시 실행하십시오.';
+        el('traceOut').innerHTML = '<div class="card reveal in"><b>백엔드 연결 실패</b><p class="sc-sub">' + hint + '</p></div>';
       });
   }
 

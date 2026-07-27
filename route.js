@@ -87,8 +87,8 @@
         }
       })
       .catch(function (e) {
-        el('simKpis').innerHTML = '<div class="src-card"><b>계산 실패</b><div class="sc-sub">' + e.message +
-          ' — start_server.bat(server.py) 실행 여부를 확인하십시오.</div></div>';
+        var hint = /Unexpected token|JSON/.test(e.message) ? ((location.hostname.indexOf('netlify') >= 0 || location.hostname.indexOf('github.io') >= 0) ? '배포판에서는 이 기능의 백엔드가 제공되지 않습니다 — 사내 로컬 포털(start_server.bat)에서 이용하십시오.' : '백엔드 없는 서버가 응답했습니다 — 기존 서버 창을 모두 닫고 start_server.bat(server.py)로 다시 실행하십시오.') : e.message;
+        el('simKpis').innerHTML = '<div class="src-card"><b>계산 실패</b><div class="sc-sub">' + hint + '</div></div>';
       });
   }
 
