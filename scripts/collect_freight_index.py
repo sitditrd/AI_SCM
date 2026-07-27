@@ -17,7 +17,7 @@ import requests
 
 SUPABASE_URL = 'https://kvmyiualdodcvreoqfin.supabase.co'
 SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
-SQL_OUT = r'C:\Temp\AI_SCM\upload_freight.sql'
+SQL_OUT = r'C:\Temp\AI_SCM\sql\upload_freight.sql'
 UA = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
 
 

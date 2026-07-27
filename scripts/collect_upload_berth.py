@@ -159,7 +159,7 @@ def to_tz(rec):
     return o
 
 
-SQL_OUT = r'C:\Temp\AI_SCM\upload_berth.sql'
+SQL_OUT = r'C:\Temp\AI_SCM\sql\upload_berth.sql'
 
 
 def sql_q(v):
