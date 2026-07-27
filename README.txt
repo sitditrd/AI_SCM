@@ -13,7 +13,7 @@
   status.html   데이터 현황 — 파이프라인 수집·적재 모니터링 (+ status.js)
   vessel.html   선박 위치 — 실시간 AIS 지도 (VesselFinder 임베드, 부산/광양/인천)
   weather.js    항만 기상 카드 (Open-Meteo Marine, 무키·브라우저 직접 호출)
-  collect_freight_index.py  주간 해상운임지수 수집기 (SCFI/CCFI 무인증 JSON)
+  scripts\collect_freight_index.py  주간 해상운임지수 수집기 (SCFI/CCFI 무인증 JSON)
   style.css     공통 스타일 (라이트/다크 테마 토큰)
   data.js       데모 데이터 레이어 (Focus Port 93개 + 실시간 변동 시뮬레이션)
   data_berth.js 선석배정 데이터 레이어 (Supabase + 내장 시드 폴백)
@@ -25,18 +25,18 @@
 ■ 선석배정현황 (Berth Insight) — 2026-07-27 추가
   - 데이터 흐름: 매일 06:00 Claude 스케쥴러가 9개 터미널 사이트를 수집해
     "터미널 스케쥴 수집\터미널_선석배정현황_통합_YYYYMMDD.xlsx" 저장
-    → 06:05 collect_upload_berth.py 가 파싱하여 Supabase 적재
+    → 06:05 scripts\collect_upload_berth.py 가 파싱하여 Supabase 적재
     → berth.html 이 REST로 조회 (45초 폴링, 실패 시 내장 시드 폴백)
-  - 최초 1회: Supabase SQL Editor에서 setup_supabase_berth.sql 실행
+  - 최초 1회: Supabase SQL Editor에서 sql\setup_supabase_berth.sql 실행
     (bs_terminals / bs_vessel_calls / bs_collect_log 생성 + 2026-07-27 시드 224건)
   - 일일 적재 (2가지 경로, 하나만 있으면 됨):
     (A) Claude 스케쥴 작업 "berth-schedule-upload" (매일 06:08, 등록됨) —
-        python collect_upload_berth.py --sql 로 upload_berth.sql 생성 후
+        python scripts\collect_upload_berth.py --sql 로 sql\upload_berth.sql 생성 후
         Supabase 연결(MCP)로 실행. service key 불필요. 앱이 켜져 있어야 함.
     (B) Windows 작업 스케줄러 "TWL_BerthUpload" (매일 06:05, 등록됨) —
         환경변수 SUPABASE_SERVICE_KEY 설정 시에만 동작 (REST 직접 적재):
-        python collect_upload_berth.py [YYYYMMDD]
-  - 문서: PRD_터미널선석배정현황.md / .docx 참조
+        python scripts\collect_upload_berth.py [YYYYMMDD]
+  - 문서: PRJ_2026\PRD\PRD_터미널선석배정현황.md / .docx 참조
 
 ■ 인터넷 연결
   - 지도(Leaflet+CARTO 타일)와 Pretendard 폰트는 CDN에서 로드됩니다.
@@ -48,14 +48,14 @@
 
 ■ Port Insight 오픈 API 연동 (2026-07-27 추가)
   - 원천: IMF PortWatch 오픈 API (portwatch.imf.org, 위성 AIS, 무료·인증 불필요)
-  - 수집기: collect_portinsight_api.py — Focus 93개 항만의 일별 port calls로
+  - 수집기: scripts\collect_portinsight_api.py — Focus 93개 항만의 일별 port calls로
     TW-PFS v2(활동량 60%+물동량 25%+모멘텀 15%) 산출 → pi_ports/pi_snapshot 갱신
     (부산·광양·인천 접안/대기 척수는 선석배정 bs_vessel_calls 실측으로 교체)
-  - 매핑: portwatch_mapping.json (Focus 93 ↔ PortWatch portid, 93/93)
+  - 매핑: scripts\portwatch_mapping.json (Focus 93 ↔ PortWatch portid, 93/93)
   - 스케쥴: Claude 작업 "portinsight-open-api-update"(06:27, 키 불필요) +
     윈도우 작업 "TWL_PortInsightUpdate"(06:15, sb_secret 키 필요)
   - 유의: PortWatch 원천은 주 1회 배치 갱신(약 7~10일 지연)
-  - 문서: PRD_2026\개발계획서_PortInsight_오픈API연계.docx
+  - 문서: PRJ_2026\개발계획서\개발계획서_PortInsight_오픈API연계.docx
 
 ■ 신규 연동 (2026-07-27 2차 추가)
   - 선박 위치: VesselFinder 공개 AIS 임베드 (무료·무키) — vessel.html
@@ -72,7 +72,7 @@
 
 ■ Supabase 실데이터 연동 (설정됨)
   - 프로젝트: https://kvmyiualdodcvreoqfin.supabase.co (data.js 상단에 URL/publishable key)
-  - 최초 1회: Supabase 대시보드 > SQL Editor 에서 setup_supabase.sql
+  - 최초 1회: Supabase 대시보드 > SQL Editor 에서 sql\setup_supabase.sql
     전체를 붙여넣고 Run → pi_ports(93행) / pi_snapshot 테이블 생성
   - 이후 insight.html을 열면 자동으로 Supabase에서 데이터를 읽어오며,
     상단에 [Supabase 실데이터] 초록 배지가 표시됩니다.
@@ -88,3 +88,7 @@
   - 데이터 대외 제공 시: 데이터 공급 계약·라이선스 검토 필요 (사내용은 무관)
 
 © 2026 TAEWOONG LOGISTICS — 사내 운영용
+
+■ 프로젝트 문서 (PRJ_2026\)
+  프로젝트개요\PROJECT_OVERVIEW.md       전체 경과·기능·스케쥴·구조 요약
+  상세기술서\상세기술서_TWL물류포털.md    아키텍처·스키마·산식·운영 상세
