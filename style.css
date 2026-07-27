@@ -105,6 +105,9 @@ button { font-family: inherit; cursor: pointer; }
 .hero-page .site-header:not(.scrolled) .site-nav a,
 .hero-page .site-header:not(.scrolled) .icon-btn,
 .hero-page .site-header:not(.scrolled) .nav-burger { color: #eaf1fb; }
+/* 로고 타이포는 자체 color 선언이 상속을 이기므로 미스크롤 상태를 명시적으로 화이트 계열로 */
+.hero-page .site-header:not(.scrolled) .logo-text .l1 { color: #eaf1fb; }
+.hero-page .site-header:not(.scrolled) .logo-text .l2 { color: #9db8dd; }
 .logo-svg { height: 34px; width: auto; display: block; }
 
 .site-nav { margin-left: auto; display: flex; align-items: center; gap: 4px; }
@@ -490,6 +493,8 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   }
   .site-nav.open { display: flex; }
   .site-nav a { padding: 12px 10px; }
+  /* 열린 메뉴 패널은 테마 유리(라이트=흰색)이므로, 미스크롤 화이트 링크 강제를 해제 */
+  .hero-page .site-header:not(.scrolled) .site-nav.open a { color: var(--ink-2); }
   .nav-burger { display: inline-flex; }
   .header-actions .btn { display: none; }
   .grid-3 { grid-template-columns: 1fr; }
@@ -548,7 +553,8 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .health-banner {
   display: flex; align-items: center; gap: 10px; margin-top: 16px;
   padding: 12px 16px; border-radius: 12px; font-size: 14px;
-  border: 1px solid var(--border); background: var(--surface);
+  /* 항상 다크인 .dash-hero 안에 놓이므로 테마 불변 다크 유리 (live-strip과 동일 패턴) */
+  border: 1px solid rgba(158, 197, 244, 0.22); background: rgba(13, 21, 38, 0.5);
 }
 .hb-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--muted); flex: none; }
 .hb-ok   { border-color: color-mix(in srgb, var(--lv-low) 40%, transparent); }
@@ -621,12 +627,17 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
    (토큰 레이어 오버라이드 — 라이트/다크 공통, 전 페이지 적용)
    ========================================================= */
 
-/* 카드·KPI·소스카드: 반투명 유리 표면 + 부드러운 링 */
-.card, .kpi, .src-card, .tbl-card, .pipe-node, .health-banner {
+/* 카드·KPI·소스카드: 반투명 유리 표면 + 부드러운 링
+   (health-banner 제외 — 항상 다크인 .dash-hero 안이라 테마 유리를 쓰면 라이트에서 깨짐) */
+.card, .kpi, .src-card, .tbl-card, .pipe-node {
   background: color-mix(in srgb, var(--surface) 72%, transparent);
   -webkit-backdrop-filter: blur(14px) saturate(1.15);
   backdrop-filter: blur(14px) saturate(1.15);
   border: 1px solid color-mix(in srgb, var(--brand-accent-2) 16%, var(--border));
+}
+.health-banner {
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  backdrop-filter: blur(14px) saturate(1.15);
 }
 .card.hover:hover, a.card:hover {
   transform: translateY(-3px);
@@ -636,8 +647,15 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 }
 
 /* 섹션 타이틀·KPI 수치: 브랜드 그라디언트 텍스트 */
-.sec-title, .dash-head h2, .hero-inner h1 .accent {
+.sec-title, .dash-head h2 {
   background: linear-gradient(92deg, var(--ink) 20%, var(--brand-accent-2) 75%, var(--brand-point) 105%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+/* 히어로 헤드라인 액센트: 항상 다크인 히어로 위이므로 시작색을 테마 불변 밝은 색으로 */
+.hero-inner h1 .accent {
+  background: linear-gradient(92deg, #f2f7ff 20%, var(--brand-accent-2) 75%, var(--brand-point) 105%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -658,12 +676,14 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 }
 .btn-primary:hover { filter: brightness(1.08); box-shadow: 0 6px 24px color-mix(in srgb, var(--brand-accent) 45%, transparent); }
 
-/* 대시 히어로: 은은한 오로라 배경 */
+/* 대시 히어로: 은은한 오로라 배경
+   — 내부 텍스트가 다크 전제(#eaf1fb 계열)이므로 베이스는 반드시 테마 불변 다크(--hero-grad).
+   (기존 var(--surface-2) 베이스는 라이트 테마에서 흰 배경+흰 글자로 깨졌음) */
 .dash-hero {
   background:
     radial-gradient(720px 300px at 12% -10%, color-mix(in srgb, var(--brand-accent) 22%, transparent), transparent 68%),
     radial-gradient(560px 260px at 88% 0%, color-mix(in srgb, var(--brand-point) 14%, transparent), transparent 70%),
-    var(--surface-2);
+    var(--hero-grad);
 }
 
 /* 표 헤더·필터 칩: 브랜드 틴트 */
@@ -807,16 +827,18 @@ body.hero-page {
    카드 나열 → 이음새 없는 단일 유리 데크 위의 플로팅 지표
    (박스·선 없음 · 대형 그라디언트 숫자 · 커서 스포트라이트)
    ========================================================= */
+/* 데크는 항상 다크인 히어로 위에 놓이므로, 색상은 테마 불변(다크 유리)으로 고정
+   — 라이트 테마에서 흰 유리판+검은 숫자로 깨지는 문제 방지 */
 .live-strip {
-  background: color-mix(in srgb, var(--surface) 46%, transparent);
+  background: rgba(13, 21, 38, 0.5);
   -webkit-backdrop-filter: blur(18px) saturate(1.2);
   backdrop-filter: blur(18px) saturate(1.2);
   border-radius: 22px;
   padding: 22px 26px;
   gap: 8px;
   position: relative; overflow: hidden;
-  box-shadow: inset 0 1px 0 color-mix(in srgb, white 10%, transparent),
-              0 18px 48px color-mix(in srgb, var(--brand-primary) 30%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1),
+              0 18px 48px rgba(11, 45, 91, 0.3);
 }
 /* 커서 스포트라이트 (JS가 --mx/--my 갱신) */
 .live-strip::after {
@@ -837,11 +859,11 @@ body.hero-page {
 }
 .live-chip .k {
   font-size: 11.5px; letter-spacing: 0.6px; text-transform: uppercase;
-  color: var(--muted); font-weight: 700;
+  color: #9db8dd; font-weight: 700;
 }
 .live-chip .v {
   font-size: 33px; letter-spacing: -0.5px; margin-top: 6px;
-  background: linear-gradient(96deg, var(--ink) 25%, var(--brand-accent-2) 115%);
+  background: linear-gradient(96deg, #f2f7ff 25%, #8fc0f7 115%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
   transition: transform .2s ease;

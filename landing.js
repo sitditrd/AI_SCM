@@ -43,7 +43,7 @@
           return '<div class="live-chip"><div class="k">' + i.label +
             '</div><div class="v">' + Number(i.d.value).toLocaleString('ko-KR') + arrow + '</div></div>';
         }).join('') +
-        '<div class="live-chip"><div class="k">발표일</div><div class="v" style="font-size:14px;">' + latest + '<br><small style="color:var(--muted);">주 1회 갱신</small></div></div>';
+        '<div class="live-chip"><div class="k">발표일</div><div class="v" style="font-size:14px;">' + latest + '<br><small style="color:#9db8dd;">주 1회 갱신</small></div></div>';
         host.style.display = '';
       })
       .catch(function () { /* 조회 실패 시 스트립 미표시 */ });
