@@ -691,3 +691,38 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 /* 신선도 게이지·상태 점: 글로우 */
 .pn-dot, .hb-dot, .pulse-dot { box-shadow: 0 0 10px currentColor; }
 .fb-fill { box-shadow: 0 0 8px color-mix(in srgb, currentColor 50%, transparent); }
+
+/* ===== Design Refresh 2026.2b — 마감 폴리시 ===== */
+html { scroll-behavior: smooth; }
+::selection { background: color-mix(in srgb, var(--brand-accent-2) 35%, transparent); }
+
+/* 스크롤 시 유리 헤더 */
+.site-header.scrolled {
+  background: color-mix(in srgb, var(--surface) 62%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  backdrop-filter: blur(16px) saturate(1.2);
+  border-bottom: 1px solid color-mix(in srgb, var(--brand-accent-2) 18%, var(--border));
+}
+
+/* 표 행 호버·수치 정렬 */
+.tw tbody tr { transition: background .15s ease; }
+.tw tbody tr:hover td { background: color-mix(in srgb, var(--brand-accent) 7%, transparent); }
+.tw td.num, .kpi .v, .sc-big, .live-chip .v { font-variant-numeric: tabular-nums; }
+
+/* 슬림 스크롤바 */
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--muted) 45%, transparent); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--brand-accent-2) 60%, transparent); }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* 등장 애니메이션 스프링감 */
+.reveal { transform: translateY(22px) scale(0.985); transition: opacity .6s cubic-bezier(.2,.7,.2,1), transform .6s cubic-bezier(.2,.7,.2,1); }
+.reveal.in { transform: none; }
+
+/* 히어로 타이틀 그라디언트 흐름 */
+@keyframes gradFlow { 0% { background-position: 0% 50%; } 100% { background-position: 130% 50%; } }
+.hero-inner h1 .accent {
+  background-size: 220% 100%;
+  animation: gradFlow 6s ease-in-out infinite alternate;
+}
+@media (prefers-reduced-motion: reduce) { .hero-inner h1 .accent { animation: none; } }
