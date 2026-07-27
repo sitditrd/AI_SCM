@@ -1,10 +1,16 @@
 /* =========================================================
-   TWL Port Insight — Mock Real-time Data Layer
-   태웅로직스 Port Insight 데모 데이터 (시드 + 실시간 변동 시뮬레이션)
-   [교체] 실데이터 연동 시 이 파일을 API 클라이언트로 대체
+   TWL Port Insight — Data Layer
+   1) Supabase 실데이터 모드: pi_ports / pi_snapshot 테이블 조회
+   2) 폴백: 내장 시드 + 실시간 변동 시뮬레이션
+   ※ 테이블이 없거나 오프라인이면 자동으로 시뮬레이션 모드로 동작
    ========================================================= */
 (function () {
   'use strict';
+
+  /* ---------- Supabase 접속 정보 ---------- */
+  var SUPABASE_URL = 'https://kvmyiualdodcvreoqfin.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_jo6oBar-JbfKY3IfhPyBbQ_gH1Lvwsv'; /* publishable key — 클라이언트 공개용(RLS 적용) */
+  var SB_TIMEOUT_MS = 8000;
 
   /* ---------- 시드 난수 (틱마다 재현 가능한 변동) ---------- */
   function mulberry32(a) {
@@ -153,38 +159,45 @@
     P('Auckland', '오클랜드(NZ)', 'NZ', 'OC', -36.84, 174.77, 47, 14.4, 6, 13)
   );
 
-  /* ---------- 전체 네트워크(1,253개 항만) 고정 통계 (원본 시드) ---------- */
+  /* ---------- 폴백 스냅샷 (마지막 실측치 — IMF PortWatch 2026-07-17 기준) ---------- */
   var NETWORK = {
-    totalPorts: 1253,
-    tpfs: 51.8,
-    criticalPorts: 127,
+    totalPorts: 93,
+    tpfs: 37.7,
+    criticalPorts: 15,
     globalRisk: 'HIGH',
-    avgDelayHours: 17.1,
+    avgDelayHours: 13.5,
     distribution: [
-      { level: 'LOW',       ratio: 62.8, count: 787, delta: +9 },
-      { level: 'STABLE',    ratio: 16.2, count: 203, delta: -23 },
-      { level: 'BUSY',      ratio: 10.9, count: 136, delta: +5 },
-      { level: 'CONGESTED', ratio: 10.1, count: 127, delta: +9 }
+      { level: 'LOW',       ratio: 39.8, count: 37, delta: +30 },
+      { level: 'STABLE',    ratio: 33.3, count: 31, delta: -16 },
+      { level: 'BUSY',      ratio: 10.8, count: 10, delta: -20 },
+      { level: 'CONGESTED', ratio: 16.1, count: 15, delta: +6 }
     ],
-    periodStart: '2026-06-29',
-    periodEnd: '2026-07-12',
-    reportDate: '2026-07-13'
+    periodStart: '2026-07-11',
+    periodEnd: '2026-07-17',
+    reportDate: '2026-07-27'
   };
 
-  /* ---------- 실시간 상태 산출 (tick 기반 변동) ---------- */
+  /* ---------- 상태 산출 코어 ----------
+     rawPorts: [{en,ko,cc,rg,lat,lng,t,d,w,b}] (시드 또는 Supabase 행)
+     netOverride: 실데이터 스냅샷 (null이면 내장 NETWORK + 미세 변동)
+     seed: 파생 난수 시드 / applyJitter: 시뮬레이션 변동 적용 여부 */
   function jitter(rand, base, pct) {
     return base * (1 + (rand() * 2 - 1) * pct);
   }
 
-  function getState(tick) {
-    var i, p, rand;
+  function buildState(rawPorts, netOverride, seed, applyJitter) {
+    var rand;
     /* 항만별 현재값 */
-    var ports = PORTS.map(function (src, idx) {
-      rand = mulberry32(tick * 1000 + idx);
-      var t = Math.max(3, Math.min(97, jitter(rand, src.t, 0.035)));
-      var d = Math.max(0.5, jitter(rand, src.d, 0.05));
-      var w = Math.max(0, Math.round(src.w + (rand() * 4 - 2)));
-      var b = Math.max(1, Math.round(src.b + (rand() * 3 - 1.5)));
+    var ports = rawPorts.map(function (src, idx) {
+      rand = mulberry32(seed * 1000 + idx);
+      var jt = Math.max(3, Math.min(97, jitter(rand, src.t, 0.035)));
+      var jd = Math.max(0.5, jitter(rand, src.d, 0.05));
+      var jw = Math.max(0, Math.round(src.w + (rand() * 4 - 2)));
+      var jb = Math.max(1, Math.round(src.b + (rand() * 3 - 1.5)));
+      var t = applyJitter ? jt : src.t;
+      var d = applyJitter ? jd : src.d;
+      var w = applyJitter ? jw : src.w;
+      var b = applyJitter ? jb : src.b;
       var waitH = d * (0.55 + rand() * 0.35);           /* 접안 전 순번 대기 */
       var tsH = 8 + rand() * 20;                        /* 하역(서비스) 시간 */
       return {
@@ -200,20 +213,41 @@
       };
     });
 
-    /* 글로벌 스냅샷 (네트워크 통계 + 미세 변동) */
-    rand = mulberry32(tick * 7 + 11);
-    var snap = {
-      totalPorts: NETWORK.totalPorts,
-      tpfs: Math.round(jitter(rand, NETWORK.tpfs, 0.012) * 10) / 10,
-      tpfsGrade: null,
-      criticalPorts: NETWORK.criticalPorts + Math.round(rand() * 4 - 2),
-      globalRisk: NETWORK.globalRisk,
-      avgDelayHours: Math.round(jitter(rand, NETWORK.avgDelayHours, 0.03) * 10) / 10,
-      distribution: NETWORK.distribution,
-      periodStart: NETWORK.periodStart,
-      periodEnd: NETWORK.periodEnd,
-      reportDate: NETWORK.reportDate
-    };
+    /* 글로벌 스냅샷 */
+    var snap;
+    if (netOverride) {
+      snap = {
+        totalPorts: netOverride.totalPorts,
+        tpfs: netOverride.tpfs,
+        tpfsGrade: null,
+        criticalPorts: netOverride.criticalPorts,
+        globalRisk: netOverride.globalRisk,
+        avgDelayHours: netOverride.avgDelayHours,
+        distribution: netOverride.distribution,
+        periodStart: netOverride.periodStart,
+        periodEnd: netOverride.periodEnd,
+        reportDate: netOverride.reportDate
+      };
+    } else {
+      /* 오프라인 캐시: 항만 배열에서 직접 집계해 화면 내 수치 모순 방지 */
+      var byLv = { LOW: 0, STABLE: 0, BUSY: 0, CONGESTED: 0 };
+      ports.forEach(function (x) { byLv[x.level] += 1; });
+      var n = ports.length || 1;
+      snap = {
+        totalPorts: ports.length,
+        tpfs: Math.round(ports.reduce(function (a, x) { return a + x.tpfs; }, 0) / n * 10) / 10,
+        tpfsGrade: null,
+        criticalPorts: byLv.CONGESTED,
+        globalRisk: NETWORK.globalRisk,
+        avgDelayHours: Math.round(ports.reduce(function (a, x) { return a + x.delayH; }, 0) / n * 10) / 10,
+        distribution: ['LOW', 'STABLE', 'BUSY', 'CONGESTED'].map(function (lv) {
+          return { level: lv, ratio: Math.round(byLv[lv] / n * 1000) / 10, count: byLv[lv], delta: 0 };
+        }),
+        periodStart: NETWORK.periodStart,
+        periodEnd: NETWORK.periodEnd,
+        reportDate: NETWORK.reportDate
+      };
+    }
     snap.tpfsGrade = levelOf(snap.tpfs);
 
     /* 권역별 집계 */
@@ -221,7 +255,7 @@
       var list = ports.filter(function (x) { return x.rg === rg; });
       var busyCon = list.filter(function (x) { return x.tpfs >= 50; }).length;
       var avgD = list.reduce(function (s, x) { return s + x.delayH; }, 0) / (list.length || 1);
-      var r2 = mulberry32(tick * 31 + rg.length * 7);
+      var r2 = mulberry32(seed * 31 + rg.length * 7);
       return {
         rg: rg, ko: REGIONS[rg].ko, en: REGIONS[rg].en,
         portCount: list.length,
@@ -281,7 +315,7 @@
     var discharge = ports.slice().sort(function (a, b) {
       return (b.serviceH - a.serviceH);
     }).slice(0, 10).map(function (x, i) {
-      var r4 = mulberry32(tick * 13 + i * 41);
+      var r4 = mulberry32(seed * 13 + i * 41);
       var base = x.serviceH;
       var m = []; var k;
       for (k = 0; k < 8; k++) m.push(Math.round((base * (0.82 + r4() * 0.18)) * 10) / 10);
@@ -306,8 +340,66 @@
       waitingTop: waitingTop,
       bottleneck: bottleneck,
       discharge: discharge,
-      focusPorts: PORTS.map(function (x) { return { ko: x.ko, en: x.en, cc: x.cc }; })
+      focusPorts: rawPorts.map(function (x) { return { ko: x.ko, en: x.en, cc: x.cc }; })
     };
+  }
+
+  /* ---------- Supabase 실데이터 연동 ---------- */
+  var MODE = 'sim';          /* 'sim' | 'supabase' */
+  var liveRaw = null;        /* pi_ports → raw 포맷 */
+  var liveNet = null;        /* pi_snapshot */
+  var lastError = null;
+
+  function sbFetch(path) {
+    var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var to = ctrl ? setTimeout(function () { ctrl.abort(); }, SB_TIMEOUT_MS) : null;
+    return fetch(SUPABASE_URL + path, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY
+      },
+      signal: ctrl ? ctrl.signal : undefined
+    }).then(function (r) {
+      if (to) clearTimeout(to);
+      if (!r.ok) throw new Error('Supabase HTTP ' + r.status);
+      return r.json();
+    });
+  }
+
+  function mapRow(r) {
+    return {
+      en: r.name_en, ko: r.name_ko, cc: r.country_cd, rg: r.region_cd,
+      lat: +r.lat, lng: +r.lng,
+      t: +r.tpfs, d: +r.delay_h,
+      w: r.waiting_cnt | 0, b: r.berthed_cnt | 0
+    };
+  }
+
+  function fetchLive() {
+    return Promise.all([
+      sbFetch('/rest/v1/pi_ports?select=*'),
+      sbFetch('/rest/v1/pi_snapshot?select=*&id=eq.1')
+    ]).then(function (res) {
+      var rows = res[0] || [];
+      if (!rows.length) throw new Error('pi_ports 테이블이 비어 있습니다 (setup_supabase.sql 실행 필요)');
+      liveRaw = rows.map(mapRow);
+      var s = (res[1] && res[1][0]) || {};
+      liveNet = {
+        totalPorts: s.total_ports != null ? +s.total_ports : NETWORK.totalPorts,
+        tpfs: s.tpfs != null ? +s.tpfs : NETWORK.tpfs,
+        criticalPorts: s.critical_ports != null ? +s.critical_ports : NETWORK.criticalPorts,
+        globalRisk: s.global_risk || NETWORK.globalRisk,
+        avgDelayHours: s.avg_delay_h != null ? +s.avg_delay_h : NETWORK.avgDelayHours,
+        distribution: (typeof s.distribution === 'string' ? JSON.parse(s.distribution) : s.distribution) || NETWORK.distribution,
+        periodStart: s.period_start || NETWORK.periodStart,
+        periodEnd: s.period_end || NETWORK.periodEnd,
+        reportDate: NETWORK.reportDate,
+        updatedAt: s.updated_at || null
+      };
+      MODE = 'supabase';
+      lastError = null;
+      return true;
+    });
   }
 
   /* ---------- 공개 API ---------- */
@@ -315,7 +407,25 @@
     LEVELS: LEVELS,
     REGIONS: REGIONS,
     levelOf: levelOf,
-    getState: getState,
+    /* 초기화: Supabase 시도 → 실패 시 시뮬레이션 폴백 (항상 resolve) */
+    init: function () {
+      if (typeof fetch === 'undefined') { MODE = 'sim'; return Promise.resolve(false); }
+      return fetchLive().catch(function (e) {
+        lastError = e; MODE = 'sim';
+        return false;
+      });
+    },
+    /* 폴링 재조회 (supabase 모드에서만 의미 있음) */
+    refreshLive: function () { return fetchLive(); },
+    getState: function (tick) {
+      if (MODE === 'supabase' && liveRaw) {
+        return buildState(liveRaw, liveNet, 7, false);   /* 실데이터: 변동 없이 그대로 */
+      }
+      return buildState(PORTS, null, 7, false);          /* 오프라인 캐시(정적) */
+    },
+    getMode: function () { return MODE; },
+    getLastError: function () { return lastError; },
+    getUpdatedAt: function () { return liveNet ? liveNet.updatedAt : null; },
     focusCount: PORTS.length,
     network: NETWORK
   };

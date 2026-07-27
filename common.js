@@ -4,22 +4,19 @@
 (function () {
   'use strict';
 
-  /* ---------- 로고 (인라인 SVG — [교체] 공식 CI 확정 시 교체) ---------- */
-  var LOGO_SVG =
-    '<svg class="logo-svg" viewBox="0 0 258 40" role="img" aria-label="TAEWOONG LOGISTICS">' +
-    '<g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">' +
-    '<path d="M4 27 L14 27 L18 15 L34 15 L30 27 L34 27" opacity="0.95"/>' +
-    '<path d="M8 33 C14 36 26 36 33 33" opacity="0.55"/>' +
-    '<circle cx="21" cy="21" r="2.2" fill="currentColor" stroke="none"/>' +
-    '</g>' +
-    '<text x="46" y="24" font-family="Pretendard, Segoe UI, sans-serif" font-size="17.5" font-weight="800" letter-spacing="0.5" fill="currentColor">TAEWOONG</text>' +
-    '<text x="160" y="24" font-family="Pretendard, Segoe UI, sans-serif" font-size="17.5" font-weight="300" letter-spacing="0.5" fill="currentColor">LOGISTICS</text>' +
-    '<text x="46" y="35.5" font-family="Pretendard, Segoe UI, sans-serif" font-size="8" font-weight="500" letter-spacing="3.2" fill="currentColor" opacity="0.62">TWL SMARTBPO</text>' +
-    '</svg>';
+  /* ---------- 로고 (공식 CI 심볼 재채색 + 사이트 타이포그래피) ----------
+     심볼: twl_symbol.png (공식 심볼을 브랜드 블루/틸로 재채색)
+     텍스트: Taewoong Logistics — 페이지 폰트(Pretendard)로 렌더, 테마 자동 대응 */
+  var LOGO_HTML =
+    '<img class="logo-sym" src="twl_symbol.png" alt="">' +
+    '<span class="logo-text" aria-label="Taewoong Logistics">' +
+    '<span class="l1"><b>TAEWOONG</b> LOGISTICS</span>' +
+    '<span class="l2">TWL SMARTBPO</span>' +
+    '</span>';
 
   function injectLogos() {
     document.querySelectorAll('.logo-slot').forEach(function (el) {
-      el.innerHTML = LOGO_SVG;
+      el.innerHTML = LOGO_HTML;
     });
   }
 

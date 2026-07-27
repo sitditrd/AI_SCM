@@ -1,0 +1,751 @@
+{
+  "generated": "2026-07-27",
+  "source": "IMF PortWatch",
+  "ports": [
+    {
+      "en": "Shanghai",
+      "ko": "상하이",
+      "cc": "CN",
+      "portid": "port1188",
+      "pw_name": "Shanghai",
+      "pw_country": "China"
+    },
+    {
+      "en": "Ningbo",
+      "ko": "닝보",
+      "cc": "CN",
+      "portid": "port824",
+      "pw_name": "Ningbo",
+      "pw_country": "China"
+    },
+    {
+      "en": "Shenzhen (Yantian)",
+      "ko": "선전(옌톈)",
+      "cc": "CN",
+      "portid": "port1414",
+      "pw_name": "Yantian",
+      "pw_country": "China"
+    },
+    {
+      "en": "Guangzhou (Nansha)",
+      "ko": "광저우(난사)",
+      "cc": "CN",
+      "portid": "port425",
+      "pw_name": "Guangzhou (Nansha)",
+      "pw_country": "China"
+    },
+    {
+      "en": "Qingdao",
+      "ko": "칭다오",
+      "cc": "CN",
+      "portid": "port1069",
+      "pw_name": "Qingdao Port",
+      "pw_country": "China"
+    },
+    {
+      "en": "Tianjin",
+      "ko": "톈진",
+      "cc": "CN",
+      "portid": "port1297",
+      "pw_name": "Tianjin Xin Gang",
+      "pw_country": "China"
+    },
+    {
+      "en": "Xiamen",
+      "ko": "샤먼",
+      "cc": "CN",
+      "portid": "port1404",
+      "pw_name": "Xiamen",
+      "pw_country": "China"
+    },
+    {
+      "en": "Dalian",
+      "ko": "다롄",
+      "cc": "CN",
+      "portid": "port273",
+      "pw_name": "Dalian",
+      "pw_country": "China"
+    },
+    {
+      "en": "Hong Kong",
+      "ko": "홍콩",
+      "cc": "HK",
+      "portid": "port474",
+      "pw_name": "Hong Kong",
+      "pw_country": "Hong Kong SAR"
+    },
+    {
+      "en": "Kaohsiung",
+      "ko": "가오슝",
+      "cc": "TW",
+      "portid": "port541",
+      "pw_name": "Kaohsiung",
+      "pw_country": "Taiwan Province of China"
+    },
+    {
+      "en": "Busan",
+      "ko": "부산",
+      "cc": "KR",
+      "portid": "port1065",
+      "pw_name": "Busan",
+      "pw_country": "Korea"
+    },
+    {
+      "en": "Incheon",
+      "ko": "인천",
+      "cc": "KR",
+      "portid": "port494",
+      "pw_name": "Incheon",
+      "pw_country": "Korea"
+    },
+    {
+      "en": "Gwangyang",
+      "ko": "광양",
+      "cc": "KR",
+      "portid": "port432",
+      "pw_name": "Gwangyang (Kwangyang)",
+      "pw_country": "Korea"
+    },
+    {
+      "en": "Tokyo",
+      "ko": "도쿄",
+      "cc": "JP",
+      "portid": "port1305",
+      "pw_name": "Tokyo",
+      "pw_country": "Japan"
+    },
+    {
+      "en": "Yokohama",
+      "ko": "요코하마",
+      "cc": "JP",
+      "portid": "port1417",
+      "pw_name": "Yokohama",
+      "pw_country": "Japan"
+    },
+    {
+      "en": "Nagoya",
+      "ko": "나고야",
+      "cc": "JP",
+      "portid": "port786",
+      "pw_name": "Nagoya",
+      "pw_country": "Japan"
+    },
+    {
+      "en": "Kobe",
+      "ko": "고베",
+      "cc": "JP",
+      "portid": "port581",
+      "pw_name": "Kobe",
+      "pw_country": "Japan"
+    },
+    {
+      "en": "Singapore",
+      "ko": "싱가포르",
+      "cc": "SG",
+      "portid": "port1201",
+      "pw_name": "Singapore",
+      "pw_country": "Singapore"
+    },
+    {
+      "en": "Tanjung Pelepas",
+      "ko": "탄중펠레파스",
+      "cc": "MY",
+      "portid": "port1269",
+      "pw_name": "Tanjung Pelepas",
+      "pw_country": "Malaysia"
+    },
+    {
+      "en": "Port Klang",
+      "ko": "포트클랑",
+      "cc": "MY",
+      "portid": "port960",
+      "pw_name": "Port Klang",
+      "pw_country": "Malaysia"
+    },
+    {
+      "en": "Penang",
+      "ko": "페낭",
+      "cc": "MY",
+      "portid": "port1062",
+      "pw_name": "Penang",
+      "pw_country": "Malaysia"
+    },
+    {
+      "en": "Kuching",
+      "ko": "쿠칭",
+      "cc": "MY",
+      "portid": "port604",
+      "pw_name": "Kuching",
+      "pw_country": "Malaysia"
+    },
+    {
+      "en": "Jakarta (Tg. Priok)",
+      "ko": "자카르타(탄중프리옥)",
+      "cc": "ID",
+      "portid": "port514",
+      "pw_name": "Tanjung Priok",
+      "pw_country": "Indonesia"
+    },
+    {
+      "en": "Surabaya",
+      "ko": "수라바야",
+      "cc": "ID",
+      "portid": "port1237",
+      "pw_name": "Surabaya",
+      "pw_country": "Indonesia"
+    },
+    {
+      "en": "Laem Chabang",
+      "ko": "람차방",
+      "cc": "TH",
+      "portid": "port1197",
+      "pw_name": "Laem Chabang",
+      "pw_country": "Thailand"
+    },
+    {
+      "en": "Bangkok",
+      "ko": "방콕",
+      "cc": "TH",
+      "portid": "port111",
+      "pw_name": "Bangkok",
+      "pw_country": "Thailand"
+    },
+    {
+      "en": "Ho Chi Minh (Cat Lai)",
+      "ko": "호치민(깟라이)",
+      "cc": "VN",
+      "portid": "port2085",
+      "pw_name": "Cat Lai (Saigon New Port)",
+      "pw_country": "Vietnam"
+    },
+    {
+      "en": "Cai Mep",
+      "ko": "까이멥",
+      "cc": "VN",
+      "portid": "port903",
+      "pw_name": "Cai Mep",
+      "pw_country": "Vietnam"
+    },
+    {
+      "en": "Haiphong",
+      "ko": "하이퐁",
+      "cc": "VN",
+      "portid": "port434",
+      "pw_name": "Hai Phong",
+      "pw_country": "Vietnam"
+    },
+    {
+      "en": "Manila",
+      "ko": "마닐라",
+      "cc": "PH",
+      "portid": "port694",
+      "pw_name": "Manila",
+      "pw_country": "Philippines"
+    },
+    {
+      "en": "Yangon",
+      "ko": "양곤",
+      "cc": "MM",
+      "portid": "port1086",
+      "pw_name": "Yangon",
+      "pw_country": "Myanmar"
+    },
+    {
+      "en": "Sihanoukville",
+      "ko": "시아누크빌",
+      "cc": "KH",
+      "portid": "port535",
+      "pw_name": "Kâmpóng Saôm",
+      "pw_country": "Cambodia"
+    },
+    {
+      "en": "Colombo",
+      "ko": "콜롬보",
+      "cc": "LK",
+      "portid": "port254",
+      "pw_name": "Colombo",
+      "pw_country": "Sri Lanka"
+    },
+    {
+      "en": "Chattogram",
+      "ko": "치타공",
+      "cc": "BD",
+      "portid": "port241",
+      "pw_name": "Chittagong",
+      "pw_country": "Bangladesh"
+    },
+    {
+      "en": "Nhava Sheva (JNPT)",
+      "ko": "나바셰바(JNPT)",
+      "cc": "IN",
+      "portid": "port776",
+      "pw_name": "Mumbai",
+      "pw_country": "India"
+    },
+    {
+      "en": "Mundra",
+      "ko": "문드라",
+      "cc": "IN",
+      "portid": "port777",
+      "pw_name": "Mundra",
+      "pw_country": "India"
+    },
+    {
+      "en": "Chennai",
+      "ko": "첸나이",
+      "cc": "IN",
+      "portid": "port235",
+      "pw_name": "Chennai (Madras)",
+      "pw_country": "India"
+    },
+    {
+      "en": "Karachi",
+      "ko": "카라치",
+      "cc": "PK",
+      "portid": "port543",
+      "pw_name": "Karachi",
+      "pw_country": "Pakistan"
+    },
+    {
+      "en": "Jebel Ali",
+      "ko": "제벨알리",
+      "cc": "AE",
+      "portid": "port744",
+      "pw_name": "Jebel Ali",
+      "pw_country": "United Arab Emirates"
+    },
+    {
+      "en": "Khalifa (Abu Dhabi)",
+      "ko": "칼리파(아부다비)",
+      "cc": "AE",
+      "portid": "port2025",
+      "pw_name": "Khalifa Port",
+      "pw_country": "United Arab Emirates"
+    },
+    {
+      "en": "Hamad",
+      "ko": "하마드",
+      "cc": "QA",
+      "portid": "port2026",
+      "pw_name": "Hamad Port",
+      "pw_country": "Qatar"
+    },
+    {
+      "en": "Dammam",
+      "ko": "담맘",
+      "cc": "SA",
+      "portid": "port275",
+      "pw_name": "Dammam",
+      "pw_country": "Saudi Arabia"
+    },
+    {
+      "en": "Jeddah",
+      "ko": "제다",
+      "cc": "SA",
+      "portid": "port518",
+      "pw_name": "Jeddah",
+      "pw_country": "Saudi Arabia"
+    },
+    {
+      "en": "Salalah",
+      "ko": "살랄라",
+      "cc": "OM",
+      "portid": "port746",
+      "pw_name": "Salalah",
+      "pw_country": "Oman"
+    },
+    {
+      "en": "Bandar Abbas",
+      "ko": "반다르아바스",
+      "cc": "IR",
+      "portid": "port107",
+      "pw_name": "Bandar Abbas",
+      "pw_country": "Iran"
+    },
+    {
+      "en": "Rotterdam",
+      "ko": "로테르담",
+      "cc": "NL",
+      "portid": "port1114",
+      "pw_name": "Rotterdam",
+      "pw_country": "The Netherlands"
+    },
+    {
+      "en": "Antwerp-Bruges",
+      "ko": "안트베르펜",
+      "cc": "BE",
+      "portid": "port57",
+      "pw_name": "Antwerp",
+      "pw_country": "Belgium"
+    },
+    {
+      "en": "Hamburg",
+      "ko": "함부르크",
+      "cc": "DE",
+      "portid": "port446",
+      "pw_name": "Hamburg",
+      "pw_country": "Germany"
+    },
+    {
+      "en": "Bremerhaven",
+      "ko": "브레머하펜",
+      "cc": "DE",
+      "portid": "port168",
+      "pw_name": "Bremerhaven",
+      "pw_country": "Germany"
+    },
+    {
+      "en": "Le Havre",
+      "ko": "르아브르",
+      "cc": "FR",
+      "portid": "port985",
+      "pw_name": "Le Havre",
+      "pw_country": "France"
+    },
+    {
+      "en": "Fos-Marseille",
+      "ko": "포스-마르세유",
+      "cc": "FR",
+      "portid": "port351",
+      "pw_name": "Fos",
+      "pw_country": "France"
+    },
+    {
+      "en": "Valencia",
+      "ko": "발렌시아",
+      "cc": "ES",
+      "portid": "port1348",
+      "pw_name": "Valencia",
+      "pw_country": "Spain"
+    },
+    {
+      "en": "Algeciras",
+      "ko": "알헤시라스",
+      "cc": "ES",
+      "portid": "port31",
+      "pw_name": "Algeciras",
+      "pw_country": "Spain"
+    },
+    {
+      "en": "Barcelona",
+      "ko": "바르셀로나",
+      "cc": "ES",
+      "portid": "port118",
+      "pw_name": "Barcelona",
+      "pw_country": "Spain"
+    },
+    {
+      "en": "Genoa",
+      "ko": "제노바",
+      "cc": "IT",
+      "portid": "port387",
+      "pw_name": "Genova",
+      "pw_country": "Italy"
+    },
+    {
+      "en": "Gioia Tauro",
+      "ko": "조이아타우로",
+      "cc": "IT",
+      "portid": "port395",
+      "pw_name": "Gioia Tauro",
+      "pw_country": "Italy"
+    },
+    {
+      "en": "Trieste",
+      "ko": "트리에스테",
+      "cc": "IT",
+      "portid": "port1318",
+      "pw_name": "Trieste",
+      "pw_country": "Italy"
+    },
+    {
+      "en": "Koper",
+      "ko": "코페르",
+      "cc": "SI",
+      "portid": "port592",
+      "pw_name": "Koper",
+      "pw_country": "Slovenia"
+    },
+    {
+      "en": "Piraeus",
+      "ko": "피레우스",
+      "cc": "GR",
+      "portid": "port908",
+      "pw_name": "Piraeus",
+      "pw_country": "Greece"
+    },
+    {
+      "en": "Ambarli (Istanbul)",
+      "ko": "암바를르(이스탄불)",
+      "cc": "TR",
+      "portid": "port2049",
+      "pw_name": "Ambarli",
+      "pw_country": "Türkiye"
+    },
+    {
+      "en": "Mersin",
+      "ko": "메르신",
+      "cc": "TR",
+      "portid": "port735",
+      "pw_name": "Mersin",
+      "pw_country": "Türkiye"
+    },
+    {
+      "en": "Gdansk",
+      "ko": "그단스크",
+      "cc": "PL",
+      "portid": "port380",
+      "pw_name": "Gdansk",
+      "pw_country": "Poland"
+    },
+    {
+      "en": "Felixstowe",
+      "ko": "펠릭스토",
+      "cc": "GB",
+      "portid": "port343",
+      "pw_name": "Felixstowe",
+      "pw_country": "United Kingdom"
+    },
+    {
+      "en": "London Gateway",
+      "ko": "런던게이트웨이",
+      "cc": "GB",
+      "portid": "port659",
+      "pw_name": "London Gateway",
+      "pw_country": "United Kingdom"
+    },
+    {
+      "en": "Los Angeles",
+      "ko": "LA",
+      "cc": "US",
+      "portid": "port664",
+      "pw_name": "Los Angeles-Long Beach",
+      "pw_country": "United States"
+    },
+    {
+      "en": "Long Beach",
+      "ko": "롱비치",
+      "cc": "US",
+      "portid": "port664",
+      "pw_name": "Los Angeles-Long Beach",
+      "pw_country": "United States"
+    },
+    {
+      "en": "Oakland",
+      "ko": "오클랜드",
+      "cc": "US",
+      "portid": "port839",
+      "pw_name": "Oakland",
+      "pw_country": "United States"
+    },
+    {
+      "en": "Seattle-Tacoma",
+      "ko": "시애틀-타코마",
+      "cc": "US",
+      "portid": "port1175",
+      "pw_name": "Seattle",
+      "pw_country": "United States"
+    },
+    {
+      "en": "Vancouver",
+      "ko": "밴쿠버",
+      "cc": "CA",
+      "portid": "port1350",
+      "pw_name": "Vancouver",
+      "pw_country": "Canada"
+    },
+    {
+      "en": "New York/New Jersey",
+      "ko": "뉴욕/뉴저지",
+      "cc": "US",
+      "portid": "port815",
+      "pw_name": "New York-New Jersey",
+      "pw_country": "United States"
+    },
+    {
+      "en": "Savannah",
+      "ko": "서배너",
+      "cc": "US",
+      "portid": "port1170",
+      "pw_name": "Savannah",
+      "pw_country": "United States"
+    },
+    {
+      "en": "Charleston",
+      "ko": "찰스턴",
+      "cc": "US",
+      "portid": "port231",
+      "pw_name": "Charleston",
+      "pw_country": "United States"
+    },
+    {
+      "en": "Houston",
+      "ko": "휴스턴",
+      "cc": "US",
+      "portid": "port481",
+      "pw_name": "Houston (US-TX)",
+      "pw_country": "United States"
+    },
+    {
+      "en": "Manzanillo (MX)",
+      "ko": "만사니요(멕시코)",
+      "cc": "MX",
+      "portid": "port699",
+      "pw_name": "Manzanillo",
+      "pw_country": "Mexico"
+    },
+    {
+      "en": "Lazaro Cardenas",
+      "ko": "라사로카르데나스",
+      "cc": "MX",
+      "portid": "port637",
+      "pw_name": "Lazaro Cardenas",
+      "pw_country": "Mexico"
+    },
+    {
+      "en": "Santos",
+      "ko": "산투스",
+      "cc": "BR",
+      "portid": "port1160",
+      "pw_name": "Santos",
+      "pw_country": "Brazil"
+    },
+    {
+      "en": "Callao",
+      "ko": "카야오",
+      "cc": "PE",
+      "portid": "port1045",
+      "pw_name": "Callao",
+      "pw_country": "Peru"
+    },
+    {
+      "en": "Cartagena",
+      "ko": "카르타헤나",
+      "cc": "CO",
+      "portid": "port218",
+      "pw_name": "Cartagena",
+      "pw_country": "Colombia"
+    },
+    {
+      "en": "Colon (Panama)",
+      "ko": "콜론(파나마)",
+      "cc": "PA",
+      "portid": "port1035",
+      "pw_name": "Colon",
+      "pw_country": "Panama"
+    },
+    {
+      "en": "Buenos Aires",
+      "ko": "부에노스아이레스",
+      "cc": "AR",
+      "portid": "port184",
+      "pw_name": "Buenos Aires",
+      "pw_country": "Argentina"
+    },
+    {
+      "en": "Guayaquil",
+      "ko": "과야킬",
+      "cc": "EC",
+      "portid": "port426",
+      "pw_name": "Guayaquil",
+      "pw_country": "Ecuador"
+    },
+    {
+      "en": "Tanger Med",
+      "ko": "탕헤르메드",
+      "cc": "MA",
+      "portid": "port1265",
+      "pw_name": "Tangier-Mediterranean",
+      "pw_country": "Morocco"
+    },
+    {
+      "en": "Port Said",
+      "ko": "포트사이드",
+      "cc": "EG",
+      "portid": "port192",
+      "pw_name": "Port Said",
+      "pw_country": "Egypt"
+    },
+    {
+      "en": "Alexandria",
+      "ko": "알렉산드리아",
+      "cc": "EG",
+      "portid": "port23",
+      "pw_name": "Alexandria",
+      "pw_country": "Egypt"
+    },
+    {
+      "en": "Durban",
+      "ko": "더반",
+      "cc": "ZA",
+      "portid": "port311",
+      "pw_name": "Durban",
+      "pw_country": "South Africa"
+    },
+    {
+      "en": "Cape Town",
+      "ko": "케이프타운",
+      "cc": "ZA",
+      "portid": "port215",
+      "pw_name": "Cape Town",
+      "pw_country": "South Africa"
+    },
+    {
+      "en": "Lagos (Apapa)",
+      "ko": "라고스(아파파)",
+      "cc": "NG",
+      "portid": "port626",
+      "pw_name": "Lagos",
+      "pw_country": "Nigeria"
+    },
+    {
+      "en": "Mombasa",
+      "ko": "몸바사",
+      "cc": "KE",
+      "portid": "port757",
+      "pw_name": "Mombasa",
+      "pw_country": "Kenya"
+    },
+    {
+      "en": "Dar es Salaam",
+      "ko": "다르에스살람",
+      "cc": "TZ",
+      "portid": "port278",
+      "pw_name": "Dar Es Salaam",
+      "pw_country": "Tanzania"
+    },
+    {
+      "en": "Sydney (Botany)",
+      "ko": "시드니(보터니)",
+      "cc": "AU",
+      "portid": "port161",
+      "pw_name": "Port Botany",
+      "pw_country": "Australia"
+    },
+    {
+      "en": "Melbourne",
+      "ko": "멜버른",
+      "cc": "AU",
+      "portid": "port729",
+      "pw_name": "Melbourne",
+      "pw_country": "Australia"
+    },
+    {
+      "en": "Brisbane",
+      "ko": "브리즈번",
+      "cc": "AU",
+      "portid": "port174",
+      "pw_name": "Brisbane",
+      "pw_country": "Australia"
+    },
+    {
+      "en": "Auckland",
+      "ko": "오클랜드(NZ)",
+      "cc": "NZ",
+      "portid": "port79",
+      "pw_name": "Auckland",
+      "pw_country": "New Zealand"
+    }
+  ],
+  "unmatched": []
+}

@@ -248,6 +248,17 @@ button { font-family: inherit; cursor: pointer; }
   font-size: 13px; color: #bcd0ea; flex-wrap: wrap;
 }
 .live-status .stamp { font-variant-numeric: tabular-nums; }
+.src-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11.5px; font-weight: 800; letter-spacing: 0.03em;
+  padding: 4px 11px; border-radius: 999px;
+  background: rgba(158, 197, 244, 0.14); color: #9db8dd;
+  border: 1px solid rgba(158, 197, 244, 0.3);
+}
+.src-badge.live {
+  background: rgba(53, 208, 127, 0.14); color: #35d07f;
+  border-color: rgba(53, 208, 127, 0.4);
+}
 .refresh-btn {
   display: inline-flex; align-items: center; gap: 7px;
   border: 1px solid rgba(158, 197, 244, 0.4); background: rgba(10, 22, 46, 0.4);
@@ -300,6 +311,8 @@ button { font-family: inherit; cursor: pointer; }
   font-size: 20px; font-weight: 800; padding: 8px 16px; border-radius: 12px; margin-top: 8px;
 }
 .risk-high { color: var(--lv-congested); background: color-mix(in srgb, var(--lv-congested) 13%, transparent); }
+.risk-medium { color: color-mix(in srgb, var(--lv-stable) 78%, var(--ink)); background: color-mix(in srgb, var(--lv-stable) 16%, transparent); }
+.risk-low { color: var(--lv-low); background: color-mix(in srgb, var(--lv-low) 13%, transparent); }
 
 /* 레벨 뱃지 (색 + 텍스트 병기) */
 .lv-badge {
@@ -496,3 +509,87 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   * { animation: none !important; transition: none !important; }
   html { scroll-behavior: auto; }
 }
+
+/* =========================================================
+   Berth Insight — 선석배정현황 (berth.html)
+   ========================================================= */
+.berth-toolbar {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  margin: 0 0 14px;
+}
+.berth-toolbar .focus-search { flex: 1 1 200px; }
+
+/* 상태 배지 — lv-badge와 동일 형태, 선석 상태 색상 */
+.st-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11.5px; font-weight: 800; letter-spacing: 0.2px;
+  padding: 3px 9px; border-radius: 999px; white-space: nowrap;
+}
+.st-planned  { color: var(--series-1);     background: color-mix(in srgb, var(--series-1) 13%, transparent); }
+.st-arrived  { color: color-mix(in srgb, var(--lv-stable) 78%, var(--ink)); background: color-mix(in srgb, var(--lv-stable) 16%, transparent); }
+.st-working  { color: var(--lv-low);       background: color-mix(in srgb, var(--lv-low) 13%, transparent); }
+.st-departed { color: var(--muted);        background: color-mix(in srgb, var(--muted) 14%, transparent); }
+
+/* 반입마감 임박/경과 */
+.row-cct-soon td { background: color-mix(in srgb, var(--lv-stable) 7%, transparent); }
+.cct-soon-txt { color: color-mix(in srgb, var(--lv-busy) 85%, var(--ink)); font-weight: 800; }
+.cct-past { color: var(--muted); }
+.row-departed td { opacity: 0.55; }
+
+/* ===== 로고: 공식 CI 심볼(재채색) + 사이트 타이포그래피 ===== */
+.logo-slot { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+.logo-sym { height: 26px; width: auto; display: block; }
+.logo-text { display: flex; flex-direction: column; line-height: 1.05; }
+.logo-text .l1 { font-size: 16.5px; font-weight: 300; letter-spacing: 0.5px; color: var(--ink); white-space: nowrap; }
+.logo-text .l1 b { font-weight: 800; }
+.logo-text .l2 { font-size: 7.5px; font-weight: 600; letter-spacing: 3.2px; color: var(--muted); margin-top: 2.5px; }
+
+/* ===== 데이터 현황 v2 — 운영 보드 ===== */
+.health-banner {
+  display: flex; align-items: center; gap: 10px; margin-top: 16px;
+  padding: 12px 16px; border-radius: 12px; font-size: 14px;
+  border: 1px solid var(--border); background: var(--surface);
+}
+.hb-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--muted); flex: none; }
+.hb-ok   { border-color: color-mix(in srgb, var(--lv-low) 40%, transparent); }
+.hb-ok .hb-dot { background: var(--lv-low); box-shadow: 0 0 8px var(--lv-low); }
+.hb-warn { border-color: color-mix(in srgb, var(--lv-stable) 50%, transparent); }
+.hb-warn .hb-dot { background: var(--lv-stable); }
+.hb-late { border-color: color-mix(in srgb, var(--lv-congested) 50%, transparent); }
+.hb-late .hb-dot { background: var(--lv-congested); }
+
+.pipe-flow { display: flex; align-items: stretch; gap: 10px; flex-wrap: wrap; }
+.pipe-node {
+  flex: 1 1 150px; display: flex; flex-direction: column; gap: 3px; position: relative;
+  border: 1.5px solid var(--border); border-radius: 12px; padding: 12px 14px 12px 26px;
+  background: var(--surface-2);
+}
+.pipe-node b { font-size: 13.5px; }
+.pipe-node small { color: var(--muted); font-size: 11.5px; }
+.pn-dot { position: absolute; left: 11px; top: 16px; width: 8px; height: 8px; border-radius: 50%; }
+.pipe-arrow { align-self: center; color: var(--muted); font-weight: 800; }
+
+.src-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; }
+.src-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 16px 18px; display: flex; flex-direction: column; gap: 8px;
+}
+.sc-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sc-big { font-size: 22px; font-weight: 800; }
+.sc-big small { font-size: 12px; color: var(--muted); font-weight: 600; }
+.fresh-bar { height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--muted) 18%, transparent); overflow: hidden; }
+.fb-fill { height: 100%; border-radius: 999px; transition: width .4s; }
+.sc-sub { font-size: 12px; color: var(--muted); }
+.sc-next { font-size: 11.5px; color: var(--ink-2); border-top: 1px dashed var(--border); padding-top: 8px; }
+
+.day-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+.day-chip {
+  border-radius: 10px; padding: 10px 8px; text-align: center; border: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.day-chip small { color: var(--muted); font-size: 11px; }
+.day-chip b { font-size: 13px; }
+.dg-ok   { background: color-mix(in srgb, var(--lv-low) 10%, transparent); border-color: color-mix(in srgb, var(--lv-low) 35%, transparent); color: var(--lv-low); }
+.dg-fail { background: color-mix(in srgb, var(--lv-congested) 10%, transparent); border-color: color-mix(in srgb, var(--lv-congested) 40%, transparent); color: var(--lv-congested); }
+.dg-none { color: var(--muted); }
+@media (max-width: 700px) { .day-grid { grid-template-columns: repeat(4, 1fr); } }

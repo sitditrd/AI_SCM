@@ -18,24 +18,64 @@
     UI = window.TWUI; DATA = window.TWDATA;
     if (!DATA) return;
 
-    refresh(true);
-    initTabs();
-    initChips();
-    initMap();
-    renderMap();
-    initFocusList();
-    initScrollSpy();
-    initStampTicker();
+    /* Supabase 연결 시도 → 실패 시 자동 시뮬레이션 폴백 */
+    DATA.init().then(function () {
+      refresh(true);
+      initTabs();
+      initChips();
+      initMap();
+      renderMap();
+      initFocusList();
+      initScrollSpy();
+      initStampTicker();
+      updateSourceBadge();
 
-    document.getElementById('refreshBtn').addEventListener('click', function () {
-      var btn = this;
-      btn.classList.add('spin');
-      setTimeout(function () { btn.classList.remove('spin'); }, 600);
-      tick += 1; refresh(false);
+      document.getElementById('refreshBtn').addEventListener('click', function () {
+        var btn = this;
+        btn.classList.add('spin');
+        setTimeout(function () { btn.classList.remove('spin'); }, 600);
+        poll();
+      });
+      /* 실시간 폴링 45초: supabase 모드는 재조회, sim 모드는 변동 시뮬레이션 */
+      setInterval(poll, 45000);
     });
-    /* 실시간 폴링 (데모: 45초) — [교체] 실서비스에서는 API 폴링/SSE */
-    setInterval(function () { tick += 1; refresh(false); }, 45000);
   });
+
+  function poll() {
+    if (DATA.getMode() === 'supabase') {
+      DATA.refreshLive().then(function () {
+        refresh(false);
+        el('staleBanner').classList.remove('show');
+      }).catch(function () {
+        el('staleBanner').classList.add('show');
+        updateStamp();
+      });
+    } else {
+      tick += 1; refresh(false);
+    }
+  }
+
+  function updateSourceBadge() {
+    var host = document.querySelector('.live-status');
+    if (!host) return;
+    var b = document.getElementById('srcBadge');
+    if (!b) {
+      b = document.createElement('span');
+      b.id = 'srcBadge';
+      b.className = 'src-badge';
+      host.insertBefore(b, host.firstChild);
+    }
+    if (DATA.getMode() === 'supabase') {
+      b.textContent = 'Supabase 실데이터';
+      b.classList.add('live');
+      b.title = '데이터 소스: Supabase (pi_ports / pi_snapshot)';
+    } else {
+      b.textContent = '내장 시뮬레이션';
+      b.classList.remove('live');
+      var err = DATA.getLastError();
+      b.title = '데이터 소스: 내장 시드' + (err ? ' — ' + err.message : '');
+    }
+  }
 
   /* ================= 공통 헬퍼 ================= */
   function el(id) { return document.getElementById(id); }
@@ -60,7 +100,7 @@
     renderTables();
     renderWaiting();
     renderBottleneck();
-    renderDischarge();
+    if (el('tbodyDischarge')) renderDischarge();
     if (map) renderMap();
     if (!first) ['kpiTpfs', 'kpiCritical', 'kpiRisk', 'kpiDelay'].forEach(flash);
     updateStamp();
@@ -71,6 +111,11 @@
     setInterval(updateStamp, 5000);
   }
   function updateStamp() {
+    if (DATA && DATA.getMode() !== 'supabase') {
+      el('lastUpdated').textContent = '오프라인 — 캐시 데이터 표시 중';
+      el('staleBanner').classList.add('show');
+      return;
+    }
     if (!lastUpdateTs) return;
     var sec = Math.max(0, Math.round((Date.now() - lastUpdateTs) / 1000));
     var label = sec < 5 ? '방금 업데이트' : sec + '초 전 업데이트';
@@ -92,6 +137,7 @@
       el('vDelay').textContent = fmt(s.avgDelayHours, 1);
     }
     el('vRisk').textContent = s.globalRisk;
+    el('vRisk').className = 'risk-badge risk-' + String(s.globalRisk || '').toLowerCase();
     el('vTpfsGrade').innerHTML = '현재 구간: ' + UI.levelBadge(s.tpfsGrade);
     el('periodLabel').textContent = s.periodStart + ' ~ ' + s.periodEnd;
     el('focusCountLabel').textContent = DATA.focusCount;
@@ -174,7 +220,7 @@
         '<td class="num">' + p.waiting + ' / ' + p.berthed + '척</td></tr>';
     }).join('');
 
-    el('tbodyWorsening').innerHTML = state.worsening.map(function (m) {
+    if (el('tbodyWorsening')) el('tbodyWorsening').innerHTML = state.worsening.map(function (m) {
       return '<tr><td class="rank">' + m.rank + '</td>' +
         '<td>' + portCell(m.ko, m.en, m.cc) + '</td>' +
         '<td class="num"><span class="chg-up">▲' + fmt(m.pciChange, 1) + '</span></td>' +
@@ -182,7 +228,7 @@
         '<td class="num">' + fmt(m.curDelayH, 1) + 'h</td></tr>';
     }).join('');
 
-    el('tbodyImproving').innerHTML = state.improving.map(function (m) {
+    if (el('tbodyImproving')) el('tbodyImproving').innerHTML = state.improving.map(function (m) {
       return '<tr><td class="rank">' + m.rank + '</td>' +
         '<td>' + portCell(m.ko, m.en, m.cc) + '</td>' +
         '<td class="num"><span class="chg-down">▼' + fmt(Math.abs(m.pciChange), 1) + '</span></td>' +

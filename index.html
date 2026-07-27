@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>태웅로직스 TWL SmartBPO — 물류 BPO 모듈 서비스</title>
-  <meta name="description" content="태웅로직스 TWL SmartBPO — 부킹부터 정산까지, 물류 백오피스를 모듈로 제공하는 BPO 서비스. 실시간 항만 혼잡도 인텔리전스 Port Insight 포함.">
+  <title>태웅로직스 TWL 물류 포털</title>
+  <meta name="description" content="태웅로직스 물류 포털 — 해상·항공·복합운송 등 실서비스 안내와 항만 혼잡도(Port Insight)·선석배정·선박 위치·운임지수 대시보드 제공.">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b2d5b'/%3E%3Cpath d='M7 20h6l3-9h10l-3 9h3' stroke='%237cb5f5' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="icon" href="twl_logo.ico">
 </head>
 <body class="hero-page">
 
@@ -19,10 +19,11 @@
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
       </button>
       <nav class="site-nav" aria-label="주요 메뉴">
-        <a href="#modules">BPO 모듈</a>
+        <a href="#modules">서비스</a>
         <a href="insight.html">Port Insight</a>
-        <a href="#process">도입 프로세스</a>
-        <a href="#why">Why TWL</a>
+        <a href="berth.html">선석배정</a>
+        <a href="vessel.html">선박 위치</a>
+        <a href="status.html">데이터 현황</a>
         <a href="#contact">문의</a>
       </nav>
       <div class="header-actions">
@@ -36,18 +37,18 @@
   <section class="hero">
     <canvas class="hero-canvas" id="heroCanvas" aria-hidden="true"></canvas>
     <div class="hero-inner">
-      <span class="hero-eyebrow"><span class="pulse-dot" aria-hidden="true"></span> TWL SmartBPO 정식 런칭</span>
+      <span class="hero-eyebrow"><span class="pulse-dot" aria-hidden="true"></span> TWL SmartBPO</span>
       <h1>물류 운영, 이제<br><span class="accent">맡기고 확인만</span> 하세요</h1>
       <p class="hero-sub">
-        태웅로직스 TWL SmartBPO는 부킹부터 서류, 통관, 정산까지
-        물류 백오피스 업무를 모듈 단위로 제공하는 BPO 서비스입니다.
-        실시간 항만 혼잡도 인텔리전스 <b>Port Insight</b>로 리스크까지 함께 관리합니다.
+        태웅로직스는 해상·항공·복합운송과 CIS/철도, 프로젝트 물류까지 수행하는 종합물류기업입니다.
+        이 포털에서는 항만 혼잡도 <b>Port Insight</b>, 국내 터미널 <b>선석배정</b>,
+        <b>선박 위치</b>·<b>운임지수</b>를 실데이터로 제공합니다.
       </p>
       <div class="hero-ctas">
         <a class="btn btn-primary btn-lg" href="insight.html">Port Insight 살펴보기</a>
-        <a class="btn btn-ghost btn-lg" href="#modules">BPO 모듈 보기</a>
+        <a class="btn btn-ghost btn-lg" href="berth.html">선석배정 보기</a>
       </div>
-      <p class="hero-note">전 세계 <b id="heroPortCount">1,253</b>개 항만 모니터링 · 격주 인사이트 리포트 발행</p>
+      <p class="hero-note">IMF PortWatch <b id="heroPortCount">2,065</b>개 항만 네트워크 · Focus Port 93개 매일 산출</p>
 
       <!-- 실시간 KPI 스트립 -->
       <a class="live-strip" href="insight.html" aria-label="실시간 지표 — Port Insight 대시보드로 이동">
@@ -68,88 +69,41 @@
           <div class="v" id="lsDelay">—</div>
         </div>
       </a>
+
+      <!-- 주간 해상운임지수 (SCFI·CCFI — 상하이해운거래소 공표) -->
+      <div class="live-strip" id="freightStrip" style="margin-top:10px; display:none; cursor:default;" aria-label="주간 해상운임지수"></div>
     </div>
   </section>
 
-  <!-- ================= BPO 모듈 ================= -->
+  <!-- ================= 서비스 ================= -->
   <section class="section" id="modules">
     <div class="container">
       <div class="reveal">
-        <div class="sec-eyebrow">BPO Modules</div>
-        <h2 class="sec-title">필요한 업무만 골라 쓰는 물류 BPO 모듈</h2>
-        <p class="sec-desc">전체 아웃소싱이 아니라, 우리 팀에 부족한 업무만 모듈로 위탁합니다. 모든 모듈은 표준 SLA와 처리 리포트를 포함합니다.</p>
+        <div class="sec-eyebrow">Services</div>
+        <h2 class="sec-title">태웅로직스 사업 영역</h2>
+        <p class="sec-desc">공식 홈페이지(www.e-tgl.com) 기준 실제 제공 서비스입니다.</p>
       </div>
       <div class="grid-3">
-        <div class="card hover reveal">
-          <div class="mod-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></div>
-          <h3>Booking BPO</h3>
-          <p>선복 부킹 요청·확정 관리와 선사별 부킹시트 자동 변환. 스케줄 변경 모니터링까지 대행합니다.</p>
-          <span class="tagline">부킹 처리 리드타임 단축</span>
-        </div>
-        <div class="card hover reveal">
-          <div class="mod-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg></div>
-          <h3>Documentation BPO</h3>
-          <p>B/L, C/I, P/L 등 선적서류 작성·검증 대행. 서류 오류로 인한 지연·비용을 사전에 차단합니다.</p>
-          <span class="tagline">서류 오류율 최소화</span>
-        </div>
-        <div class="card hover reveal">
-          <div class="mod-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4.5"/></svg></div>
-          <h3>Customs BPO</h3>
-          <p>수출입 통관 서류 준비와 신고 프로세스 관리. 관세사 연계로 통관 이슈에 즉시 대응합니다.</p>
-          <span class="tagline">통관 리드타임 관리</span>
-        </div>
-        <div class="card hover reveal">
-          <div class="mod-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 14h3M8 17h6"/></svg></div>
-          <h3>Settlement BPO</h3>
-          <p>운임 정산, 인보이스 대사, 세금계산서 처리 대행. 월 마감 기준의 정산 리포트를 제공합니다.</p>
-          <span class="tagline">정산 마감 자동 리포트</span>
-        </div>
-        <div class="card hover reveal">
-          <div class="mod-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18M3 12h18"/></svg></div>
-          <h3>Visibility — Port Insight</h3>
-          <p>전 세계 1,253개 항만의 혼잡도를 실시간 측정. TW-PFS 지수로 선적 리스크를 미리 확인합니다.</p>
-          <span class="tagline">↳ 실시간 대시보드 제공</span>
-        </div>
-        <div class="card hover reveal">
-          <div class="mod-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M12 7V4M8 4h8M9 12h.01M15 12h.01M9 16h6"/></svg></div>
-          <h3>RPA Automation</h3>
-          <p>반복되는 물류 사무 업무를 RPA로 자동화 구축. 입력·대사·보고 업무의 휴먼 에러를 제거합니다.</p>
-          <span class="tagline">반복 업무 자동화 구축 대행</span>
-        </div>
+        <div class="card hover reveal"><h3>해상 운송</h3><p>수출입 컨테이너 해상운송 포워딩. 전 세계 주요 항로 선복 확보와 스케줄 관리.</p><span class="tagline">FCL · LCL</span></div>
+        <div class="card hover reveal"><h3>항공 운송</h3><p>긴급 화물·고부가 화물의 항공 수출입 운송 서비스.</p><span class="tagline">Air Freight</span></div>
+        <div class="card hover reveal"><h3>복합 운송 · CIS/철도</h3><p>해상+철도 복합운송. CIS·러시아·중앙아시아 철도 운송 전문.</p><span class="tagline">TSR · TCR</span></div>
+        <div class="card hover reveal"><h3>ISO TANK · 프로젝트</h3><p>액체화물 ISO 탱크 운송과 중량물·플랜트 프로젝트 물류.</p><span class="tagline">특수 화물</span></div>
+        <div class="card hover reveal"><h3>창고 · 내륙운송</h3><p>보관·재고관리와 내륙운송, 물류 컨설팅.</p><span class="tagline">Warehouse · Trucking</span></div>
+        <div class="card hover reveal"><h3>이커머스 물류</h3><p>이커머스 국제 물류 및 풀필먼트 지원.</p><span class="tagline">E-Commerce</span></div>
       </div>
-    </div>
-  </section>
 
-  <!-- ================= 도입 프로세스 ================= -->
-  <section class="section tight" id="process" style="background: var(--surface-2);">
-    <div class="container">
-      <div class="reveal">
-        <div class="sec-eyebrow">Process</div>
-        <h2 class="sec-title">도입은 4단계면 충분합니다</h2>
-        <p class="sec-desc">평균 2~4주 내 운영 개시. 기존 시스템 교체 없이 현재 업무 흐름에 모듈을 연결합니다.</p>
+      <div class="reveal" style="margin-top:44px;">
+        <div class="sec-eyebrow">Digital Services</div>
+        <h2 class="sec-title">이 포털에서 바로 쓰는 대시보드</h2>
+        <p class="sec-desc">아래는 전부 실데이터로 지금 동작하는 기능입니다.</p>
       </div>
-      <div class="grid-4">
-        <div class="card step reveal"><span class="num">STEP 01</span><h3>상담·진단</h3><p>현재 물류 업무 범위와 병목 구간을 무료로 진단합니다.</p></div>
-        <div class="card step reveal"><span class="num">STEP 02</span><h3>범위 정의</h3><p>위탁할 모듈과 SLA, 커뮤니케이션 채널을 확정합니다.</p></div>
-        <div class="card step reveal"><span class="num">STEP 03</span><h3>모듈 셋업</h3><p>템플릿·계정·연동을 셋업하고 병행 운영으로 검증합니다.</p></div>
-        <div class="card step reveal"><span class="num">STEP 04</span><h3>운영·리포팅</h3><p>정기 처리 리포트와 KPI로 운영 품질을 투명하게 관리합니다.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= Why TWL ================= -->
-  <section class="section" id="why">
-    <div class="container">
-      <div class="reveal">
-        <div class="sec-eyebrow">Why TWL</div>
-        <h2 class="sec-title">현장을 아는 물류 회사가 운영하는 BPO</h2>
-        <p class="sec-desc">단순 사무 대행이 아닙니다. 포워딩·창고·운송을 직접 운영해 온 태웅로직스의 실무 표준으로 처리합니다.</p>
-      </div>
-      <div class="grid-4">
-        <div class="card reveal"><h3 style="font-size:30px; color:var(--brand-accent-2);" data-count="30" data-suffix="+">0</h3><p>물류 운영 경력(년) <small style="color:var(--muted)">[교체] 실제 수치 반영</small></p></div>
-        <div class="card reveal"><h3 style="font-size:30px; color:var(--brand-accent-2);" data-count="1253">0</h3><p>모니터링 항만 수</p></div>
-        <div class="card reveal"><h3 style="font-size:30px; color:var(--brand-accent-2);" data-count="93">0</h3><p>집중 분석 Focus Port</p></div>
-        <div class="card reveal"><h3 style="font-size:30px; color:var(--brand-accent-2);" data-count="24" data-suffix="/7">0</h3><p>실시간 혼잡도 업데이트</p></div>
+      <div class="grid-3">
+        <a class="card hover reveal" href="insight.html" style="text-decoration:none; color:inherit;"><h3>Port Insight</h3><p>IMF PortWatch(위성 AIS) 기반 Focus Port 93개 혼잡도 — TW-PFS v2 지수, 매일 산출.</p><span class="tagline">↳ 대시보드 열기</span></a>
+        <a class="card hover reveal" href="berth.html" style="text-decoration:none; color:inherit;"><h3>선석배정 현황</h3><p>부산신항·광양·인천 9개 터미널 선석배정, 매일 06시 자동 수집. 반입마감 임박 강조.</p><span class="tagline">↳ 대시보드 열기</span></a>
+        <a class="card hover reveal" href="vessel.html" style="text-decoration:none; color:inherit;"><h3>선박 위치</h3><p>항만 주변 선박 실시간 위치(AIS). 부산신항·북항·광양·인천 전환.</p><span class="tagline">↳ 지도 열기</span></a>
+        <a class="card hover reveal" href="index.html#contact" style="text-decoration:none; color:inherit;"><h3>주간 운임지수</h3><p>SCFI·CCFI 종합/항로별 지수 — 상하이해운거래소 공표, 주간 자동 수집(상단 스트립).</p><span class="tagline">↳ 홈 상단 표시</span></a>
+        <a class="card hover reveal" href="berth.html#weather" style="text-decoration:none; color:inherit;"><h3>항만 기상</h3><p>부산신항·광양·인천 파고/풍속 실황 — 선석배정 페이지 제공.</p><span class="tagline">↳ 기상 카드 보기</span></a>
+        <a class="card hover reveal" href="status.html" style="text-decoration:none; color:inherit;"><h3>데이터 현황</h3><p>파이프라인 도착·신선도·7일 이력 운영 보드.</p><span class="tagline">↳ 운영 보드 열기</span></a>
       </div>
     </div>
   </section>
@@ -158,9 +112,9 @@
   <section class="section tight" id="contact">
     <div class="container">
       <div class="cta-band reveal">
-        <h2>우리 팀에 맞는 모듈 구성이 궁금하신가요?</h2>
-        <p>업무 범위를 알려주시면 1영업일 내 모듈 구성안과 견적을 회신드립니다.</p>
-        <a class="btn btn-primary btn-lg" href="mailto:bpo@twsc.co.kr?subject=%5BTWL%20SmartBPO%5D%20%EB%8F%84%EC%9E%85%20%EB%AC%B8%EC%9D%98">이메일로 도입 문의</a>
+        <h2>문의</h2>
+        <p>모듈 구성·데이터 연동 관련 문의는 아래 메일로 부탁드립니다.</p>
+        <a class="btn btn-primary btn-lg" href="mailto:itt@twsc.co.kr?subject=%5BTWL%20SmartBPO%5D%20%EB%8F%84%EC%9E%85%20%EB%AC%B8%EC%9D%98">이메일로 도입 문의</a>
       </div>
     </div>
   </section>
@@ -171,17 +125,17 @@
       <div>
         <a href="index.html" class="logo-slot" aria-label="태웅로직스"></a>
         <p class="footer-note">
-          태웅로직스 | 대표: [교체] | 사업자등록번호: [교체]<br>
-          주소: [교체] | 문의: bpo@twsc.co.kr<br>
-          본 사이트의 항만 혼잡 데이터는 데모 시뮬레이션 데이터입니다. 상용 서비스 제공 시 데이터 공급 계약 및 라이선스 검토가 필요합니다.<br>
+          태웅로직스 | 문의: itt@twsc.co.kr<br>
+          항만 혼잡 지표: IMF PortWatch 오픈데이터 기반 자체 산출(TW-PFS) · 선석배정: 각 터미널 공표 데이터<br>
           © <span class="footer-year">2026</span> TAEWOONG LOGISTICS. All rights reserved.
         </p>
       </div>
       <nav class="footer-links" aria-label="푸터 메뉴">
-        <a href="#modules">BPO 모듈</a>
+        <a href="#modules">서비스</a>
         <a href="insight.html">Port Insight</a>
-        <a href="insight.html#portfocus">주목 항만</a>
-        <a href="#contact">도입 문의</a>
+        <a href="berth.html">선석배정</a>
+        <a href="vessel.html">선박 위치</a>
+        <a href="status.html">데이터 현황</a>
       </nav>
     </div>
   </footer>

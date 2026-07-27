@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>선석배정현황 — 국내 터미널 통합 | 태웅로직스</title>
+  <meta name="description" content="부산신항·광양항·인천항 9개 컨테이너 터미널의 선석배정현황을 매일 오전 6시 자동 수집하여 한 화면에서 제공하는 태웅로직스 Berth Insight.">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="twl_logo.ico">
+</head>
+<body class="hero-page">
+
+  <!-- ================= 헤더 ================= -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="태웅로직스 홈"></a>
+      <button class="nav-burger" aria-label="메뉴 열기" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <nav class="site-nav" aria-label="주요 메뉴">
+        <a href="index.html#modules">BPO 모듈</a>
+        <a href="insight.html">Port Insight</a>
+        <a href="berth.html" class="active">선석배정</a>
+        <a href="vessel.html">선박 위치</a>
+        <a href="status.html">데이터 현황</a>
+        <a href="index.html#contact">문의</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+        <a class="btn btn-primary" href="index.html#contact">도입 문의</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= 대시보드 타이틀 ================= -->
+  <section class="dash-hero">
+    <div class="container">
+      <div class="dash-title-row">
+        <div>
+          <h1>선석배정현황 <span style="font-weight:300; opacity:.75;">— 국내 터미널 통합</span></h1>
+          <p class="dash-sub">부산신항·광양항·인천항 <b>9개 터미널</b>의 선석배정을 매일 오전 6시 자동 수집합니다</p>
+        </div>
+        <div class="live-status">
+          <span class="pulse-dot" aria-hidden="true"></span>
+          <span class="stamp" id="lastUpdated">업데이트 확인 중…</span>
+          <button class="refresh-btn" id="refreshBtn" aria-label="지금 새로고침">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 4v5h-5"/></svg>
+            새로고침
+          </button>
+        </div>
+      </div>
+      <p class="dash-sub" style="margin-top:14px; font-size:12.5px;">
+        수집 기준: <span id="collectLabel">—</span> 06:00 (매일 자동 수집) · 총 <b id="totalLabel">—</b>건
+      </p>
+    </div>
+  </section>
+
+  <div class="stale-banner" id="staleBanner">실시간 연결 지연 — 마지막 수신 데이터를 표시 중입니다.</div>
+
+  <!-- ============ Section 01 KPI ============ -->
+  <section class="dash-section" id="summary">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 01</span>
+        <h2>금일 운영 스냅샷</h2>
+        <span class="hint">수집일 06:00 기준</span>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi reveal">
+          <div class="k"><span class="pulse-dot" aria-hidden="true"></span>총 모선</div>
+          <div class="v"><span id="kTotal">—</span><small>척</small></div>
+          <div class="sub" id="kTotalSub">터미널 9곳 합산</div>
+        </div>
+        <div class="kpi reveal">
+          <div class="k">접안·작업중</div>
+          <div class="v"><span id="kWorking">—</span><small>척</small></div>
+          <div class="sub">ARRIVED + WORKING</div>
+        </div>
+        <div class="kpi reveal">
+          <div class="k">반입마감 임박</div>
+          <div class="v"><span id="kCct">—</span><small>건</small></div>
+          <div class="sub">기준시각 후 12시간 이내 마감</div>
+        </div>
+        <div class="kpi reveal">
+          <div class="k">금일 출항 예정</div>
+          <div class="v"><span id="kEtd">—</span><small>척</small></div>
+          <div class="sub">수집일 중 출항 (완료 제외)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Section 02 선석배정 목록 ============ -->
+  <section class="dash-section" id="list">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 02</span>
+        <h2>선석배정 목록</h2>
+        <span class="hint">접안(예정)일시 오름차순 · 반입마감 12시간 이내 강조</span>
+      </div>
+
+      <div class="chip-row reveal" id="portChips" aria-label="항만 필터"></div>
+      <div class="tab-row reveal" id="terminalTabs" role="tablist" aria-label="터미널 필터" style="flex-wrap:wrap;"></div>
+
+      <div class="berth-toolbar reveal">
+        <div class="chip-row" id="statusChips" aria-label="상태 필터" style="margin:0;"></div>
+        <input type="search" class="focus-search" id="berthSearch" placeholder="선명 / 선사 / 항로 / 항차 검색" aria-label="선석배정 검색" style="max-width:280px;">
+        <span style="color:var(--muted); font-size:13px;" id="matchLabel"></span>
+      </div>
+
+      <div class="tbl-card reveal">
+        <div class="tbl-scroll">
+          <table class="tw" id="berthTable">
+            <thead>
+              <tr>
+                <th>터미널</th><th>선석</th><th>선명 / 모선항차</th><th>선사</th><th>항로</th>
+                <th>반입마감</th><th>접안(예정)</th><th>출항(예정)</th>
+                <th class="num">양하</th><th class="num">적하</th><th>상태</th>
+              </tr>
+            </thead>
+            <tbody id="berthBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Section 03 항만 기상 ============ -->
+  <section class="dash-section" id="weather">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 03</span>
+        <h2>항만 기상</h2>
+        <span class="hint">파고·풍속 현황 (Open-Meteo · 1시간 단위)</span>
+      </div>
+      <div class="kpi-grid" id="wxGrid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));"></div>
+    </div>
+  </section>
+
+  <!-- ============ Section 04 터미널별 요약 ============ -->
+  <section class="dash-section" id="byterminal">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 04</span>
+        <h2>터미널별 요약</h2>
+        <span class="hint">모선 수 · 양적하 물량 소계</span>
+      </div>
+      <div class="tbl-card reveal">
+        <div class="tbl-scroll">
+          <table class="tw">
+            <thead>
+              <tr><th>터미널</th><th>항만</th><th class="num">모선</th><th class="num">접안·작업중</th><th class="num">양하 합계</th><th class="num">적하 합계</th><th class="num">Shift</th></tr>
+            </thead>
+            <tbody id="termBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <p class="notice">
+        본 현황은 각 터미널이 공표한 선석배정정보를 매일 오전 6시 자동 수집·정규화한 것입니다.
+        터미널 사정에 따라 실제 일정과 차이가 있을 수 있으며, 확정 정보는 각 터미널 공지를 따릅니다.
+      </p>
+
+    </div>
+  </section>
+
+  <!-- ================= 푸터 ================= -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="index.html" class="logo-slot" aria-label="태웅로직스"></a>
+        <p class="footer-note">
+          태웅로직스 | 문의: itt@twsc.co.kr<br>
+          © <span class="footer-year">2026</span> TAEWOONG LOGISTICS. All rights reserved.
+        </p>
+      </div>
+      <nav class="footer-links" aria-label="푸터 메뉴">
+        <a href="index.html#modules">BPO 모듈</a>
+        <a href="insight.html">Port Insight</a>
+        <a href="berth.html">선석배정</a>
+        <a href="status.html">데이터 현황</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="data_berth.js"></script>
+  <script src="common.js"></script>
+  <script src="berth.js"></script>
+  <script src="weather.js"></script>
+</body>
+</html>

@@ -7,9 +7,47 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     initLiveStrip();
+    initFreightStrip();
     initHeroCanvas();
     initCounters();
   });
+
+  /* ---------- 주간 해상운임지수 스트립 (freight_index 테이블) ---------- */
+  function initFreightStrip() {
+    var host = document.getElementById('freightStrip');
+    if (!host || typeof fetch === 'undefined') return;
+    var URL = 'https://kvmyiualdodcvreoqfin.supabase.co/rest/v1/freight_index' +
+      '?select=index_code,route,value,pct_change,pub_date&order=pub_date.desc&limit=60';
+    var KEY = 'sb_publishable_jo6oBar-JbfKY3IfhPyBbQ_gH1Lvwsv';
+    fetch(URL, { headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY } })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (rows) {
+        if (!rows.length) return;
+        var latest = rows[0].pub_date;
+        rows = rows.filter(function (x) { return x.pub_date === latest; });
+        function pick(code, route) {
+          return rows.filter(function (x) { return x.index_code === code && x.route === route; })[0];
+        }
+        var items = [
+          { label: 'SCFI 종합', d: pick('SCFI', 'COMPOSITE') },
+          { label: 'CCFI 종합', d: pick('CCFI', 'COMPOSITE') },
+          { label: 'CCFI 한국항로', d: pick('CCFI', 'KOREA') },
+          { label: 'CCFI 유럽항로', d: pick('CCFI', 'EUROPE') }
+        ].filter(function (i) { return i.d; });
+        if (!items.length) return;
+        host.innerHTML = items.map(function (i) {
+          var up = i.d.pct_change > 0;
+          var arrow = i.d.pct_change == null ? '' :
+            ' <small style="color:' + (up ? 'var(--lv-congested)' : 'var(--lv-low)') + ';">' +
+            (up ? '▲' : '▼') + Math.abs(i.d.pct_change).toFixed(2) + '%</small>';
+          return '<div class="live-chip"><div class="k">' + i.label +
+            '</div><div class="v">' + Number(i.d.value).toLocaleString('ko-KR') + arrow + '</div></div>';
+        }).join('') +
+        '<div class="live-chip"><div class="k">발표일</div><div class="v" style="font-size:14px;">' + latest + '<br><small style="color:var(--muted);">주 1회 갱신</small></div></div>';
+        host.style.display = '';
+      })
+      .catch(function () { /* 조회 실패 시 스트립 미표시 */ });
+  }
 
   /* ---------- 실시간 KPI 스트립 ---------- */
   var tick = 1;
@@ -36,8 +74,18 @@
   }
   function initLiveStrip() {
     if (!window.TWDATA) return;
-    renderStrip(true);
-    setInterval(function () { tick += 1; renderStrip(false); }, 45000);
+    window.TWDATA.init().then(function () {
+      /* 실데이터 연결 시에만 표시 — 오프라인 폴백 수치를 실시간처럼 보이지 않게 함 */
+      if (window.TWDATA.getMode() !== 'supabase') {
+        var strip = document.querySelector('.live-strip');
+        if (strip) strip.style.display = 'none';
+        return;
+      }
+      renderStrip(true);
+      setInterval(function () {
+        window.TWDATA.refreshLive().then(function () { renderStrip(false); }).catch(function () { });
+      }, 45000);
+    });
   }
 
   /* ---------- Why TWL 카운터 ---------- */
