@@ -176,6 +176,8 @@
     renderKpis(first);
     renderTable();
     renderTerminalSummary();
+    /* 대형 표는 등장 애니메이션 관찰 조건과 무관하게 즉시 표시 (진입 시 빈 화면 방지) */
+    document.querySelectorAll('#list .reveal, #byterminal .reveal').forEach(function (n) { n.classList.add('in'); });
     updateStamp();
   }
 

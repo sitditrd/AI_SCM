@@ -86,7 +86,7 @@
       entries.forEach(function (en) {
         if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
       });
-    }, { threshold: 0.12 });
+    }, { threshold: 0.01 }); /* 임계값을 낮게: 세로로 매우 긴 요소(대형 표)도 일부만 보이면 등장 */
     items.forEach(function (el) { io.observe(el); });
   }
 
