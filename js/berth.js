@@ -94,6 +94,26 @@
         poll();
       });
       setInterval(poll, 45000);
+
+      /* 딥링크/앵커(#weather 등): 비동기 렌더로 페이지 높이가 커진 뒤 해당 섹션으로 이동·표시.
+         (index.html '항만 기상' → berth.html#weather 가 상단에 머무르던 문제 수정) */
+      var hashLastTop = null;
+      function gotoHash(retries) {
+        if (!location.hash || location.hash.length < 2) return;
+        var target;
+        try { target = document.querySelector(location.hash); } catch (e) { return; }
+        if (!target) return;
+        target.querySelectorAll('.reveal').forEach(function (n) { n.classList.add('in'); });
+        var absTop = Math.round(target.getBoundingClientRect().top + window.pageYOffset);
+        target.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' });
+        /* 비동기 렌더로 문서 위치가 계속 바뀌는 동안만 보정, 안정되면 중단 */
+        if (retries > 0 && absTop !== hashLastTop) {
+          hashLastTop = absTop;
+          setTimeout(function () { gotoHash(retries - 1); }, 500);
+        }
+      }
+      setTimeout(function () { gotoHash(3); }, 160);
+      window.addEventListener('hashchange', function () { hashLastTop = null; gotoHash(1); });
     });
   });
 
