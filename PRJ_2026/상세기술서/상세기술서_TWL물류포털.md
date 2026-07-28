@@ -46,6 +46,10 @@ RLS: 전 테이블 활성화, 익명은 select 정책만. 쓰기는 service_role
   - Bitt 오프셋(`+10m` 등) 항로 오파싱 제거, `(null/null)` 항차 토큰 제거
   - ICON의 sub='E1' 행 제외 (E1CT 시트와 중복 방지)
 - 출력: REST upsert 또는 `sql\upload_berth.sql`
+- **과거분 백필**: `scripts/backfill_upload_berth.py` — 여러 날짜 파일 일괄 적재(수집일별 replace).
+  기간 중 변경된 공표 양식(헤더 변형)을 VARIANTS 대응표로 자동 흡수: 줄바꿈/띄어쓰기 변형,
+  컬럼 분리↔결합(모선항차/선사항차·선명/ROUTE·선박명/Bitt), `양하/적하/Shift` 통합 컬럼 분해,
+  괄호 감싼 일시값 파싱. `--dry-run`(검증)·`--sql`(MCP 적재용)·REST 3모드.
 
 ### 3.2 PCI v2 — scripts/collect_portinsight_api.py
 - 원천: `Daily_Ports_Data` FeatureServer (services9.arcgis.com/weJ1QsnbMYJlCHdG, 무인증)
