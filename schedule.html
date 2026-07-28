@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>해외 스케줄 — Ship Schedule | TWL Control Tower</title>
+  <meta name="description" content="LOCODE 기반 해외 선박 스케줄(Route·Vessel·Port)과 해외 터미널 현황 — 서비스 준비 중.">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css?v=2026-7">
+  <link rel="icon" href="assets/twl_logo.ico">
+</head>
+<body class="hero-page">
+
+  <!-- ================= 헤더 ================= -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="태웅로직스 홈"></a>
+      <button class="nav-burger" aria-label="메뉴 열기" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <nav class="site-nav" aria-label="주요 메뉴">
+        <a href="insight.html">Port Insight</a>
+        <a href="berth.html">선석배정</a>
+        <a href="vessel.html">선박 위치</a>
+        <a href="cargo.html">화물 추적</a>
+        <a href="route.html">경로 분석</a>
+        <a href="schedule.html" class="active">해외 스케줄</a>
+        <a href="status.html">데이터 현황</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= 타이틀 + 국내/해외 탭 (FR-03) ================= -->
+  <section class="dash-hero">
+    <div class="container">
+      <div class="scope-tabs" role="tablist" aria-label="조회 범위">
+        <a class="scope-tab" href="index.html" role="tab" aria-selected="false">국내</a>
+        <a class="scope-tab active" href="schedule.html" role="tab" aria-selected="true">해외</a>
+      </div>
+      <div class="dash-title-row">
+        <div>
+          <h1>해외 스케줄 <span style="font-weight:300; opacity:.75;">— Ship Schedule</span></h1>
+          <p class="dash-sub">LOCODE 기반 해외 선박 스케줄과 터미널 현황을 한 화면에서 조회합니다</p>
+        </div>
+        <span class="prep-pill"><span class="pulse-dot" aria-hidden="true"></span>서비스 준비 중</span>
+      </div>
+      <p class="dash-sub" style="margin-top:14px; font-size:12.5px;">
+        Route · Vessel · Port 3-뷰 · 사전수집 + 캐시로 <b>빠른 응답(&lt;3초)</b> 목표 · 데이터 소스 확정 후 오픈
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ Ship Schedule 3-뷰 (FR-05) ============ -->
+  <section class="dash-section" id="shipschedule">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SHIP SCHEDULE</span>
+        <h2>선박 스케줄 조회</h2>
+        <span class="hint">Route(항로) · Vessel(선박) · Port(항만) — 3가지 방식</span>
+      </div>
+
+      <div class="view-tabs" role="tablist" aria-label="조회 방식">
+        <button class="view-tab active" data-view="route" role="tab" aria-selected="true">Route · 항로</button>
+        <button class="view-tab" data-view="vessel" role="tab" aria-selected="false">Vessel · 선박</button>
+        <button class="view-tab" data-view="port" role="tab" aria-selected="false">Port · 항만</button>
+      </div>
+
+      <!-- Route -->
+      <div class="card reveal view-panel" data-view="route">
+        <div class="sched-form">
+          <label>출발항 (POL)<input type="text" placeholder="LOCODE 또는 항구명 (예: KRPUS)" disabled></label>
+          <label>도착항 (POD)<input type="text" placeholder="LOCODE 또는 항구명 (예: USSAV)" disabled></label>
+          <label>출발일<input type="date" disabled></label>
+          <label>조회 주(weeks)<select disabled><option>2주</option><option>4주</option></select></label>
+          <button class="btn btn-primary" disabled>조회</button>
+        </div>
+        <div class="prep-panel">
+          <div class="prep-ic" aria-hidden="true">🧭</div>
+          <h3>서비스 준비 중입니다</h3>
+          <p>선사·모선/항차·ETD/ETA·<b>소요일</b>·<b>환적 여부·환적항</b>을 표 형태로 제공합니다.</p>
+          <p class="muted">POL→POD 항로별 스케줄을 사전수집·캐시하여 3초 이내 응답을 목표로 합니다.</p>
+        </div>
+      </div>
+
+      <!-- Vessel -->
+      <div class="card reveal view-panel" data-view="vessel" hidden>
+        <div class="sched-form">
+          <label>모선명 / IMO<input type="text" placeholder="모선명 또는 IMO 번호" disabled></label>
+          <button class="btn btn-primary" disabled>조회</button>
+        </div>
+        <div class="prep-panel">
+          <div class="prep-ic" aria-hidden="true">🚢</div>
+          <h3>서비스 준비 중입니다</h3>
+          <p>선박의 <b>현재 위치(지도)</b>·예정 기항지·ETA/ETD를 표시합니다.</p>
+          <p class="muted">AIS 및 스케줄 데이터를 결합해 선박 단위로 추적합니다.</p>
+        </div>
+      </div>
+
+      <!-- Port -->
+      <div class="card reveal view-panel" data-view="port" hidden>
+        <div class="sched-form">
+          <label>항만 (LOCODE)<input type="text" placeholder="LOCODE (예: NLRTM)" disabled></label>
+          <button class="btn btn-primary" disabled>조회</button>
+        </div>
+        <div class="prep-panel">
+          <div class="prep-ic" aria-hidden="true">⚓</div>
+          <h3>서비스 준비 중입니다</h3>
+          <p>해당 항만의 <b>입·출항 스케줄</b>과 혼잡/현황을 제공합니다.</p>
+          <p class="muted">Port Insight 혼잡 지표와 연계해 해외 항만도 함께 확인할 수 있게 확장 예정입니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 해외 터미널 현황 (FR-04) ============ -->
+  <section class="dash-section" id="overseas-terminal">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">OVERSEAS</span>
+        <h2>해외 터미널 현황</h2>
+        <span class="hint">LOCODE 기반 해외 포트 조회 · 국내와 동일 UI 패턴</span>
+      </div>
+      <div class="card reveal">
+        <div class="prep-panel">
+          <div class="prep-ic" aria-hidden="true">🌐</div>
+          <h3>서비스 준비 중입니다</h3>
+          <p>주요 해외 터미널의 선석·스케줄 정보를 국내 선석배정과 동일한 방식으로 제공할 예정입니다.</p>
+          <p class="muted">데이터 소스(스크래핑 · OCR · 공개 API) 확정 후 순차 오픈합니다.</p>
+        </div>
+      </div>
+      <p class="notice">
+        본 화면은 요구사항 명세서(항만/선박 인텔리전스 SRS) FR-03·FR-04·FR-05 기준 <b>기획 화면</b>입니다.
+        데이터 소스 확정 및 성능 목표(초기 &lt;2초 · 조회 &lt;3초) 충족 후 정식 오픈합니다.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= 푸터 ================= -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="index.html" class="logo-slot" aria-label="태웅로직스"></a>
+        <p class="footer-note">
+          태웅로직스 | 문의: itt@twsc.co.kr<br>
+          시각 표기 KST · 지표 산출 기준: 데이터 현황·상세기술서 참조 · 포털 v1.5 (2026-07-28 개정)<br>
+          © <span class="footer-year">2026</span> TAEWOONG LOGISTICS. All rights reserved.
+        </p>
+      </div>
+      <nav class="footer-links" aria-label="푸터 메뉴">
+        <a href="insight.html">Port Insight</a>
+        <a href="berth.html">선석배정</a>
+        <a href="schedule.html">해외 스케줄</a>
+        <a href="status.html">데이터 현황</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="js/common.js?v=2026-4"></script>
+  <script>
+    (function () {
+      var tabs = document.querySelectorAll('.view-tab');
+      var panels = document.querySelectorAll('.view-panel');
+      tabs.forEach(function (t) {
+        t.addEventListener('click', function () {
+          var v = t.getAttribute('data-view');
+          tabs.forEach(function (x) { var on = x === t; x.classList.toggle('active', on); x.setAttribute('aria-selected', on); });
+          panels.forEach(function (p) { p.hidden = p.getAttribute('data-view') !== v; });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
