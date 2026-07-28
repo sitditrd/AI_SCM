@@ -21,9 +21,17 @@
     DGT:  { name: '부산신항 서컨 (동원글로벌)', port: '부산신항', ord: 6 },
     GWCT: { name: '광양항 서부컨테이너터미널', port: '광양항', ord: 7 },
     E1CT: { name: '인천 E1컨테이너터미널', port: '인천항', ord: 8 },
-    ICON: { name: '인천항 통합', port: '인천항', ord: 9 }
+    ICON: { name: '인천항 통합', port: '인천항', ord: 9 },
+    /* 2026-07-28 확대(FR-02) — bs_terminals와 동일. 명칭/항만 임시배치, 정식 표기 확정 시 갱신 */
+    HBCT: { name: '허치슨부산 (HBCT)', port: '부산북항', ord: 10 },
+    BPT:  { name: '부산항터미널 신선대·감만 (BPT)', port: '부산북항', ord: 11 },
+    BCT:  { name: 'BCT', port: '기타', ord: 12 },
+    KITL: { name: 'KITL', port: '기타', ord: 13 },
+    PCTC: { name: 'PCTC', port: '기타', ord: 14 },
+    PNCT: { name: 'PNCT', port: '기타', ord: 15 },
+    DDCT: { name: 'DDCT (동방)', port: '기타', ord: 16 }
   };
-  var PORTS = ['부산신항', '광양항', '인천항'];
+  var PORTS = ['부산신항', '부산북항', '광양항', '인천항', '기타'];
   var STATUS = { P: 'PLANNED', A: 'ARRIVED', W: 'WORKING', D: 'DEPARTED' };
   var STATUS_KO = { PLANNED: '예정', ARRIVED: '접안', WORKING: '작업중', DEPARTED: '출항' };
 

@@ -35,16 +35,26 @@ SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
 WATCH_DIR = r'C:\Temp\AI_SCM\터미널 스케쥴 수집'
 
 # ---------- 시트별 컬럼 매핑 (PRD 6.3절) ----------
+# 값은 str 또는 [후보1, 후보2 …] — 터미널 포털의 헤더 변형(구/신 포맷) 모두 대응.
+# inout: '총물량(IN/OUT)' 결합형 → IN=양하/OUT=적하 로 분리. vessel 없는 시트는 voy로 대체.
 MAP = {
  'PNIT': {'berth':'선석','carrier':'선사','voy':'모선항차','vessel':'선명','route':'ROUTE','cct':'반입마감시한','eta':'접안(예정)일시','etd':'출항(예정)일시','dis':'양하','lod':'적하','shift':'Shift','status':'상태'},
  'PNC':  {'berth':'선석','carrier':'운항선사','voy':'모선코드','vessel':'모선명','route':'항로','cct':'반입마감일시','eta':'접안(예정)일시','etd':'출항(예정)일시','dis':'양하수량','lod':'선적수량','shift':'Shift'},
  'HPNT': {'berth':'선석','carrier':'선사','voy':'모선항차','vessel':'선명','route':'ROUTE','cct':'반입마감시한','eta':'접안(예정)일시','etd':'출항(예정)일시','dis':'양하','lod':'적하','shift':'Shift','status':'상태'},
  'HJNC': {'berth':'선석','carrier':'선사','voy':'모선항차','vessel':'선박명','route':'항로','cct':'반입마감일시','eta':'입항일시','etd':'출항일시','ws':'작업시작일시','we':'작업완료일시','dis':'양하','lod':'선적','shift':'S/H'},
- 'BNCT': {'berth':'선석','carrier':'선사','voy':'모선항차(선사항차)','vessel':'선명(ROUTE)','cct':'반입마감시한','eta':'접안(예정)일시','etd':'출항(예정)일시','dis':'양하','lod':'적하','shift':'Shift','status':'상태'},
- 'DGT':  {'berth':'선석','carrier':'선사코드','voy':'모선항차(선사항차)','vessel':'모선명(Route)','cct':'반입마감시한','eta':'접안예정일시','etd':'출항예정일시','ws':'작업시작시간','we':'작업완료시간','dis':'양하','lod':'적하','shift':'Shift','status':'상태'},
+ 'BNCT': {'berth':'선석','carrier':'선사','voy':['모선항차','모선항차(선사항차)'],'vessel':['선명','선명(ROUTE)'],'route':'ROUTE','cct':'반입마감시한','eta':'접안(예정)일시','etd':'출항(예정)일시','dis':'양하','lod':'적하','shift':'Shift','status':'상태'},
+ 'DGT':  {'berth':'선석','carrier':'선사코드','voy':['모선항차','모선항차(선사항차)'],'vessel':['모선명','모선명(Route)'],'route':'Route','cct':'반입마감시한','eta':'접안예정일시','etd':'출항예정일시','ws':'작업시작시간','we':'작업완료시간','dis':'양하','lod':'적하','shift':'Shift','status':'상태'},
  'GWCT': {'berth':'선석','carrier':'선사','voy':'모선항차','vessel':'선박명','route':'항로','cct':'반입마감일시','eta':'입항일시','etd':'출항일시','ws':'작업시작일시','we':'작업완료일시','dis':'양하','lod':'선적','shift':'S/H'},
- 'E1CT': {'berth':'선석','carrier':'선사','voy':'모선항차(입항차/출항차)','vessel':'선박명(Bitt)','cct':'반입마감시한(작업완료일시)','eta':'접안(예정)일시','etd':'출항(예정)일시','dis':'양하수량','lod':'적하수량','shift':'Shift'},
- 'ICON': {'berth':'선석','carrier':'선사','voy':'모선항차(입항차/출항차)','vessel':'선박명(Bitt)','cct':'반입마감일시','eta':'접안(예정)일시','etd':'출항(예정)일시','dis':'양하수량(VAN)','lod':'적하수량(VAN)','shift':'Shift','sub':'터미널'},
+ 'E1CT': {'berth':'선석','carrier':'선사','voy':['모선항차','모선항차(입항차/출항차)'],'vessel':['선박명','선박명 Bitt','선박명(Bitt)'],'cct':'반입마감시한(작업완료일시)','eta':'접안(예정)일시','etd':'출항(예정)일시','dis':'양하수량','lod':'적하수량','shift':'Shift'},
+ 'ICON': {'berth':'선석','carrier':'선사','voy':['모선항차 입항차/출항차','모선항차(입항차/출항차)'],'vessel':['선박명 Bitt(M)','선박명(Bitt)'],'cct':'반입마감일시','eta':'접안(예정)일시','etd':'출항(예정)일시','dis':'양하수량(VAN)','lod':'적하수량(VAN)','shift':'Shift','sub':'터미널'},
+ # ---- 2026-07-28 확대: 부산북항·기타 터미널 (FR-02) ----
+ 'HBCT': {'berth':'선석','carrier':'선사','voy':['선사항차(IN/OUT)','선사항차'],'vessel':'선명','route':'Route','cct':'Closing Time','eta':'접안예정일시','etd':'출항예정일시','ws':'작업예정일시','inout':['총물량(IN/OUT)','총물량 IN/OUT']},
+ 'BPT':  {'sub':'구분','berth':'선석','carrier':'선사','voy':'모선항차','vessel':'선박명','route':'항로','cct':'반입마감일시','eta':'입항일시','etd':'출항일시','we':'작업완료일시','dis':'양하','lod':'선적','shift':'S/H'},
+ 'BCT':  {'berth':'선석','carrier':'선사','voy':'모선','vessel':'모선명','route':'ROUTE','cct':'CCT','eta':'접안예정시간(ETB)','etd':'출항예정시간(ETD)','dis':'양하','lod':'적하','status':'상태'},
+ 'KITL': {'berth':'선석','carrier':'선사','voy':['선사항차(IN/OUT)','선사항차'],'vessel':'모선명','route':'Route','cct':'Closing Time','eta':'접안예정일시','etd':'출항예정일시','inout':['총물량(IN/OUT)','총물량 IN/OUT']},
+ 'PCTC': {'berth':'선석','carrier':'선사','voy':'모선항차','vessel':'선박명','route':'항로','cct':'반입마감일시','eta':'입항일시','etd':'출항일시','ws':'작업시작일시','we':'작업완료일시','dis':'양하','lod':'선적','shift':'S/H'},
+ 'PNCT': {'berth':'선석','voy':'모선항차','vessel':'모선항차','eta':'접안(예정)일시','etd':'출항(예정)일시'},
+ 'DDCT': {'berth':'선석','carrier':'선사','voy':'모선항차','vessel':'모선명','cct':'CCT','eta':'ETB/ATB','etd':'ETD/ATD','dis':'양하','lod':'적하'},
 }
 
 
@@ -57,9 +67,18 @@ def parse_dt(v):
     s = str(v).strip().replace('/', '-')
     if not s or s == '-':
         return None
-    m = re.match(r'(\d{4}-\d{2}-\d{2})[ T]?(\d{2}:\d{2})?', s)
+    def _valid(y, mo, d, hm):   # 0000-00-00 등 무효 날짜 제거
+        try:
+            datetime.datetime.strptime('%s-%s-%s %s' % (y, mo, d, hm), '%Y-%m-%d %H:%M')
+            return '%s-%s-%s %s' % (y, mo, d, hm)
+        except ValueError:
+            return None
+    m = re.match(r'(\d{4})-(\d{2})-(\d{2})[ T]?(\d{2}:\d{2})?', s)
     if m:
-        return m.group(1) + (' ' + m.group(2) if m.group(2) else ' 00:00')
+        return _valid(m.group(1), m.group(2), m.group(3), m.group(4) or '00:00')
+    m = re.match(r'(\d{2})-(\d{2})-(\d{2})[ T]?(\d{2}:\d{2})?', s)   # YY/MM/DD (2자리 연도, PNCT 등)
+    if m:
+        return _valid('20' + m.group(1), m.group(2), m.group(3), m.group(4) or '00:00')
     return None
 
 
@@ -98,7 +117,17 @@ def parse_workbook(path, cdate):
         ws = wb[sheet]
         rows = list(ws.iter_rows(values_only=True))
         header = [str(h).strip() if h is not None else '' for h in rows[0]]
-        idx = {k: header.index(v) for k, v in m.items() if v in header}
+        # 헤더 후보(리스트) 지원 — 터미널 포털의 헤더 변형(구/신 포맷) 모두 대응
+        def _col(v):
+            for c in (v if isinstance(v, list) else [v]):
+                if c in header:
+                    return header.index(c)
+            return None
+        idx = {}
+        for k, v in m.items():
+            j = _col(v)
+            if j is not None:
+                idx[k] = j
         cnt = 0
         for r in rows[1:]:
             if all(v is None for v in r):
@@ -106,6 +135,10 @@ def parse_workbook(path, cdate):
             g = lambda k: (r[idx[k]] if k in idx else None)
             vessel = g('vessel')
             if not vessel or not str(vessel).strip():
+                continue
+            # 각 시트 하단 '출처: http…, 수집시각: …' 푸터 행 제거 (전 터미널 방어)
+            _vv = str(vessel).strip()
+            if _vv.startswith('출처') or 'http' in _vv or '수집시각' in _vv:
                 continue
             sub_v = str(g('sub')).strip() if g('sub') else None
             if sheet == 'ICON' and sub_v == 'E1':
@@ -128,8 +161,9 @@ def parse_workbook(path, cdate):
                 'route': str(route).strip() if route else None,
                 'cct': parse_dt(g('cct')), 'eta': eta, 'etd': etd,
                 'work_start': parse_dt(g('ws')), 'work_end': we,
-                'discharge_qty': parse_int(g('dis')),
-                'load_qty': parse_int(g('lod')),
+                # HBCT 등은 '총물량 IN/OUT' 결합형 → IN=양하/OUT=적하 로 분리
+                'discharge_qty': (parse_int(str(g('inout')).split('/')[0]) if g('inout') else parse_int(g('dis'))),
+                'load_qty': (parse_int(str(g('inout')).split('/')[1]) if (g('inout') and '/' in str(g('inout'))) else parse_int(g('lod'))),
                 'shift_qty': parse_int(g('shift')),
                 'status': norm_status(g('status'), eta, etd, we, ref),
                 'raw': {header[i]: (str(v) if v is not None else None) for i, v in enumerate(r) if i < len(header)},
