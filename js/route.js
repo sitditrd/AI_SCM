@@ -36,8 +36,15 @@
       '<div class="sc-big">' + big + '</div><div class="sc-sub">' + sub + '</div></div>';
   }
 
-  /* 도착 소요일 분포 — SVG 히스토그램(신뢰구간 밴드·밀도곡선·P10/P50/P90 마커·그리드·호버) */
+  /* 도착 소요일 분포 — SVG 히스토그램(신뢰구간 밴드·밀도곡선·P10/P50/P90 마커·그리드·호버)
+     컨테이너 실제 px 폭으로 viewBox를 잡아 텍스트 왜곡 없이 반응형(모바일도 충분한 높이) */
+  var _lastSim = null, _histoResizeBound = false;
   function drawHisto(r) {
+    _lastSim = r;
+    if (!_histoResizeBound) {
+      _histoResizeBound = true;
+      var t; window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(function () { if (_lastSim) drawHisto(_lastSim); }, 200); });
+    }
     var N = r.all.length;
     /* 극단 꼬리를 다듬어 분포 본체가 화면을 꽉 채우도록 범위 설정 */
     var lo = Math.max(r.min, r.p10 - 1.6 * (r.p50 - r.p10));
@@ -51,7 +58,11 @@
     });
     var mx = Math.max.apply(null, counts) || 1;
 
-    var W = 1000, H = 300, padL = 48, padR = 18, padT = 44, padB = 44;
+    /* 실제 컨테이너 폭을 viewBox 폭으로 사용 → 좌표계=px, 텍스트 왜곡 없음.
+       좁은 화면(모바일)에서도 종횡비를 높여 최소 높이 확보 */
+    var W = Math.max(320, Math.round(el('histo').clientWidth || 900));
+    var H = Math.max(240, Math.min(360, Math.round(W * 0.42)));
+    var padL = 48, padR = 18, padT = 44, padB = 44;
     var x0 = padL, x1 = W - padR, pw = x1 - x0, y0 = padT, y1 = H - padB, ph = y1 - y0;
     var xOf = function (day) { return x0 + (day - lo) / (hi - lo) * pw; };
     var yOf = function (c) { return y1 - c / mx * ph; };

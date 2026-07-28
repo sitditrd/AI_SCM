@@ -20,8 +20,9 @@ function simulate(nm: number, meanKn: number): SimResult {
   return { p10: days[N * 0.1 | 0], p50: days[N * 0.5 | 0], p90: days[N * 0.9 | 0], min: days[0], max: days[N - 1], all: days };
 }
 
-/* SVG 히스토그램 (레거시 route.js drawHisto 이식) */
-function histoSvg(r: SimResult): string {
+/* SVG 히스토그램 (레거시 route.js drawHisto 이식)
+   cw=컨테이너 실제 px 폭 → viewBox 좌표계를 px로 잡아 텍스트 왜곡 없이 반응형(모바일도 충분한 높이) */
+function histoSvg(r: SimResult, cw: number): string {
   const N = r.all.length;
   let lo = Math.max(r.min, r.p10 - 1.6 * (r.p50 - r.p10));
   let hi = Math.min(r.max, r.p90 + 1.6 * (r.p90 - r.p50));
@@ -29,7 +30,7 @@ function histoSvg(r: SimResult): string {
   const bins = 34, bw = (hi - lo) / bins, counts = new Array(bins).fill(0);
   r.all.forEach((d) => { if (d < lo || d > hi) return; let b = Math.floor((d - lo) / bw); if (b === bins) b = bins - 1; if (b >= 0 && b < bins) counts[b]++; });
   const mx = Math.max(...counts) || 1;
-  const W = 1000, H = 300, padL = 48, padR = 18, padT = 44, padB = 44;
+  const W = Math.max(320, Math.round(cw || 900)), H = Math.max(240, Math.min(360, Math.round(W * 0.42))), padL = 48, padR = 18, padT = 44, padB = 44;
   const x0 = padL, x1 = W - padR, pw = x1 - x0, y0 = padT, y1 = H - padB, ph = y1 - y0;
   const xOf = (day: number) => x0 + (day - lo) / (hi - lo) * pw;
   const yOf = (c: number) => y1 - c / mx * ph;
@@ -57,6 +58,15 @@ export default function RouteView() {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapObj = useRef<L.Map | null>(null);
   const layer = useRef<L.LayerGroup | null>(null);
+  const histoBox = useRef<HTMLDivElement>(null);
+  const [histoW, setHistoW] = useState(900);
+
+  useEffect(() => {
+    const measure = () => { const b = histoBox.current; if (b && b.clientWidth > 0) setHistoW(b.clientWidth); };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [res]);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -134,7 +144,7 @@ export default function RouteView() {
       {res && (
         <div className="card">
           <h3 style={{ margin: '0 0 10px', fontSize: 15 }}>도착 소요일 분포 <span className="muted" style={{ fontSize: 12 }}>몬테카를로 10,000회</span></h3>
-          <div dangerouslySetInnerHTML={{ __html: histoSvg(res.sim) }} />
+          <div ref={histoBox} dangerouslySetInnerHTML={{ __html: histoSvg(res.sim, histoW) }} />
           <div id="histoAxis">
             <span className="hl"><i className="hl-sw in" />P10~P90 (80% 구간)</span>
             <span className="hl"><i className="hl-sw out" />그 외</span>
