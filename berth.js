@@ -63,6 +63,14 @@
     q: ''
   };
 
+  /* ---------- 그리드 뷰 상태 (2026.6 UX 개편) ---------- */
+  var view = { mode: 'page', layout: 'flat', page: 1, size: 25, shown: 25 };
+  var colf = { term: 'ALL', berth: '', vessel: '', carrier: 'ALL', route: '', cct: 'ALL', status: 'ALL' };
+  var treeOpen = {};          /* 터미널코드 → 펼침 여부 (기본 접힘) */
+  var rowRef = [];            /* data-ri → 원본 레코드 (우클릭 퀵뷰용) */
+  var lazyLoading = false;
+  var PORT_KEY = { '부산신항': 'busan', '광양항': 'gwangyang', '인천항': 'incheon' };
+
   document.addEventListener('DOMContentLoaded', function () {
     UI = window.TWUI; B = window.TWBERTH;
     if (!B) return;
@@ -73,6 +81,9 @@
       initPortChips();
       initStatusChips();
       initSearch();
+      initGridToolbar();
+      initColFilters();
+      initCtxMenu();
       initStampTicker();
       updateSourceBadge();
 
@@ -156,7 +167,7 @@
         filter.terminal = 'ALL';
         initPortChips();
         renderTerminalTabs();
-        renderTable();
+        resetAndRender();
       });
     });
     renderTerminalTabs();
@@ -180,7 +191,7 @@
         filter.terminal = b.getAttribute('data-term');
         wrap.querySelectorAll('.tab-btn').forEach(function (x) { x.classList.remove('active'); });
         b.classList.add('active');
-        renderTable();
+        resetAndRender();
       });
     });
   }
@@ -201,7 +212,7 @@
         var st = c.getAttribute('data-st');
         filter.status[st] = !filter.status[st];
         initStatusChips();
-        renderTable();
+        resetAndRender();
       });
     });
   }
@@ -209,7 +220,7 @@
   function initSearch() {
     el('berthSearch').addEventListener('input', function () {
       filter.q = this.value.trim().toLowerCase();
-      renderTable();
+      resetAndRender();
     });
   }
 
@@ -267,33 +278,358 @@
     return true;
   }
 
-  function renderTable() {
-    var ref = B.getRefMs();
-    var rows = B.getRows().filter(pass).sort(function (a, b) {
+  /* ================= 그리드 렌더 (페이지/연속 스크롤/트리 · 2026.6) ================= */
+  var EMPTY_ROW = '<tr><td colspan="11" style="text-align:center; color:var(--muted); padding:26px;">조건에 맞는 선석배정이 없습니다.</td></tr>';
+
+  function resetAndRender() {
+    view.page = 1;
+    view.shown = view.size;
+    renderTable();
+  }
+
+  function reduceMotion() {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  function colfPass(r) {
+    if (colf.term !== 'ALL' && r.t !== colf.term) return false;
+    if (colf.berth && String(r.berth).toLowerCase().indexOf(colf.berth) < 0) return false;
+    if (colf.vessel && (r.vessel + ' ' + r.voy).toLowerCase().indexOf(colf.vessel) < 0) return false;
+    if (colf.carrier !== 'ALL' && r.carrier !== colf.carrier) return false;
+    if (colf.route && String(r.route).toLowerCase().indexOf(colf.route) < 0) return false;
+    if (colf.status !== 'ALL' && r.status !== colf.status) return false;
+    if (colf.cct !== 'ALL') {
+      var ref = B.getRefMs();
+      var soon = r.status !== 'DEPARTED' && r.cct != null && r.cct >= ref && r.cct <= ref + CCT_SOON_MS;
+      if (colf.cct === 'SOON' && !soon) return false;
+      if (colf.cct === 'PAST' && !(r.cct != null && r.cct < ref)) return false;
+      if (colf.cct === 'UPCOMING' && !(r.cct != null && r.cct > ref + CCT_SOON_MS)) return false;
+    }
+    return true;
+  }
+
+  function filteredRows() {
+    return B.getRows().filter(pass).filter(colfPass).sort(function (a, b) {
       return (a.eta == null ? Infinity : a.eta) - (b.eta == null ? Infinity : b.eta);
     });
-    el('matchLabel').textContent = fmt(rows.length) + '건 표시';
-    el('berthBody').innerHTML = rows.map(function (r) {
-      var soon = r.status !== 'DEPARTED' && r.cct != null && r.cct >= ref && r.cct <= ref + CCT_SOON_MS;
-      var past = r.cct != null && r.cct < ref;
-      var cctCell = r.cct == null ? '—'
-        : '<span class="' + (soon ? 'cct-soon-txt' : (past ? 'cct-past' : '')) + '">' + B.fmtDT(r.cct) + (soon ? ' ⚠' : '') + '</span>';
-      var termCell = '<div class="port-cell"><b>' + esc(r.t) + (r.sub ? ' · ' + esc(r.sub) : '') + '</b><small>' + esc(r.terminalName) + '</small></div>';
-      var vesselCell = '<div class="port-cell"><b>' + esc(r.vessel) + '</b><small>' + esc(r.voy) + '</small></div>';
-      return '<tr class="' + (soon ? 'row-cct-soon' : '') + (r.status === 'DEPARTED' ? ' row-departed' : '') + '">' +
-        '<td>' + termCell + '</td>' +
-        '<td>' + esc(r.berth) + '</td>' +
-        '<td>' + vesselCell + '</td>' +
-        '<td>' + esc(r.carrier) + '</td>' +
-        '<td>' + esc(r.route) + '</td>' +
-        '<td>' + cctCell + '</td>' +
-        '<td>' + B.fmtDT(r.eta) + '</td>' +
-        '<td>' + B.fmtDT(r.etd) + '</td>' +
-        '<td class="num">' + fmt(r.dis) + '</td>' +
-        '<td class="num">' + fmt(r.lod) + '</td>' +
-        '<td>' + stBadge(r.status) + '</td>' +
-        '</tr>';
-    }).join('') || '<tr><td colspan="11" style="text-align:center; color:var(--muted); padding:26px;">조건에 맞는 선석배정이 없습니다.</td></tr>';
+  }
+
+  function pushRef(r) { rowRef.push(r); return rowRef.length - 1; }
+
+  function rowHtml(r, ri, ref, extraCls) {
+    var soon = r.status !== 'DEPARTED' && r.cct != null && r.cct >= ref && r.cct <= ref + CCT_SOON_MS;
+    var past = r.cct != null && r.cct < ref;
+    var cctCell = r.cct == null ? '—'
+      : '<span class="' + (soon ? 'cct-soon-txt' : (past ? 'cct-past' : '')) + '">' + B.fmtDT(r.cct) + (soon ? ' ⚠' : '') + '</span>';
+    var termCell = '<div class="port-cell"><b>' + esc(r.t) + (r.sub ? ' · ' + esc(r.sub) : '') + '</b><small>' + esc(r.terminalName) + '</small></div>';
+    var vesselCell = '<div class="port-cell"><b>' + esc(r.vessel) + '</b><small>' + esc(r.voy) + '</small></div>';
+    return '<tr data-ri="' + ri + '" class="' + (soon ? 'row-cct-soon' : '') + (r.status === 'DEPARTED' ? ' row-departed' : '') + (extraCls || '') + '">' +
+      '<td>' + termCell + '</td>' +
+      '<td>' + esc(r.berth) + '</td>' +
+      '<td>' + vesselCell + '</td>' +
+      '<td>' + esc(r.carrier) + '</td>' +
+      '<td>' + esc(r.route) + '</td>' +
+      '<td>' + cctCell + '</td>' +
+      '<td>' + B.fmtDT(r.eta) + '</td>' +
+      '<td>' + B.fmtDT(r.etd) + '</td>' +
+      '<td class="num">' + fmt(r.dis) + '</td>' +
+      '<td class="num">' + fmt(r.lod) + '</td>' +
+      '<td>' + stBadge(r.status) + '</td>' +
+      '</tr>';
+  }
+
+  function renderTable() {
+    var ref = B.getRefMs();
+    var rows = filteredRows();
+    rowRef = [];
+    updateCfDot();
+    closeCtx();
+
+    if (view.layout === 'tree') {
+      renderTreeBody(rows, ref);
+      el('pagerBar').innerHTML = '';
+      el('matchLabel').textContent = fmt(rows.length) + '건 · 터미널 그룹 보기';
+      return;
+    }
+    if (view.mode === 'page') {
+      var pages = Math.max(1, Math.ceil(rows.length / view.size));
+      if (view.page > pages) view.page = pages;
+      var s = (view.page - 1) * view.size;
+      var slice = rows.slice(s, s + view.size);
+      el('berthBody').innerHTML = slice.map(function (r) { return rowHtml(r, pushRef(r), ref); }).join('') || EMPTY_ROW;
+      renderPager(rows.length, pages, s, slice.length);
+      el('matchLabel').textContent = rows.length
+        ? fmt(s + 1) + '–' + fmt(s + slice.length) + ' / ' + fmt(rows.length) + '건'
+        : '0건';
+    } else {
+      view.shown = Math.min(Math.max(view.shown, view.size), Math.max(rows.length, view.size));
+      var head = rows.slice(0, view.shown);
+      el('berthBody').innerHTML = head.map(function (r) { return rowHtml(r, pushRef(r), ref); }).join('') || EMPTY_ROW;
+      renderMoreBar(rows.length);
+      el('matchLabel').textContent = fmt(head.length) + ' / ' + fmt(rows.length) + '건 표시';
+    }
+  }
+
+  /* ---------- 페이지네이션 ---------- */
+  function pageNums(pages, cur) {
+    var out = [], last = 0;
+    for (var p = 1; p <= pages; p++) {
+      if (p === 1 || p === pages || Math.abs(p - cur) <= 2) {
+        if (last && p - last > 1) out.push('…');
+        out.push(p);
+        last = p;
+      }
+    }
+    return out;
+  }
+
+  function renderPager(total, pages, start, count) {
+    var pb = el('pagerBar');
+    if (pages <= 1) {
+      pb.innerHTML = total ? '<span class="pg-info">' + fmt(total) + '건 전체 표시</span>' : '';
+      return;
+    }
+    function btn(p, label, cls, dis) {
+      return '<button class="pg-btn' + (cls ? ' ' + cls : '') + '" data-pg="' + p + '"' + (dis ? ' disabled' : '') + '>' + label + '</button>';
+    }
+    var h = btn(view.page - 1, '‹ 이전', '', view.page === 1);
+    pageNums(pages, view.page).forEach(function (p) {
+      h += (p === '…') ? '<span class="pg-ellip">…</span>' : btn(p, p, p === view.page ? 'cur' : '', false);
+    });
+    h += btn(view.page + 1, '다음 ›', '', view.page === pages);
+    h += '<span class="pg-info">' + fmt(total) + '건 중 ' + fmt(start + 1) + '–' + fmt(start + count) + '</span>';
+    pb.innerHTML = h;
+  }
+
+  /* ---------- 연속 스크롤 (lazy load + 팬텀 스켈레톤 행) ---------- */
+  var sentinelIO = null;
+
+  function renderMoreBar(total) {
+    var pb = el('pagerBar');
+    if (view.shown >= total) {
+      pb.innerHTML = total ? '<span class="pg-info">' + fmt(total) + '건 모두 표시됨</span>' : '';
+      return;
+    }
+    pb.innerHTML = '<button class="pg-btn more" id="loadMoreBtn">더 보기 (+' + view.size + ')</button>' +
+      '<span class="pg-info">' + fmt(view.shown) + ' / ' + fmt(total) + '건</span>' +
+      '<span class="scroll-sentinel" id="scrollSentinel" aria-hidden="true"></span>';
+    initSentinel();
+  }
+
+  function initSentinel() {
+    if (!('IntersectionObserver' in window)) return;
+    var s = el('scrollSentinel');
+    if (!s) return;
+    if (sentinelIO) sentinelIO.disconnect();
+    sentinelIO = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) loadMore(); });
+    }, { rootMargin: '220px 0px' });
+    sentinelIO.observe(s);
+  }
+
+  function loadMore() {
+    if (lazyLoading || view.mode !== 'scroll' || view.layout !== 'flat') return;
+    if (view.shown >= filteredRows().length) return;
+    lazyLoading = true;
+    var tb = el('berthBody');
+    for (var i = 0; i < 3; i++) {
+      tb.insertAdjacentHTML('beforeend',
+        '<tr class="sk-row" aria-hidden="true"><td colspan="11"><span class="sk-bar"></span></td></tr>');
+    }
+    setTimeout(function () {
+      lazyLoading = false;
+      view.shown += view.size;
+      renderTable();
+    }, 260);
+  }
+
+  /* ---------- 트리 그리드 (터미널 그룹 접기/펼치기) ---------- */
+  function renderTreeBody(rows, ref) {
+    var codes = Object.keys(B.TERMINALS).sort(function (a, b) { return B.TERMINALS[a].ord - B.TERMINALS[b].ord; });
+    var html = '';
+    codes.forEach(function (c) {
+      var list = rows.filter(function (r) { return r.t === c; });
+      if (!list.length) return;
+      var open = !!treeOpen[c];
+      var work = list.filter(function (r) { return r.status === 'ARRIVED' || r.status === 'WORKING'; }).length;
+      var soonC = list.filter(function (r) {
+        return r.status !== 'DEPARTED' && r.cct != null && r.cct >= ref && r.cct <= ref + CCT_SOON_MS;
+      }).length;
+      html += '<tr class="tree-hd' + (open ? ' open' : '') + '" data-term="' + c + '" tabindex="0" role="button" aria-expanded="' + open + '">' +
+        '<td colspan="11"><span class="tree-caret" aria-hidden="true">▸</span><b>' + c + '</b>' +
+        '<small>' + esc(B.TERMINALS[c].name) + '</small>' +
+        '<span class="tree-cnt">' + fmt(list.length) + '척</span>' +
+        '<span class="tree-mini">작업중 ' + work + (soonC ? ' · <b class="cct-soon-txt">마감임박 ' + soonC + '</b>' : '') + '</span>' +
+        '</td></tr>';
+      if (open) {
+        html += list.map(function (r) { return rowHtml(r, pushRef(r), ref, ' tree-child'); }).join('');
+      }
+    });
+    el('berthBody').innerHTML = html || EMPTY_ROW;
+  }
+
+  function treeToggleFrom(e) {
+    var hd = e.target.closest('tr.tree-hd');
+    if (!hd) return false;
+    var c = hd.getAttribute('data-term');
+    treeOpen[c] = !treeOpen[c];
+    renderTable();
+    return true;
+  }
+
+  /* ---------- 그리드 툴바 ---------- */
+  function initGridToolbar() {
+    function seg(onBtn, offBtn) {
+      onBtn.classList.add('active'); onBtn.setAttribute('aria-pressed', 'true');
+      offBtn.classList.remove('active'); offBtn.setAttribute('aria-pressed', 'false');
+    }
+    el('modePage').addEventListener('click', function () {
+      if (view.mode === 'page') return;
+      view.mode = 'page'; seg(this, el('modeScroll')); resetAndRender();
+    });
+    el('modeScroll').addEventListener('click', function () {
+      if (view.mode === 'scroll') return;
+      view.mode = 'scroll'; seg(this, el('modePage')); resetAndRender();
+    });
+    el('layoutFlat').addEventListener('click', function () {
+      if (view.layout === 'flat') return;
+      view.layout = 'flat'; seg(this, el('layoutTree')); resetAndRender();
+    });
+    el('layoutTree').addEventListener('click', function () {
+      if (view.layout === 'tree') return;
+      view.layout = 'tree'; seg(this, el('layoutFlat')); resetAndRender();
+    });
+    el('pageSize').addEventListener('change', function () {
+      view.size = parseInt(this.value, 10) || 25;
+      resetAndRender();
+    });
+    el('pagerBar').addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (!b || b.disabled) return;
+      if (b.id === 'loadMoreBtn') { loadMore(); return; }
+      var pg = b.getAttribute('data-pg');
+      if (pg == null) return;
+      view.page = parseInt(pg, 10);
+      renderTable();
+      var card = document.querySelector('#list .tbl-card');
+      if (card) card.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' });
+    });
+    el('berthBody').addEventListener('click', treeToggleFrom);
+    el('berthBody').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') treeToggleFrom(e);
+    });
+    el('colFilterBtn').addEventListener('click', function () {
+      var row = el('colfRow');
+      var show = row.hidden;
+      row.hidden = !show;
+      this.setAttribute('aria-pressed', String(show));
+      this.classList.toggle('active', show);
+      if (!show) {                    /* 숨길 때는 보이지 않는 필터가 남지 않게 초기화 */
+        colf = { term: 'ALL', berth: '', vessel: '', carrier: 'ALL', route: '', cct: 'ALL', status: 'ALL' };
+        ['cfBerth', 'cfVessel', 'cfRoute'].forEach(function (id) { el(id).value = ''; });
+        ['cfTerm', 'cfCarrier', 'cfCct', 'cfStatus'].forEach(function (id) { el(id).value = 'ALL'; });
+        resetAndRender();
+      }
+    });
+  }
+
+  /* ---------- 컬럼 필터 ---------- */
+  function initColFilters() {
+    var codes = Object.keys(B.TERMINALS).sort(function (a, b) { return B.TERMINALS[a].ord - B.TERMINALS[b].ord; });
+    el('cfTerm').innerHTML = '<option value="ALL">터미널 전체</option>' +
+      codes.map(function (c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
+    el('cfStatus').innerHTML = '<option value="ALL">상태 전체</option>' +
+      STATUS_ORDER.map(function (st) { return '<option value="' + st + '">' + st + ' · ' + (B.STATUS_KO[st] || st) + '</option>'; }).join('');
+    refreshCarrierOptions();
+
+    function bindText(id, key) {
+      el(id).addEventListener('input', function () {
+        colf[key] = this.value.trim().toLowerCase();
+        resetAndRender();
+      });
+    }
+    function bindSel(id, key) {
+      el(id).addEventListener('change', function () {
+        colf[key] = this.value;
+        resetAndRender();
+      });
+    }
+    bindText('cfBerth', 'berth'); bindText('cfVessel', 'vessel'); bindText('cfRoute', 'route');
+    bindSel('cfTerm', 'term'); bindSel('cfCarrier', 'carrier'); bindSel('cfCct', 'cct'); bindSel('cfStatus', 'status');
+  }
+
+  function refreshCarrierOptions() {
+    var s = el('cfCarrier');
+    if (!s) return;
+    var cur = colf.carrier, set = {};
+    B.getRows().forEach(function (r) { if (r.carrier && r.carrier !== '—') set[r.carrier] = 1; });
+    var list = Object.keys(set).sort();
+    s.innerHTML = '<option value="ALL">선사 전체</option>' +
+      list.map(function (c) { return '<option value="' + esc(c) + '"' + (c === cur ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('');
+    if (cur !== 'ALL' && !set[cur]) colf.carrier = 'ALL';
+  }
+
+  function updateCfDot() {
+    var active = colf.term !== 'ALL' || colf.berth || colf.vessel || colf.carrier !== 'ALL' ||
+      colf.route || colf.cct !== 'ALL' || colf.status !== 'ALL';
+    var d = document.querySelector('#colFilterBtn .cf-dot');
+    if (d) d.hidden = !active;
+  }
+
+  /* ---------- 우클릭 퀵뷰 메뉴 ---------- */
+  function initCtxMenu() {
+    el('berthBody').addEventListener('contextmenu', function (e) {
+      var tr = e.target.closest('tr[data-ri]');
+      if (!tr) return;
+      e.preventDefault();
+      openCtx(rowRef[parseInt(tr.getAttribute('data-ri'), 10)], e.clientX, e.clientY);
+    });
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('#ctxMenu')) closeCtx();
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeCtx(); });
+    window.addEventListener('scroll', closeCtx, true);
+    window.addEventListener('resize', closeCtx);
+  }
+
+  function closeCtx() {
+    var m = el('ctxMenu');
+    if (m && m.classList.contains('show')) {
+      m.classList.remove('show');
+      m.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  function openCtx(r, x, y) {
+    if (!r) return;
+    var m = el('ctxMenu');
+    var pk = PORT_KEY[r.port] || 'busan';
+    var vq = encodeURIComponent(r.vessel);
+    m.innerHTML =
+      '<div class="cm-head">' +
+      '<b>' + esc(r.vessel) + '</b><small>' + esc(r.voy) + '</small>' +
+      '<div class="cm-meta">' + esc(r.t) + ' · 선석 ' + esc(r.berth) + ' · ' + stBadge(r.status) + '</div>' +
+      '<div class="cm-meta">CCT ' + B.fmtDT(r.cct) + ' · ETB ' + B.fmtDT(r.eta) + ' · ETD ' + B.fmtDT(r.etd) + '</div>' +
+      '</div>' +
+      '<a class="cm-item" role="menuitem" href="vessel.html?port=' + pk + '&q=' + vq + '#livemap">🗺 선박 위치 지도에서 보기</a>' +
+      '<a class="cm-item" role="menuitem" target="_blank" rel="noopener" href="https://www.vesselfinder.com/vessels?name=' + vq + '">🔎 VesselFinder 실시간 조회</a>' +
+      '<a class="cm-item" role="menuitem" href="route.html">🧭 경로 분석 열기</a>' +
+      '<a class="cm-item" role="menuitem" href="cargo.html">📦 화물 추적 열기</a>' +
+      '<button class="cm-item" role="menuitem" id="cmCopy" type="button">📋 선명·항차 복사</button>';
+    m.classList.add('show');
+    m.setAttribute('aria-hidden', 'false');
+    m.style.left = '0px'; m.style.top = '0px';           /* 크기 측정용 리셋 */
+    var nx = Math.max(8, Math.min(x, window.innerWidth - m.offsetWidth - 10));
+    var ny = Math.max(8, Math.min(y, window.innerHeight - m.offsetHeight - 10));
+    m.style.left = nx + 'px';
+    m.style.top = ny + 'px';
+    el('cmCopy').addEventListener('click', function () {
+      var btn = this;
+      var txt = (r.vessel + ' ' + (r.voy === '—' ? '' : r.voy)).trim();
+      (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject())
+        .then(function () { btn.textContent = '✓ 복사됨'; setTimeout(closeCtx, 700); })
+        .catch(function () { btn.textContent = '복사 실패 — 수동 복사: ' + txt; });
+    });
   }
 
   function renderTerminalSummary() {

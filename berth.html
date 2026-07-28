@@ -6,7 +6,7 @@
   <title>선석배정현황 — 국내 터미널 통합 | 태웅로직스</title>
   <meta name="description" content="부산신항·광양항·인천항 9개 컨테이너 터미널의 선석배정현황을 매일 오전 6시 자동 수집하여 한 화면에서 제공하는 태웅로직스 Berth Insight.">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="style.css?v=2026-5a">
+  <link rel="stylesheet" href="style.css?v=2026-6">
   <link rel="icon" href="twl_logo.ico">
 </head>
 <body class="hero-page">
@@ -111,6 +111,24 @@
         <span style="color:var(--muted); font-size:13px;" id="matchLabel"></span>
       </div>
 
+      <div class="grid-toolbar reveal">
+        <div class="seg" role="group" aria-label="표시 방식">
+          <button class="seg-btn active" id="modePage" aria-pressed="true">페이지</button>
+          <button class="seg-btn" id="modeScroll" aria-pressed="false">연속 스크롤</button>
+        </div>
+        <div class="seg" role="group" aria-label="그리드 형태">
+          <button class="seg-btn active" id="layoutFlat" aria-pressed="true">평면 그리드</button>
+          <button class="seg-btn" id="layoutTree" aria-pressed="false">트리 그리드</button>
+        </div>
+        <button class="seg-btn single" id="colFilterBtn" aria-pressed="false">컬럼 필터<i class="cf-dot" hidden></i></button>
+        <label class="pg-size">페이지당
+          <select id="pageSize" aria-label="페이지당 표시 건수">
+            <option value="25" selected>25</option><option value="50">50</option><option value="100">100</option>
+          </select>건
+        </label>
+        <span class="gt-hint">행 우클릭 → 퀵뷰 메뉴</span>
+      </div>
+
       <div class="tbl-card reveal">
         <div class="tbl-scroll">
           <table class="tw" id="berthTable">
@@ -120,13 +138,30 @@
                 <th>반입마감 (CCT)</th><th>접안 (ETB)</th><th>출항 (ETD)</th>
                 <th class="num">양하 (VAN)</th><th class="num">적하 (VAN)</th><th>상태</th>
               </tr>
+              <tr class="colf-row" id="colfRow" hidden>
+                <th><select id="cfTerm" class="colf-in" aria-label="터미널 필터"></select></th>
+                <th><input id="cfBerth" class="colf-in" type="text" placeholder="선석" aria-label="선석 필터"></th>
+                <th><input id="cfVessel" class="colf-in" type="text" placeholder="선명/항차" aria-label="선명 필터"></th>
+                <th><select id="cfCarrier" class="colf-in" aria-label="선사 필터"></select></th>
+                <th><input id="cfRoute" class="colf-in" type="text" placeholder="항로" aria-label="항로 필터"></th>
+                <th><select id="cfCct" class="colf-in" aria-label="반입마감 필터">
+                  <option value="ALL">전체</option><option value="SOON">임박 (12h)</option>
+                  <option value="UPCOMING">이후 마감</option><option value="PAST">마감 지남</option>
+                </select></th>
+                <th></th><th></th><th></th><th></th>
+                <th><select id="cfStatus" class="colf-in" aria-label="상태 필터"></select></th>
+              </tr>
             </thead>
             <tbody id="berthBody"></tbody>
           </table>
         </div>
       </div>
+      <div class="pager-bar reveal" id="pagerBar"></div>
     </div>
   </section>
+
+  <!-- 우클릭 퀵뷰 메뉴 (선석배정 행) -->
+  <div class="ctx-menu" id="ctxMenu" role="menu" aria-hidden="true"></div>
 
   <!-- ============ Section 03 항만 기상 ============ -->
   <section class="dash-section" id="weather">
@@ -189,7 +224,7 @@
 
   <script src="data_berth.js"></script>
   <script src="common.js?v=2026-4"></script>
-  <script src="berth.js?v=2026-5"></script>
+  <script src="berth.js?v=2026-6"></script>
   <script src="weather.js"></script>
 </body>
 </html>
