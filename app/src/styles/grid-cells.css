@@ -1,8 +1,0 @@
-/* 그리드 셀 내부 표현 */
-.dg-table .sub { color: var(--muted); font-size: 11.5px; margin-top: 2px; }
-.dg-table b { font-weight: 700; }
-.st { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; }
-.st-planned { background: color-mix(in srgb, #2a78d6 20%, transparent); color: #2a78d6; }
-.st-arrived { background: color-mix(in srgb, #fab219 22%, transparent); color: #b5810f; }
-.st-working { background: color-mix(in srgb, #0ca30c 20%, transparent); color: #0a8f0a; }
-.st-departed { background: color-mix(in srgb, #8493ac 22%, transparent); color: #8493ac; }

@@ -49,7 +49,6 @@ AI_SCM/
 ├─ routes/ ×93          사전계산 항로(경로 분석용 정적 JSON)
 ├─ scripts/             수집기(★다른 PC가 실행) — 아래 3종
 ├─ sql/                 셋업·적재 SQL
-├─ app/                 React+TS 이관 진행분(선석배정 그리드까지)
 ├─ .github/workflows/   deploy-pages.yml (push→GitHub Pages 자동배포)
 └─ PRJ_2026/            문서(개요·상세기술서·개발이력·개발자가이드·피드백)
 ```
@@ -93,7 +92,7 @@ DATA_GO_KR_KEY=<공공데이터포털 키>       # 해수부/공항 프록시 (�
 | **해외 스케줄 허브** | schedule.html | Ship Schedule 3뷰·해외 터미널 (준비중 기획) |
 | **소요일 분포 차트** | js/route.js | CSS막대 → SVG(밴드·곡선·마커·툴팁) |
 | **GitHub Pages 배포** | .github/workflows/ | push→자동배포 (Netlify 크레딧 소진 대체) |
-| **React 이관 착수** | app/ | 기반+선석배정 고급 그리드(TanStack+dnd-kit+exceljs) |
+| **React 이관 착수** | app/ | 기반+선석배정 고급 그리드(TanStack+dnd-kit+exceljs) → 최종 채택 보류, app/ 제거(2026-07-28): 사유는 SEO 후퇴·번들 무게·빌드/인수인계 복잡도 |
 
 ---
 
@@ -104,7 +103,6 @@ DATA_GO_KR_KEY=<공공데이터포털 키>       # 해수부/공항 프록시 (�
 - [ ] Supabase 프로젝트 동일(kvmyiualdodcvreoqfin) 확인 — 웹/스케줄러가 같은 DB를 봐야 연계됨
 - [ ] `git push` 시 GitHub Actions(Deploy to Pages) 초록 체크 확인 → 사이트 반영 확인
 - [ ] 저장소 **public 유지** (private 전환 시 Pages 다운)
-- [ ] (선택) React 이어가려면 `cd app && npm install && npm run dev`
 
 ---
 
@@ -113,7 +111,6 @@ DATA_GO_KR_KEY=<공공데이터포털 키>       # 해수부/공항 프록시 (�
 - **FR-02 터미널 8곳 확대** — 조회 URL·스케줄 수집(다른 PC 담당). 파서는 `scripts/`에 플러그인식 추가
 - **FR-04/05 해외 스케줄 실데이터** — 데이터 소스(스크래핑/OCR/공개API) 확정 후 schedule.html '준비중' 자리에 연결
 - **대기 키**: UNIPASS·AISStream·ORS — 키 확보 시 즉시 동작
-- **React 6화면 포팅** — insight/vessel/cargo/route/status (현재 레거시 화면 연결 자리표시자)
 
 ---
 

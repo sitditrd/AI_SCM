@@ -36,7 +36,7 @@ git add -A && git commit -m "..." && git push origin master
 | 웹(정적) 8화면 | ✅ 운영 · GitHub Pages 무료 배포 (index·insight·berth·vessel·cargo·route·schedule·status) |
 | 데이터(Supabase) | ✅ 선석배정 14일 이력·PCI 지수·운임지수 적재 중 |
 | 자동 수집 | ⏳ **다른 PC에서 스케줄러 운영** (git pull로 연계) |
-| React 이관(app/) | 🔨 기반 + 선석배정 + 데이터현황 완료(공통 그리드 재사용), 4화면 남음 |
+| React 이관(app/) | 채택 보류(app/ 제거) — 운영은 정적본 유지 |
 | 배포 | ✅ GitHub Pages (Netlify는 무료 크레딧 소진으로 보류) |
 
 **화면별**: Port Insight(PCI 혼잡지수·포트검색), 선석배정(고급 그리드), 선박위치(AIS), 화물추적(UNIPASS+딥링크), 경로분석(몬테카를로), 해외 스케줄(준비중 기획), 데이터현황(운영보드). 상단 **국내/해외 탭**으로 범위 전환.
@@ -57,7 +57,6 @@ AI_SCM/
 ├─ server.py              로컬 백엔드(8090) — UNIPASS·searoute·data.go.kr 프록시(로컬 전용)
 ├─ scripts/               ★수집기(다른 PC 실행) — 아래 표
 ├─ sql/                   Supabase 셋업·적재 SQL
-├─ app/                   React+TS 이관 진행분(Vite)
 ├─ .github/workflows/     deploy-pages.yml (push→Pages 자동배포)
 └─ PRJ_2026/              문서 (개요·상세기술서·개발이력·개발자가이드·피드백·PRD·화면기획)
 ```
@@ -85,38 +84,30 @@ AI_SCM/
 
 ---
 
-## 5. React 앱 (app/) 이어가기
+## 5. React 시안 (app/) — 채택 보류
 
-```bash
-cd app
-npm install
-npm run dev      # 개발 서버
-npm run build    # 프로덕션 빌드(dist/)
-```
+React+TS(Vite) 이관 시안은 검토 결과 **채택 보류**하고 `app/` 폴더를 저장소에서 제거했습니다(git 이력엔 보존). 운영본은 **바닐라 정적 사이트(HTML/JS)**로 유지 — 빌드 불필요, `git pull` 후 그대로 서빙합니다.
 
-- **완료**: 디자인 토큰·공용 레이아웃·Supabase 데이터 레이어·**재사용 DataGrid**(정렬·컬럼 DnD·그룹핑 트리·엑셀·툴팁)·선석배정·데이터현황
-- **남음**: insight·vessel·cargo·route 4화면 (현재 레거시 화면 연결 자리표시자) → 이관 후 Pages를 React 빌드로 컷오버
-- 스택(전부 무료 MIT): TanStack Table · dnd-kit · exceljs · react-router-dom
+- **사유**(공개 물류 포털 특성): HashRouter 구조라 검색 색인이 한 페이지로 뭉쳐 SEO 후퇴 · 번들 무게 증가로 초기 로딩 저하 · 빌드 도입으로 배포·타 PC 인수인계 복잡도 상승 · 정적본 대비 사용자 체감 이점 없음
 
 ---
 
 ## 6. 남은 작업 리스트
 
 ### A. 지금 바로 가능
-1. React 나머지 4화면 포팅 (insight·vessel·cargo·route) → 이후 Pages 빌드 컷오버
-2. 모바일/반응형 QA · 번들 최적화(코드 스플릿) · 접근성 심화 감사
+1. 모바일/반응형 QA · 번들 최적화(코드 스플릿) · 접근성 심화 감사
 
 ### B. 자원·결정 필요 (막힘 — 확보 시 즉시 동작)
-3. **FR-02** 터미널 8곳 확대 — 조회 URL·스케줄 수집(다른 PC 담당)
-4. **FR-04/05** 해외 스케줄 실데이터 — 데이터 소스 확정(스크래핑/OCR/공개API)
-5. **화물 추적 실조회** — `UNIPASS_API_KEY`
-6. **해수부/공항 본선·화물편** — `DATA_GO_KR_KEY`
-7. **선사 무료 API(HMM DCSA 등)** — 개발자 등록·무료 키 (조사 완료)
-8. **AIS 레이어/내륙 최적화** — AISStream·ORS 키
-9. **Windows 예비 스케줄러** — `SUPABASE_SERVICE_KEY`
+2. **FR-02** 터미널 8곳 확대 — 조회 URL·스케줄 수집(다른 PC 담당)
+3. **FR-04/05** 해외 스케줄 실데이터 — 데이터 소스 확정(스크래핑/OCR/공개API)
+4. **화물 추적 실조회** — `UNIPASS_API_KEY`
+5. **해수부/공항 본선·화물편** — `DATA_GO_KR_KEY`
+6. **선사 무료 API(HMM DCSA 등)** — 개발자 등록·무료 키 (조사 완료)
+7. **AIS 레이어/내륙 최적화** — AISStream·ORS 키
+8. **Windows 예비 스케줄러** — `SUPABASE_SERVICE_KEY`
 
 ### C. 운영·고도화 (선택)
-10. 스케줄 자동화 점검(다른 PC 운영분) · M2 터미널 매핑·ICON 중복정리 · v3 지표(UNCTAD·CPPI) · KCCI 파서
+9. 스케줄 자동화 점검(다른 PC 운영분) · M2 터미널 매핑·ICON 중복정리 · v3 지표(UNCTAD·CPPI) · KCCI 파서
 
 > 요구사항 명세서(FR-01~05)는 `PRJ_2026/피드백리스트/항만인텔리전스_요구사항명세서_20260728.md` 참조. **FR-01·FR-03 완료**, FR-04/05는 기획 화면(준비중) 배치됨.
 
@@ -133,7 +124,7 @@ npm run build    # 프로덕션 빌드(dist/)
 | UX | 선석배정 고급 그리드(페이지네이션·연속스크롤·컬럼필터·트리·우클릭 퀵뷰), FR-01 포트 검색, 소요일 분포 SVG 차트 |
 | 구조 | 폴더 계층화(css/js/assets), 국내/해외 탭, 해외 스케줄 허브(준비중) |
 | 배포 | GitHub Pages 무료 자동배포, OG/SEO/a11y 폴리시 |
-| React | app/ 기반 + 선석배정 + 데이터현황 이관 |
+| React | app/ 기반 + 선석배정 + 데이터현황 이관 → 최종 채택 보류, app/ 제거(2026-07-28): 사유는 SEO 후퇴·번들 무게·빌드/인수인계 복잡도 |
 | 부가 산출물 | 위험물 물류 통합 플랫폼 발표 PPT·Connect DG 통합본·화물 무료 API 조사(59건) |
 
 ---

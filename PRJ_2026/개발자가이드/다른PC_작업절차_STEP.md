@@ -13,7 +13,6 @@
 | **Git** | ✅ | https://git-scm.com |
 | **GitHub 로그인** | ✅ | push 하려면 sitditrd 계정 인증 |
 | Python 3 | 선택 | 수집기·로컬 백엔드(server.py) 실행 |
-| Node.js | 선택 | React(app/) 작업 |
 | VS Code + Claude Code 등 | 선택 | 에디터 |
 
 git 사용자 설정 (최초 1회):
@@ -70,15 +69,11 @@ git push origin master          # (4) 푸시 → 자동 배포
 
 ---
 
-## 4단계 · React 앱(app/) 이어갈 때만
+## 4단계 · (구) React 시안 — 채택 보류 (2026-07-28)
 
-```bash
-cd app
-npm install        # 최초 1회
-npm run dev        # 개발 서버(핫리로드)
-npm run build      # 배포용 빌드
-```
-완료: 선석배정·데이터현황(공통 DataGrid 재사용) / 남음: insight·vessel·cargo·route
+> React+TS(Vite) 시안은 검토 결과 **채택 보류**하고 `app/` 폴더를 저장소에서 제거함(git 이력엔 보존).
+> 사유: SEO 후퇴(HashRouter)·번들 무게로 초기 로딩 저하·빌드 도입에 따른 배포/인수인계 복잡도 상승·정적본 대비 체감 이점 없음.
+> 운영본은 바닐라 정적 사이트(HTML/JS)로 유지 — 빌드 불필요, `git pull` 후 그대로 서빙(별도 이어갈 작업 없음).
 
 ---
 
