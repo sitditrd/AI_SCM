@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://sitditrd.github.io/AI_SCM/sitemap.xml

@@ -67,6 +67,14 @@
 }
 
 /* ---------- 베이스 ---------- */
+/* 접근성 — 키보드 포커스 시 본문 바로가기 */
+.skip-link {
+  position: absolute; left: 12px; top: -60px; z-index: 100;
+  background: var(--brand-accent); color: #fff; padding: 10px 16px; border-radius: 8px;
+  font-weight: 700; font-size: 13px; transition: top .15s ease;
+}
+.skip-link:focus { top: 12px; outline: 2px solid #fff; outline-offset: 2px; }
+
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body {

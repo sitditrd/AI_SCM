@@ -26,6 +26,7 @@ jobs:
         run: |
           mkdir -p _site
           cp *.html _site/ 2>/dev/null || true
+          cp sitemap.xml robots.txt _site/ 2>/dev/null || true
           for d in css js assets routes; do
             if [ -d "$d" ]; then cp -r "$d" _site/; fi
           done
