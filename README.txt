@@ -6,6 +6,13 @@
   index.html 파일을 더블클릭하면 브라우저에서 바로 열립니다.
   (설치·빌드 불필요. Chrome/Edge 권장)
 
+■ 폴더 구성 (2026-07-28 계층화)
+  *.html        7개 화면 (웹 루트)
+  css\          style.css (공통 스타일·라이트/다크 테마 토큰)
+  js\           *.js 11종 (데이터 레이어·렌더러·공통 스크립트)
+  assets\       twl_symbol.png · twl_logo.ico (브랜드 자산)
+  routes\       사전계산 항로 93파일 · scripts\ 수집기 · sql\ · PRJ_2026\ 문서
+
 ■ 파일 구성
   index.html    랜딩 페이지 (BPO 모듈 서비스 소개)
   insight.html  Port Insight 항만 혼잡도 대시보드 (IMF PortWatch 실데이터)
