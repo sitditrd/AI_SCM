@@ -7,7 +7,7 @@
   <meta name="description" content="IMF PortWatch 오픈데이터(위성 AIS) 기반으로 전 세계 Focus Port 93개의 혼잡도를 산출하는 태웅로직스 Port Insight 대시보드.">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-  <link rel="stylesheet" href="css/style.css?v=2026-5a">
+  <link rel="stylesheet" href="css/style.css?v=2026-7">
   <link rel="icon" href="assets/twl_logo.ico">
 </head>
 <body class="hero-page">
@@ -177,11 +177,21 @@
       <div class="dash-head reveal">
         <span class="no">SECTION 04</span>
         <h2>주요 항만 전체 PCI 현황 — 글로벌 지도</h2>
-        <span class="hint">마커 크기 = PCI · 2주 이동평균 기준</span>
+        <span class="hint">마커 크기 = PCI · 2주 이동평균 기준 · 아래 검색으로 관심 포트 포커스</span>
       </div>
+
+      <!-- FR-01 관심 포트 검색 -->
+      <div class="port-search reveal" role="search">
+        <svg class="ps-ico" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="search" id="portSearch" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="portAC" aria-autocomplete="list"
+               placeholder="관심 포트 검색 — 항구명(국문/영문) 또는 LOCODE (예: 부산, Savannah, USSAV)">
+        <div class="port-ac" id="portAC" role="listbox" hidden></div>
+      </div>
+
       <div class="chip-row reveal" id="levelChips" aria-label="레벨 필터"></div>
       <div class="card map-card reveal" id="mapCard" style="padding:6px;">
         <div id="map" role="application" aria-label="항만 혼잡도 지도"></div>
+        <div class="port-detail" id="portDetail" hidden aria-live="polite"></div>
         <div class="map-fallback">
           지도 라이브러리를 불러오지 못했습니다 (오프라인 환경).<br>
           인터넷 연결 후 새로고침하면 지도가 표시됩니다. 데이터는 아래 표에서 동일하게 확인할 수 있습니다.
@@ -277,6 +287,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="js/data.js"></script>
   <script src="js/common.js?v=2026-4"></script>
-  <script src="js/insight.js?v=2026-5"></script>
+  <script src="js/insight.js?v=2026-7"></script>
 </body>
 </html>

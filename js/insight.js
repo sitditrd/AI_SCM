@@ -25,6 +25,7 @@
       initChips();
       initMap();
       renderMap();
+      initPortSearch();
       initFocusList();
       initScrollSpy();
       initStampTicker();
@@ -301,6 +302,154 @@
       markerLayer.addLayer(m);
     });
   }
+  /* ===================================================================
+     FR-01 · 관심 포트 검색 (항구명/LOCODE 자동완성 → 지도 포커스 + 상세 패널)
+     =================================================================== */
+  // 주요 포트 LOCODE (UN/LOCODE). en(소문자) → LOCODE. 없는 포트는 이름 검색만.
+  var LOCODE = {
+    'shanghai': 'CNSHA', 'ningbo': 'CNNGB', 'shenzhen (yantian)': 'CNYTN', 'guangzhou (nansha)': 'CNGZG',
+    'qingdao': 'CNTAO', 'tianjin': 'CNTXG', 'xiamen': 'CNXMN', 'dalian': 'CNDLC', 'hong kong': 'HKHKG',
+    'kaohsiung': 'TWKHH', 'busan': 'KRPUS', 'incheon': 'KRINC', 'gwangyang': 'KRKAN',
+    'tokyo': 'JPTYO', 'yokohama': 'JPYOK', 'nagoya': 'JPNGO', 'kobe': 'JPUKB', 'singapore': 'SGSIN',
+    'tanjung pelepas': 'MYTPP', 'port klang': 'MYPKG', 'penang': 'MYPEN', 'kuching': 'MYKCH',
+    'jakarta (tg. priok)': 'IDJKT', 'surabaya': 'IDSUB', 'laem chabang': 'THLCH', 'bangkok': 'THBKK',
+    'ho chi minh (cat lai)': 'VNSGN', 'cai mep': 'VNCMT', 'haiphong': 'VNHPH', 'manila': 'PHMNL',
+    'yangon': 'MMRGN', 'sihanoukville': 'KHKOS', 'colombo': 'LKCMB', 'chattogram': 'BDCGP',
+    'nhava sheva (jnpt)': 'INNSA', 'mundra': 'INMUN', 'chennai': 'INMAA', 'karachi': 'PKKHI',
+    'jebel ali': 'AEJEA', 'khalifa (abu dhabi)': 'AEKHL', 'hamad': 'QAHMD', 'dammam': 'SADMM',
+    'jeddah': 'SAJED', 'salalah': 'OMSLL', 'bandar abbas': 'IRBND', 'rotterdam': 'NLRTM',
+    'antwerp-bruges': 'BEANR', 'hamburg': 'DEHAM', 'bremerhaven': 'DEBRV', 'le havre': 'FRLEH',
+    'fos-marseille': 'FRFOS', 'valencia': 'ESVLC', 'algeciras': 'ESALG', 'barcelona': 'ESBCN',
+    'genoa': 'ITGOA', 'gioia tauro': 'ITGIT', 'trieste': 'ITTRS', 'koper': 'SIKOP', 'piraeus': 'GRPIR',
+    'ambarli (istanbul)': 'TRAMB', 'mersin': 'TRMER', 'gdansk': 'PLGDN', 'felixstowe': 'GBFXT',
+    'london gateway': 'GBLGP', 'los angeles': 'USLAX', 'long beach': 'USLGB', 'oakland': 'USOAK',
+    'seattle-tacoma': 'USSEA', 'vancouver': 'CAVAN', 'new york/new jersey': 'USNYC', 'savannah': 'USSAV',
+    'charleston': 'USCHS', 'houston': 'USHOU', 'manzanillo (mx)': 'MXZLO', 'lazaro cardenas': 'MXLZC',
+    'santos': 'BRSSZ', 'callao': 'PECLL', 'cartagena': 'COCTG', 'colon (panama)': 'PACOL',
+    'buenos aires': 'ARBUE', 'guayaquil': 'ECGYE', 'tanger med': 'MAPTM', 'port said': 'EGPSD',
+    'alexandria': 'EGALY', 'durban': 'ZADUR', 'cape town': 'ZACPT', 'lagos (apapa)': 'NGLOS',
+    'mombasa': 'KEMBA', 'dar es salaam': 'TZDAR', 'sydney (botany)': 'AUSYD', 'melbourne': 'AUMEL',
+    'brisbane': 'AUBNE', 'auckland': 'NZAKL'
+  };
+  var CC_KO = { KR:'한국', CN:'중국', JP:'일본', HK:'홍콩', TW:'대만', SG:'싱가포르', MY:'말레이시아',
+    ID:'인도네시아', TH:'태국', VN:'베트남', PH:'필리핀', MM:'미얀마', KH:'캄보디아', LK:'스리랑카',
+    BD:'방글라데시', IN:'인도', PK:'파키스탄', AE:'UAE', QA:'카타르', SA:'사우디', OM:'오만', IR:'이란',
+    NL:'네덜란드', BE:'벨기에', DE:'독일', FR:'프랑스', ES:'스페인', IT:'이탈리아', SI:'슬로베니아',
+    GR:'그리스', TR:'튀르키예', PL:'폴란드', GB:'영국', US:'미국', CA:'캐나다', MX:'멕시코', BR:'브라질',
+    PE:'페루', CO:'콜롬비아', PA:'파나마', AR:'아르헨티나', EC:'에콰도르', MA:'모로코', EG:'이집트',
+    ZA:'남아공', NG:'나이지리아', KE:'케냐', TZ:'탄자니아', AU:'호주', NZ:'뉴질랜드' };
+
+  var searchIdx = [];
+  var acItems = [], acActive = -1, highlightMarker = null;
+
+  function buildSearchIndex() {
+    searchIdx = (state.ports || []).map(function (p) {
+      var loc = LOCODE[String(p.en || '').toLowerCase()] || '';
+      return { p: p, ko: p.ko || '', en: p.en || '', locode: loc,
+        cc: loc ? loc.slice(0, 2) : '', hay: (p.ko + ' ' + p.en + ' ' + loc).toLowerCase() };
+    });
+  }
+
+  function initPortSearch() {
+    buildSearchIndex();
+    var input = el('portSearch'), ac = el('portAC');
+    if (!input) return;
+    input.addEventListener('input', function () {
+      var q = this.value.trim().toLowerCase();
+      if (q.length < 2) { closeAC(); return; }
+      var hits = searchIdx.filter(function (x) { return x.hay.indexOf(q) >= 0; }).slice(0, 8);
+      renderAC(hits, q);
+    });
+    input.addEventListener('keydown', function (e) {
+      if (ac.hidden) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); moveAC(1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); moveAC(-1); }
+      else if (e.key === 'Enter') { e.preventDefault(); if (acActive >= 0 && acItems[acActive]) selectPort(acItems[acActive]); }
+      else if (e.key === 'Escape') closeAC();
+    });
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.port-search')) closeAC();
+    });
+  }
+
+  function renderAC(hits, q) {
+    var ac = el('portAC'), input = el('portSearch');
+    acItems = hits; acActive = -1;
+    if (!hits.length) {
+      ac.innerHTML = '<div class="port-ac-empty">검색 결과 없음</div>';
+    } else {
+      ac.innerHTML = hits.map(function (x, i) {
+        return '<button class="port-ac-item" role="option" data-i="' + i + '">' +
+          '<span class="pai-ko">' + esc(x.ko) + '</span>' +
+          '<span class="pai-en">' + esc(x.en) + '</span>' +
+          (x.locode ? '<span class="pai-loc">' + x.locode + '</span>' : '') +
+          (x.cc ? '<span class="pai-cc">' + (CC_KO[x.cc] || x.cc) + '</span>' : '') +
+          '</button>';
+      }).join('');
+      ac.querySelectorAll('.port-ac-item').forEach(function (b) {
+        b.addEventListener('click', function () { selectPort(hits[parseInt(this.getAttribute('data-i'), 10)]); });
+      });
+    }
+    ac.hidden = false; input.setAttribute('aria-expanded', 'true');
+  }
+  function closeAC() {
+    var ac = el('portAC'), input = el('portSearch');
+    if (ac) { ac.hidden = true; acItems = []; acActive = -1; }
+    if (input) input.setAttribute('aria-expanded', 'false');
+  }
+  function moveAC(dir) {
+    var ac = el('portAC');
+    var nodes = ac.querySelectorAll('.port-ac-item');
+    if (!nodes.length) return;
+    acActive = (acActive + dir + nodes.length) % nodes.length;
+    nodes.forEach(function (n, i) { n.classList.toggle('active', i === acActive); });
+  }
+
+  function selectPort(x) {
+    closeAC();
+    el('portSearch').value = x.ko + (x.locode ? ' (' + x.locode + ')' : '');
+    focusPort(x);
+  }
+
+  function focusPort(x) {
+    var p = x.p;
+    if (map) {
+      map.setView([p.lat, p.lng], 6, { animate: true });
+      if (highlightMarker) { markerLayer.removeLayer(highlightMarker); highlightMarker = null; }
+      highlightMarker = L.circleMarker([p.lat, p.lng], {
+        radius: 16, color: '#00b8a9', weight: 3, fill: false, className: 'port-focus-ring'
+      }).addTo(markerLayer);
+    }
+    renderPortDetail(x);
+  }
+
+  function renderPortDetail(x) {
+    var p = x.p, box = el('portDetail');
+    if (!box) return;
+    box.innerHTML =
+      '<div class="pd-head"><b>' + esc(p.ko) + '</b> <small>' + esc(p.en) + '</small>' +
+      (x.locode ? '<span class="pd-loc">' + x.locode + '</span>' : '') +
+      '<button class="pd-x" id="pdClose" aria-label="닫기">×</button></div>' +
+      '<div class="pd-grade"><span class="st-badge st-' + p.level.toLowerCase() + '"><i class="lv-dot"></i>' +
+      p.level + ' · ' + UI.LEVEL_KO[p.level] + '</span></div>' +
+      '<div class="pd-rows">' +
+      '<div class="row"><span>PCI (혼잡도 지수)</span><b>' + p.tpfs + '</b></div>' +
+      '<div class="row"><span>접안 지연</span><b>' + p.delayH + 'h</b></div>' +
+      '<div class="row"><span>대기 / 접안</span><b>' + p.waiting + ' / ' + p.berthed + '척</b></div>' +
+      (x.cc ? '<div class="row"><span>국가</span><b>' + (CC_KO[x.cc] || x.cc) + '</b></div>' : '') +
+      '</div>';
+    box.hidden = false;
+    var xb = el('pdClose');
+    if (xb) xb.addEventListener('click', function () {
+      box.hidden = true;
+      if (highlightMarker && markerLayer) { markerLayer.removeLayer(highlightMarker); highlightMarker = null; }
+    });
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
   function initChips() {
     var wrap = el('levelChips');
     function render() {
