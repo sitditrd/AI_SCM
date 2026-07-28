@@ -22,6 +22,12 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 PORT = int(os.environ.get('PORT', '8090'))  # 기본 8090, 병행 실행 시 PORT 환경변수로 변경 가능
 UNIPASS_KEY = os.environ.get('UNIPASS_API_KEY', '')
 UNIPASS_URL = 'https://unipass.customs.go.kr:38010/ext/rest/cargCsclPrgsInfoQry/retrieveCargCsclPrgsInfo'
+# 공공데이터포털(data.go.kr) 인증키 — 활용신청(자동승인) 후 발급되는 일반 인증키(Encoding 아님, Decoding 키 권장)
+DATAGO_KEY = os.environ.get('DATA_GO_KR_KEY', '')
+PORTMIS_URL = 'http://apis.data.go.kr/1192000/VsslEtrynd5/Info5'                       # 해수부 선박 입출항
+AIRCARGO_URL = 'http://apis.data.go.kr/B551177/StatusOfCargoFlights/getCargoArrivals'  # 인천공항 화물편 도착
+DATAGO_GUIDE = ('공공데이터포털(data.go.kr) 회원가입 → 해당 API 활용신청(자동승인) → 발급 키를 '
+                '환경변수 DATA_GO_KR_KEY 로 설정 후 서버 재시작 (선박운항정보 VsslEtrynd5, 인천공항 화물편 StatusOfCargoFlights 각각 신청 필요)')
 
 
 def xml_to_obj(node):
@@ -78,6 +84,40 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_response(200)
             except Exception as e:
                 data = json.dumps({'error': '경로 계산 실패: %s' % e}, ensure_ascii=False).encode('utf-8')
+                self.send_response(502)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Length', str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+            return
+        if parsed.path in ('/api/portmis', '/api/aircargo'):
+            # data.go.kr 프록시 — 키 미설정 시 발급 안내 반환 (UNIPASS 프록시와 동일 UX)
+            q = urllib.parse.parse_qs(parsed.query)
+            try:
+                if not DATAGO_KEY:
+                    body = {'needKey': True, 'guide': DATAGO_GUIDE}
+                elif parsed.path == '/api/portmis':
+                    # 선박 입출항: 호출부호(clsgn) 또는 항구코드로 본선 ATA/ATD 확인
+                    params = {'serviceKey': DATAGO_KEY, 'numOfRows': '30', 'pageNo': '1', 'type': 'json'}
+                    for k in ('clsgn', 'prtAgCd', 'fromDt', 'toDt'):
+                        if q.get(k):
+                            params[k] = q[k][0]
+                    url = PORTMIS_URL + '?' + urllib.parse.urlencode(params)
+                    with urllib.request.urlopen(urllib.request.Request(url), timeout=25) as r:
+                        body = {'needKey': False, 'data': json.loads(r.read().decode('utf-8', 'replace'))}
+                else:
+                    # 인천공항 화물편 도착 현황: 편명/항공사 필터
+                    params = {'serviceKey': DATAGO_KEY, 'numOfRows': '30', 'pageNo': '1', 'type': 'json', 'lang': 'K'}
+                    for k in ('flight_id', 'airline', 'from_time', 'to_time'):
+                        if q.get(k):
+                            params[k] = q[k][0]
+                    url = AIRCARGO_URL + '?' + urllib.parse.urlencode(params)
+                    with urllib.request.urlopen(urllib.request.Request(url), timeout=25) as r:
+                        body = {'needKey': False, 'data': json.loads(r.read().decode('utf-8', 'replace'))}
+                data = json.dumps(body, ensure_ascii=False).encode('utf-8')
+                self.send_response(200)
+            except Exception as e:
+                data = json.dumps({'error': '조회 실패: %s' % e}, ensure_ascii=False).encode('utf-8')
                 self.send_response(502)
             self.send_header('Content-Type', 'application/json; charset=utf-8')
             self.send_header('Content-Length', str(len(data)))

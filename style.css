@@ -1056,6 +1056,19 @@ tr.tree-hd.open .tree-caret { transform: rotate(90deg); }
 .tree-mini { float: right; color: var(--muted); font-size: 12px; }
 tr.tree-child td:first-child { padding-left: 30px; }
 
+/* 화물 추적 — 무료 조회 채널 링크 묶음 */
+.ql-links { display: flex; flex-wrap: wrap; gap: 7px; margin: 10px 0 0; }
+.ql-links a {
+  font-size: 12.5px; font-weight: 700; color: var(--brand-accent-2);
+  border: 1px solid color-mix(in srgb, var(--brand-accent-2) 35%, var(--border));
+  border-radius: 999px; padding: 5px 12px;
+  transition: background .16s ease, color .16s ease, border-color .16s ease;
+}
+.ql-links a:hover {
+  background: color-mix(in srgb, var(--brand-accent) 12%, transparent);
+  color: var(--ink); border-color: var(--brand-accent-2);
+}
+
 /* 우클릭 퀵뷰 메뉴 */
 .ctx-menu {
   position: fixed; z-index: 240; min-width: 250px; max-width: 320px;

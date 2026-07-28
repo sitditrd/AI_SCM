@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>화물 추적 — 해상·항공 수입 통관 진행 | 태웅로직스</title>
+  <title>화물 추적 — 해상·항공 수입 통관 진행 | TWL Control Tower</title>
   <meta name="description" content="MBL/HBL/AWB 번호로 해상·항공 수입 화물의 통관 진행 상태를 조회합니다 (관세청 유니패스 연계).">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="style.css?v=2026-5a">
+  <link rel="stylesheet" href="style.css?v=2026-6a">
   <link rel="icon" href="twl_logo.ico">
 </head>
 <body class="hero-page">
@@ -66,6 +66,60 @@
       </div>
 
       <div id="traceOut"></div>
+    </div>
+  </section>
+
+  <!-- ============ 무료 조회 채널 바로가기 (키 불필요) ============ -->
+  <section class="dash-section" id="quicklinks" style="padding-top:0;">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">바로가기</span>
+        <h2>터미널·선사·항공 무료 조회 채널</h2>
+        <span class="hint">API 키 없이 즉시 조회 가능한 공식 채널 모음 · 새 탭으로 열림</span>
+      </div>
+      <div class="grid-3 reveal" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
+        <div class="card">
+          <h3 style="font-size:14.5px;">부산신항 터미널 반출입·본선작업</h3>
+          <p style="font-size:12.5px; color:var(--muted);">컨테이너 번호·모선항차로 터미널 직접 조회</p>
+          <p class="ql-links">
+            <a href="https://www.hjnc.co.kr" target="_blank" rel="noopener">HJNC</a>
+            <a href="https://www.pnitl.com" target="_blank" rel="noopener">PNIT</a>
+            <a href="https://svc.pncport.com" target="_blank" rel="noopener">PNC</a>
+            <a href="https://info.bnctkorea.com" target="_blank" rel="noopener">BNCT</a>
+            <a href="https://www.hpnt.co.kr" target="_blank" rel="noopener">HPNT</a>
+            <a href="https://www.dgtbusan.com" target="_blank" rel="noopener">DGT</a>
+            <a href="https://www.chainportal.co.kr" target="_blank" rel="noopener">BPA 체인포털</a>
+          </p>
+        </div>
+        <div class="card">
+          <h3 style="font-size:14.5px;">선사 컨테이너 트래킹</h3>
+          <p style="font-size:12.5px; color:var(--muted);">위 조회에서 MBL 입력 시 선사 자동 감지 딥링크 제공 (SCAC 12사) — 주요 선사 직접 링크</p>
+          <p class="ql-links">
+            <a href="https://www.hmm21.com/e-service/general/trackNTrace/TrackNTrace.do" target="_blank" rel="noopener">HMM</a>
+            <a href="https://www.msc.com/en/track-a-shipment" target="_blank" rel="noopener">MSC</a>
+            <a href="https://www.maersk.com/tracking" target="_blank" rel="noopener">Maersk</a>
+            <a href="https://ecomm.one-line.com/one-ecom/manage-shipment/cargo-tracking" target="_blank" rel="noopener">ONE</a>
+            <a href="https://www.shipmentlink.com/servlet/TDB1_CargoTracking.do" target="_blank" rel="noopener">Evergreen</a>
+            <a href="https://www.ekmtc.com" target="_blank" rel="noopener">KMTC</a>
+            <a href="https://ebiz.sinokor.co.kr" target="_blank" rel="noopener">장금상선</a>
+          </p>
+        </div>
+        <div class="card">
+          <h3 style="font-size:14.5px;">항공 화물 (AWB)</h3>
+          <p style="font-size:12.5px; color:var(--muted);">AWB 번호로 항공사 공식 추적 · 위 조회에서 AWB 입력 시 항공사(10사) 자동 감지</p>
+          <p class="ql-links">
+            <a href="https://cargo.koreanair.com" target="_blank" rel="noopener">대한항공 Cargo</a>
+            <a href="https://asianacargo.com" target="_blank" rel="noopener">아시아나 Cargo</a>
+            <a href="https://track.champ.aero" target="_blank" rel="noopener">CHAMP 범용조회</a>
+            <a href="https://www.track-trace.com/aircargo" target="_blank" rel="noopener">track-trace.com</a>
+          </p>
+        </div>
+      </div>
+      <p class="notice">
+        무료 API 확충 로드맵: 관세청 UNIPASS(통관 타임라인)·HMM 등 선사 무료 API(DCSA 표준)·해수부 PORT-MIS(본선 입출항)·
+        인천공항 화물편 현황·AISStream(실시간 선박 위치)은 무료 키 발급 즉시 연동되도록 백엔드가 준비되어 있습니다.
+        발급 절차는 PRJ_2026/개발자가이드 문서를 참조하십시오.
+      </p>
     </div>
   </section>
 
