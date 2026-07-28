@@ -13,7 +13,6 @@ import {
   SortableContext, horizontalListSortingStrategy, useSortable, arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import ExcelJS from 'exceljs';
 import { InfoTip } from './InfoTip';
 import './DataGrid.css';
 
@@ -119,6 +118,7 @@ export function DataGrid<T>({ columns, data, excelName = 'export', rowContextMen
   }
 
   async function exportExcel() {
+    const ExcelJS = (await import('exceljs')).default; // 동적 로딩 — 내보낼 때만 번들 로드
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('선석배정');
     const cols = table.getVisibleLeafColumns();
