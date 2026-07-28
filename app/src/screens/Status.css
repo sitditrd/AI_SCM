@@ -1,0 +1,35 @@
+.health-banner {
+  display: flex; align-items: center; gap: 11px; margin-bottom: 20px;
+  padding: 14px 18px; border-radius: 12px; font-size: 15px;
+  border: 1px solid var(--border); background: color-mix(in srgb, var(--surface) 80%, transparent);
+}
+.health-banner .hb-dot { width: 11px; height: 11px; border-radius: 50%; flex: none; background: var(--muted); }
+.health-banner .hb-sub { color: var(--muted); font-size: 13px; }
+.hb-ok { border-color: color-mix(in srgb, var(--lv-low) 45%, transparent); }
+.hb-ok .hb-dot { background: var(--lv-low); box-shadow: 0 0 8px var(--lv-low); }
+.hb-warn { border-color: color-mix(in srgb, var(--lv-stable) 50%, transparent); }
+.hb-warn .hb-dot { background: var(--lv-stable); }
+.hb-late { border-color: color-mix(in srgb, var(--lv-congested) 50%, transparent); }
+.hb-late .hb-dot { background: var(--lv-congested); }
+
+.src-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 24px; }
+.src-card { background: color-mix(in srgb, var(--surface) 88%, transparent); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; box-shadow: var(--shadow); }
+.sc-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sc-top b { font-size: 14.5px; }
+.lv-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+.lv-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.sc-big { font-size: 18px; font-weight: 800; margin: 10px 0 8px; letter-spacing: -.01em; }
+.sc-sub { color: var(--ink-2); font-size: 12.5px; }
+.sc-next { color: var(--muted); font-size: 11.5px; margin-top: 6px; }
+
+.sec-h { font-size: 17px; font-weight: 800; margin: 8px 0 12px; }
+.day-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 26px; }
+.day-chip { border: 1px solid var(--border); border-radius: 10px; padding: 12px 8px; text-align: center; background: var(--surface); }
+.day-chip small { display: block; color: var(--muted); font-size: 11px; margin-bottom: 6px; }
+.day-chip b { font-size: 12.5px; }
+.day-chip.dg-ok { border-color: color-mix(in srgb, var(--lv-low) 40%, transparent); }
+.day-chip.dg-ok b { color: var(--lv-low); }
+.day-chip.dg-fail { border-color: color-mix(in srgb, var(--lv-congested) 45%, transparent); }
+.day-chip.dg-fail b { color: var(--lv-congested); }
+.day-chip.dg-none b { color: var(--muted); }
+@media (max-width: 640px) { .day-grid { grid-template-columns: repeat(4, 1fr); } }
