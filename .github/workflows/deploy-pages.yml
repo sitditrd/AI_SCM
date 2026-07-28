@@ -1,0 +1,48 @@
+name: Deploy static portal to GitHub Pages
+
+# Netlify 무료 빌드 한도 소진(프로덕션 배포 일시중지) 대체 무료 배포 경로.
+# 웹 파일(html·css·js·assets·routes)만 게시. 사업문서(PRJ_2026)·React 소스(app)·수집기(scripts)는 제외.
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pages 활성화(가능 시 자동)
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: 웹 파일만 _site로 수집
+        run: |
+          mkdir -p _site
+          cp *.html _site/ 2>/dev/null || true
+          for d in css js assets routes; do
+            if [ -d "$d" ]; then cp -r "$d" _site/; fi
+          done
+          ls -1 _site/*.html | head
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
