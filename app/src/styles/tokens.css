@@ -1,0 +1,65 @@
+/* TWL Control Tower — 디자인 토큰 (레거시 style.css :root 이식, 라이트/다크) */
+:root {
+  --brand-primary: #0b2d5b;
+  --brand-accent: #1e6fe0;
+  --brand-accent-2: #3987e5;
+  --brand-point: #00b8a9;
+  --lv-low: #0ca30c;
+  --lv-stable: #fab219;
+  --lv-busy: #ec835a;
+  --lv-congested: #d03b3b;
+  --series-1: #1e6fe0;
+  --series-2: #eb6834;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --maxw: 1240px;
+  --header-h: 64px;
+  --font: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+}
+:root[data-theme='light'] {
+  --bg: #f4f6fa; --surface: #ffffff; --surface-2: #f0f3f8;
+  --ink: #101828; --ink-2: #46536a; --muted: #71809b;
+  --grid: #e5e8f0; --border: rgba(16, 24, 40, 0.1);
+  --header-bg: rgba(255, 255, 255, 0.82);
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 8px 28px rgba(16, 24, 40, 0.07);
+  --hero-grad: radial-gradient(1100px 500px at 18% -10%, #12408a 0%, transparent 60%),
+    radial-gradient(900px 460px at 85% 0%, #0d5f8a 0%, transparent 55%),
+    linear-gradient(180deg, #0a1e3f 0%, #0b2d5b 100%);
+}
+:root[data-theme='dark'] {
+  --bg: #0a0f1e; --surface: #121a2c; --surface-2: #182238;
+  --ink: #e9eef8; --ink-2: #b9c4d8; --muted: #8493ac;
+  --grid: #223048; --border: rgba(233, 238, 248, 0.1);
+  --header-bg: rgba(10, 15, 30, 0.78);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 34px rgba(0, 0, 0, 0.4);
+  --hero-grad: radial-gradient(1100px 520px at 18% -10%, #123c82 0%, transparent 60%),
+    radial-gradient(900px 460px at 85% 0%, #0c4a6e 0%, transparent 55%),
+    linear-gradient(180deg, #0a0f1e 0%, #0e1830 100%);
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font); font-size: 15px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition: background .3s ease, color .3s ease;
+}
+a { color: inherit; text-decoration: none; }
+.container { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+.muted { color: var(--muted); }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  font: inherit; font-weight: 700; font-size: 13.5px; border-radius: 10px;
+  padding: 9px 16px; border: 1px solid var(--border); background: var(--surface); color: var(--ink);
+}
+.btn-primary {
+  border: none; color: #fff;
+  background: linear-gradient(120deg, var(--brand-accent) 10%, var(--brand-accent-2) 60%, var(--brand-point) 130%);
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--brand-accent) 35%, transparent);
+}
+.card {
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 18px;
+}
