@@ -1081,8 +1081,23 @@ tr.tree-child td:first-child { padding-left: 30px; }
 .sched-form input:disabled, .sched-form select:disabled { opacity: .7; cursor: not-allowed; }
 .sched-form .btn:disabled { opacity: .5; cursor: not-allowed; }
 
-.prep-panel { text-align: center; padding: 40px 20px 30px; }
-.prep-ic { font-size: 44px; line-height: 1; margin-bottom: 12px; filter: grayscale(.2); }
+.prep-panel { text-align: center; padding: 44px 20px 34px; }
+.prep-badge {
+  width: 86px; height: 86px; margin: 0 auto 20px; border-radius: 24px;
+  display: grid; place-items: center; position: relative; color: var(--brand-accent-2);
+  background: linear-gradient(142deg, color-mix(in srgb, var(--brand-accent) 18%, transparent), color-mix(in srgb, var(--brand-point) 12%, transparent));
+  border: 1px solid color-mix(in srgb, var(--brand-accent-2) 26%, var(--border));
+  box-shadow: 0 14px 32px color-mix(in srgb, var(--brand-accent) 20%, transparent),
+              inset 0 1px 0 color-mix(in srgb, white 14%, transparent);
+}
+.prep-badge svg { width: 42px; height: 42px; display: block; }
+.prep-badge::after {
+  content: ''; position: absolute; inset: -7px; border-radius: 30px;
+  border: 1.5px solid color-mix(in srgb, var(--brand-accent-2) 32%, transparent);
+  animation: prepPulse 2.6s ease-out infinite; pointer-events: none;
+}
+@keyframes prepPulse { 0% { opacity: .65; transform: scale(1); } 100% { opacity: 0; transform: scale(1.16); } }
+@media (prefers-reduced-motion: reduce) { .prep-badge::after { animation: none; opacity: .4; } }
 .prep-panel h3 { margin: 0 0 10px; font-size: 19px; color: var(--ink); }
 .prep-panel p { margin: 0 auto 6px; max-width: 52ch; font-size: 14px; color: var(--ink-2); }
 .prep-panel p.muted { color: var(--muted); font-size: 12.5px; }
