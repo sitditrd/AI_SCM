@@ -126,7 +126,9 @@ button { font-family: inherit; cursor: pointer; }
 .site-nav a:hover { background: color-mix(in srgb, var(--brand-accent) 12%, transparent); color: var(--ink); }
 .site-nav a.active { color: var(--brand-accent-2); }
 
-.header-actions { display: flex; align-items: center; gap: 8px; }
+.header-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+/* 헤더 CTA(도입 문의): 회원승인·로그아웃 추가로 좁아져도 줄바꿈되지 않게 */
+.header-actions .btn { white-space: nowrap; flex: none; padding: 8px 14px; font-size: 13.5px; }
 .icon-btn {
   width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border);
   background: transparent; color: var(--ink-2);
