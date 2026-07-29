@@ -106,7 +106,7 @@ button { font-family: inherit; cursor: pointer; }
 }
 .header-inner {
   max-width: var(--maxw); margin: 0 auto; padding: 0 22px;
-  height: 100%; display: flex; align-items: center; gap: 20px;
+  height: 100%; display: flex; align-items: center; gap: 12px;
 }
 .logo-slot { display: flex; align-items: center; color: var(--ink); }
 .hero-page .site-header:not(.scrolled) .logo-slot,
@@ -118,9 +118,9 @@ button { font-family: inherit; cursor: pointer; }
 .hero-page .site-header:not(.scrolled) .logo-text .l2 { color: #9db8dd; }
 .logo-svg { height: 34px; width: auto; display: block; }
 
-.site-nav { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+.site-nav { margin-left: auto; display: flex; align-items: center; gap: 2px; }
 .site-nav a {
-  padding: 8px 13px; border-radius: 999px; font-size: 14.5px; font-weight: 600;
+  padding: 8px 10px; border-radius: 999px; font-size: 14px; font-weight: 600; white-space: nowrap;
   color: var(--ink-2); transition: background 0.15s ease, color 0.15s ease;
 }
 .site-nav a:hover { background: color-mix(in srgb, var(--brand-accent) 12%, transparent); color: var(--ink); }
@@ -1262,9 +1262,9 @@ tr.tree-child td:first-child { padding-left: 30px; }
 
 /* ---------- 계정 버튼 (헤더 주입: 로그인/로그아웃) ---------- */
 .acct-btn {
-  margin-left: 10px; padding: 7px 14px; border-radius: 999px;
-  border: 1px solid currentColor; font-size: 13px; font-weight: 700;
-  color: inherit; opacity: .9; white-space: nowrap; background: transparent; cursor: pointer;
+  margin-left: 4px; padding: 6px 12px; border-radius: 999px;
+  border: 1px solid currentColor; font-size: 12.5px; font-weight: 700;
+  color: inherit; opacity: .9; white-space: nowrap; background: transparent; cursor: pointer; flex: none;
   transition: background .15s ease, opacity .15s ease;
 }
 .acct-btn:hover { opacity: 1; background: color-mix(in srgb, currentColor 12%, transparent); }
