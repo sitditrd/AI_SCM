@@ -15,7 +15,9 @@
       <a href="index.html" class="logo-slot" aria-label="태웅로직스 홈">
         <span class="logo-text"><b class="l1">TWL</b> <span class="l2">Control Tower</span></span>
       </a>
-      <button class="icon-btn theme-toggle" aria-label="테마 전환" style="margin-left:auto"></button>
+      <div class="header-actions" style="margin-left:auto">
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+      </div>
     </div>
   </header>
 
@@ -23,46 +25,46 @@
     <div class="auth-card">
       <div class="auth-brand">
         <div class="ab-dot"></div>
-        <div><b>TWL Control Tower</b><span>태웅로직스 물류 관제</span></div>
+        <div><b>TWL Control Tower</b><span data-i18n="login.brand.sub">태웅로직스 물류 관제</span></div>
       </div>
 
       <div class="auth-tabs" role="tablist">
-        <button class="auth-tab active" data-tab="login" role="tab">로그인</button>
-        <button class="auth-tab" data-tab="signup" role="tab">회원가입</button>
-        <button class="auth-tab" data-tab="reset" role="tab">비밀번호 찾기</button>
+        <button class="auth-tab active" data-tab="login" role="tab" data-i18n="auth.tab.login">로그인</button>
+        <button class="auth-tab" data-tab="signup" role="tab" data-i18n="auth.tab.signup">회원가입</button>
+        <button class="auth-tab" data-tab="reset" role="tab" data-i18n="auth.tab.reset">비밀번호 찾기</button>
       </div>
 
       <div id="msg" class="auth-msg" hidden></div>
 
       <!-- 로그인 -->
       <form id="f-login" class="auth-form">
-        <label>이메일 <input type="email" name="login" autocomplete="username" placeholder="you@company.com" required></label>
-        <label>비밀번호 <input type="password" name="password" autocomplete="current-password" required></label>
-        <button class="btn btn-primary btn-block" type="submit">로그인</button>
-        <p class="auth-hint">승인된 계정만 로그인할 수 있습니다. 관리자 승인 후 이용하세요.</p>
+        <label><span data-i18n="auth.email">이메일</span> <input type="email" name="login" autocomplete="username" placeholder="you@company.com" required></label>
+        <label><span data-i18n="auth.password">비밀번호</span> <input type="password" name="password" autocomplete="current-password" required></label>
+        <button class="btn btn-primary btn-block" type="submit" data-i18n="auth.tab.login">로그인</button>
+        <p class="auth-hint" data-i18n="auth.hint.login">승인된 계정만 로그인할 수 있습니다. 관리자 승인 후 이용하세요.</p>
       </form>
 
       <!-- 회원가입 -->
       <form id="f-signup" class="auth-form" hidden>
-        <label>이메일 <span class="req">*</span>
+        <label><span data-i18n="auth.email">이메일</span> <span class="req">*</span>
           <span class="with-btn">
             <input type="email" name="login" autocomplete="username" placeholder="you@company.com" required>
-            <button type="button" class="btn btn-ghost btn-sm" data-send="signup">인증코드 받기</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-send="signup" data-i18n="auth.getcode">인증코드 받기</button>
           </span>
         </label>
-        <label>인증코드 <input type="text" name="code" inputmode="numeric" maxlength="6" placeholder="메일로 받은 6자리" required></label>
-        <label>이름/부서 <input type="text" name="name" placeholder="예: 홍길동 / 영업1팀"></label>
-        <label>비밀번호 <span class="req">*</span> <input type="password" name="password" autocomplete="new-password" required></label>
+        <label><span data-i18n="auth.code">인증코드</span> <input type="text" name="code" inputmode="numeric" maxlength="6" placeholder="메일로 받은 6자리" data-i18n-ph="auth.codeHint" required></label>
+        <label><span data-i18n="auth.namedept">이름/부서</span> <input type="text" name="name" placeholder="예: 홍길동 / 영업1팀"></label>
+        <label><span data-i18n="auth.password">비밀번호</span> <span class="req">*</span> <input type="password" name="password" autocomplete="new-password" required></label>
         <div class="pw-meter" id="pw-signup" hidden>
           <div class="pw-bar"><span></span></div>
           <div class="pw-label"></div>
           <ul class="pw-checks">
-            <li data-k="len">8자 이상</li><li data-k="upper">대문자</li><li data-k="lower">소문자</li><li data-k="digit">숫자</li><li data-k="special">특수문자</li>
+            <li data-k="len" data-i18n="auth.pw.len">8자 이상</li><li data-k="upper" data-i18n="auth.pw.upper">대문자</li><li data-k="lower" data-i18n="auth.pw.lower">소문자</li><li data-k="digit" data-i18n="auth.pw.digit">숫자</li><li data-k="special" data-i18n="auth.pw.special">특수문자</li>
           </ul>
         </div>
-        <label>비밀번호 확인 <input type="password" name="password2" autocomplete="new-password" required></label>
-        <button class="btn btn-primary btn-block" type="submit">가입 신청</button>
-        <p class="auth-hint">가입 신청 후 <b>관리자 승인</b>이 완료되면 로그인할 수 있습니다.</p>
+        <label><span data-i18n="auth.password2">비밀번호 확인</span> <input type="password" name="password2" autocomplete="new-password" required></label>
+        <button class="btn btn-primary btn-block" type="submit" data-i18n="auth.btn.signup">가입 신청</button>
+        <p class="auth-hint" data-i18n-html="auth.hint.signup">가입 신청 후 <b>관리자 승인</b>이 완료되면 로그인할 수 있습니다.</p>
       </form>
 
       <!-- 비밀번호 찾기 -->
@@ -89,6 +91,7 @@
   </main>
 
   <script src="js/common.js?v=2026-4"></script>
+  <script src="js/i18n.js?v=2026-07-30a"></script>
   <script src="js/auth.js?v=2026-07-29f"></script>
   <script>
     (function () {

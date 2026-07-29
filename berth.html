@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>선석배정현황 — 국내 터미널 통합 | TWL Control Tower</title>
-  <meta name="description" content="부산신항·광양항·인천항 9개 컨테이너 터미널의 선석배정현황을 매일 오전 6시 자동 수집하여 한 화면에서 제공하는 태웅로직스 Berth Insight."
+  <meta name="description" content="부산신항·광양항·인천항 9개 컨테이너 터미널의 선석배정현황을 매일 오전 6시 자동 수집하여 한 화면에서 제공하는 태웅로직스 Berth Insight.">
   <meta name="theme-color" content="#0a0f1e">
   <link rel="canonical" href="https://sitditrd.github.io/AI_SCM/berth.html">
   <link rel="apple-touch-icon" href="assets/og-image.png">
@@ -17,7 +17,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="선석배정현황 — 국내 터미널 통합 | TWL Control Tower">
   <meta name="twitter:description" content="부산신항·광양항·인천항 9개 컨테이너 터미널의 선석배정현황을 매일 오전 6시 자동 수집하여 한 화면에서 제공하는 태웅로직스 Berth Insight.">
-  <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">>
+  <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="css/style.css?v=2026-07-29i">
   <link rel="icon" href="assets/twl_logo.ico">
@@ -52,30 +52,30 @@
   <section id="main-content" tabindex="-1" class="dash-hero">
     <div class="container">
       <div class="scope-tabs" role="tablist" aria-label="조회 범위">
-        <a class="scope-tab active" href="berth.html" role="tab" aria-selected="true">국내</a>
-        <a class="scope-tab" href="schedule.html" role="tab" aria-selected="false">해외</a>
+        <a class="scope-tab active" href="berth.html" role="tab" aria-selected="true" data-i18n="scope.dom">국내</a>
+        <a class="scope-tab" href="schedule.html" role="tab" aria-selected="false" data-i18n="scope.ovs">해외</a>
       </div>
       <div class="dash-title-row">
         <div>
-          <h1>선석배정현황 <span style="font-weight:300; opacity:.75;">— 국내 터미널 통합</span></h1>
-          <p class="dash-sub">부산신항·광양항·인천항 <b>9개 터미널</b>의 선석배정을 매일 오전 6시 자동 수집합니다</p>
+          <h1 data-i18n-html="berth.hero.title">선석배정현황 <span style="font-weight:300; opacity:.75;">— 국내 터미널 통합</span></h1>
+          <p class="dash-sub" data-i18n-html="berth.hero.sub">부산신항·광양항·인천항 <b>9개 터미널</b>의 선석배정을 매일 오전 6시 자동 수집합니다</p>
         </div>
         <div class="live-status">
           <span class="pulse-dot" aria-hidden="true"></span>
           <span class="stamp" id="lastUpdated">업데이트 확인 중…</span>
           <button class="refresh-btn" id="refreshBtn" aria-label="지금 새로고침">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 4v5h-5"/></svg>
-            새로고침
+            <span data-i18n="berth.refresh">새로고침</span>
           </button>
         </div>
       </div>
       <p class="dash-sub" style="margin-top:14px; font-size:12.5px;">
-        수집 기준: <span id="collectLabel">—</span> 06:00 KST (일일 자동 수집) · 총 <b id="totalLabel">—</b>건
+        <span data-i18n="berth.meta.basis">수집 기준:</span> <span id="collectLabel">—</span> <span data-i18n="berth.meta.mid">06:00 KST (일일 자동 수집) · 총</span> <b id="totalLabel">—</b><span data-i18n="berth.meta.unit">건</span>
       </p>
     </div>
   </section>
 
-  <div class="stale-banner" id="staleBanner">실시간 연결 지연 — 마지막 수신 데이터를 표시 중입니다.</div>
+  <div class="stale-banner" id="staleBanner" data-i18n="berth.stale">실시간 연결 지연 — 마지막 수신 데이터를 표시 중입니다.</div>
 
   <!-- ============ Section 01 KPI ============ -->
   <section class="dash-section" id="summary">
@@ -240,8 +240,9 @@
 
   <script src="js/data_berth.js?v=2026-07-28"></script>
   <script src="js/common.js?v=2026-4"></script>
+  <script src="js/i18n.js?v=2026-07-30a"></script>
   <script src="js/auth.js?v=2026-07-29f"></script>
-  <script src="js/auth-gate.js?v=2026-07-29g"></script>
+  <script src="js/auth-gate.js?v=2026-07-30a"></script>
   <script src="js/berth.js?v=2026-8"></script>
   <script src="js/weather.js"></script>
 </body>

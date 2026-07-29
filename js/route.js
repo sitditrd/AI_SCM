@@ -5,10 +5,48 @@
 (function () {
   'use strict';
 
-  var map = null, routeLayer = null, ports = [];
+  var map = null, routeLayer = null, ports = [], routeCache = Object.create(null);
 
   function el(id) { return document.getElementById(id); }
   function slugOf(en) { return en.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+  function currentLang() {
+    var i18n = window.TWI18N;
+    return i18n && typeof i18n.getLang === 'function' ? i18n.getLang() : 'ko';
+  }
+  function tr(text) {
+    var i18n = window.TWI18N;
+    return i18n && typeof i18n.translate === 'function' ? i18n.translate(String(text || ''), currentLang()) : String(text || '');
+  }
+  function esc(text) {
+    return String(text == null ? '' : text).replace(/[&<>"']/g, function (ch) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+    });
+  }
+  function setStatus(title, message) {
+    var html = '<div class="src-card">';
+    if (title) html += '<b>' + esc(tr(title)) + '</b>';
+    html += '<div class="sc-sub">' + esc(tr(message)) + '</div></div>';
+    el('simKpis').innerHTML = html;
+  }
+  function loadRoute(o) {
+    var slug = slugOf(o.en);
+    if (routeCache[slug]) return Promise.resolve(routeCache[slug]);
+    if (typeof fetch !== 'function') {
+      return Promise.reject(new Error('브라우저가 항로 데이터 로딩을 지원하지 않습니다'));
+    }
+    return fetch('routes/' + slug + '.json', { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('항로 데이터를 찾을 수 없습니다 (HTTP ' + r.status + ')');
+        return r.json();
+      })
+      .then(function (json) { routeCache[slug] = json; return json; })
+      .catch(function (e) {
+        if (window.location && window.location.protocol === 'file:') {
+          throw new Error('로컬 파일로 열면 항로 JSON을 불러올 수 없습니다. python server.py 또는 GitHub Pages 주소로 접속해 주세요.');
+        }
+        throw e;
+      });
+  }
 
   /* ---------- 난수: 정규(Box-Muller)·로그정규 ---------- */
   function randn() {
@@ -130,9 +168,8 @@
     var o = ports[+el('fromPort').value], d = ports[+el('toPort').value];
     var kn = parseFloat(el('speedKn').value) || 16.5;
     if (!o || !d || o === d) return;
-    el('simKpis').innerHTML = '<div class="src-card"><div class="sc-sub">항로 계산 중… (searoute)</div></div>';
-    fetch('routes/' + slugOf(o.en) + '.json')
-      .then(function (r) { if (!r.ok) throw new Error('항로 데이터를 찾을 수 없습니다 (HTTP ' + r.status + ')'); return r.json(); })
+    setStatus('', '항로 계산 중… (searoute)');
+    loadRoute(o)
       .then(function (all) {
         var res = all[slugOf(d.en)];
         if (!res) throw new Error('해당 구간의 사전계산 항로가 없습니다');
@@ -162,12 +199,21 @@
         }
       })
       .catch(function (e) {
-        el('simKpis').innerHTML = '<div class="src-card"><b>계산 실패</b><div class="sc-sub">' + e.message + '</div></div>';
+        setStatus('계산 실패', e.message);
       });
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    ports = window.TWDATA.getState(1).ports.slice().sort(function (a, b) { return a.ko.localeCompare(b.ko, 'ko'); });
+    if (!window.TWDATA || typeof window.TWDATA.getState !== 'function') {
+      setStatus('계산 실패', '항만 기준 데이터를 불러오지 못했습니다');
+      return;
+    }
+    var state = window.TWDATA.getState(1);
+    if (!state || !state.ports || !state.ports.length) {
+      setStatus('계산 실패', '항만 기준 데이터를 불러오지 못했습니다');
+      return;
+    }
+    ports = state.ports.slice().sort(function (a, b) { return a.ko.localeCompare(b.ko, 'ko'); });
     var opts = ports.map(function (p, i) { return '<option value="' + i + '">' + p.ko + ' (' + p.en + ')</option>'; }).join('');
     el('fromPort').innerHTML = opts;
     el('toPort').innerHTML = opts;

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>데이터 현황 — 파이프라인 모니터링 | TWL Control Tower</title>
-  <meta name="description" content="선석배정·Port Insight·운임지수·항만기상 데이터 파이프라인의 상태를 한눈에 보여주는 운영 보드."
+  <meta name="description" content="선석배정·Port Insight·운임지수·항만기상 데이터 파이프라인의 상태를 한눈에 보여주는 운영 보드.">
   <meta name="theme-color" content="#0a0f1e">
   <link rel="canonical" href="https://sitditrd.github.io/AI_SCM/status.html">
   <link rel="apple-touch-icon" href="assets/og-image.png">
@@ -17,7 +17,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="데이터 현황 — 파이프라인 모니터링 | TWL Control Tower">
   <meta name="twitter:description" content="선석배정·Port Insight·운임지수·항만기상 데이터 파이프라인의 상태를 한눈에 보여주는 운영 보드.">
-  <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">>
+  <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="css/style.css?v=2026-07-29i">
   <link rel="icon" href="assets/twl_logo.ico">
@@ -52,15 +52,15 @@
     <div class="container">
       <div class="dash-title-row">
         <div>
-          <h1>데이터 현황 <span style="font-weight:300; opacity:.75;">— 일일 수집·적재 현황</span></h1>
-          <p class="dash-sub">4개 데이터 파이프라인의 적재 여부·최신성·이력을 한 화면에서 점검합니다</p>
+          <h1 data-i18n-html="status.hero.title">데이터 현황 <span style="font-weight:300; opacity:.75;">— 일일 수집·적재 현황</span></h1>
+          <p class="dash-sub" data-i18n="status.hero.sub">4개 데이터 파이프라인의 적재 여부·최신성·이력을 한 화면에서 점검합니다</p>
         </div>
         <div class="live-status">
           <span class="pulse-dot" aria-hidden="true"></span>
           <span class="stamp" id="lastUpdated">확인 중…</span>
           <button class="refresh-btn" id="refreshBtn" aria-label="지금 새로고침">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 4v5h-5"/></svg>
-            새로고침
+            <span data-i18n="status.hero.refresh">새로고침</span>
           </button>
         </div>
       </div>
@@ -77,8 +77,8 @@
     <div class="container">
       <div class="dash-head reveal">
         <span class="no">SECTION 01</span>
-        <h2>선석배정 파이프라인 (금일)</h2>
-        <span class="hint">수집 → 적재 → DB → 화면 · 단계별 상태</span>
+        <h2 data-i18n="status.sec01.h">선석배정 파이프라인 (금일)</h2>
+        <span class="hint" data-i18n="status.sec01.hint">수집 → 적재 → DB → 화면 · 단계별 상태</span>
       </div>
       <div class="card reveal">
         <div class="pipe-flow" id="pipeFlow"></div>
@@ -91,8 +91,8 @@
     <div class="container">
       <div class="dash-head reveal">
         <span class="no">SECTION 02</span>
-        <h2>데이터 소스 최신성</h2>
-        <span class="hint">갱신 주기 대비 경과 시간 기준 · 게이지 초과 전 정상 판정</span>
+        <h2 data-i18n="status.sec02.h">데이터 소스 최신성</h2>
+        <span class="hint" data-i18n="status.sec02.hint">갱신 주기 대비 경과 시간 기준 · 게이지 초과 전 정상 판정</span>
       </div>
       <div class="src-grid" id="srcGrid"></div>
     </div>
@@ -103,8 +103,8 @@
     <div class="container">
       <div class="dash-head reveal">
         <span class="no">SECTION 03</span>
-        <h2>최근 7일 적재 기록</h2>
-        <span class="hint">선석배정 일별 적재 이력 · 누락 일자 식별</span>
+        <h2 data-i18n="status.sec03.h">최근 7일 적재 기록</h2>
+        <span class="hint" data-i18n="status.sec03.hint">선석배정 일별 적재 이력 · 누락 일자 식별</span>
       </div>
       <div class="card reveal">
         <div class="day-grid" id="dayGrid"></div>
@@ -117,20 +117,20 @@
     <div class="container">
       <div class="dash-head reveal">
         <span class="no">SECTION 04</span>
-        <h2>적재 이력 상세</h2>
-        <span class="hint">최근 14건</span>
+        <h2 data-i18n="status.sec04.h">적재 이력 상세</h2>
+        <span class="hint" data-i18n="status.sec04.hint">최근 14건</span>
       </div>
       <div class="tbl-card reveal">
         <div class="tbl-scroll">
           <table class="tw">
             <thead>
-              <tr><th>수집일</th><th>파일</th><th class="num">적재 건수</th><th>상태</th><th>비고</th><th>적재 시각</th></tr>
+              <tr><th data-i18n="status.tbl.date">수집일</th><th data-i18n="status.tbl.file">파일</th><th class="num" data-i18n="status.tbl.count">적재 건수</th><th data-i18n="status.tbl.status">상태</th><th data-i18n="status.tbl.note">비고</th><th data-i18n="status.tbl.time">적재 시각</th></tr>
             </thead>
             <tbody id="logBody"></tbody>
           </table>
         </div>
       </div>
-      <p class="notice">
+      <p class="notice" data-i18n="status.sec04.notice">
         이상 감지 시 조치 순서: ① 수집 파일 확인(터미널 스케쥴 수집 폴더) ② 스케쥴 작업 실행 이력 확인
         ③ 수동 재적재(collect_upload_berth.py) ④ 미해결 시 IT 담당(itt@twsc.co.kr) 연락.
       </p>
@@ -158,8 +158,9 @@
   </footer>
 
   <script src="js/common.js?v=2026-4"></script>
+  <script src="js/i18n.js?v=2026-07-30a"></script>
   <script src="js/auth.js?v=2026-07-29f"></script>
-  <script src="js/auth-gate.js?v=2026-07-29g"></script>
+  <script src="js/auth-gate.js?v=2026-07-30a"></script>
   <script src="js/status.js?v=2026-5"></script>
 </body>
 </html>

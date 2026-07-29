@@ -10,7 +10,9 @@
   var WARN_BEFORE = 3000;    /* [조정] blur 몇 ms 전에 알림 카운트다운 */
   var ADMIN_ONLY = ['status.html']; /* [조정] 관리자 전용 화면 — 미관리자는 메뉴 숨김 + 접근 차단 */
   var gateApplied = false, timers = [];
+  var lastAuthed = false, lastName = null;
 
+  function ti(k, ko) { return (typeof TWI18N !== 'undefined' && TWI18N.t) ? TWI18N.t(k, ko) : ko; }
   function acctHost() { return document.querySelector('.site-header .header-inner'); }
   function pageName() { var p = (location.pathname.split('/').pop() || 'index.html'); return p || 'index.html'; }
   function isAdminOnlyPage() { return ADMIN_ONLY.indexOf(pageName()) !== -1; }
@@ -24,21 +26,23 @@
   }
 
   /* 관리자 전용 화면: 콘텐츠 숨김 + 안내 오버레이 */
+  function adminOverlayHTML() {
+    return '<div class="auth-gate-card">' +
+        '<div class="agc-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-3 8-7 9-4-1-7-4.6-7-9V6l7-3z"/><path d="M9.2 12.2l2 2 3.6-3.8"/></svg></div>' +
+        '<h2>' + ti('admin.blockTitle', '관리자 전용 화면입니다') + '</h2>' +
+        '<p>' + ti('admin.blockBody', '데이터 현황 보드는 관리자 계정만 열람할 수 있습니다.<br>관리자 계정으로 로그인해 주세요.') + '</p>' +
+        '<div class="agc-cta">' +
+          '<a class="btn btn-primary" href="login.html">' + ti('auth.login', '로그인') + '</a>' +
+          '<a class="btn btn-ghost" href="index.html">' + ti('gate.home', '홈으로') + '</a>' +
+        '</div>' +
+      '</div>';
+  }
   function blockAdminOnlyPage() {
     document.body.classList.add('admin-only-blocked');
     if (document.getElementById('adminOnlyGate')) return;
     var ov = document.createElement('div');
     ov.id = 'adminOnlyGate'; ov.className = 'auth-gate-ov admin-only-ov';
-    ov.innerHTML =
-      '<div class="auth-gate-card">' +
-        '<div class="agc-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-3 8-7 9-4-1-7-4.6-7-9V6l7-3z"/><path d="M9.2 12.2l2 2 3.6-3.8"/></svg></div>' +
-        '<h2>관리자 전용 화면입니다</h2>' +
-        '<p>데이터 현황 보드는 관리자 계정만 열람할 수 있습니다.<br>관리자 계정으로 로그인해 주세요.</p>' +
-        '<div class="agc-cta">' +
-          '<a class="btn btn-primary" href="login.html">로그인</a>' +
-          '<a class="btn btn-ghost" href="index.html">홈으로</a>' +
-        '</div>' +
-      '</div>';
+    ov.innerHTML = adminOverlayHTML();
     document.body.appendChild(ov);
   }
   function unblockAdminOnlyPage() {
@@ -47,6 +51,7 @@
   }
 
   function injectAccount(authed, name) {
+    lastAuthed = authed; lastName = name;
     var host = acctHost(); if (!host) return;
     var role = authed ? (TWAUTH.session() || {}).role : null;
 
@@ -54,18 +59,18 @@
     var a = document.getElementById('acctBtn');
     if (!a) { a = document.createElement('a'); a.id = 'acctBtn'; a.className = 'acct-btn'; host.appendChild(a); }
     if (authed) {
-      a.textContent = '로그아웃' + (name ? ' · ' + name : '');
-      a.href = 'javascript:void(0)'; a.title = '로그아웃';
+      a.textContent = ti('auth.logout', '로그아웃') + (name ? ' · ' + name : '');
+      a.href = 'javascript:void(0)'; a.title = ti('auth.logout', '로그아웃');
       a.onclick = function () { TWAUTH.logout().then(function () { location.reload(); }); };
     } else {
-      a.textContent = '로그인'; a.href = 'login.html'; a.title = '로그인'; a.onclick = null;
+      a.textContent = ti('auth.login', '로그인'); a.href = 'login.html'; a.title = ti('auth.login', '로그인'); a.onclick = null;
     }
 
     /* 관리자: '회원 승인' 링크 — 로그인 유지한 채 관리자 화면 이동 */
     var adm = document.getElementById('adminBtn');
     if (authed && role === 'admin') {
       if (!adm) { adm = document.createElement('a'); adm.id = 'adminBtn'; adm.className = 'acct-btn acct-btn-admin'; host.insertBefore(adm, a); }
-      adm.textContent = '회원 승인'; adm.href = 'admin.html'; adm.title = '관리자 · 회원 승인 관리';
+      adm.textContent = ti('auth.admin', '회원 승인'); adm.href = 'admin.html'; adm.title = ti('auth.admin', '회원 승인');
     } else if (adm) { adm.remove(); }
   }
 
@@ -79,12 +84,23 @@
     }
     t.innerHTML =
       '<span class="gt-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2.6"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><path d="M12 14.4v2.4"/></svg></span>' +
-      '<span class="gt-txt"><b>로그인이 필요한 서비스입니다</b>' +
-      '<small><b>' + secondsLeft + '초</b> 후 주요 기능이 가려집니다 · 로그인 시 계속 이용</small></span>' +
-      '<a class="gt-btn" href="login.html">로그인</a>';
+      '<span class="gt-txt"><b>' + ti('gate.title', '로그인이 필요한 서비스입니다') + '</b>' +
+      '<small>' + ti('gate.toastSub', '<b>%s초</b> 후 주요 기능이 가려집니다 · 로그인 시 계속 이용').replace('%s', secondsLeft) + '</small></span>' +
+      '<a class="gt-btn" href="login.html">' + ti('auth.login', '로그인') + '</a>';
   }
   function removeToast() { var t = document.getElementById('gateToast'); if (t) t.remove(); }
 
+  function gateOverlayHTML() {
+    return '<div class="auth-gate-card">' +
+        '<div class="agc-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2.6"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><path d="M12 14.4v2.5"/></svg></div>' +
+        '<h2>' + ti('gate.title', '로그인이 필요한 서비스입니다') + '</h2>' +
+        '<p>' + ti('gate.body', '주요 기능은 로그인 후 이용하실 수 있습니다.<br>승인된 계정으로 로그인하거나 회원가입을 신청해 주세요.') + '</p>' +
+        '<div class="agc-cta">' +
+          '<a class="btn btn-primary" href="login.html">' + ti('gate.cta', '로그인 / 회원가입') + '</a>' +
+          '<a class="btn btn-ghost" href="index.html">' + ti('gate.home', '홈으로') + '</a>' +
+        '</div>' +
+      '</div>';
+  }
   function applyGate() {
     if (gateApplied || TWAUTH.isAuthed()) return;
     gateApplied = true;
@@ -93,16 +109,7 @@
     if (document.getElementById('authGate')) return;
     var ov = document.createElement('div');
     ov.id = 'authGate'; ov.className = 'auth-gate-ov';
-    ov.innerHTML =
-      '<div class="auth-gate-card">' +
-        '<div class="agc-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2.6"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><path d="M12 14.4v2.5"/></svg></div>' +
-        '<h2>로그인이 필요한 서비스입니다</h2>' +
-        '<p>주요 기능은 로그인 후 이용하실 수 있습니다.<br>승인된 계정으로 로그인하거나 회원가입을 신청해 주세요.</p>' +
-        '<div class="agc-cta">' +
-          '<a class="btn btn-primary" href="login.html">로그인 / 회원가입</a>' +
-          '<a class="btn btn-ghost" href="index.html">홈으로</a>' +
-        '</div>' +
-      '</div>';
+    ov.innerHTML = gateOverlayHTML();
     document.body.appendChild(ov);
   }
 
@@ -152,5 +159,12 @@
       if (authed) { releaseGate(); }
       else if (hasContent) { scheduleGate(); }
     });
+  });
+
+  /* 언어 전환 시 동적 주입 요소(계정 버튼·게이트/관리자 오버레이) 재번역 */
+  window.addEventListener('twl:langchange', function () {
+    injectAccount(lastAuthed, lastName);
+    var g = document.getElementById('authGate'); if (g) g.innerHTML = gateOverlayHTML();
+    var ao = document.getElementById('adminOnlyGate'); if (ao) ao.innerHTML = adminOverlayHTML();
   });
 })();

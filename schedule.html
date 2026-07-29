@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>해외 스케줄 — Ship Schedule | TWL Control Tower</title>
-  <meta name="description" content="LOCODE 기반 해외 선박 스케줄(Route·Vessel·Port)과 해외 터미널 현황 — 서비스 준비 중."
+  <meta name="description" content="LOCODE 기반 해외 선박 스케줄(Route·Vessel·Port)과 해외 터미널 현황 — 서비스 준비 중.">
   <meta name="theme-color" content="#0a0f1e">
   <link rel="canonical" href="https://sitditrd.github.io/AI_SCM/schedule.html">
   <link rel="apple-touch-icon" href="assets/og-image.png">
@@ -17,7 +17,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="해외 스케줄 — Ship Schedule | TWL Control Tower">
   <meta name="twitter:description" content="LOCODE 기반 해외 선박 스케줄(Route·Vessel·Port)과 해외 터미널 현황 — 서비스 준비 중.">
-  <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">>
+  <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="css/style.css?v=2026-07-29i">
   <link rel="icon" href="assets/twl_logo.ico">
@@ -50,17 +50,17 @@
   <section id="main-content" tabindex="-1" class="dash-hero">
     <div class="container">
       <div class="scope-tabs" role="tablist" aria-label="조회 범위">
-        <a class="scope-tab" href="berth.html" role="tab" aria-selected="false">국내</a>
-        <a class="scope-tab active" href="schedule.html" role="tab" aria-selected="true">해외</a>
+        <a class="scope-tab" href="berth.html" role="tab" aria-selected="false" data-i18n="scope.dom">국내</a>
+        <a class="scope-tab active" href="schedule.html" role="tab" aria-selected="true" data-i18n="scope.ovs">해외</a>
       </div>
       <div class="dash-title-row">
         <div>
-          <h1>해외 스케줄 <span style="font-weight:300; opacity:.75;">— Ship Schedule</span></h1>
-          <p class="dash-sub">LOCODE 기반 해외 선박 스케줄과 터미널 현황을 한 화면에서 조회합니다</p>
+          <h1 data-i18n-html="schedule.hero.title">해외 스케줄 <span style="font-weight:300; opacity:.75;">— Ship Schedule</span></h1>
+          <p class="dash-sub" data-i18n="schedule.hero.sub">LOCODE 기반 해외 선박 스케줄과 터미널 현황을 한 화면에서 조회합니다</p>
         </div>
-        <span class="prep-pill"><span class="pulse-dot" aria-hidden="true"></span>서비스 준비 중</span>
+        <span class="prep-pill" data-i18n-html="schedule.hero.pill"><span class="pulse-dot" aria-hidden="true"></span>서비스 준비 중</span>
       </div>
-      <p class="dash-sub" style="margin-top:14px; font-size:12.5px;">
+      <p class="dash-sub" style="margin-top:14px; font-size:12.5px;" data-i18n-html="schedule.hero.sub2">
         Route · Vessel · Port 3-뷰 · 사전수집 + 캐시로 <b>빠른 응답(&lt;3초)</b> 목표 · 데이터 소스 확정 후 오픈
       </p>
     </div>
@@ -71,14 +71,14 @@
     <div class="container">
       <div class="dash-head reveal">
         <span class="no">SHIP SCHEDULE</span>
-        <h2>선박 스케줄 조회</h2>
-        <span class="hint">Route(항로) · Vessel(선박) · Port(항만) — 3가지 방식</span>
+        <h2 data-i18n="schedule.sched.h">선박 스케줄 조회</h2>
+        <span class="hint" data-i18n="schedule.sched.hint">Route(항로) · Vessel(선박) · Port(항만) — 3가지 방식</span>
       </div>
 
       <div class="view-tabs" role="tablist" aria-label="조회 방식">
-        <button class="view-tab active" data-view="route" role="tab" aria-selected="true">Route · 항로</button>
-        <button class="view-tab" data-view="vessel" role="tab" aria-selected="false">Vessel · 선박</button>
-        <button class="view-tab" data-view="port" role="tab" aria-selected="false">Port · 항만</button>
+        <button class="view-tab active" data-view="route" role="tab" aria-selected="true" data-i18n="schedule.view.route">Route · 항로</button>
+        <button class="view-tab" data-view="vessel" role="tab" aria-selected="false" data-i18n="schedule.view.vessel">Vessel · 선박</button>
+        <button class="view-tab" data-view="port" role="tab" aria-selected="false" data-i18n="schedule.view.port">Port · 항만</button>
       </div>
 
       <!-- Route -->
@@ -88,15 +88,15 @@
           <label>도착항 (POD)<input type="text" placeholder="LOCODE 또는 항구명 (예: USSAV)" disabled></label>
           <label>출발일<input type="date" disabled></label>
           <label>조회 주(weeks)<select disabled><option>2주</option><option>4주</option></select></label>
-          <button class="btn btn-primary" disabled>조회</button>
+          <button class="btn btn-primary" disabled data-i18n="schedule.form.search">조회</button>
         </div>
         <div class="prep-panel">
           <div class="prep-badge" aria-hidden="true">
             <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="24" r="16.5"/><path d="M32 16 L26 26 L16 32 L22 22 Z" fill="currentColor" fill-opacity="0.16"/><circle cx="24" cy="24" r="1.8" fill="currentColor" stroke="none"/></svg>
           </div>
-          <h3>서비스 준비 중입니다</h3>
-          <p>선사·모선/항차·ETD/ETA·<b>소요일</b>·<b>환적 여부·환적항</b>을 표 형태로 제공합니다.</p>
-          <p class="muted">POL→POD 항로별 스케줄을 사전수집·캐시하여 3초 이내 응답을 목표로 합니다.</p>
+          <h3 data-i18n="schedule.prep.h">서비스 준비 중입니다</h3>
+          <p data-i18n-html="schedule.route.prep.p">선사·모선/항차·ETD/ETA·<b>소요일</b>·<b>환적 여부·환적항</b>을 표 형태로 제공합니다.</p>
+          <p class="muted" data-i18n="schedule.route.prep.muted">POL→POD 항로별 스케줄을 사전수집·캐시하여 3초 이내 응답을 목표로 합니다.</p>
         </div>
       </div>
 
@@ -104,15 +104,15 @@
       <div class="card reveal view-panel" data-view="vessel" hidden>
         <div class="sched-form">
           <label>모선명 / IMO<input type="text" placeholder="모선명 또는 IMO 번호" disabled></label>
-          <button class="btn btn-primary" disabled>조회</button>
+          <button class="btn btn-primary" disabled data-i18n="schedule.form.search">조회</button>
         </div>
         <div class="prep-panel">
           <div class="prep-badge" aria-hidden="true">
             <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 28 h32 l-4 9 H12 z"/><path d="M14 28 v-7 h16 v7"/><path d="M18 21 v-4 h8 v4"/><path d="M7 38c2.5 1.8 4.6 1.8 7 0s4.6-1.8 7 0 4.6 1.8 7 0 4.6-1.8 7 0"/></svg>
           </div>
-          <h3>서비스 준비 중입니다</h3>
-          <p>선박의 <b>현재 위치(지도)</b>·예정 기항지·ETA/ETD를 표시합니다.</p>
-          <p class="muted">AIS 및 스케줄 데이터를 결합해 선박 단위로 추적합니다.</p>
+          <h3 data-i18n="schedule.prep.h">서비스 준비 중입니다</h3>
+          <p data-i18n-html="schedule.vessel.prep.p">선박의 <b>현재 위치(지도)</b>·예정 기항지·ETA/ETD를 표시합니다.</p>
+          <p class="muted" data-i18n="schedule.vessel.prep.muted">AIS 및 스케줄 데이터를 결합해 선박 단위로 추적합니다.</p>
         </div>
       </div>
 
@@ -120,15 +120,15 @@
       <div class="card reveal view-panel" data-view="port" hidden>
         <div class="sched-form">
           <label>항만 (LOCODE)<input type="text" placeholder="LOCODE (예: NLRTM)" disabled></label>
-          <button class="btn btn-primary" disabled>조회</button>
+          <button class="btn btn-primary" disabled data-i18n="schedule.form.search">조회</button>
         </div>
         <div class="prep-panel">
           <div class="prep-badge" aria-hidden="true">
             <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="11" r="3.5"/><path d="M24 14.5 V37"/><path d="M16 21 H32"/><path d="M10 27c0 8.5 6.5 11.5 14 11.5S38 35.5 38 27"/><path d="M10 27 l-2.6 3.4 M10 27 l3.4 1.6"/><path d="M38 27 l2.6 3.4 M38 27 l-3.4 1.6"/></svg>
           </div>
-          <h3>서비스 준비 중입니다</h3>
-          <p>해당 항만의 <b>입·출항 스케줄</b>과 혼잡/현황을 제공합니다.</p>
-          <p class="muted">Port Insight 혼잡 지표와 연계해 해외 항만도 함께 확인할 수 있게 확장 예정입니다.</p>
+          <h3 data-i18n="schedule.prep.h">서비스 준비 중입니다</h3>
+          <p data-i18n-html="schedule.port.prep.p">해당 항만의 <b>입·출항 스케줄</b>과 혼잡/현황을 제공합니다.</p>
+          <p class="muted" data-i18n="schedule.port.prep.muted">Port Insight 혼잡 지표와 연계해 해외 항만도 함께 확인할 수 있게 확장 예정입니다.</p>
         </div>
       </div>
     </div>
@@ -139,20 +139,20 @@
     <div class="container">
       <div class="dash-head reveal">
         <span class="no">OVERSEAS</span>
-        <h2>해외 터미널 현황</h2>
-        <span class="hint">LOCODE 기반 해외 포트 조회 · 국내와 동일 UI 패턴</span>
+        <h2 data-i18n="schedule.term.h">해외 터미널 현황</h2>
+        <span class="hint" data-i18n="schedule.term.hint">LOCODE 기반 해외 포트 조회 · 국내와 동일 UI 패턴</span>
       </div>
       <div class="card reveal">
         <div class="prep-panel">
           <div class="prep-badge" aria-hidden="true">
             <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="24" r="16"/><path d="M8 24 h32"/><path d="M24 8c6 5 6 27 0 32 M24 8c-6 5 -6 27 0 32"/></svg>
           </div>
-          <h3>서비스 준비 중입니다</h3>
-          <p>주요 해외 터미널의 선석·스케줄 정보를 국내 선석배정과 동일한 방식으로 제공할 예정입니다.</p>
-          <p class="muted">데이터 소스(스크래핑 · OCR · 공개 API) 확정 후 순차 오픈합니다.</p>
+          <h3 data-i18n="schedule.prep.h">서비스 준비 중입니다</h3>
+          <p data-i18n="schedule.term.prep.p">주요 해외 터미널의 선석·스케줄 정보를 국내 선석배정과 동일한 방식으로 제공할 예정입니다.</p>
+          <p class="muted" data-i18n="schedule.term.prep.muted">데이터 소스(스크래핑 · OCR · 공개 API) 확정 후 순차 오픈합니다.</p>
         </div>
       </div>
-      <p class="notice">
+      <p class="notice" data-i18n-html="schedule.notice">
         본 화면은 요구사항 명세서(항만/선박 인텔리전스 SRS) FR-03·FR-04·FR-05 기준 <b>기획 화면</b>입니다.
         데이터 소스 확정 및 성능 목표(초기 &lt;2초 · 조회 &lt;3초) 충족 후 정식 오픈합니다.
       </p>
@@ -179,8 +179,9 @@
   </footer>
 
   <script src="js/common.js?v=2026-4"></script>
+  <script src="js/i18n.js?v=2026-07-30a"></script>
   <script src="js/auth.js?v=2026-07-29f"></script>
-  <script src="js/auth-gate.js?v=2026-07-29g"></script>
+  <script src="js/auth-gate.js?v=2026-07-30a"></script>
   <script>
     (function () {
       var tabs = document.querySelectorAll('.view-tab');

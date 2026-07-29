@@ -40,10 +40,11 @@
     };
     var score = (checks.len ? 1 : 0) + (checks.lower ? 1 : 0) + (checks.upper ? 1 : 0) + (checks.digit ? 1 : 0) + (checks.special ? 1 : 0);
     var label = score <= 2 ? '약함' : score === 3 ? '보통' : score === 4 ? '강함' : '매우 강함';
+    var key = score <= 2 ? 'auth.pw.weak' : score === 3 ? 'auth.pw.fair' : score === 4 ? 'auth.pw.strong' : 'auth.pw.vstrong';
     var color = score <= 2 ? 'var(--lv-congested)' : score === 3 ? 'var(--lv-stable)' : 'var(--lv-low)';
     // 최소 요건: 8자 이상 + 특수문자 포함
     var ok = checks.len && checks.special && score >= 3;
-    return { score: score, label: label, color: color, checks: checks, ok: ok };
+    return { score: score, label: label, key: key, color: color, checks: checks, ok: ok };
   }
 
   window.TWAUTH = {

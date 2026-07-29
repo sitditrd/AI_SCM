@@ -12,7 +12,33 @@
     initCounters();
   });
 
+  /* 언어 전환 시 JS 렌더 스트립 재번역 */
+  window.addEventListener('twl:langchange', function () {
+    renderFreight();
+    if (window.TWDATA && window.TWDATA.getMode && window.TWDATA.getMode() === 'supabase') renderStrip(false);
+  });
+
+  function t(k, ko) { return (window.TWI18N && window.TWI18N.t) ? window.TWI18N.t(k, ko) : ko; }
+
   /* ---------- 주간 해상운임지수 스트립 (freight_index 테이블) ---------- */
+  var fxItems = null, fxLatest = null;   /* 언어 전환 재렌더용 캐시 */
+
+  function renderFreight() {
+    var host = document.getElementById('freightStrip');
+    if (!host || !fxItems || !fxItems.length) return;
+    host.innerHTML = fxItems.map(function (i) {
+      var up = i.d.pct_change > 0;
+      var arrow = i.d.pct_change == null ? '' :
+        ' <small style="color:' + (up ? 'var(--lv-congested)' : 'var(--lv-low)') + ';">' +
+        (up ? '▲' : '▼') + Math.abs(i.d.pct_change).toFixed(2) + '%</small>';
+      return '<div class="live-chip"><div class="k">' + t(i.key, i.ko) +
+        '</div><div class="v">' + Number(i.d.value).toLocaleString('ko-KR') + arrow + '</div></div>';
+    }).join('') +
+    '<div class="live-chip"><div class="k">' + t('fx.pubdate', '발표일') + '</div><div class="v" style="font-size:14px;">' +
+      fxLatest + '<br><small style="color:#9db8dd;">' + t('fx.weekly', '주 1회 갱신') + '</small></div></div>';
+    host.style.display = '';
+  }
+
   function initFreightStrip() {
     var host = document.getElementById('freightStrip');
     if (!host || typeof fetch === 'undefined') return;
@@ -28,23 +54,15 @@
         function pick(code, route) {
           return rows.filter(function (x) { return x.index_code === code && x.route === route; })[0];
         }
-        var items = [
-          { label: 'SCFI 종합', d: pick('SCFI', 'COMPOSITE') },
-          { label: 'CCFI 종합', d: pick('CCFI', 'COMPOSITE') },
-          { label: 'CCFI 한국항로', d: pick('CCFI', 'KOREA') },
-          { label: 'CCFI 유럽항로', d: pick('CCFI', 'EUROPE') }
+        var defs = [
+          { key: 'fx.scfi',   ko: 'SCFI 종합',     d: pick('SCFI', 'COMPOSITE') },
+          { key: 'fx.ccfi',   ko: 'CCFI 종합',     d: pick('CCFI', 'COMPOSITE') },
+          { key: 'fx.ccfiKr', ko: 'CCFI 한국항로', d: pick('CCFI', 'KOREA') },
+          { key: 'fx.ccfiEu', ko: 'CCFI 유럽항로', d: pick('CCFI', 'EUROPE') }
         ].filter(function (i) { return i.d; });
-        if (!items.length) return;
-        host.innerHTML = items.map(function (i) {
-          var up = i.d.pct_change > 0;
-          var arrow = i.d.pct_change == null ? '' :
-            ' <small style="color:' + (up ? 'var(--lv-congested)' : 'var(--lv-low)') + ';">' +
-            (up ? '▲' : '▼') + Math.abs(i.d.pct_change).toFixed(2) + '%</small>';
-          return '<div class="live-chip"><div class="k">' + i.label +
-            '</div><div class="v">' + Number(i.d.value).toLocaleString('ko-KR') + arrow + '</div></div>';
-        }).join('') +
-        '<div class="live-chip"><div class="k">발표일</div><div class="v" style="font-size:14px;">' + latest + '<br><small style="color:#9db8dd;">주 1회 갱신</small></div></div>';
-        host.style.display = '';
+        if (!defs.length) return;
+        fxItems = defs; fxLatest = latest;
+        renderFreight();
       })
       .catch(function () { /* 조회 실패 시 스트립 미표시 */ });
   }
@@ -61,8 +79,8 @@
     }
     el = document.getElementById('lsCritical');
     if (el) {
-      if (first) window.TWUI.countUp(el, s.criticalPorts, { suffix: '개' });
-      else el.textContent = window.TWUI.fmt(s.criticalPorts, 0) + '개';
+      if (first) window.TWUI.countUp(el, s.criticalPorts, { suffix: t('unit.ports', '개') });
+      else el.textContent = window.TWUI.fmt(s.criticalPorts, 0) + t('unit.ports', '개');
     }
     el = document.getElementById('lsRisk');
     if (el) el.textContent = s.globalRisk;

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>선박 위치 — 실시간 AIS 지도 | TWL Control Tower</title>
-  <meta name="description" content="부산신항·광양항·인천항 주변 선박의 실시간 위치를 AIS 기반 지도로 표시합니다."
+  <meta name="description" content="부산신항·광양항·인천항 주변 선박의 실시간 위치를 AIS 기반 지도로 표시합니다.">
   <meta name="theme-color" content="#0a0f1e">
   <link rel="canonical" href="https://sitditrd.github.io/AI_SCM/vessel.html">
   <link rel="apple-touch-icon" href="assets/og-image.png">
@@ -17,7 +17,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="선박 위치 — 실시간 AIS 지도 | TWL Control Tower">
   <meta name="twitter:description" content="부산신항·광양항·인천항 주변 선박의 실시간 위치를 AIS 기반 지도로 표시합니다.">
-  <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">>
+  <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="css/style.css?v=2026-07-29i">
   <link rel="icon" href="assets/twl_logo.ico">
@@ -52,11 +52,11 @@
     <div class="container">
       <div class="dash-title-row">
         <div>
-          <h1>선박 위치 <span style="font-weight:300; opacity:.75;">— 실시간 AIS 지도</span></h1>
-          <p class="dash-sub">항만 주변 선박의 현재 위치를 실시간으로 표시합니다 (AIS 기반)</p>
+          <h1 data-i18n-html="vessel.hero.title">선박 위치 <span style="font-weight:300; opacity:.75;">— 실시간 AIS 지도</span></h1>
+          <p class="dash-sub" data-i18n="vessel.hero.sub">항만 주변 선박의 현재 위치를 실시간으로 표시합니다 (AIS 기반)</p>
         </div>
       </div>
-      <p class="dash-sub" style="margin-top:14px; font-size:12.5px;">
+      <p class="dash-sub" style="margin-top:14px; font-size:12.5px;" data-i18n="vessel.hero.sub2">
         지도: VesselFinder Live AIS · 선박 클릭 시 선명·속력·목적지 확인 · 데이터는 참고용
       </p>
     </div>
@@ -67,8 +67,8 @@
     <div class="container">
       <div class="berth-toolbar reveal" style="margin-bottom:6px;">
         <input type="search" class="focus-search" id="shipSearch" placeholder="선명 / 모선항차 검색 (예: MSC, HMM DIAMOND)" style="max-width:340px;">
-        <button class="btn btn-primary" id="shipSearchBtn" type="button">선박 찾기</button>
-        <span style="color:var(--muted); font-size:12.5px;">선석배정 DB 기준 · MBL/HBL/AWB는 <a href="cargo.html">화물 추적</a>에서 조회</span>
+        <button class="btn btn-primary" id="shipSearchBtn" type="button" data-i18n="vessel.find.btn">선박 찾기</button>
+        <span style="color:var(--muted); font-size:12.5px;" data-i18n-html="vessel.find.note">선석배정 DB 기준 · MBL/HBL/AWB는 <a href="cargo.html">화물 추적</a>에서 조회</span>
       </div>
       <div id="shipResults" class="src-grid" style="margin-bottom:14px;"></div>
     </div>
@@ -105,13 +105,13 @@
           </script>
           <script src="https://www.vesselfinder.com/aismap.js"></script>
         </div>
-        <div class="map-fallback">
+        <div class="map-fallback" data-i18n-html="vessel.map.fallback">
           실시간 지도를 불러오지 못했습니다 (네트워크/차단 환경).<br>
           인터넷 연결 확인 후 새로고침하십시오.
         </div>
       </div>
 
-      <p class="notice">
+      <p class="notice" data-i18n="vessel.map.notice">
         본 지도는 VesselFinder의 공개 AIS 서비스를 임베드한 것으로, 선박 위치는 수 분 지연될 수 있습니다.
         운항·안전 판단 용도가 아닌 업무 참고용입니다. 특정 모선 추적이 필요하면 IT 담당에게 MMSI 기반 추적 화면을 요청하십시오.
       </p>
@@ -139,8 +139,9 @@
   </footer>
 
   <script src="js/common.js?v=2026-4"></script>
+  <script src="js/i18n.js?v=2026-07-30a"></script>
   <script src="js/auth.js?v=2026-07-29f"></script>
-  <script src="js/auth-gate.js?v=2026-07-29g"></script>
+  <script src="js/auth-gate.js?v=2026-07-30a"></script>
   <script src="js/vessel.js?v=2026-5"></script>
 </body>
 </html>
