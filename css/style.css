@@ -1316,6 +1316,16 @@ tr.tree-child td:first-child { padding-left: 30px; }
 .auth-gate-card p { margin: 0 0 22px; color: var(--ink-2); font-size: 14.5px; line-height: 1.6; }
 .agc-cta { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 
+/* 관리자 전용 화면 차단 (데이터 현황) — 콘텐츠 숨김 + 불투명 오버레이 */
+.admin-only-blocked .dash-hero,
+.admin-only-blocked .dash-section,
+.admin-only-blocked .site-footer { display: none !important; }
+.auth-gate-ov.admin-only-ov { background: var(--bg); }
+
+/* 우클릭 메뉴: 구분선 + 강조 항목(Excel 내보내기) */
+.cm-sep { height: 1px; margin: 5px 8px; background: var(--border); }
+.cm-item-strong { font-weight: 700; }
+
 /* 게이트 직전 알림 토스트 (카운트다운) */
 .gate-toast {
   position: fixed; z-index: 210; left: 50%; bottom: 26px; transform: translateX(-50%);

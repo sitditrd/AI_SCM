@@ -635,7 +635,9 @@
       '<a class="cm-item" role="menuitem" target="_blank" rel="noopener" href="https://www.vesselfinder.com/vessels?name=' + vq + '">🔎 VesselFinder 실시간 조회</a>' +
       '<a class="cm-item" role="menuitem" href="route.html">🧭 경로 분석 열기</a>' +
       '<a class="cm-item" role="menuitem" href="cargo.html">📦 화물 추적 열기</a>' +
-      '<button class="cm-item" role="menuitem" id="cmCopy" type="button">📋 선명·항차 복사</button>';
+      '<button class="cm-item" role="menuitem" id="cmCopy" type="button">📋 선명·항차 복사</button>' +
+      '<div class="cm-sep" role="separator"></div>' +
+      '<button class="cm-item cm-item-strong" role="menuitem" id="cmXls" type="button">📥 조회결과 Excel 다운로드 (' + fmt(filteredRows().length) + '건)</button>';
     m.classList.add('show');
     m.setAttribute('aria-hidden', 'false');
     m.style.left = '0px'; m.style.top = '0px';           /* 크기 측정용 리셋 */
@@ -649,6 +651,81 @@
       (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject())
         .then(function () { btn.textContent = '✓ 복사됨'; setTimeout(closeCtx, 700); })
         .catch(function () { btn.textContent = '복사 실패 — 수동 복사: ' + txt; });
+    });
+    el('cmXls').addEventListener('click', function () {
+      var btn = this;
+      btn.disabled = true; btn.textContent = '⏳ 내보내는 중…';
+      exportCurrentQuery(function (ok, mode) {
+        btn.textContent = ok ? ('✓ 다운로드 완료 (' + mode + ')') : '✗ 내보낼 데이터 없음';
+        setTimeout(closeCtx, 900);
+      });
+    });
+  }
+
+  /* ---------- 조회결과 Excel 내보내기 (현재 필터/검색/컬럼필터 반영) ----------
+     SheetJS(xlsx, MIT)를 클릭 시에만 지연 로드 → .xlsx 생성. CDN 실패 시 UTF-8 BOM CSV로 폴백. */
+  function exportFileStamp() {   /* 내보낸 시각 HHMMSS — 수집일과 별도로 파일명 충돌 방지 */
+    var d = new Date();
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    return p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+  }
+  function buildExportAOA() {
+    var rows = filteredRows();
+    var head = ['터미널', '부터미널', '터미널명', '항만', '선석', '모선명', '항차', '선사', '항로',
+      '반입마감(CCT)', 'ETB(접안예정)', 'ETD(출항예정)', '양하', '적하', '상태', '상태(국문)'];
+    var aoa = [head];
+    var dash = function (v) { return (v == null || v === '—') ? '' : v; };
+    rows.forEach(function (r) {
+      aoa.push([
+        r.t || '', r.sub || '', r.terminalName || '', r.port || '',
+        r.berth || '', r.vessel || '', dash(r.voy), dash(r.carrier), dash(r.route),
+        B.fmtDT(r.cct), B.fmtDT(r.eta), B.fmtDT(r.etd),
+        (r.dis == null ? '' : r.dis), (r.lod == null ? '' : r.lod),
+        r.status || '', (B.STATUS_KO[r.status] || r.status || '')
+      ]);
+    });
+    return aoa;
+  }
+  function loadXLSX() {
+    return new Promise(function (resolve, reject) {
+      if (window.XLSX) return resolve(window.XLSX);
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+      s.onload = function () { window.XLSX ? resolve(window.XLSX) : reject(new Error('XLSX 미로딩')); };
+      s.onerror = function () { reject(new Error('CDN 로드 실패')); };
+      document.head.appendChild(s);
+    });
+  }
+  function saveBlob(blob, filename) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+  }
+  function csvFallback(aoa, base) {
+    var csv = aoa.map(function (row) {
+      return row.map(function (c) {
+        c = String(c == null ? '' : c);
+        return /[",\n\r]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c;
+      }).join(',');
+    }).join('\r\n');
+    saveBlob(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' }), base + '.csv');
+  }
+  function exportCurrentQuery(done) {
+    var aoa = buildExportAOA();
+    if (aoa.length <= 1) { done && done(false, ''); return; }
+    var base = '선석배정_' + (B.getCollectedDate() || '').replace(/[^0-9]/g, '') + '_' + exportFileStamp();
+    loadXLSX().then(function (XLSX) {
+      var ws = XLSX.utils.aoa_to_sheet(aoa);
+      ws['!cols'] = [6, 7, 20, 10, 8, 22, 12, 10, 12, 15, 15, 15, 7, 7, 10, 12].map(function (w) { return { wch: w }; });
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '선석배정');
+      XLSX.writeFile(wb, base + '.xlsx');
+      done && done(true, 'xlsx');
+    }).catch(function () {
+      csvFallback(aoa, base);   /* 오프라인/차단 환경: 엑셀 호환 CSV로 폴백 */
+      done && done(true, 'csv');
     });
   }
 

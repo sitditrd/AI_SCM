@@ -8,9 +8,43 @@
   'use strict';
   var GATE_DELAY_MS = 10000; /* [조정] 처음 노출 시간(ms) — 이후 게이트 */
   var WARN_BEFORE = 3000;    /* [조정] blur 몇 ms 전에 알림 카운트다운 */
+  var ADMIN_ONLY = ['status.html']; /* [조정] 관리자 전용 화면 — 미관리자는 메뉴 숨김 + 접근 차단 */
   var gateApplied = false, timers = [];
 
   function acctHost() { return document.querySelector('.site-header .header-inner'); }
+  function pageName() { var p = (location.pathname.split('/').pop() || 'index.html'); return p || 'index.html'; }
+  function isAdminOnlyPage() { return ADMIN_ONLY.indexOf(pageName()) !== -1; }
+
+  /* 관리자 전용 화면으로의 네비/푸터 링크를 미관리자에게 숨김 */
+  function applyAdminOnlyNav(isAdmin) {
+    ADMIN_ONLY.forEach(function (p) {
+      var sel = 'a[href="' + p + '"], a[href^="' + p + '?"], a[href^="' + p + '#"]';
+      document.querySelectorAll(sel).forEach(function (a) { a.style.display = isAdmin ? '' : 'none'; });
+    });
+  }
+
+  /* 관리자 전용 화면: 콘텐츠 숨김 + 안내 오버레이 */
+  function blockAdminOnlyPage() {
+    document.body.classList.add('admin-only-blocked');
+    if (document.getElementById('adminOnlyGate')) return;
+    var ov = document.createElement('div');
+    ov.id = 'adminOnlyGate'; ov.className = 'auth-gate-ov admin-only-ov';
+    ov.innerHTML =
+      '<div class="auth-gate-card">' +
+        '<div class="agc-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-3 8-7 9-4-1-7-4.6-7-9V6l7-3z"/><path d="M9.2 12.2l2 2 3.6-3.8"/></svg></div>' +
+        '<h2>관리자 전용 화면입니다</h2>' +
+        '<p>데이터 현황 보드는 관리자 계정만 열람할 수 있습니다.<br>관리자 계정으로 로그인해 주세요.</p>' +
+        '<div class="agc-cta">' +
+          '<a class="btn btn-primary" href="login.html">로그인</a>' +
+          '<a class="btn btn-ghost" href="index.html">홈으로</a>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(ov);
+  }
+  function unblockAdminOnlyPage() {
+    document.body.classList.remove('admin-only-blocked');
+    var ov = document.getElementById('adminOnlyGate'); if (ov) ov.remove();
+  }
 
   function injectAccount(authed, name) {
     var host = acctHost(); if (!host) return;
@@ -94,12 +128,27 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     if (typeof TWAUTH === 'undefined') return;
+    var onAdminOnly = isAdminOnlyPage();
     var s = TWAUTH.session();
+    var cachedAdmin = TWAUTH.isAuthed() && s && s.role === 'admin';
+
     injectAccount(TWAUTH.isAuthed(), s && s.name);
+    applyAdminOnlyNav(cachedAdmin);
+    /* 캐시상 관리자가 아니면 즉시 차단(데이터 깜빡임 방지) — 검증 후 확정 */
+    if (onAdminOnly && !cachedAdmin) blockAdminOnlyPage();
+
     var hasContent = !!document.querySelector('.dash-section'); /* 대시보드 화면만 게이트(랜딩/홈 제외) */
     TWAUTH.validate().then(function (authed) {
       s = TWAUTH.session();
+      var isAdmin = authed && s && s.role === 'admin';
       injectAccount(authed, s && s.name);
+      applyAdminOnlyNav(isAdmin);
+
+      if (onAdminOnly) {                 /* 관리자 전용 화면은 일반 게이트(10초 노출) 미적용 */
+        if (isAdmin) { unblockAdminOnlyPage(); releaseGate(); }
+        else { blockAdminOnlyPage(); }
+        return;
+      }
       if (authed) { releaseGate(); }
       else if (hasContent) { scheduleGate(); }
     });
