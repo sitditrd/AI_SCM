@@ -1259,3 +1259,30 @@ tr.tree-child td:first-child { padding-left: 30px; }
     color-mix(in srgb, var(--brand-accent) 40%, var(--border)) 30%,
     color-mix(in srgb, var(--brand-point) 34%, var(--border)) 70%, transparent 96%);
 }
+
+/* ---------- 계정 버튼 (헤더 주입: 로그인/로그아웃) ---------- */
+.acct-btn {
+  margin-left: 10px; padding: 7px 14px; border-radius: 999px;
+  border: 1px solid currentColor; font-size: 13px; font-weight: 700;
+  color: inherit; opacity: .9; white-space: nowrap; background: transparent; cursor: pointer;
+  transition: background .15s ease, opacity .15s ease;
+}
+.acct-btn:hover { opacity: 1; background: color-mix(in srgb, currentColor 12%, transparent); }
+
+/* ---------- 미로그인 게이트 (일정시간 뒤 blur + 로그인 유도) ---------- */
+.auth-gated .dash-section { filter: blur(6px); pointer-events: none; user-select: none; }
+.auth-gate-ov {
+  position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center;
+  padding: 24px; animation: gateIn .5s ease;
+  background: radial-gradient(700px 460px at 50% 42%, transparent, color-mix(in srgb, var(--bg) 55%, transparent));
+}
+@keyframes gateIn { from { opacity: 0; } to { opacity: 1; } }
+.auth-gate-card {
+  max-width: 420px; width: 100%; text-align: center;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .3); padding: 34px 30px;
+}
+.auth-gate-card .agc-lock { font-size: 40px; margin-bottom: 6px; }
+.auth-gate-card h2 { margin: 6px 0 10px; font-size: 21px; font-weight: 800; }
+.auth-gate-card p { margin: 0 0 22px; color: var(--ink-2); font-size: 14.5px; line-height: 1.6; }
+.agc-cta { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }

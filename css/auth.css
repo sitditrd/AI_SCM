@@ -1,0 +1,79 @@
+/* =========================================================
+   TWL Control Tower — 로그인/관리자 페이지 스타일 (style.css 토큰 사용)
+   ========================================================= */
+.auth-page { background: var(--bg); min-height: 100vh; }
+
+/* 버튼 크기 헬퍼 (style.css .btn 재사용) */
+.btn-block { width: 100%; justify-content: center; }
+.btn-sm { padding: 8px 12px; font-size: 13px; border-radius: 10px; }
+.btn-xs { padding: 5px 10px; font-size: 12px; border-radius: 8px; }
+
+/* ---------- 로그인 카드 ---------- */
+.auth-wrap { max-width: 440px; margin: 0 auto; padding: calc(var(--header-h) + 40px) 20px 60px; }
+.auth-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+  box-shadow: var(--shadow); padding: 30px 28px;
+}
+.auth-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+.auth-brand .ab-dot { width: 40px; height: 40px; border-radius: 12px; flex: none;
+  background: linear-gradient(135deg, var(--brand-accent), var(--brand-point)); }
+.auth-brand b { display: block; font-size: 16px; letter-spacing: -.01em; }
+.auth-brand span { display: block; font-size: 12px; color: var(--muted); }
+
+.auth-tabs { display: flex; gap: 4px; background: var(--surface-2); border-radius: 12px; padding: 4px; margin-bottom: 20px; }
+.auth-tab {
+  flex: 1; border: 0; background: transparent; color: var(--ink-2); font-weight: 700;
+  font-size: 13.5px; padding: 9px 6px; border-radius: 9px; transition: all .15s ease;
+}
+.auth-tab.active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+
+.auth-form { display: flex; flex-direction: column; gap: 14px; }
+.auth-form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.auth-form input {
+  font: inherit; font-size: 14.5px; color: var(--ink); background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: 11px; padding: 12px 14px; width: 100%; box-sizing: border-box;
+}
+.auth-form input:focus { outline: none; border-color: var(--brand-accent-2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-accent-2) 20%, transparent); }
+.auth-form .req { color: var(--lv-congested); }
+.with-btn { display: flex; gap: 8px; }
+.with-btn input { flex: 1; }
+.with-btn .btn { flex: none; white-space: nowrap; }
+.btn-block { margin-top: 4px; }
+.auth-hint { margin: 2px 0 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
+.auth-foot { text-align: center; margin-top: 18px; font-size: 13px; }
+.auth-foot a { color: var(--brand-accent-2); font-weight: 600; }
+
+.auth-msg { padding: 11px 14px; border-radius: 11px; font-size: 13.5px; font-weight: 600; margin-bottom: 4px; }
+.auth-msg.ok { background: color-mix(in srgb, var(--lv-low) 14%, transparent); color: var(--down); border: 1px solid color-mix(in srgb, var(--lv-low) 30%, transparent); }
+.auth-msg.err { background: color-mix(in srgb, var(--lv-congested) 12%, transparent); color: var(--up); border: 1px solid color-mix(in srgb, var(--lv-congested) 30%, transparent); }
+
+/* ---------- 비밀번호 강도 미터 ---------- */
+.pw-meter { margin: -4px 0 2px; }
+.pw-bar { height: 6px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.pw-bar span { display: block; height: 100%; width: 0; border-radius: 4px; transition: width .2s ease, background .2s ease; }
+.pw-label { font-size: 12px; font-weight: 700; margin: 5px 0 6px; }
+.pw-checks { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 0; padding: 0; }
+.pw-checks li { font-size: 11.5px; color: var(--muted); position: relative; padding-left: 15px; }
+.pw-checks li::before { content: '○'; position: absolute; left: 0; }
+.pw-checks li.on { color: var(--down); font-weight: 600; }
+.pw-checks li.on::before { content: '✓'; }
+
+/* ---------- 관리자 ---------- */
+.admin-badge { font-size: 11px; font-weight: 800; letter-spacing: .04em; color: #fff;
+  background: var(--brand-accent); padding: 3px 9px; border-radius: 999px; margin-left: 10px; }
+.admin-wrap { padding-top: calc(var(--header-h) + 30px); padding-bottom: 60px; }
+.admin-wrap .page-head h1 { margin: 0 0 6px; font-size: 24px; font-weight: 800; }
+.admin-wrap .page-head p { margin: 0 0 20px; color: var(--ink-2); font-size: 14px; }
+.admin-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.seg { display: inline-flex; background: var(--surface-2); border-radius: 10px; padding: 3px; }
+.seg-btn { border: 0; background: transparent; color: var(--ink-2); font-weight: 700; font-size: 13px; padding: 8px 14px; border-radius: 8px; }
+.seg-btn.active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.admin-tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 640px; }
+.admin-tbl th, .admin-tbl td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+.admin-tbl thead th { background: var(--surface-2); font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.admin-tbl .ta-r { text-align: right; }
+.row-act { display: inline-flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+.st-pill { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+.st-pending { color: var(--lv-busy); background: color-mix(in srgb, var(--lv-busy) 16%, transparent); }
+.st-approved { color: var(--down); background: color-mix(in srgb, var(--lv-low) 16%, transparent); }
+.st-rejected { color: var(--up); background: color-mix(in srgb, var(--lv-congested) 14%, transparent); }

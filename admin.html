@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>관리자 — 회원 승인 | TWL Control Tower</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="assets/twl_logo.ico">
+  <link rel="stylesheet" href="css/style.css?v=2026-07-29b">
+  <link rel="stylesheet" href="css/auth.css?v=2026-07-29b">
+</head>
+<body class="auth-page">
+  <header class="site-header scrolled">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="태웅로직스 홈">
+        <span class="logo-text"><b class="l1">TWL</b> <span class="l2">Control Tower</span></span>
+      </a>
+      <span class="admin-badge">관리자</span>
+      <button class="icon-btn theme-toggle" aria-label="테마 전환" style="margin-left:auto"></button>
+      <a class="acct-btn" id="logoutBtn" href="javascript:void(0)">로그아웃</a>
+    </div>
+  </header>
+
+  <main class="container admin-wrap">
+    <div class="page-head">
+      <h1>회원 승인 관리</h1>
+      <p>가입 신청을 검토하고 승인/거부합니다. 승인된 계정만 로그인할 수 있습니다.</p>
+    </div>
+
+    <div class="admin-toolbar">
+      <div class="seg" id="filterSeg">
+        <button class="seg-btn active" data-f="pending">승인대기</button>
+        <button class="seg-btn" data-f="approved">승인됨</button>
+        <button class="seg-btn" data-f="all">전체</button>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="reload">새로고침</button>
+    </div>
+
+    <div id="adminMsg" class="auth-msg" hidden></div>
+    <div class="tbl-card" style="overflow-x:auto">
+      <table class="tw admin-tbl">
+        <thead><tr><th>이메일(아이디)</th><th>이름/부서</th><th>상태</th><th>권한</th><th>신청일</th><th class="ta-r">관리</th></tr></thead>
+        <tbody id="userRows"><tr><td colspan="6" class="muted" style="text-align:center;padding:24px">불러오는 중…</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script src="js/common.js?v=2026-4"></script>
+  <script src="js/auth.js?v=2026-07-29b"></script>
+  <script>
+    (function () {
+      var A = window.TWAUTH, filter = 'pending', ALL = [];
+      var rows = document.getElementById('userRows'), msg = document.getElementById('adminMsg');
+      function show(t, k) { msg.hidden = false; msg.textContent = t; msg.className = 'auth-msg ' + (k || ''); setTimeout(function () { msg.hidden = true; }, 3500); }
+      function esc(s) { return (s == null ? '' : String(s)).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+      var ST = { pending: '승인대기', approved: '승인됨', rejected: '거부' };
+
+      /* 관리자 권한 확인 */
+      if (!A.isAuthed()) { location.replace('login.html'); return; }
+      A.validate().then(function (ok) {
+        if (!ok || A.role() !== 'admin') { alert('관리자만 접근할 수 있습니다.'); location.replace('login.html'); return; }
+        load();
+      });
+
+      document.getElementById('logoutBtn').onclick = function () { A.logout().then(function () { location.href = 'login.html'; }); };
+      document.getElementById('reload').onclick = load;
+      document.querySelectorAll('#filterSeg .seg-btn').forEach(function (b) {
+        b.onclick = function () { document.querySelectorAll('#filterSeg .seg-btn').forEach(function (x) { x.classList.remove('active'); }); b.classList.add('active'); filter = b.dataset.f; render(); };
+      });
+
+      function load() {
+        rows.innerHTML = '<tr><td colspan="6" class="muted" style="text-align:center;padding:24px">불러오는 중…</td></tr>';
+        A.adminList().then(function (r) {
+          if (!Array.isArray(r)) { show(r && r.error ? r.error : '목록 조회 실패', 'err'); return; }
+          ALL = r; render();
+        });
+      }
+      function render() {
+        var list = ALL.filter(function (u) { return filter === 'all' ? true : u.status === filter; });
+        if (!list.length) { rows.innerHTML = '<tr><td colspan="6" class="muted" style="text-align:center;padding:24px">해당 항목이 없습니다.</td></tr>'; return; }
+        rows.innerHTML = list.map(function (u) {
+          var d = u.created_at ? new Date(u.created_at) : null;
+          var ds = d ? (d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2)) : '—';
+          var isAdmin = u.role === 'admin';
+          var act = isAdmin ? '<span class="muted">관리자</span>' :
+            '<div class="row-act">' +
+              (u.status !== 'approved' ? '<button class="btn btn-primary btn-xs" data-act="approved" data-id="' + u.id + '">승인</button>' : '') +
+              (u.status !== 'rejected' ? '<button class="btn btn-ghost btn-xs" data-act="rejected" data-id="' + u.id + '">거부</button>' : '') +
+              '<button class="btn btn-ghost btn-xs" data-act="reset" data-id="' + u.id + '">비번재설정</button>' +
+            '</div>';
+          return '<tr><td><b>' + esc(u.login) + '</b></td><td>' + esc(u.name || '—') + '</td>' +
+            '<td><span class="st-pill st-' + u.status + '">' + (ST[u.status] || u.status) + '</span></td>' +
+            '<td>' + (isAdmin ? '관리자' : '일반') + '</td><td>' + ds + '</td><td class="ta-r">' + act + '</td></tr>';
+        }).join('');
+        rows.querySelectorAll('[data-act]').forEach(function (b) {
+          b.onclick = function () {
+            var id = b.dataset.id, act = b.dataset.act;
+            if (act === 'reset') {
+              var pw = prompt('새 임시 비밀번호를 입력하세요 (8자 이상, 특수문자 포함).');
+              if (!pw) return;
+              var s = A.pwStrength(pw);
+              if (!s.ok) { show('비밀번호는 8자 이상 + 특수문자 포함이어야 합니다.', 'err'); return; }
+              A.adminResetPw(id, pw).then(function (r) { show(r && r.ok ? '비밀번호를 재설정했습니다.' : (r.error || '실패'), r && r.ok ? 'ok' : 'err'); });
+            } else {
+              A.adminSetStatus(id, act).then(function (r) { if (r && r.ok) { show(act === 'approved' ? '승인했습니다.' : '거부했습니다.', 'ok'); load(); } else { show(r && r.error ? r.error : '실패', 'err'); } });
+            }
+          };
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
