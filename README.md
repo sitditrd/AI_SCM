@@ -35,7 +35,7 @@ git add -A && git commit -m "..." && git push origin master
 |---|---|
 | 웹(정적) 8화면 + 로그인/관리자 | ✅ 운영 · GitHub Pages 무료 배포 (index·insight·berth·vessel·cargo·route·schedule·status + login·admin) |
 | 데이터(Supabase) | ✅ 선석배정 **16개 터미널** 일일 적재·PCI 지수·운임지수 |
-| 로그인/승인 | ✅ 커스텀 인증(Supabase, bcrypt) + 관리자 승인 + 미로그인 게이트(지연 blur). ⏳ **이메일 인증코드·비번찾기는 SMTP 시크릿 등록 필요**(§5) |
+| 로그인/승인 | ✅ 커스텀 인증(Supabase, bcrypt) + 관리자 승인 + 미로그인 게이트(지연 blur) + **이메일 인증코드 발송 동작**(네이버 SMTP·denomailer). 관리자 `sitditrd2@naver.com` |
 | 자동 수집 | ⏳ **다른 PC에서 스케줄러 운영** (git pull로 연계) |
 | React 이관(app/) | 채택 보류(app/ 제거) — 운영은 정적본 유지 |
 | 배포 | ✅ GitHub Pages (Netlify는 무료 크레딧 소진으로 보류) |

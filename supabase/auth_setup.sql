@@ -128,9 +128,11 @@ grant execute on function public.app_login(text,text), public.app_me(uuid), publ
   public.app_signup_verified(text,text,text,text), public.app_reset_with_code(text,text,text),
   public.app_admin_list(uuid), public.app_admin_set_status(uuid,uuid,text), public.app_admin_reset_pw(uuid,uuid,text) to anon;
 
--- 관리자 계정 시드 (초기 비번은 반드시 변경 권장)
+-- 관리자 계정 시드 (초기 비번은 반드시 변경 권장). 운영 관리자: sitditrd2@naver.com
+-- 이메일 인증코드 발송: Edge Function send-code + 네이버 SMTP(smtp.naver.com:465, 앱 비밀번호).
+--   시크릿(대시보드 → Edge Functions → Secrets): SMTP_HOST/PORT/USER/PASS/FROM
 insert into public.app_users(login_id, pass_hash, status, role, display_name)
-values ('sitditrd@naver.com', crypt('CHANGE_ME', gen_salt('bf')), 'approved', 'admin', '관리자')
+values ('sitditrd2@naver.com', crypt('CHANGE_ME', gen_salt('bf')), 'approved', 'admin', '관리자')
 on conflict (login_id) do nothing;
 
 notify pgrst, 'reload schema';
