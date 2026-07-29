@@ -129,6 +129,11 @@ button { font-family: inherit; cursor: pointer; }
 .header-actions { display: flex; align-items: center; gap: 8px; flex: none; }
 /* 헤더 CTA(도입 문의): 회원승인·로그아웃 추가로 좁아져도 줄바꿈되지 않게 */
 .header-actions .btn { white-space: nowrap; flex: none; padding: 8px 14px; font-size: 13.5px; }
+/* 언어 전환기 (한 · EN · 中) */
+.lang-switch { display: inline-flex; align-items: center; border: 1px solid currentColor; border-radius: 999px; overflow: hidden; opacity: .8; flex: none; }
+.lang-btn { border: 0; background: transparent; color: inherit; font-size: 12px; font-weight: 800; padding: 5px 8px; cursor: pointer; line-height: 1; white-space: nowrap; }
+.lang-btn:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
+.lang-btn.active { background: color-mix(in srgb, currentColor 20%, transparent); }
 .icon-btn {
   width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border);
   background: transparent; color: var(--ink-2);
