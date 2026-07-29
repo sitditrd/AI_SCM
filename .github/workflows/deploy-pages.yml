@@ -45,3 +45,14 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+      # Netlify 미러 배포 트리거 (선택) — 저장소 Settings→Secrets→Actions 에 NETLIFY_BUILD_HOOK 등록 시 자동 발동.
+      # (Netlify 빌드 훅 URL: https://api.netlify.com/build_hooks/xxxx). 미설정 시 조용히 건너뜀.
+      - name: Trigger Netlify mirror build (optional)
+        env:
+          HOOK: ${{ secrets.NETLIFY_BUILD_HOOK }}
+        run: |
+          if [ -n "$HOOK" ]; then
+            curl -sf -X POST -d '{}' "$HOOK" && echo "Netlify 빌드 트리거됨" || echo "Netlify hook 실패 (무시)"
+          else
+            echo "NETLIFY_BUILD_HOOK 시크릿 미설정 — Netlify 미러 배포 건너뜀"
+          fi

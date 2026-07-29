@@ -120,8 +120,8 @@
   function initMap() {
     if (typeof L === 'undefined') { el('mapCard').classList.add('no-map'); return; }
     map = L.map('map', { worldCopyJump: true, minZoom: 1, scrollWheelZoom: false }).setView([25, 60], 2);
-    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/' + (dark ? 'dark_all' : 'light_all') + '/{z}/{x}/{y}{r}.png',
+    /* 해상 항로 가시성 우선 — Voyager(밝고 오션/랜드·라벨 뚜렷) 고정 */
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
       { attribution: '&copy; OpenStreetMap &copy; CARTO', subdomains: 'abcd' }).addTo(map);
     routeLayer = L.layerGroup().addTo(map);
   }
@@ -147,13 +147,13 @@
           routeLayer.clearLayers();
           var latlngs = res.line;   /* 사전계산 시 [lat,lng]로 저장됨 */
           /* 항로 3중 레이어: 글로우 케이싱 → 본선 → 흐름 점선(이동 애니메이션) */
-          L.polyline(latlngs, { color: '#3987e5', weight: 10, opacity: 0.16, lineJoin: 'round', lineCap: 'round', interactive: false }).addTo(routeLayer);
-          L.polyline(latlngs, { color: '#4c9bff', weight: 3.5, opacity: 0.95, lineJoin: 'round', lineCap: 'round', interactive: false }).addTo(routeLayer);
-          L.polyline(latlngs, { color: '#eaf3ff', weight: 2.2, opacity: 0.95, lineCap: 'round', className: 'route-flow', interactive: false }).addTo(routeLayer);
+          L.polyline(latlngs, { color: '#ffffff', weight: 9, opacity: 0.9, lineJoin: 'round', lineCap: 'round', interactive: false }).addTo(routeLayer);
+          L.polyline(latlngs, { color: '#1d4ed8', weight: 4, opacity: 1, lineJoin: 'round', lineCap: 'round', interactive: false }).addTo(routeLayer);
+          L.polyline(latlngs, { color: '#ffffff', weight: 2, opacity: 0.95, lineCap: 'round', className: 'route-flow', interactive: false }).addTo(routeLayer);
           /* 출발·도착 마커 (펄스 글로우 + 항구명 라벨) */
-          L.circleMarker([o.lat, o.lng], { radius: 7, color: '#00b8a9', weight: 3, fillColor: '#06302c', fillOpacity: 1, className: 'route-pin start' })
+          L.circleMarker([o.lat, o.lng], { radius: 7, color: '#00b8a9', weight: 3.5, fillColor: '#ffffff', fillOpacity: 1, className: 'route-pin start' })
             .bindTooltip('출발 · ' + o.ko, { permanent: true, direction: 'top', offset: [0, -8], className: 'route-tip start' }).addTo(routeLayer);
-          L.circleMarker([d.lat, d.lng], { radius: 7, color: '#d03b3b', weight: 3, fillColor: '#2e0e0e', fillOpacity: 1, className: 'route-pin end' })
+          L.circleMarker([d.lat, d.lng], { radius: 7, color: '#d03b3b', weight: 3.5, fillColor: '#ffffff', fillOpacity: 1, className: 'route-pin end' })
             .bindTooltip('도착 · ' + d.ko, { permanent: true, direction: 'top', offset: [0, -8], className: 'route-tip end' }).addTo(routeLayer);
           /* 항로 중간 거리 라벨 */
           var _mid = latlngs[Math.floor(latlngs.length / 2)];
