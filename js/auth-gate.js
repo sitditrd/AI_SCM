@@ -14,6 +14,9 @@
 
   function injectAccount(authed, name) {
     var host = acctHost(); if (!host) return;
+    var role = authed ? (TWAUTH.session() || {}).role : null;
+
+    /* 로그인 / 로그아웃 버튼 */
     var a = document.getElementById('acctBtn');
     if (!a) { a = document.createElement('a'); a.id = 'acctBtn'; a.className = 'acct-btn'; host.appendChild(a); }
     if (authed) {
@@ -23,6 +26,13 @@
     } else {
       a.textContent = '로그인'; a.href = 'login.html'; a.title = '로그인'; a.onclick = null;
     }
+
+    /* 관리자: '회원 승인' 링크 — 로그인 유지한 채 관리자 화면 이동 */
+    var adm = document.getElementById('adminBtn');
+    if (authed && role === 'admin') {
+      if (!adm) { adm = document.createElement('a'); adm.id = 'adminBtn'; adm.className = 'acct-btn acct-btn-admin'; host.insertBefore(adm, a); }
+      adm.textContent = '회원 승인'; adm.href = 'admin.html'; adm.title = '관리자 · 회원 승인 관리';
+    } else if (adm) { adm.remove(); }
   }
 
   /* blur 직전 알림 토스트 (카운트다운) */

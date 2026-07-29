@@ -1268,6 +1268,8 @@ tr.tree-child td:first-child { padding-left: 30px; }
   transition: background .15s ease, opacity .15s ease;
 }
 .acct-btn:hover { opacity: 1; background: color-mix(in srgb, currentColor 12%, transparent); }
+.acct-btn-admin { background: color-mix(in srgb, var(--brand-accent) 18%, transparent); border-color: color-mix(in srgb, var(--brand-accent) 45%, currentColor); opacity: 1; }
+.acct-btn-admin:hover { background: color-mix(in srgb, var(--brand-accent) 30%, transparent); }
 
 /* ---------- 미로그인 게이트 (일정시간 뒤 blur + 로그인 유도) ---------- */
 .auth-gated .dash-section { filter: blur(6px); pointer-events: none; user-select: none; }
