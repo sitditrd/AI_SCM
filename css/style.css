@@ -1282,7 +1282,36 @@ tr.tree-child td:first-child { padding-left: 30px; }
   background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
   box-shadow: 0 24px 70px rgba(0, 0, 0, .3); padding: 34px 30px;
 }
-.auth-gate-card .agc-lock { font-size: 40px; margin-bottom: 6px; }
+.auth-gate-card .agc-lock {
+  width: 66px; height: 66px; margin: 0 auto 14px; border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(140deg, color-mix(in srgb, var(--brand-accent) 24%, var(--surface)), color-mix(in srgb, var(--brand-point) 20%, var(--surface)));
+  border: 1px solid color-mix(in srgb, var(--brand-accent) 34%, var(--border));
+  color: var(--brand-accent-2); box-shadow: 0 10px 30px color-mix(in srgb, var(--brand-accent) 24%, transparent);
+}
+.auth-gate-card .agc-lock svg { width: 30px; height: 30px; }
 .auth-gate-card h2 { margin: 6px 0 10px; font-size: 21px; font-weight: 800; }
 .auth-gate-card p { margin: 0 0 22px; color: var(--ink-2); font-size: 14.5px; line-height: 1.6; }
 .agc-cta { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+/* 게이트 직전 알림 토스트 (카운트다운) */
+.gate-toast {
+  position: fixed; z-index: 210; left: 50%; bottom: 26px; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 12px; max-width: 92vw;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, .3); padding: 12px 14px 12px 16px;
+  animation: toastIn .3s ease;
+}
+@keyframes toastIn { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+.gate-toast .gt-ic {
+  flex: none; width: 38px; height: 38px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(140deg, color-mix(in srgb, var(--brand-accent) 22%, var(--surface)), color-mix(in srgb, var(--brand-point) 18%, var(--surface)));
+  border: 1px solid color-mix(in srgb, var(--brand-accent) 30%, var(--border)); color: var(--brand-accent-2);
+}
+.gate-toast .gt-ic svg { width: 20px; height: 20px; }
+.gate-toast .gt-txt { display: flex; flex-direction: column; line-height: 1.35; }
+.gate-toast .gt-txt b { font-size: 13.5px; }
+.gate-toast .gt-txt small { font-size: 12px; color: var(--ink-2); margin-top: 1px; }
+.gate-toast .gt-btn { margin-left: 6px; flex: none; background: var(--brand-accent); color: #fff; font-weight: 700; font-size: 13px; padding: 8px 14px; border-radius: 9px; white-space: nowrap; }
+.gate-toast .gt-btn:hover { background: var(--brand-accent-2); }
