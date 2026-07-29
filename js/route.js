@@ -146,10 +146,19 @@
         if (map) {
           routeLayer.clearLayers();
           var latlngs = res.line;   /* 사전계산 시 [lat,lng]로 저장됨 */
-          L.polyline(latlngs, { color: '#3987e5', weight: 3, opacity: 0.85 }).addTo(routeLayer);
-          L.circleMarker([o.lat, o.lng], { radius: 6, color: '#00b8a9', fillOpacity: 0.9 }).bindPopup(o.ko).addTo(routeLayer);
-          L.circleMarker([d.lat, d.lng], { radius: 6, color: '#d03b3b', fillOpacity: 0.9 }).bindPopup(d.ko).addTo(routeLayer);
-          map.fitBounds(L.polyline(latlngs).getBounds(), { padding: [30, 30] });
+          /* 항로 3중 레이어: 글로우 케이싱 → 본선 → 흐름 점선(이동 애니메이션) */
+          L.polyline(latlngs, { color: '#3987e5', weight: 10, opacity: 0.16, lineJoin: 'round', lineCap: 'round', interactive: false }).addTo(routeLayer);
+          L.polyline(latlngs, { color: '#4c9bff', weight: 3.5, opacity: 0.95, lineJoin: 'round', lineCap: 'round', interactive: false }).addTo(routeLayer);
+          L.polyline(latlngs, { color: '#eaf3ff', weight: 2.2, opacity: 0.95, lineCap: 'round', className: 'route-flow', interactive: false }).addTo(routeLayer);
+          /* 출발·도착 마커 (펄스 글로우 + 항구명 라벨) */
+          L.circleMarker([o.lat, o.lng], { radius: 7, color: '#00b8a9', weight: 3, fillColor: '#06302c', fillOpacity: 1, className: 'route-pin start' })
+            .bindTooltip('출발 · ' + o.ko, { permanent: true, direction: 'top', offset: [0, -8], className: 'route-tip start' }).addTo(routeLayer);
+          L.circleMarker([d.lat, d.lng], { radius: 7, color: '#d03b3b', weight: 3, fillColor: '#2e0e0e', fillOpacity: 1, className: 'route-pin end' })
+            .bindTooltip('도착 · ' + d.ko, { permanent: true, direction: 'top', offset: [0, -8], className: 'route-tip end' }).addTo(routeLayer);
+          /* 항로 중간 거리 라벨 */
+          var _mid = latlngs[Math.floor(latlngs.length / 2)];
+          if (_mid) L.marker(_mid, { interactive: false, icon: L.divIcon({ className: 'route-distlabel', html: '<span>' + Number(res.nm).toLocaleString('ko-KR') + ' nm</span>' }) }).addTo(routeLayer);
+          map.fitBounds(L.polyline(latlngs).getBounds(), { padding: [46, 46] });
         }
       })
       .catch(function (e) {
