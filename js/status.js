@@ -56,9 +56,50 @@
       '<b>' + label + '</b><small>' + sub + '</small></div>';
   }
 
+  /* ---- 외부 연동 헬스체크 (로드맵 §4 status P1 — 키 없이 착수) ---- */
+  var FN_BASE = SUPABASE_URL + '/functions/v1';
+  var HC_GAUGE_MS = 3000;   /* 게이지 만점·정상/주의 경계 응답 시간 */
+  var HC_TIMEOUT_MS = 8000; /* 초과 시 확인불가 처리 */
+
+  function timedFetch(url, opts) {
+    var t0 = Date.now();
+    var o = opts || {};
+    if (typeof AbortController === 'function') {
+      var ctrl = new AbortController();
+      o.signal = ctrl.signal;
+      setTimeout(function () { ctrl.abort(); }, HC_TIMEOUT_MS);
+    }
+    return fetch(url, o).then(function (r) { return { res: r, ms: Date.now() - t0 }; });
+  }
+
+  function intCard(o) {
+    var st = ST[o.state];
+    var fill = Math.max(4, Math.min(100, o.pct));
+    return '<div class="src-card">' +
+      '<div class="sc-top"><b>' + o.name + '</b>' +
+      '<span class="lv-badge" style="color:' + st.color + '; background:color-mix(in srgb, ' + st.color + ' 13%, transparent);"><i class="lv-dot"></i>' + st.ko + '</span></div>' +
+      '<div class="sc-big">' + o.big + '</div>' +
+      '<div class="fresh-bar" title="응답 시간 (게이지 3초 기준)"><div class="fb-fill" style="width:' + fill + '%; background:' + st.color + ';"></div></div>' +
+      '<div class="sc-sub">' + o.sub + '</div>' +
+      '<div class="sc-next">점검 주기 45초</div>' +
+      '</div>';
+  }
+
+  function hcCard(name, desc, h, note) {
+    if (!h) return intCard({ name: name, state: 'off', big: '응답 없음', pct: 100, sub: desc + ' · 연결 실패' });
+    if (h.http) return intCard({ name: name, state: 'warn', big: 'HTTP ' + h.http + ' <small>/ ' + h.ms + 'ms</small>', pct: 100, sub: desc + ' · 응답 코드 확인' });
+    return intCard({
+      name: name,
+      state: h.ms < HC_GAUGE_MS ? 'ok' : 'warn',
+      big: (h.needKey ? '정상(키 대기)' : '정상') + ' <small>/ ' + h.ms + 'ms</small>',
+      pct: h.ms / HC_GAUGE_MS * 100,
+      sub: desc + ' · ' + (note || (h.needKey ? '키 등록 대기' : '실조회 가동'))
+    });
+  }
+
   function load() {
     var today = dstr(new Date());
-    var results = { berth: null, pi: null, fx: null, wx: null, logs: [] };
+    var results = { berth: null, pi: null, fx: null, wx: null, logs: [], hc: {} };
 
     var pBerth = sb('/rest/v1/bs_vessel_calls?select=collected_date&order=collected_date.desc&limit=1')
       .then(function (rows) {
@@ -77,15 +118,37 @@
         if (rows.length) results.fx = { date: rows[0].pub_date, scfi: scfi ? scfi.value : null };
       }).catch(function () {});
 
+    var wxT0 = Date.now();
     var pWx = fetch('https://marine-api.open-meteo.com/v1/marine?latitude=35.05&longitude=128.79&current=wave_height&timezone=Asia%2FSeoul')
-      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        results.hc.wx = r.ok ? { ms: Date.now() - wxT0 } : { ms: Date.now() - wxT0, http: r.status };
+        return r.json();
+      })
       .then(function (js) { if (js && js.current) results.wx = { wave: js.current.wave_height, time: js.current.time }; })
       .catch(function () {});
 
     var pLog = sb('/rest/v1/bs_collect_log?select=*&order=created_at.desc&limit=14')
       .then(function (rows) { results.logs = rows; }).catch(function () {});
 
-    Promise.all([pBerth, pPi, pFx, pWx, pLog]).then(function () { render(results, today); });
+    /* 외부 연동 헬스체크 — track·datago는 needKey 응답도 정상(키 대기)으로 판정 */
+    var pHcTrack = timedFetch(FN_BASE + '/track?type=mbl&no=TWLHEALTH01')
+      .then(function (t) {
+        if (!t.res.ok) { results.hc.track = { ms: t.ms, http: t.res.status }; return; }
+        return t.res.json().then(function (js) { results.hc.track = { ms: t.ms, needKey: !!js.needKey }; });
+      }).catch(function () {});
+
+    var pHcDatago = timedFetch(FN_BASE + '/datago?api=portmis&numOfRows=1')
+      .then(function (t) {
+        if (!t.res.ok) { results.hc.datago = { ms: t.ms, http: t.res.status }; return; }
+        return t.res.json().then(function (js) { results.hc.datago = { ms: t.ms, needKey: !!js.needKey }; });
+      }).catch(function () {});
+
+    var pHcSend = timedFetch(FN_BASE + '/send-code', { method: 'OPTIONS' })
+      .then(function (t) {
+        results.hc.sendcode = t.res.ok ? { ms: t.ms } : { ms: t.ms, http: t.res.status };
+      }).catch(function () {});
+
+    Promise.all([pBerth, pPi, pFx, pWx, pLog, pHcTrack, pHcDatago, pHcSend]).then(function () { render(results, today); });
     lastUpdateTs = Date.now();
     updateStamp();
   }
@@ -195,6 +258,13 @@
         '<td style="color:var(--muted); font-size:12px;">' + esc(l.message || '') + '</td>' +
         '<td>' + fmtTs(l.created_at) + '</td></tr>';
     }).join('') || '<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:22px;">적재 이력이 없습니다.</td></tr>';
+
+    /* ---- 외부 연동 헬스체크 ---- */
+    el('intGrid').innerHTML =
+      hcCard('Edge Function · track', 'UNIPASS 화물통관 프록시', r.hc.track) +
+      hcCard('Edge Function · datago', 'data.go.kr 공공 API 프록시', r.hc.datago) +
+      hcCard('Edge Function · send-code', '이메일 인증코드 발송', r.hc.sendcode, 'OPTIONS 응답 확인') +
+      hcCard('Open-Meteo Marine', '해양 기상 공개 API', r.hc.wx, '부산신항 파고 조회');
   }
 
   function updateStamp() {
