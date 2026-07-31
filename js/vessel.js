@@ -129,4 +129,71 @@
     if (q0) { input.value = q0; search(q0); }
     if (wantsMapScroll) setTimeout(focusMap, 300);
   });
+
+  /* ================= 입출항 실적 조회 (PORT-MIS · data.go.kr 프록시, 2026-07-31) ================= */
+  var DATAGO = 'https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/datago';
+
+  function pmCard(html) { return '<div class="card reveal in">' + html + '</div>'; }
+
+  function pmFindItems(o, depth) {
+    /* data.go.kr 표준 응답(response.body.items.item[]) 변형에 대비해 첫 객체 배열을 관대하게 탐색 */
+    if (depth > 6 || o == null) return null;
+    if (Array.isArray(o)) return (o.length && typeof o[0] === 'object') ? o : null;
+    if (typeof o === 'object') {
+      for (var k in o) {
+        var f = pmFindItems(o[k], depth + 1);
+        if (f) return f;
+      }
+    }
+    return null;
+  }
+
+  function pmSearch() {
+    var out = el('pmOut');
+    out.innerHTML = pmCard('<div class="sc-sub">PORT-MIS 조회 중…</div>');
+    var p = new URLSearchParams({ api: 'portmis' });
+    var clsgn = el('pmClsgn').value.trim(), port = el('pmPort').value.trim();
+    var from = el('pmFrom').value.replace(/-/g, ''), to = el('pmTo').value.replace(/-/g, '');
+    if (clsgn) p.set('clsgn', clsgn);
+    if (port) p.set('prtAgCd', port);
+    if (from) p.set('fromDt', from);
+    if (to) p.set('toDt', to);
+    fetch(DATAGO + '?' + p)
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res.needKey) {
+          out.innerHTML = pmCard('<h3 style="margin-top:0; font-size:15px;">data.go.kr 공공 API 키가 아직 등록되지 않았습니다</h3>' +
+            '<p class="sc-sub">' + esc(res.guide) + '</p>' +
+            '<a class="btn btn-primary" target="_blank" rel="noopener" href="https://www.data.go.kr/data/15006353/openapi.do">data.go.kr 활용신청 페이지 ↗</a>');
+          return;
+        }
+        var items = res.data ? pmFindItems(res.data, 0) : null;
+        if (!items || !items.length) {
+          var extra = res.error ? ' (' + esc(res.error) + ')' : '';
+          out.innerHTML = pmCard('<div class="sc-sub">조회 결과가 없습니다. 조건(호출부호·기간)을 바꿔 시도하십시오.' + extra + '</div>');
+          return;
+        }
+        var keys = Object.keys(items[0]).slice(0, 8);
+        out.innerHTML = pmCard(
+          '<h3 style="margin-top:0; font-size:15px;">입출항 실적 <small style="color:var(--muted);">' + items.length + '건 · PORT-MIS</small></h3>' +
+          '<div class="tbl-scroll"><table class="tw"><thead><tr>' +
+          keys.map(function (k) { return '<th>' + esc(k) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+          items.slice(0, 30).map(function (it) {
+            return '<tr>' + keys.map(function (k) { return '<td>' + esc(it[k]) + '</td>'; }).join('') + '</tr>';
+          }).join('') + '</tbody></table></div>');
+      })
+      .catch(function () {
+        out.innerHTML = pmCard('<div class="sc-sub">조회 실패 — 잠시 후 다시 시도하십시오.</div>');
+      });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var btn = el('pmBtn');
+    if (!btn) return;
+    var t = new Date(), u = new Date(t.getTime() + 2 * 86400000);
+    function d(x) { return x.toISOString().slice(0, 10); }
+    el('pmFrom').value = d(t);
+    el('pmTo').value = d(u);
+    btn.addEventListener('click', pmSearch);
+  });
 })();

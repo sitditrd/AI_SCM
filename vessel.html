@@ -118,6 +118,30 @@
     </div>
   </section>
 
+  <!-- ============ 입출항 실적 조회 (PORT-MIS · 2026-07-31 NLIC 고도화) ============ -->
+  <section class="dash-section" id="portmis" style="padding-top:0;">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">PORT-MIS</span>
+        <h2>선박 입출항 실적 조회</h2>
+        <span class="hint">해양수산부 PORT-MIS 공공 API · 입출항 시각(ATA/ATD)·출항지·차항지</span>
+      </div>
+      <div class="card reveal" style="margin-bottom:14px;">
+        <div class="berth-toolbar" style="margin:0;">
+          <input type="search" class="focus-search" id="pmClsgn" placeholder="호출부호 (예: D7HW) — 선택" style="max-width:210px;">
+          <input type="search" class="focus-search" id="pmPort" placeholder="항구코드 (선택)" style="max-width:150px;">
+          <input type="date" class="focus-search" id="pmFrom" style="max-width:160px;" aria-label="조회 시작일">
+          <input type="date" class="focus-search" id="pmTo" style="max-width:160px;" aria-label="조회 종료일">
+          <button class="btn btn-primary" id="pmBtn" type="button">실적 조회</button>
+        </div>
+        <p class="sc-sub" style="margin:10px 0 0; color:var(--muted); font-size:12px;">
+          데이터: 해양수산부 선박운항정보(PORT-MIS) — data.go.kr 키 등록 후 동작 · 호출부호는 터미널 공표 자료에서 확인
+        </p>
+      </div>
+      <div id="pmOut"></div>
+    </div>
+  </section>
+
   <!-- ================= 푸터 ================= -->
   <footer class="site-footer">
     <div class="container footer-grid">
@@ -139,9 +163,9 @@
   </footer>
 
   <script src="js/common.js?v=2026-4"></script>
-  <script src="js/i18n.js?v=2026-07-31a"></script>
+  <script src="js/i18n.js?v=2026-07-31b"></script>
   <script src="js/auth.js?v=2026-07-29f"></script>
   <script src="js/auth-gate.js?v=2026-07-30a"></script>
-  <script src="js/vessel.js?v=2026-5"></script>
+  <script src="js/vessel.js?v=2026-07-31a"></script>
 </body>
 </html>
