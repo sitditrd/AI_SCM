@@ -104,7 +104,7 @@
         name: '선석배정', state: berthState,
         big: r.berth.count + '건 <small>/ ' + r.berth.date + '</small>',
         freshPct: age / (26 * 3600000) * 100,
-        sub: '9개 터미널 · ' + ageText(age) + ' 수집 · 갱신 주기 24시간',
+        sub: '16개 터미널 · ' + ageText(age) + ' 수집 · 갱신 주기 24시간',
         next: '내일 06:00 수집 → 06시대 적재'
       }));
     } else cards.push(srcCard({ name: '선석배정', state: 'off', big: '—', freshPct: 100, sub: '연결 실패', next: '—' }));

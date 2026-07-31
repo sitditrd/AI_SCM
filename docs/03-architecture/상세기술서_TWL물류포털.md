@@ -1,12 +1,12 @@
 # TWL 물류 포털 — 상세기술서
 
-버전 v1.0 · 2026-07-27 · 태웅로직스 IT
+버전 v1.1 · 2026-07-31 (v1.0: 2026-07-27) · 태웅로직스 IT
 
 ## 1. 시스템 아키텍처
 
 ```
 [외부 데이터 소스]                         [배치 계층]                    [저장 계층]        [표현 계층]
-터미널 사이트 9곳 ──(06:00 수집 엑셀)──▶ collect_upload_berth.py ──▶ bs_vessel_calls ──▶ berth.html
+터미널 사이트 16곳 ─(06:00 수집 엑셀)──▶ 선석 적재(08:03, 파서+MCP) ─▶ bs_vessel_calls ──▶ berth.html
 IMF PortWatch(ArcGIS REST) ───────────▶ collect_portinsight_api.py ▶ pi_ports/snapshot ▶ insight.html
 상하이해운거래소(JSON) ────────────────▶ collect_freight_index.py ──▶ freight_index ───▶ index.html 스트립
 Open-Meteo Marine ────────(브라우저 직접 fetch, CORS)──────────────────────────────────▶ berth.html 기상카드
@@ -21,7 +21,7 @@ VesselFinder AIS ─────────(iframe 임베드)──────
 ## 2. 데이터베이스 스키마
 
 ### 2.1 선석배정 (bs_*)
-- **bs_terminals**(code PK, name_ko, port_ko, region_ord, website) — 터미널 마스터 9행
+- **bs_terminals**(code PK, name_ko, port_ko, region_ord, website) — 터미널 마스터 16행 (2026-07-29 FR-02 확대)
 - **bs_vessel_calls**(id, collected_date, terminal_cd FK, sub_terminal, berth, carrier, vessel_name, voyage, route, cct, eta, etd, work_start, work_end, discharge_qty, load_qty, shift_qty, status, raw jsonb, updated_at)
   - 인덱스: (collected_date desc), (terminal_cd, collected_date desc)
   - 적재: 동일 collected_date **delete 후 insert** (재실행 안전)
@@ -50,6 +50,8 @@ RLS: 전 테이블 활성화, 익명은 select 정책만. 쓰기는 service_role
   기간 중 변경된 공표 양식(헤더 변형)을 VARIANTS 대응표로 자동 흡수: 줄바꿈/띄어쓰기 변형,
   컬럼 분리↔결합(모선항차/선사항차·선명/ROUTE·선박명/Bitt), `양하/적하/Shift` 통합 컬럼 분해,
   괄호 감싼 일시값 파싱. `--dry-run`(검증)·`--sql`(MCP 적재용)·REST 3모드.
+  2026-07-31 보강: MAP 후보 리스트 지원·공백 위치 무시 매칭·`@@` 오염 토큰 제거·출처 푸터 행 필터.
+  일일 스케줄 적재는 `scripts/upload_berth_sql_parts.py`(분할 SQL 생성) 경유 — 입력 위치 `D:\터미널 스케쥴 정보\`.
 
 ### 3.2 PCI v2 — scripts/collect_portinsight_api.py
 - 원천: `Daily_Ports_Data` FeatureServer (services9.arcgis.com/weJ1QsnbMYJlCHdG, 무인증)
@@ -90,7 +92,7 @@ RLS: 전 테이블 활성화, 익명은 select 정책만. 쓰기는 service_role
 
 ## 5. 운영
 
-- **스케쥴**: Claude 작업 3종(06:08 선석 / 06:27 지수 / 월 07시 운임 — 키 불필요) + Windows 예비 2종(sb_secret 키 필요)
+- **스케쥴**: 4종 체계(2026-07-31 재편, 윈도우 작업 스케줄러 미사용) — ① 06:00 Cowork 수집·메일 ② 08:03 선석 적재 ③ 08:44 PCI ④ 월·금 17:02 운임지수. 전부 `--sql` 생성 후 Supabase MCP 적재(키 미보관). 상세: `docs/06-operations/스케줄러_체계.md`
 - **모니터링**: status.html — 이상 시 조치: ①수집 파일 확인 ②스케쥴 이력 ③수동 재적재 ④IT 문의
 - **보안**: publishable key만 클라이언트 노출(RLS select-only). service_role 키는 환경변수 `SUPABASE_SERVICE_KEY` 전용, 저장소 커밋 금지
 - **장애 폴백**: Supabase 불가 시 각 페이지는 마지막 시드(정적)로 표시 + 오프라인 배너, 45초마다 재연결 시도

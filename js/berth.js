@@ -160,10 +160,10 @@
       host.insertBefore(b, host.firstChild);
     }
     if (B.getMode() === 'supabase') {
-      b.textContent = 'Supabase 실데이터';
-      b.classList.add('live');
-      b.title = '데이터 소스: Supabase (bs_vessel_calls)';
+      b.style.display = 'none';   /* 라이브 모드에서는 소스 배지 비노출 (2026-07-31 운영 요청) */
+      b.textContent = '';
     } else {
+      b.style.display = '';
       b.textContent = '내장 샘플 데이터';
       b.classList.remove('live');
       var err = B.getLastError();
@@ -279,7 +279,7 @@
     setKpi('kWorking', working, first);
     setKpi('kCct', cctSoon, first);
     setKpi('kEtd', etdToday, first);
-    el('kTotalSub').textContent = '부산신항·광양항·인천항 9개 터미널';
+    el('kTotalSub').textContent = '부산신항·북항·광양·인천·평택당진·대산 16개 터미널';
   }
   function setKpi(id, v, first) {
     var e = el(id);

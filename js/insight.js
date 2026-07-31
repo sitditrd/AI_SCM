@@ -67,10 +67,10 @@
       host.insertBefore(b, host.firstChild);
     }
     if (DATA.getMode() === 'supabase') {
-      b.textContent = 'Supabase 실데이터';
-      b.classList.add('live');
-      b.title = '데이터 소스: Supabase (pi_ports / pi_snapshot)';
+      b.style.display = 'none';   /* 라이브 모드에서는 소스 배지 비노출 (2026-07-31 운영 요청) */
+      b.textContent = '';
     } else {
+      b.style.display = '';
       b.textContent = '내장 시뮬레이션';
       b.classList.remove('live');
       var err = DATA.getLastError();

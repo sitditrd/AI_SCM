@@ -133,6 +133,10 @@ def parse_workbook_v(path, cdate):
             vessel = g('vessel')
             if not vessel or not str(vessel).strip():
                 continue
+            # 각 시트 하단 '출처: http…, 수집시각: …' 푸터 행 제거 (전 터미널 방어)
+            _vv = str(vessel).strip()
+            if _vv.startswith('출처') or 'http' in _vv or '수집시각' in _vv:
+                continue
             sub_v = str(g('sub')).strip() if g('sub') else None
             if sheet == 'ICON' and sub_v == 'E1':
                 continue                      # E1CT 시트와 동일 기항 중복 방지

@@ -1,7 +1,7 @@
 name: Deploy static portal to GitHub Pages
 
 # Netlify 무료 빌드 한도 소진(프로덕션 배포 일시중지) 대체 무료 배포 경로.
-# 웹 파일(html·css·js·assets·routes)만 게시. 사업문서(PRJ_2026)·수집기(scripts)는 제외.
+# 웹 파일(html·css·js·assets·routes)만 게시. 사업문서(docs)·수집기(scripts)는 제외.
 # 운영본은 바닐라 정적 사이트(빌드 불필요). React 시안은 SEO·번들·인수인계 복잡도 이유로 채택 보류(2026-07 제거).
 # ※ 최초 1회: 저장소 Settings → Pages → Build and deployment → Source: "GitHub Actions" 로 설정 필요.
 on:

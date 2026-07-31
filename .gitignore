@@ -1,3 +1,13 @@
 __pycache__/
 *.pyc
 *.local
+_site/
+
+# 생성 산출물 — 스케줄러가 매 실행 시 재생성하므로 커밋 금지
+sql/backfill_berth.sql
+sql/upload_berth.sql
+sql/update_portinsight.sql
+sql/upload_freight.sql
+
+# 수집 데이터 스냅샷 — 원본은 D:\터미널 스케쥴 정보, 정규화본은 Supabase(bs_vessel_calls)
+터미널 스케쥴 수집/

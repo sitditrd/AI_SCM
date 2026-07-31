@@ -1,6 +1,6 @@
 # TWL Control Tower — 태웅로직스 물류 관제 포털
 
-> **이 파일 하나로 다른 PC에서 작업을 이어받을 수 있습니다.** (마스터 인수인계 · 최종 갱신 2026-07-29)
+> **이 파일 하나로 다른 PC에서 작업을 이어받을 수 있습니다.** (마스터 인수인계 · 최종 갱신 2026-07-31)
 > 저장소 https://github.com/sitditrd/AI_SCM · 배포 **https://sitditrd.github.io/AI_SCM/** · 문의 itt@twsc.co.kr
 
 항만 혼잡도·선석배정·선박 위치·화물 추적·경로 분석·해외 스케줄을 한 화면에서 제공하는 사내 물류 대시보드.
@@ -24,21 +24,21 @@ git add -A && git commit -m "..." && git push origin master
 **핵심 원리** — 수집(스케줄러)과 웹이 **Supabase를 사이에 두고 분리**돼 있어, 다른 PC는 `git pull`만 하면 연계됩니다.
 
 ```
-[스케줄러 PC] collect_*.py ──(쓰기: service key)──▶ [Supabase kvmyiualdodcvreoqfin] ◀──(읽기: 공개키)── [웹 · GitHub Pages]
+[스케줄러] collect_*.py --sql ──(Claude 세션 · Supabase MCP 적재)──▶ [Supabase kvmyiualdodcvreoqfin] ◀──(읽기: 공개키)── [웹 · GitHub Pages]
 ```
 
 ---
 
-## 2. 현재 상태 (2026-07-29)
+## 2. 현재 상태 (2026-07-31)
 
 | 영역 | 상태 |
 |---|---|
 | 웹(정적) 8화면 + 로그인/관리자 | ✅ 운영 · GitHub Pages 무료 배포 (index·insight·berth·vessel·cargo·route·schedule·status + login·admin) |
 | 데이터(Supabase) | ✅ 선석배정 **16개 터미널** 일일 적재·PCI 지수·운임지수 |
 | 로그인/승인 | ✅ 커스텀 인증(Supabase, bcrypt) + 관리자 승인 + 미로그인 게이트(지연 blur) + **이메일 인증코드 발송 동작**(네이버 SMTP·denomailer). 관리자 `sitditrd2@naver.com` |
-| 자동 수집 | ⏳ **다른 PC에서 스케줄러 운영** (git pull로 연계) |
+| 자동 수집 | ✅ **스케줄러 4개 운영**(2026-07-31 ②③④ 등록) — Cowork ① 06:00 터미널 수집 + Claude 앱 ② 08:03 선석 적재 · ③ 08:44 PCI · ④ 월·금 17:02 운임지수. 상세 `docs/06-operations/스케줄러_체계.md` |
 | React 이관(app/) | 채택 보류(app/ 제거) — 운영은 정적본 유지 |
-| 배포 | ✅ GitHub Pages (Netlify는 무료 크레딧 소진으로 보류) |
+| 배포 | ✅ GitHub Pages(주) + **Netlify 미러 자동 트리거**(`NETLIFY_BUILD_HOOK` 시크릿 등록 완료 2026-07-31, 웹 파일만 선별 게시) |
 
 **화면별**: Port Insight(PCI 혼잡지수·포트검색), 선석배정(16터미널 고급 그리드·항만 기상·**조회결과 우클릭 Excel 내보내기**), 선박위치(AIS), 화물추적(UNIPASS+딥링크), 경로분석(몬테카를로·Voyager 지도 항로 시각화), 해외 스케줄(준비중 기획), 데이터현황(운영보드·**관리자 전용**). **국내/해외 탭은 선석배정↔해외스케줄에만** 노출. 미로그인 사용자는 처음엔 정상 노출 → 일정시간 뒤 주요기능 blur + 로그인 유도. **홈페이지는 한/영/중 다국어 전환**(우상단 언어 스위처, `js/i18n.js`).
 
@@ -56,23 +56,25 @@ AI_SCM/
 ├─ routes/ ×93            사전계산 항로(경로 분석용 정적 JSON)
 ├─ sitemap.xml, robots.txt
 ├─ server.py              로컬 백엔드(8090) — UNIPASS·searoute·data.go.kr 프록시(로컬 전용)
-├─ scripts/               ★수집기(다른 PC 실행) — 아래 표
+├─ scripts/               ★수집기(스케줄러 ②③④가 실행) — 아래 표
 ├─ sql/                   Supabase 셋업·적재 SQL
 ├─ supabase/              auth_setup.sql · functions/send-code(인증코드 발송 Edge Function)
 ├─ .github/workflows/     deploy-pages.yml (push→Pages 자동배포)
-└─ PRJ_2026/              문서 (개요·상세기술서·개발이력·개발자가이드·피드백·PRD·화면기획)
+└─ docs/                  문서 — 01-overview · 02-requirements · 03-architecture(상세기술서·ARCHITECTURE·API)
+                          · 04-design · 05-development(가이드·CHANGELOG) · 06-operations(스케줄러_체계·RUNBOOK) · 07-presentation
 ```
 
-### 수집기 (scripts/) — 다른 PC가 실행
+### 수집기 (scripts/) — 스케줄러가 실행
 
 | 스크립트 | 역할 | 실행 |
 |---|---|---|
 | `collect_upload_berth.py` | 선석배정 일일 수집→Supabase 적재 | `python … [YYYYMMDD]` / `--sql` |
 | `collect_portinsight_api.py` | IMF PortWatch→PCI 지수 산출·적재 | `python …` / `--sql` |
-| `collect_freight_index.py` | SCFI/CCFI 해상운임지수 수집 | `python …` |
+| `collect_freight_index.py` | KCCI·SCFI/CCFI 해상운임지수 수집 | `python …` / `--sql` |
 | `backfill_upload_berth.py` | 과거분 일괄 백필(헤더 변형 자동대응) | `--dry-run` 후 실행 |
 
-**환경변수** (스케줄러 PC): `SUPABASE_SERVICE_KEY`(필수, 쓰기) · `UNIPASS_API_KEY`(선택) · `DATA_GO_KR_KEY`(선택)
+**자동 실행** (2026-07-31 등록): Cowork 앱 ①(매일 06:00 터미널 16곳 수집)과 Claude 앱 예약 작업 ② `berth-upload-supabase`(매일 08:03) · ③ `portinsight-daily-update`(매일 08:44) · ④ `freight-index-update`(월·금 17:02)로 구동 — 시각·실행 모델·확인 위치는 `docs/06-operations/스케줄러_체계.md` 참조.
+**환경변수**: `SUPABASE_SERVICE_KEY`(직접 쓰기 실행 시에만 — 스케줄러는 `--sql` 생성 후 Supabase MCP로 적재해 PC에 키를 저장하지 않음) · `UNIPASS_API_KEY`(선택) · `DATA_GO_KR_KEY`(선택)
 **패키지**: `pip install openpyxl requests`
 
 ---
@@ -82,7 +84,7 @@ AI_SCM/
 - `git push origin master` → GitHub Actions(`Deploy to Pages`) 자동 실행 → **https://sitditrd.github.io/AI_SCM/**
 - ⚠️ **저장소를 private으로 바꾸면 무료 계정은 Pages가 꺼집니다.** 반드시 **public 유지**.
   - 만약 꺼졌다면: Settings → Pages → Source **`GitHub Actions`** 재지정 후 아무 커밋이나 push
-- 상세: `PRJ_2026/개발자가이드/GitHub_Pages_배포가이드.md`
+- 상세: `docs/05-development/GitHub_Pages_배포가이드.md`
 
 ---
 
@@ -112,7 +114,7 @@ React+TS(Vite) 이관 시안은 검토 결과 **채택 보류**하고 `app/` 폴
 ## 7. 남은 작업 리스트
 
 ### A. 지금 바로 가능
-1. **Netlify 미러 배포 활성화(선택)** — 저장소 Settings → Secrets and variables → Actions 에 `NETLIFY_BUILD_HOOK`(Netlify 빌드 훅 URL) 등록 시 GitHub Pages 배포 후 Netlify도 자동 미러 빌드. 미설정 시 조용히 건너뜀(운영은 GitHub Pages 단독으로 정상)
+1. ~~Netlify 미러 배포 활성화~~ — **완료(2026-07-31)**: `NETLIFY_BUILD_HOOK` 시크릿 등록, push 시 Pages 배포 후 Netlify 미러 자동 트리거 검증됨("Netlify 빌드 트리거됨" 로그 확인)
 2. **라이트 테마 상단 폴리시** — hero 밴드를 라이트에서 밝게 적응(현재 라이트에서도 상단이 짙은 네이비, 진행 예정)
 3. 모바일/반응형 QA · 접근성(a11y) 심화 감사 · 이미지/폰트 로딩 최적화
 
@@ -127,11 +129,11 @@ React+TS(Vite) 이관 시안은 검토 결과 **채택 보류**하고 `app/` 폴
 9. **Windows 예비 스케줄러** — `SUPABASE_SERVICE_KEY`
 
 ### C. 운영·고도화 (선택)
-10. 스케줄 자동화 점검(다른 PC 운영분) · ICON 중복정리 · v3 지표(UNCTAD·CPPI) · KCCI 파서
+10. 스케줄 자동화 점검(스케줄러 4개 운영분, §3) · ICON 중복정리 · v3 지표(UNCTAD·CPPI) · KCCI 파서
 
 > **FR-02(터미널 확대) 완료** — 선석배정 16개 터미널 적재·조회 반영(2026-07-29).
 
-> 요구사항 명세서(FR-01~05)는 `PRJ_2026/피드백리스트/항만인텔리전스_요구사항명세서_20260728.md` 참조. **FR-01·FR-03 완료**, FR-04/05는 기획 화면(준비중) 배치됨.
+> 요구사항 명세서(FR-01~05)는 `docs/02-requirements/항만인텔리전스_요구사항명세서_20260728.md` 참조. **FR-01·FR-03 완료**, FR-04/05는 기획 화면(준비중) 배치됨.
 
 ---
 
@@ -152,18 +154,20 @@ React+TS(Vite) 이관 시안은 검토 결과 **채택 보류**하고 `app/` 폴
 | 배포 훅(2026-07-29) | GitHub Pages 배포 후 **Netlify 미러 빌드 자동 트리거**(선택·`NETLIFY_BUILD_HOOK` 시크릿) |
 | 편의(2026-07-29) | 선석배정 **조회결과 우클릭→Excel(.xlsx) 내보내기**(현재 필터/검색 반영·SheetJS 지연로드·CSV 폴백) · **데이터 현황 관리자 전용**(미관리자 메뉴 숨김+접근 차단) |
 | 네비 정리(2026-07-29) | insight·berth에 남아 있던 **'BPO 모듈' 잔여 탭 제거** → 전 페이지 네비게이션 통일(헤더/푸터) |
+| 스케줄러(2026-07-31) | **적재 자동화 ②③④ Claude 앱 예약 작업 신규 등록** — 선석 적재(매일 08:03)·PCI 재산출(매일 08:44, ② 이후로 순서 조정해 당일 실측 보정)·운임지수(월·금 17:02). service key 미보관(`--sql` 생성 후 Supabase MCP 적재)·동일 수집일 replace 멱등. 파서 헤더 변형 대응 보강. 상세 `docs/06-operations/스케줄러_체계.md` |
 | React | app/ 기반 + 선석배정 + 데이터현황 이관 → 최종 채택 보류, app/ 제거(2026-07-28): 사유는 SEO 후퇴·번들 무게·빌드/인수인계 복잡도 |
 | 부가 산출물 | 위험물 물류 통합 플랫폼 발표 PPT·Connect DG 통합본·화물 무료 API 조사(59건) |
 
 ---
 
-## 9. 문서 인덱스 (PRJ_2026/)
+## 9. 문서 인덱스 (docs/)
 
 | 문서 | 용도 |
 |---|---|
 | `개발이력/개발이력_전체정리.md` | 전체 타임라인·검증 이력 (이어받기 필독) |
 | `개발자가이드/다른PC_작업절차_STEP.md` | **다른 PC 작업 순차 절차**(clone→수정→push→배포) |
 | `개발자가이드/다른PC_연계_이어받기_가이드.md` | 다른 PC 연계 원리·상세 |
+| `개발자가이드/스케줄러_체계.md` | **스케줄러 4개 체계**(시각·작업 ID·실행 모델·확인 위치, 2026-07-31 기준) |
 | `개발자가이드/GitHub_Pages_배포가이드.md` | 무료 배포·트러블슈팅 |
 | `개발자가이드/개발자_인수인계_가이드_v1.5.docx` | 키 발급→환경변수→운영 STEP |
 | `개발자가이드/화물추적_무료API_조사결과.md` | 화물 추적 API 59건 조사 |
@@ -179,7 +183,7 @@ React+TS(Vite) 이관 시안은 검토 결과 **채택 보류**하고 `app/` 폴
 - **사이트가 전부 404** → 저장소가 private으로 바뀌어 Pages가 꺼진 것. public 전환 + Pages 재활성화(§4)
 - **탭 제목/내용 안 바뀜** → 브라우저 캐시. `Ctrl+F5`. (HTML은 캐시버스팅 없음)
 - **Netlify 배포 멈춤** → 무료 빌드 크레딧 소진("deploys paused"). 결제 주기 리셋 대기 or GitHub Pages 사용(현재 채택)
-- **수집 데이터 미반영** → 스케줄러 PC에서 수집기 실행/로그 확인, 같은 Supabase 프로젝트인지 확인
+- **수집 데이터 미반영** → Cowork/Claude 앱 예약 작업 실행 이력 확인(앱이 켜져 있어야 실행됨, `스케줄러_체계.md`), `bs_collect_log` 조회, 같은 Supabase 프로젝트인지 확인
 
 ---
 

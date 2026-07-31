@@ -42,7 +42,7 @@
           var lv = waveLevel(wave);
           card.innerHTML = '<div class="k">' + p.ko +
             (lv[1] ? ' <span class="lv-badge" style="color:' + lv[1] + '; background: color-mix(in srgb, ' + lv[1] + ' 13%, transparent);"><i class="lv-dot"></i>' + lv[0] + '</span>' : '') + '</div>' +
-            '<div class="v" style="font-size:24px;">' + (wave != null ? wave.toFixed(1) : '—') + '<small>m 파고</small></div>' +
+            '<div class="v" style="font-size:24px;">' + (wave != null ? '파고 ' + wave.toFixed(1) + 'm' : '—') + '</div>' +
             '<div class="sub">' +
             (mw && mw.wave_period != null ? '파주기 ' + mw.wave_period.toFixed(1) + 's · ' : '') +
             (wd && wd.wind_speed_10m != null ? '풍속 ' + wd.wind_speed_10m.toFixed(1) + 'm/s' : '풍속 —') +

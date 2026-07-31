@@ -1,8 +1,8 @@
 # TWL 물류 포털 — 개발 이력 전체 정리
 
-작성일 2026-07-27 · 최종 개정 2026-07-28 (v1.5) · 저장소 https://github.com/sitditrd/AI_SCM · 문의 itt@twsc.co.kr
+작성일 2026-07-27 · 최종 개정 2026-07-31 (v1.6) · 저장소 https://github.com/sitditrd/AI_SCM · 문의 itt@twsc.co.kr
 
-## 1. 개발 타임라인 (2026-07-24 ~ 07-28)
+## 1. 개발 타임라인 (2026-07-24 ~ 07-31)
 
 | 단계 | 개발 내용 | 핵심 산출물 |
 |---|---|---|
@@ -15,9 +15,10 @@
 | 6. 운영 보드 | 데이터 현황 v2 — 종합 판정 배너·파이프라인 흐름도·소스 신선도 게이지·7일 적재 타임라인 | status.html/status.js |
 | 7. 백엔드·화물 추적 | 로컬 백엔드(server.py) 신설 — 유니패스 화물통관진행 프록시(/api/track), MBL/HBL/AWB 조회 화면, AWB 항공사(10사)·해상 SCAC(12사) 자동 감지 딥링크 | server.py, cargo.html/cargo.js |
 | 8. 알고리즘 탭 | ① 경로 분석: searoute 항로+몬테카를로 1만회(P10/P50/P90) ② ETA 지연 리스크: 접안편차 로그정규 적합+MC 4천회(표본 축적 시 자동 보정) | route.html/route.js, routes/(8,556구간), berth.js |
-| 9. 배포 | 폴더 계층 재구성(scripts/·sql/·PRJ_2026), Netlify 자동 배포(netlify.toml), 경로 분석 정적화(배포판 완전 동작), UI 버그 수정(그리드 짤림·진입 시 표 미표시·터미널 확대 이동) | netlify.toml, routes/ |
+| 9. 배포 | 폴더 계층 재구성(scripts/·sql/·docs), Netlify 자동 배포(netlify.toml), 경로 분석 정적화(배포판 완전 동작), UI 버그 수정(그리드 짤림·진입 시 표 미표시·터미널 확대 이동) | netlify.toml, routes/ |
 | 10. 07-28 기능 보강 | ① 선박 위치 "터미널 확대 이동" 완성(자동 스크롤+정중앙 펄스 핀+줌15) ② 용어 전문화: TW-PFS→PCI(Port Congestion Index) 전면 교체, 전주 대비 등 조어 정리 ③ 디자인 2026.5(카드·CTA·푸터 헤어라인)·라이트 테마 전면 수리(다크 고정 영역 테마 변수 오용 6건) ④ 선석배정 14일치 백필(3,218건, 헤더 변형 8종 자동 대응) ⑤ 선석배정 그리드 UX 2026.6: 페이지네이션·연속 스크롤(팬텀 스켈레톤)·컬럼 필터·트리 그리드·우클릭 퀵뷰 | vessel.js, 전 페이지, scripts/backfill_upload_berth.py, berth.html/js |
 | 11. 07-28 배포·SRS·React | ① 폴더 계층화(css/js/assets) ② **GitHub Pages 무료 자동배포** 정착(Netlify 크레딧 소진 대체, private→Pages 다운 사고 복구) ③ **FR-01** Port Insight 포트 검색(국문/영문/LOCODE 자동완성→지도 포커스+상세패널) ④ **FR-03** 국내/해외 탭 전 화면 ⑤ 해외 스케줄 허브(schedule.html, Ship Schedule 3뷰·해외 터미널 준비중 기획) ⑥ 소요일 분포 SVG 차트 개선(밴드·밀도곡선·마커·툴팁) ⑦ 배포 폴리시(OG·sitemap·robots·a11y) ⑧ **React 이관**: 기반+선석배정+데이터현황(재사용 DataGrid) → 최종 채택 보류, app/ 제거(2026-07-28): 사유는 SEO 후퇴·번들 무게·빌드/인수인계 복잡도 | 전 페이지, schedule.html, .github/workflows/, README.md |
+| 12. 07-31 운영 자동화·정비 | ① 선석배정 파서 헤더 변형 대응 확대(462→516건) ② 수집 스크립트 경로 수정 ③ Netlify 선별 게시+빌드 훅 완성(GitHub Pages 주경로의 미러) ④ 유니패스 화물 추적 Edge Function(track) 배포 ⑤ 스케줄러 3종 등록·스케줄러 체계 문서 신설 ⑥ i18n 대량 보강 ⑦ 07-31분 515건 적재 | scripts/collect_upload_berth.py, netlify.toml, supabase/functions/track, docs/06-operations/스케줄러_체계.md |
 
 ## 2. 최종 기능 (8개 화면, 전부 실데이터)
 
@@ -25,7 +26,8 @@
 |---|---|---|---|
 | index | 서비스 소개(사업영역 6+디지털 6) · TW-PFS 스트립 · 운임지수 스트립 | Supabase | ✅ |
 | insight | TW-PFS v2 게이지·분포·권역·지도·Top10 | IMF PortWatch(위성 AIS) | ✅ |
-| berth | 9개 터미널 선석배정, 필터/검색, 반입마감 임박 강조, 항만 기상, ETA 지연 리스크, 그리드 UX(페이지네이션·연속 스크롤·컬럼 필터·트리 그리드·우클릭 퀵뷰) | 터미널 공표+Open-Meteo | ✅ |
+| berth | 16개 터미널 선석배정(07-29 확대), 필터/검색, 반입마감 임박 강조, 항만 기상, ETA 지연 리스크, 그리드 UX(페이지네이션·연속 스크롤·컬럼 필터·트리 그리드·우클릭 퀵뷰) | 터미널 공표+Open-Meteo | ✅ |
+| schedule | 해외 스케줄 허브 — Ship Schedule 3뷰(Route·Vessel·Port), 해외 터미널 현황(준비중 기획 공개), 국내/해외 탭 | LOCODE 기반(소스 확정 전) | ✅ (준비중 안내) |
 | vessel | 실시간 AIS 지도(4개 항만), 선명/항차 검색→터미널 확대 이동, VesselFinder 연동 | VesselFinder+선석 DB | ✅ |
 | cargo | MBL/HBL/AWB 통관 진행 조회(유니패스), 선사·항공사 자동 감지 딥링크 | 관세청 유니패스 | 안내(로컬 전용) |
 | route | 해상 항로+소요일 몬테카를로(P10/P50/P90, 히스토그램, 지도) | searoute 사전계산 8,556구간 | ✅ |
@@ -35,7 +37,7 @@
 
 - **Claude 스케쥴 작업(키 불필요)**: 선석배정 매일 06:08 · Port Insight 매일 06:27 · 운임지수 월 07시
 - **Windows 예비(sb_secret 키 필요)**: TWL_BerthUpload 06:05 · TWL_PortInsightUpdate 06:15
-- **배포**: git push → Netlify 자동 배포 (netlify.toml)
+- **배포**: git push → GitHub Pages 자동 배포(주경로, .github/workflows/) + Netlify 미러(선별 게시·빌드 훅, netlify.toml)
 - **DB(Supabase)**: pi_ports/pi_snapshot · bs_terminals/bs_vessel_calls/bs_collect_log · freight_index (전 테이블 RLS 읽기 전용, 쓰기는 service_role/MCP)
 
 ## 4. 폴더 구조
@@ -48,7 +50,7 @@ C:\Temp\AI_SCM\
 ├─ scripts\   수집기 3종 + gen_routes.py + portwatch_mapping.json
 ├─ sql\       셋업 2종 + 수집기 생성 SQL 3종
 ├─ routes\    사전계산 항로 93파일(8,556구간)
-├─ PRJ_2026\  PRD · 개발계획서 · 프로젝트개요 · 상세기술서 · 화면기획 · 개발이력(본 문서)
+├─ docs\  PRD · 개발계획서 · 프로젝트개요 · 상세기술서 · 화면기획 · 개발이력(본 문서)
 └─ 터미널 스케쥴 수집\   일일 수집 엑셀 입력
 ```
 

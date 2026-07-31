@@ -1,7 +1,7 @@
 # 다른 PC 연계·이어받기 인수인계 가이드
 
 > **목적**: 스케줄 자동화(데이터 수집)를 운영 중인 **다른 PC**가, 이 세션에서 개발된 프런트엔드/배포 변경분을 **git으로 이어받아 하나의 서비스로 연계**하도록 안내.
-> 작성 2026-07-28 · 저장소 https://github.com/sitditrd/AI_SCM · 문의 itt@twsc.co.kr
+> 작성 2026-07-28 · 갱신 2026-07-31 · 저장소 https://github.com/sitditrd/AI_SCM · 문의 itt@twsc.co.kr
 
 ---
 
@@ -47,26 +47,30 @@ AI_SCM/
 ├─ js/*.js ×11          데이터 레이어·렌더러·공통
 ├─ assets/              twl_symbol.png · twl_logo.ico
 ├─ routes/ ×93          사전계산 항로(경로 분석용 정적 JSON)
-├─ scripts/             수집기(★다른 PC가 실행) — 아래 3종
+├─ scripts/             수집기(★다른 PC가 실행) — 아래 4종
 ├─ sql/                 셋업·적재 SQL
 ├─ .github/workflows/   deploy-pages.yml (push→GitHub Pages 자동배포)
-└─ PRJ_2026/            문서(개요·상세기술서·개발이력·개발자가이드·피드백)
+└─ docs/            문서(개요·상세기술서·개발이력·개발자가이드·피드백)
 ```
 
 ### STEP 3 · 스케줄러 환경 확인 (다른 PC가 이미 운영 중)
 
-수집기 3종은 그대로 유지 — pull 후에도 인터페이스 변화 없음:
+수집기 4종은 그대로 유지 — pull 후에도 인터페이스 변화 없음:
 
 | 스크립트 | 역할 | 실행 |
 |---|---|---|
 | `scripts/collect_upload_berth.py` | 선석배정 일일 수집→적재 | `python … [YYYYMMDD]` 또는 `--sql` |
 | `scripts/collect_portinsight_api.py` | PortWatch→PCI 지수 산출·적재 | `python …` 또는 `--sql` |
-| `scripts/collect_freight_index.py` | SCFI/CCFI 운임지수 수집 | `python …` |
+| `scripts/collect_freight_index.py` | SCFI/CCFI 운임지수 수집 | `python …` 또는 `--sql` |
 | `scripts/backfill_upload_berth.py` | (신규) 과거분 일괄 백필 | `--dry-run` 후 실행 |
+
+> 현행 운영(2026-07-31)은 **스케줄러 4종 체계** — Cowork/Claude 앱 내장 스케줄러가 수집기의 `--sql` 산출물을 Supabase MCP로 적재. 시각·작업 ID·실행 모델은 `docs/06-operations/스케줄러_체계.md` 참조.
+
+⚠️ `--sql` 모드가 생성하는 `sql/upload_berth.sql`·`sql/update_portinsight.sql`·`sql/upload_freight.sql`·`sql/backfill_berth.sql`은 매 실행 시 재생성되는 산출물이므로 **커밋 금지** (.gitignore 등록됨, 2026-07-31).
 
 **환경변수** (다른 PC에 설정):
 ```bash
-SUPABASE_SERVICE_KEY=<service_role 키>   # 스케줄러 쓰기 (필수)
+SUPABASE_SERVICE_KEY=<service_role 키>   # 직접 적재 시에만 필수 (--sql 모드는 불필요 — 키를 PC에 저장하지 않음)
 UNIPASS_API_KEY=<유니패스 키>            # 화물 추적 실조회 (선택)
 DATA_GO_KR_KEY=<공공데이터포털 키>       # 해수부/공항 프록시 (선택)
 ```
@@ -75,7 +79,9 @@ DATA_GO_KR_KEY=<공공데이터포털 키>       # 해수부/공항 프록시 (�
 ### STEP 4 · 웹 배포는 자동
 
 다른 PC에서 코드 수정 후 `git push` 하면 **GitHub Actions가 GitHub Pages로 자동 배포**합니다.
+- push 인증: **gh CLI 인증 기반** (`gh auth login` 후 push, 2026-07-31 확립). PAT 직접 입력 방식도 가능.
 - 배포 URL: **https://sitditrd.github.io/AI_SCM/**
+- Netlify 미러: 저장소 Actions 시크릿에 `NETLIFY_BUILD_HOOK` **등록 완료(2026-07-31)** — Pages 배포 후 Netlify 미러 빌드가 자동 트리거됨.
 - ⚠️ 저장소를 **private으로 바꾸면 무료 계정은 Pages가 꺼집니다.** public 유지 필수. (자세한 건 `GitHub_Pages_배포가이드.md`)
 
 ---
@@ -102,13 +108,14 @@ DATA_GO_KR_KEY=<공공데이터포털 키>       # 해수부/공항 프록시 (�
 - [ ] 스케줄러 환경변수(SERVICE_KEY 등) 유지 확인 → 수집기 정상 실행되는지 1회 수동 실행
 - [ ] Supabase 프로젝트 동일(kvmyiualdodcvreoqfin) 확인 — 웹/스케줄러가 같은 DB를 봐야 연계됨
 - [ ] `git push` 시 GitHub Actions(Deploy to Pages) 초록 체크 확인 → 사이트 반영 확인
+- [ ] 생성 산출물 SQL(`sql/upload_berth.sql` 등 4종)은 **커밋 금지** — .gitignore에 등록됨
 - [ ] 저장소 **public 유지** (private 전환 시 Pages 다운)
 
 ---
 
 ## 5. 남은 과제 (다른 PC에서 데이터 소스 확보 시 착수)
 
-- **FR-02 터미널 8곳 확대** — 조회 URL·스케줄 수집(다른 PC 담당). 파서는 `scripts/`에 플러그인식 추가
+- ~~FR-02 터미널 확대~~ — **완료(2026-07-29)**: 16개 터미널 수집·적재 운영 중 (파서 변형 대응은 2026-07-31 보강)
 - **FR-04/05 해외 스케줄 실데이터** — 데이터 소스(스크래핑/OCR/공개API) 확정 후 schedule.html '준비중' 자리에 연결
 - **대기 키**: UNIPASS·AISStream·ORS — 키 확보 시 즉시 동작
 
@@ -116,10 +123,11 @@ DATA_GO_KR_KEY=<공공데이터포털 키>       # 해수부/공항 프록시 (�
 
 ## 6. 관련 문서
 
-- `PRJ_2026/개발이력/개발이력_전체정리.md` — 전체 타임라인·검증 이력 (이어받기 필독)
-- `PRJ_2026/개발자가이드/GitHub_Pages_배포가이드.md` — 무료 배포·트러블슈팅
-- `PRJ_2026/개발자가이드/개발자_인수인계_가이드_v1.5.docx` — 키 발급→환경변수→운영 STEP
-- `PRJ_2026/상세기술서/` — 스키마·수집 파이프라인·산식
-- `PRJ_2026/피드백리스트/항만인텔리전스_요구사항명세서_20260728.md` — SRS(FR-01~05)
+- `docs/05-development/CHANGELOG.md` — 전체 타임라인·검증 이력 (이어받기 필독)
+- `docs/06-operations/스케줄러_체계.md` — 스케줄러 4종 체계(2026-07-31 기준)·실행 모델·확인 위치
+- `docs/05-development/GitHub_Pages_배포가이드.md` — 무료 배포·트러블슈팅
+- `docs/05-development/개발자_인수인계_가이드_v1.5.docx` — 키 발급→환경변수→운영 STEP
+- `docs/03-architecture/` — 스키마·수집 파이프라인·산식
+- `docs/02-requirements/항만인텔리전스_요구사항명세서_20260728.md` — SRS(FR-01~05)
 
 *끝. 문의: itt@twsc.co.kr*
