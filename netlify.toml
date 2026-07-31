@@ -1,6 +1,8 @@
-# Netlify 배포 설정 — 정적 사이트 (빌드 불필요, 저장소 루트 그대로 게시)
+# Netlify 배포 설정 — GitHub Pages 워크플로와 동일하게 웹 파일만 선별 게시
+# (사업문서 PRJ_2026·수집기 scripts·sql 덤프가 사이트 도메인으로 노출되지 않도록 publish="." 금지)
 [build]
-  publish = "."
+  command = "mkdir -p _site && cp *.html sitemap.xml robots.txt _site/ && for d in css js assets routes; do [ -d \"$d\" ] && cp -r \"$d\" _site/; done; true"
+  publish = "_site"
 
 # 주의: /api/* 백엔드(server.py — 유니패스 화물추적, searoute 경로계산)는
 # 로컬 실행 전용이라 Netlify 배포판에서는 동작하지 않는다.

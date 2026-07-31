@@ -52,6 +52,8 @@ VARIANTS = {
              'cct': ['반입마감시한 (작업완료일시)', '반입마감시한']},
     'ICON': {'voy': ['모선항차 입항차/출항차', '모선항차'],
              'vessel': ['선박명 Bitt(M)', '선박명']},
+    'BCT':  {'voy': ['모선/항차']},
+    'DDCT': {'voy': ['모선/항차']},
 }
 # '양하/적하/Shift'가 한 컬럼으로 합쳐진 변형 (값: '618/675/0')
 COMBINED_QTY = ['양하/적하/Shift', '작업량 양하/적하/Shift', '작업량 양하 / 적하 / Shift']
@@ -60,8 +62,8 @@ FNAME_RE = re.compile(r'터미널_선석배정현황_통합_(\d{8})\.xlsx$')
 
 
 def norm_h(h):
-    """헤더 정규화: 줄바꿈·다중 공백 → 단일 공백"""
-    return re.sub(r'\s+', ' ', str(h)).strip() if h is not None else ''
+    """헤더 정규화: 공백·줄바꿈 전부 제거 — 공백 위치만 다른 변형('접안예정 일시' 등)을 흡수"""
+    return re.sub(r'\s+', '', str(h)) if h is not None else ''
 
 
 def parse_dt_x(v):
@@ -74,23 +76,26 @@ def parse_dt_x(v):
 
 
 def build_idx(header, sheet):
-    """정규화 헤더 위치 매핑: 현행 MAP 우선, 실패 시 VARIANTS 후보 순차 적용"""
+    """정규화 헤더 위치 매핑: 현행 MAP(후보 리스트 지원) 우선, 실패 시 VARIANTS 후보 순차 적용"""
     hn = [norm_h(h) for h in header]
     m, v = MAP[sheet], VARIANTS.get(sheet, {})
     idx = {}
     for k, primary in m.items():
-        for cand in [primary] + v.get(k, []):
-            if cand in hn:
-                idx[k] = hn.index(cand)
+        prim = list(primary) if isinstance(primary, list) else [primary]
+        for cand in prim + v.get(k, []):
+            cn = norm_h(cand)
+            if cn in hn:
+                idx[k] = hn.index(cn)
                 break
     for k, cands in v.items():          # MAP에 없는 보조 필드 (예: BNCT의 분리형 route)
         if k in idx:
             continue
         for cand in cands:
-            if cand in hn:
-                idx[k] = hn.index(cand)
+            cn = norm_h(cand)
+            if cn in hn:
+                idx[k] = hn.index(cn)
                 break
-    combined = next((hn.index(c) for c in COMBINED_QTY if c in hn), None)
+    combined = next((hn.index(norm_h(c)) for c in COMBINED_QTY if norm_h(c) in hn), None)
     unresolved = [k for k in m if k not in idx]
     if combined is not None:
         unresolved = [k for k in unresolved if k not in ('dis', 'lod', 'shift')]
@@ -119,7 +124,12 @@ def parse_workbook_v(path, cdate):
         for r in rows[1:]:
             if all(x is None for x in r):
                 continue
-            g = lambda k: (r[idx[k]] if k in idx and idx[k] < len(r) else None)
+            def g(k, _r=r):
+                x = _r[idx[k]] if k in idx and idx[k] < len(_r) else None
+                if isinstance(x, str):   # 수집 원문의 '@@' 변경표시·잉여 공백 제거
+                    x = re.sub(r'\s+', ' ', x.replace('@@', ' ')).strip()
+                    return x or None
+                return x
             vessel = g('vessel')
             if not vessel or not str(vessel).strip():
                 continue

@@ -1,8 +1,13 @@
 /* =========================================================
-   TWL 화물 추적 — 유니패스 통관진행(백엔드 프록시 /api/track) + AWB 항공사 딥링크
+   TWL 화물 추적 — 유니패스 통관진행 + AWB 항공사 딥링크
+   로컬(localhost)은 server.py /api/track, 배포판은 Supabase Edge Function `track` 호출
    ========================================================= */
 (function () {
   'use strict';
+
+  var TRACK_API = (location.protocol === 'file:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname))
+    ? '/api/track'
+    : 'https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/track';
 
   var AIRLINES = {
     '180': ['대한항공 Cargo', 'https://cargo.koreanair.com/'],
@@ -140,11 +145,13 @@
            '<a target="_blank" rel="noopener" href="' + oc.url + '">' + esc(oc.name) + ' 트래킹 ↗</a>')
         : '');
     el('traceOut').innerHTML = '<div class="card reveal in"><div class="sc-sub">관세청 유니패스 조회 중…</div></div>';
-    fetch('/api/track?type=' + type + '&no=' + encodeURIComponent(no) + '&year=' + el('blYear').value)
+    fetch(TRACK_API + '?type=' + type + '&no=' + encodeURIComponent(no) + '&year=' + el('blYear').value)
       .then(function (r) { return r.json(); })
       .then(function (res) { render(res, no); })
       .catch(function () {
-        var hint = (location.hostname.indexOf('netlify') >= 0 || location.hostname.indexOf('github.io') >= 0) ? '배포판에서는 이 기능의 백엔드가 제공되지 않습니다 — 사내 로컬 포털(start_server.bat)에서 이용하십시오.' : '백엔드 없는 서버가 응답했습니다 — 기존 서버 창을 모두 닫고 start_server.bat(server.py)로 다시 실행하십시오.';
+        var hint = (TRACK_API.indexOf('functions') >= 0)
+          ? '일시적 네트워크 오류입니다 — 잠시 후 다시 시도하십시오.'
+          : '백엔드 없는 서버가 응답했습니다 — 기존 서버 창을 모두 닫고 start_server.bat(server.py)로 다시 실행하십시오.';
         el('traceOut').innerHTML = '<div class="card reveal in"><b>백엔드 연결 실패</b><p class="sc-sub">' + hint + '</p></div>';
       });
   }

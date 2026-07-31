@@ -34,8 +34,9 @@ if hasattr(sys.stdout, 'reconfigure'):
 import requests
 
 PW_DAILY = 'https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/Daily_Ports_Data/FeatureServer/0/query'
-MAPPING = r'C:\Temp\AI_SCM\scripts\portwatch_mapping.json'
-SQL_OUT = r'C:\Temp\AI_SCM\sql\update_portinsight.sql'
+MAPPING = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'portwatch_mapping.json')
+SQL_OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                       'sql', 'update_portinsight.sql')
 SUPABASE_URL = 'https://kvmyiualdodcvreoqfin.supabase.co'
 SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
 PUBLISHABLE_KEY = 'sb_publishable_jo6oBar-JbfKY3IfhPyBbQ_gH1Lvwsv'  # 읽기 전용(전주 대비 delta 계산용)

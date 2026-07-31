@@ -93,7 +93,7 @@ AI_SCM/
 - **화면**: `login.html`(로그인/회원가입/비밀번호찾기 + 특수문자·비밀번호 강도 미터), `admin.html`(관리자 승인)
 - **백엔드(Supabase)**: 커스텀 인증 — `app_users`(bcrypt 해시)·`app_sessions`·`email_codes` (RLS 잠금 + SECURITY DEFINER 함수). 스키마: `supabase/auth_setup.sql`
 - **이메일 발송**: Edge Function `send-code` (오픈소스 denomailer + 본인 SMTP). 소스: `supabase/functions/send-code/index.ts`
-- **관리자 계정**: `sitditrd@naver.com` (최초 비밀번호는 변경 권장)
+- **관리자 계정**: `sitditrd2@naver.com` (최초 비밀번호는 변경 권장 — app_users 실DB 기준 2026-07-31 확인)
 - **가입 흐름**: 이메일 인증코드 → 가입신청(pending) → 관리자 승인 → 로그인
 - ⚠️ **SMTP 시크릿 등록 필요(무료)**: 네이버/Gmail 본인 메일 SMTP를 대시보드 → Project Settings → Edge Functions → Secrets 에 등록해야 인증코드 메일이 실제 발송됨.
   `SMTP_HOST=smtp.naver.com · SMTP_PORT=465 · SMTP_USER=<메일> · SMTP_PASS=<앱비번> · SMTP_FROM=<메일>`
