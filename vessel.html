@@ -19,6 +19,7 @@
   <meta name="twitter:description" content="부산신항·광양항·인천항 주변 선박의 실시간 위치를 AIS 기반 지도로 표시합니다.">
   <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
   <link rel="stylesheet" href="css/style.css?v=2026-07-29i">
   <link rel="icon" href="assets/twl_logo.ico">
 </head>
@@ -142,6 +143,21 @@
     </div>
   </section>
 
+  <!-- ============ 자체 AIS 수신 현황 (AISStream PoC · 2026-07-31) ============ -->
+  <section class="dash-section" id="aispoc" style="padding-top:0;">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">AIS PoC</span>
+        <h2>자체 AIS 수신 현황</h2>
+        <span class="hint">AISStream 웹소켓 수신 → 자체 DB 적재 · 지상파 연안 커버리지 · 1시간 주기 스냅샷</span>
+      </div>
+      <div class="card map-card reveal" style="padding:6px;">
+        <div id="aisMap" style="height:420px;" role="application" aria-label="자체 AIS 수신 지도"></div>
+      </div>
+      <p class="sc-sub" id="aisStat" style="margin:10px 0 0; color:var(--muted); font-size:12px;">—</p>
+    </div>
+  </section>
+
   <!-- ================= 푸터 ================= -->
   <footer class="site-footer">
     <div class="container footer-grid">
@@ -162,10 +178,11 @@
     </div>
   </footer>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="js/common.js?v=2026-4"></script>
-  <script src="js/i18n.js?v=2026-07-31c"></script>
+  <script src="js/i18n.js?v=2026-07-31d"></script>
   <script src="js/auth.js?v=2026-07-29f"></script>
   <script src="js/auth-gate.js?v=2026-07-30a"></script>
-  <script src="js/vessel.js?v=2026-07-31a"></script>
+  <script src="js/vessel.js?v=2026-07-31b"></script>
 </body>
 </html>

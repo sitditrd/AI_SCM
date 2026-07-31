@@ -196,4 +196,60 @@
     el('pmTo').value = d(u);
     btn.addEventListener('click', pmSearch);
   });
+
+  /* ================= 자체 AIS 수신 지도 (AISStream PoC, 2026-07-31) ================= */
+  var aisMap = null, aisLayer = null;
+
+  function aisRender(rows) {
+    var stat = el('aisStat');
+    if (!rows.length) {
+      stat.textContent = '아직 수신 데이터가 없습니다 — AIS 수집 스케줄러 첫 실행 후 표시됩니다.';
+      return;
+    }
+    if (aisLayer) aisLayer.clearLayers();
+    var latest = null;
+    rows.forEach(function (r) {
+      var moving = r.sog != null && r.sog > 0.5;
+      var mk = L.circleMarker([r.lat, r.lng], {
+        radius: moving ? 5 : 3.5,
+        color: moving ? '#1e6fe0' : '#8493ac',
+        fillColor: moving ? '#1e6fe0' : '#8493ac',
+        fillOpacity: 0.75, weight: 1
+      });
+      mk.bindPopup('<b>' + esc(r.ship_name || 'MMSI ' + r.mmsi) + '</b><br>MMSI ' + esc(r.mmsi) +
+        (r.sog != null ? ' · ' + r.sog + ' kn' : '') +
+        (r.cog != null ? ' · ' + Math.round(r.cog) + '°' : '') +
+        '<br>' + esc(String(r.received_at).slice(5, 16).replace('T', ' ')));
+      aisLayer.addLayer(mk);
+      if (!latest || r.received_at > latest) latest = r.received_at;
+    });
+    stat.textContent = '수신 선박: ' + rows.length + ' · 최근 수신: ' + String(latest).slice(5, 16).replace('T', ' ') + ' KST';
+  }
+
+  function aisFetch() {
+    var since = new Date(Date.now() - 2 * 3600000).toISOString();
+    fetch(SUPABASE_URL + '/rest/v1/vessel_positions?select=mmsi,ship_name,lat,lng,sog,cog,received_at' +
+      '&received_at=gt.' + encodeURIComponent(since) + '&order=received_at.desc&limit=900',
+      { headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY } })
+      .then(function (r) { return r.json(); })
+      .then(function (rows) {
+        if (!Array.isArray(rows)) return;
+        var seen = {}, uniq = [];
+        rows.forEach(function (r) { if (!seen[r.mmsi]) { seen[r.mmsi] = 1; uniq.push(r); } });
+        aisRender(uniq);
+      })
+      .catch(function () { /* 오프라인 등 — 기존 표시 유지 */ });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var host = el('aisMap');
+    if (!host || !window.L) return;
+    aisMap = L.map('aisMap', { scrollWheelZoom: false }).setView([35.6, 128.3], 6);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 18
+    }).addTo(aisMap);
+    aisLayer = L.layerGroup().addTo(aisMap);
+    aisFetch();
+    setInterval(aisFetch, 5 * 60000);   /* 5분마다 재조회 */
+  });
 })();
