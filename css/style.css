@@ -112,6 +112,8 @@ button { font-family: inherit; cursor: pointer; }
 .hero-page .site-header:not(.scrolled) .logo-slot,
 .hero-page .site-header:not(.scrolled) .site-nav a,
 .hero-page .site-header:not(.scrolled) .icon-btn,
+.hero-page .site-header:not(.scrolled) .lang-switch,
+.hero-page .site-header:not(.scrolled) .acct-btn,
 .hero-page .site-header:not(.scrolled) .nav-burger { color: #eaf1fb; }
 /* 로고 타이포는 자체 color 선언이 상속을 이기므로 미스크롤 상태를 명시적으로 화이트 계열로 */
 .hero-page .site-header:not(.scrolled) .logo-text .l1 { color: #eaf1fb; }
