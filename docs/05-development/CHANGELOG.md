@@ -19,6 +19,7 @@
 | 10. 07-28 기능 보강 | ① 선박 위치 "터미널 확대 이동" 완성(자동 스크롤+정중앙 펄스 핀+줌15) ② 용어 전문화: TW-PFS→PCI(Port Congestion Index) 전면 교체, 전주 대비 등 조어 정리 ③ 디자인 2026.5(카드·CTA·푸터 헤어라인)·라이트 테마 전면 수리(다크 고정 영역 테마 변수 오용 6건) ④ 선석배정 14일치 백필(3,218건, 헤더 변형 8종 자동 대응) ⑤ 선석배정 그리드 UX 2026.6: 페이지네이션·연속 스크롤(팬텀 스켈레톤)·컬럼 필터·트리 그리드·우클릭 퀵뷰 | vessel.js, 전 페이지, scripts/backfill_upload_berth.py, berth.html/js |
 | 11. 07-28 배포·SRS·React | ① 폴더 계층화(css/js/assets) ② **GitHub Pages 무료 자동배포** 정착(Netlify 크레딧 소진 대체, private→Pages 다운 사고 복구) ③ **FR-01** Port Insight 포트 검색(국문/영문/LOCODE 자동완성→지도 포커스+상세패널) ④ **FR-03** 국내/해외 탭 전 화면 ⑤ 해외 스케줄 허브(schedule.html, Ship Schedule 3뷰·해외 터미널 준비중 기획) ⑥ 소요일 분포 SVG 차트 개선(밴드·밀도곡선·마커·툴팁) ⑦ 배포 폴리시(OG·sitemap·robots·a11y) ⑧ **React 이관**: 기반+선석배정+데이터현황(재사용 DataGrid) → 최종 채택 보류, app/ 제거(2026-07-28): 사유는 SEO 후퇴·번들 무게·빌드/인수인계 복잡도 | 전 페이지, schedule.html, .github/workflows/, README.md |
 | 12. 07-31 운영 자동화·정비 | ① 선석배정 파서 헤더 변형 대응 확대(462→516건) ② 수집 스크립트 경로 수정 ③ Netlify 선별 게시+빌드 훅 완성(GitHub Pages 주경로의 미러) ④ 유니패스 화물 추적 Edge Function(track) 배포 ⑤ 스케줄러 3종 등록·스케줄러 체계 문서 신설 ⑥ i18n 대량 보강 ⑦ 07-31분 515건 적재 | scripts/collect_upload_berth.py, netlify.toml, supabase/functions/track, docs/06-operations/스케줄러_체계.md |
+| 13. 07-31 status 헬스체크 | 외부 연동 헬스체크 섹션(SECTION 05) 신설 — Edge Function track·datago(needKey 응답은 "정상(키 대기)" 판정)·send-code(OPTIONS)·Open-Meteo marine 4종을 45초 주기 점검, 응답시간 게이지(3초 기준)·8초 타임아웃, 신규 문구 i18n(EN/ZH) 반영 (로드맵 §4 status P1) | status.html/js/status.js, js/i18n.js |
 
 ## 2. 최종 기능 (8개 화면, 전부 실데이터)
 
@@ -31,7 +32,7 @@
 | vessel | 실시간 AIS 지도(4개 항만), 선명/항차 검색→터미널 확대 이동, VesselFinder 연동 | VesselFinder+선석 DB | ✅ |
 | cargo | MBL/HBL/AWB 통관 진행 조회(유니패스), 선사·항공사 자동 감지 딥링크 | 관세청 유니패스 | 안내(로컬 전용) |
 | route | 해상 항로+소요일 몬테카를로(P10/P50/P90, 히스토그램, 지도) | searoute 사전계산 8,556구간 | ✅ |
-| status | 종합 판정·흐름도·신선도 게이지·7일 타임라인·이력 | bs_collect_log 등 | ✅ |
+| status | 종합 판정·흐름도·신선도 게이지·7일 타임라인·이력·외부 연동 헬스체크 | bs_collect_log 등 + Edge Functions·Open-Meteo | ✅ |
 
 ## 3. 데이터 파이프라인·자동화
 

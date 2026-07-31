@@ -46,7 +46,7 @@ select index_code, route, value, pct_change, pub_date, updated_at
 
 1. **Cowork 앱 › 예약된 작업** — ①(Terminal schedule collection)의 실행 이력·회차별 결과 보고
 2. **Claude 앱 사이드바 › 예정됨** — ② `berth-upload-supabase` · ③ `portinsight-daily-update` · ④ `freight-index-update` 의 실행 이력·결과 보고
-3. **포털 데이터 현황(status.html, 관리자 전용)** — https://sitditrd.github.io/AI_SCM/status.html — 파이프라인 최신성 게이지·최근 7일 적재 타임라인 (관리자 계정 로그인 필요)
+3. **포털 데이터 현황(status.html, 관리자 전용)** — https://sitditrd.github.io/AI_SCM/status.html — 파이프라인 최신성 게이지·최근 7일 적재 타임라인·외부 연동 헬스체크(Edge Function track/datago/send-code·Open-Meteo, 45초 주기) (관리자 계정 로그인 필요)
 
 ---
 

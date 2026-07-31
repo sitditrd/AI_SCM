@@ -93,7 +93,7 @@ RLS: 전 테이블 활성화, 익명은 select 정책만. 쓰기는 service_role
 ## 5. 운영
 
 - **스케쥴**: 4종 체계(2026-07-31 재편, 윈도우 작업 스케줄러 미사용) — ① 06:00 Cowork 수집·메일 ② 08:03 선석 적재 ③ 08:44 PCI ④ 월·금 17:02 운임지수. 전부 `--sql` 생성 후 Supabase MCP 적재(키 미보관). 상세: `docs/06-operations/스케줄러_체계.md`
-- **모니터링**: status.html — 이상 시 조치: ①수집 파일 확인 ②스케쥴 이력 ③수동 재적재 ④IT 문의
+- **모니터링**: status.html — 이상 시 조치: ①수집 파일 확인 ②스케쥴 이력 ③수동 재적재 ④IT 문의. 외부 연동 헬스체크(SECTION 05): Edge Function track·datago(needKey→정상(키 대기))·send-code(OPTIONS)·Open-Meteo를 45초 주기 점검(응답시간 게이지 3초 기준·8초 타임아웃)
 - **보안**: publishable key만 클라이언트 노출(RLS select-only). service_role 키는 환경변수 `SUPABASE_SERVICE_KEY` 전용, 저장소 커밋 금지
 - **장애 폴백**: Supabase 불가 시 각 페이지는 마지막 시드(정적)로 표시 + 오프라인 배너, 45초마다 재연결 시도
 

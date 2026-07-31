@@ -79,7 +79,7 @@ flowchart LR
 | `cargo.html` | `cargo.js` | 화물 추적 — UNIPASS 조회(Edge Function `track` / 로컬 `server.py` 프록시) + 딥링크 |
 | `route.html` | `route.js` | 경로 분석 — 몬테카를로 소요일 분포, CARTO Voyager 지도 항로 시각화(사전계산 `routes/` 93개 JSON) |
 | `schedule.html` | — | 해외 스케줄 — 준비중(기획 화면, FR-04/05) |
-| `status.html` | `status.js` | 데이터 현황(관리자 전용) — 판정 배너·흐름도·신선도 게이지·7일 적재 타임라인 |
+| `status.html` | `status.js` | 데이터 현황(관리자 전용) — 판정 배너·흐름도·신선도 게이지·7일 적재 타임라인·외부 연동 헬스체크(Edge Function track/datago/send-code·Open-Meteo, 45초 주기) |
 | `login.html` | `auth.js` | 로그인·회원가입·비밀번호 찾기(이메일 인증코드, 비밀번호 강도 미터) |
 | `admin.html` | `auth.js` | 관리자 — 가입 승인/거부, 비밀번호 재설정 |
 
