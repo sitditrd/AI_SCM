@@ -89,13 +89,13 @@ flowchart LR
 
 | 화면 | 주요 JS 모듈 | 역할 |
 |---|---|---|
-| `index.html` | `landing.js` | 홈 — KPI 스트립(Supabase 모드), 운임지수 스트립, 히어로 캔버스, 한/영/중 다국어(`i18n.js`) |
-| `insight.html` | `data.js` · `insight.js` | Port Insight — PCI 게이지·분포·권역·Leaflet 지도·순위, 포트 검색 |
+| `index.html` | `landing.js` | 홈 — KPI 스트립(Supabase 모드), 운임지수 스트립, **월간 컨테이너 TEU 스트립**(`datago?api=teuimpexp`), **기상특보 티커**(`api=wthrwarn`), 히어로 캔버스, 한/영/중 다국어(`i18n.js`) |
+| `insight.html` | `data.js` · `insight.js` | Port Insight — PCI 게이지·분포·권역·Leaflet 지도·순위, 포트 검색, **컨테이너 물동량 추이 SECTION 07**(`datago?api=teuimpexp`, 12개월·페이지 순회) |
 | `berth.html` | `data_berth.js` · `berth.js` · `weather.js` | 선석배정 — 16터미널 고급 그리드(필터·검색·마감임박 강조), 항만 기상 카드, 우클릭 Excel 내보내기 |
-| `vessel.html` | `vessel.js` | 선박 위치 — VesselFinder AIS 지도 임베드, PORT-MIS 입출항 실적 조회(Edge Function `datago`), 자체 AIS 수신 지도(Leaflet · `vessel_positions`, 5분 재조회) |
+| `vessel.html` | `vessel.js` | 선박 위치 — VesselFinder AIS 지도 임베드, PORT-MIS 입출항 실적 조회(`datago?api=portmis`), **선박 제원 조회**(`api=shipspec`, 행 클릭 시 상세 15항목), 자체 AIS 수신 지도(Leaflet · `vessel_positions`, 5분 재조회) |
 | `cargo.html` | `cargo.js` | 화물 추적 — UNIPASS 조회(Edge Function `track` / 로컬 `server.py` 프록시) + 딥링크 |
-| `route.html` | `route.js` | 경로 분석 — 몬테카를로 소요일 분포, CARTO Voyager 지도 항로 시각화(사전계산 `routes/` 93개 JSON) |
-| `schedule.html` | — | 해외 스케줄 — 준비중(기획 화면, FR-04/05) |
+| `route.html` | `route.js` | 경로 분석 — 몬테카를로 소요일 분포, CARTO Voyager 지도 항로 시각화(사전계산 `routes/` 93개 JSON), **도착국가 물동량 근거 KPI**(`datago?api=teunation`, 도착항 ISO2 매칭·4페이지 순회 후 캐시) |
+| `schedule.html` | `schedule.js` | 해외 스케줄 — 선박 스케줄 3뷰는 준비중(FR-04/05), **항공 화물편 스케줄 실데이터**(`datago?api=aircargoarr`/`aircargodep`/`airschedarr` 3탭) |
 | `status.html` | `status.js` | 데이터 현황(관리자 전용) — 판정 배너·흐름도·신선도 게이지·7일 적재 타임라인(`berth_daily_counts` RPC 실적 기준)·외부 연동 헬스체크(Edge Function track/datago/send-code·Open-Meteo, 45초 주기) |
 | `login.html` | `auth.js` | 로그인·회원가입·비밀번호 찾기(이메일 인증코드, 비밀번호 강도 미터) |
 | `admin.html` | `auth.js` | 관리자 — 가입 승인/거부, 비밀번호 재설정 |
