@@ -20,7 +20,22 @@ if hasattr(sys.stdout, 'reconfigure'):
 
 import websocket
 
-API_KEY = os.environ.get('AISSTREAM_API_KEY', '')
+
+def env_key(name):
+    """환경변수 → (Windows) 사용자 환경변수 레지스트리 순으로 조회.
+    setx 직후 기존 프로세스는 갱신된 환경을 상속하지 못하므로 레지스트리를 폴백으로 읽는다."""
+    v = os.environ.get(name, '')
+    if v or os.name != 'nt':
+        return v
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, 'Environment') as k:
+            return winreg.QueryValueEx(k, name)[0] or ''
+    except Exception:
+        return ''
+
+
+API_KEY = env_key('AISSTREAM_API_KEY')
 SQL_OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                        'sql', 'upload_ais.sql')
 # 한국 연안 (제주 남단 ~ 동해 북부, 서해 ~ 동해)

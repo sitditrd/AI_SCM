@@ -31,7 +31,23 @@ import openpyxl
 import requests
 
 SUPABASE_URL = 'https://kvmyiualdodcvreoqfin.supabase.co'
-SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
+
+
+def env_key(name):
+    """환경변수 → (Windows) 사용자 환경변수 레지스트리 순으로 조회.
+    setx 직후 기존 프로세스는 갱신된 환경을 상속하지 못하므로 레지스트리를 폴백으로 읽는다."""
+    v = os.environ.get(name, '')
+    if v or os.name != 'nt':
+        return v
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, 'Environment') as k:
+            return winreg.QueryValueEx(k, name)[0] or ''
+    except Exception:
+        return ''
+
+
+SERVICE_KEY = env_key('SUPABASE_SERVICE_KEY')
 WATCH_DIR = r'C:\Temp\AI_SCM\터미널 스케쥴 수집'
 
 # ---------- 시트별 컬럼 매핑 (PRD 6.3절) ----------
