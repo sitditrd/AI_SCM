@@ -74,6 +74,99 @@
       '<div class="sc-big">' + big + '</div><div class="sc-sub">' + sub + '</div></div>';
   }
 
+  /* ========== 항로별 물동량 근거 (해수부 국가별컨테이너처리실적 15057250, 2026-08-03) ==========
+     도착 항만의 국가코드(ISO2)로 "한국 ↔ 해당 국가" 컨테이너 실적을 붙여 항로 선택의 근거를 준다.
+     제약 2가지:
+       ① 이 API는 numOfRows 상한이 50인데 한 달치가 168개국 → 4페이지를 순회해야 전부 모인다.
+       ② 원천이 약 2개월 지연 공표라 최신월을 고정할 수 없다 → 지역별 API(12행·1페이지)로 먼저 최신월을 탐색.
+     둘 다 첫 시뮬레이션에서 한 번만 수행하고 모듈 캐시에 담는다. */
+  var DATAGO = 'https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/datago';
+  var teuCache = null, teuPending = null;
+
+  function dgItems(o, depth) {
+    if (depth > 6 || o == null) return null;
+    if (Array.isArray(o)) return (o.length && typeof o[0] === 'object') ? o : null;
+    if (typeof o === 'object') {
+      for (var k in o) {
+        var f = dgItems(o[k], depth + 1);
+        if (f) return f;
+      }
+    }
+    return null;
+  }
+  function dgFetch(params) {
+    return fetch(DATAGO + '?' + new URLSearchParams(params))
+      .then(function (r) { return r.json(); })
+      .then(function (res) { return res.needKey ? null : (res.data ? dgItems(res.data, 0) : null); })
+      .catch(function () { return null; });
+  }
+  function ymOffset(back) {
+    var d = new Date();
+    d = new Date(d.getFullYear(), d.getMonth() - back, 1);
+    return String(d.getFullYear() * 100 + (d.getMonth() + 1));
+  }
+
+  /* 지역별 API로 실적이 존재하는 최신월 탐색 (2·3·4개월 전 순서로 확인) */
+  function findLatestMonth(i) {
+    if (i > 4) return Promise.resolve(null);
+    var m = ymOffset(i);
+    return dgFetch({ api: 'teuimpexp', numOfRows: '50', sym: m, eym: m }).then(function (rows) {
+      return (rows && rows.length) ? m : findLatestMonth(i + 1);
+    });
+  }
+
+  /* 국가별 실적 4페이지 순회 → { 국가코드: {ko, imp, exp} } */
+  function loadNation(month, page, acc) {
+    return dgFetch({ api: 'teunation', numOfRows: '50', pageNo: String(page), sym: month, eym: month })
+      .then(function (rows) {
+        if (!rows || !rows.length) return acc;
+        rows.forEach(function (r) {
+          if (!r.natCd) return;
+          acc[r.natCd] = {
+            ko: r.natNm || r.natCd,
+            imp: Number(r.eContnTeuTotal) || 0,   /* e* = 수입 */
+            exp: Number(r.tContnTeuTotal) || 0    /* t* = 수출 */
+          };
+        });
+        return (rows.length < 50 || page >= 6) ? acc : loadNation(month, page + 1, acc);
+      });
+  }
+
+  function teuByNation() {
+    if (teuCache) return Promise.resolve(teuCache);
+    if (teuPending) return teuPending;
+    teuPending = findLatestMonth(2).then(function (month) {
+      if (!month) { teuCache = { month: null, map: {} }; return teuCache; }
+      return loadNation(month, 1, {}).then(function (map) {
+        teuCache = { month: month, map: map || {} };
+        return teuCache;
+      });
+    }).catch(function () {
+      teuCache = { month: null, map: {} };
+      return teuCache;
+    });
+    return teuPending;
+  }
+
+  /* 시뮬레이션 KPI 뒤에 물동량 카드를 덧붙인다 (조회 실패·미수록 국가면 조용히 생략) */
+  function appendVolume(dest) {
+    if (!dest || !dest.cc || typeof fetch === 'undefined') return;
+    teuByNation().then(function (c) {
+      var host = el('simKpis');
+      if (!host || !c || !c.month) return;
+      var v = c.map[dest.cc];
+      if (!v) return;
+      var tot = v.imp + v.exp;
+      var ym = String(c.month);
+      host.insertAdjacentHTML('beforeend', kpi(
+        '한국 ↔ ' + esc(v.ko) + ' 물동량',
+        Math.round(tot).toLocaleString('ko-KR') + ' <small>TEU</small>',
+        ym.slice(0, 4) + '-' + ym.slice(4, 6) + ' 기준 · 수입 ' + Math.round(v.imp).toLocaleString('ko-KR') +
+          ' / 수출 ' + Math.round(v.exp).toLocaleString('ko-KR') + ' TEU · 해수부 국가별 실적'
+      ));
+    });
+  }
+
   /* 도착 소요일 분포 — SVG 히스토그램(신뢰구간 밴드·밀도곡선·P10/P50/P90 마커·그리드·호버)
      컨테이너 실제 px 폭으로 viewBox를 잡아 텍스트 왜곡 없이 반응형(모바일도 충분한 높이) */
   var _lastSim = null, _histoResizeBound = false;
@@ -179,6 +272,7 @@
           kpi('예상 소요일 P50', r.p50.toFixed(1) + ' <small>일</small>', '중앙값 · 평균 속력 ' + kn + 'kn 기준') +
           kpi('신뢰 구간 P10~P90', r.p10.toFixed(1) + '~' + r.p90.toFixed(1) + ' <small>일</small>', '10회 중 8회는 이 구간 내 도착') +
           kpi('지연 리스크', ((r.p90 - r.p50)).toFixed(1) + ' <small>일</small>', 'P50 대비 P90 추가 소요 (버퍼 권장치)');
+        appendVolume(d);
         drawHisto(r);
         if (map) {
           routeLayer.clearLayers();
