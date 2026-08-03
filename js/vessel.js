@@ -154,10 +154,11 @@
     var p = new URLSearchParams({ api: 'portmis' });
     var clsgn = el('pmClsgn').value.trim(), port = el('pmPort').value.trim();
     var from = el('pmFrom').value.replace(/-/g, ''), to = el('pmTo').value.replace(/-/g, '');
+    /* PORT-MIS(15006353) 규격 파라미터: clsgn(호출부호)·prtAgCd(항만청)·sde/ede(조회 시작·종료일 YYYYMMDD) */
     if (clsgn) p.set('clsgn', clsgn);
     if (port) p.set('prtAgCd', port);
-    if (from) p.set('fromDt', from);
-    if (to) p.set('toDt', to);
+    if (from) p.set('sde', from);
+    if (to) p.set('ede', to);
     fetch(DATAGO + '?' + p)
       .then(function (r) { return r.json(); })
       .then(function (res) {
