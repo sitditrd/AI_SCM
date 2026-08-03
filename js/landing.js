@@ -8,6 +8,8 @@
   document.addEventListener('DOMContentLoaded', function () {
     initLiveStrip();
     initFreightStrip();
+    initTeuStrip();
+    initWxAlert();
     initHeroCanvas();
     initCounters();
   });
@@ -15,8 +17,28 @@
   /* 언어 전환 시 JS 렌더 스트립 재번역 */
   window.addEventListener('twl:langchange', function () {
     renderFreight();
+    renderTeu();
+    renderWx();
     if (window.TWDATA && window.TWDATA.getMode && window.TWDATA.getMode() === 'supabase') renderStrip(false);
   });
+
+  var DATAGO = 'https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/datago';
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  /* data.go.kr 응답(response.body.items.item[])에서 첫 객체 배열을 관대하게 탐색 */
+  function dgItems(o, depth) {
+    if (depth > 6 || o == null) return null;
+    if (Array.isArray(o)) return (o.length && typeof o[0] === 'object') ? o : null;
+    if (typeof o === 'object') {
+      for (var k in o) {
+        var f = dgItems(o[k], depth + 1);
+        if (f) return f;
+      }
+    }
+    return null;
+  }
 
   function t(k, ko) { return (window.TWI18N && window.TWI18N.t) ? window.TWI18N.t(k, ko) : ko; }
 
@@ -65,6 +87,101 @@
         renderFreight();
       })
       .catch(function () { /* 조회 실패 시 스트립 미표시 */ });
+  }
+
+  /* ---------- 월간 컨테이너 물동량 스트립 (해수부 15059131, Edge Function datago) ----------
+     주의: 응답 필드 접두사가 직관과 반대다 — e* = 수입, t* = 수출 (data.go.kr 출력결과 정의 기준).
+     원천이 월 단위 배치라 최신월이 비어 있을 수 있어 최근 6개월을 조회해 실적이 있는 최신월을 쓴다. */
+  var teuData = null;
+
+  function ym(d) { return d.getFullYear() * 100 + (d.getMonth() + 1); }
+  function ymLabel(v) {
+    var s = String(v);
+    return s.slice(0, 4) + '-' + s.slice(4, 6);
+  }
+
+  function renderTeu() {
+    var host = document.getElementById('teuStrip');
+    if (!host || !teuData) return;
+    var imp = teuData.imp, exp = teuData.exp, tot = imp + exp;
+    function chip(k, ko, val, sub) {
+      return '<div class="live-chip"><div class="k">' + t(k, ko) + '</div><div class="v">' +
+        Math.round(val).toLocaleString('ko-KR') +
+        ' <small style="color:#9db8dd;">TEU</small>' +
+        (sub ? '<br><small style="color:#9db8dd;">' + sub + '</small>' : '') + '</div></div>';
+    }
+    host.innerHTML =
+      chip('teu.total', '월간 컨테이너 물동량', tot, t('teu.basis', '수출입 합계')) +
+      chip('teu.imp', '수입', imp, '') +
+      chip('teu.exp', '수출', exp, '') +
+      '<div class="live-chip"><div class="k">' + t('teu.month', '기준월') + '</div><div class="v" style="font-size:14px;">' +
+        ymLabel(teuData.ym) + '<br><small style="color:#9db8dd;">' + t('teu.src', '해수부 · 월 1회 공표') + '</small></div></div>';
+    host.style.display = '';
+  }
+
+  function initTeuStrip() {
+    var host = document.getElementById('teuStrip');
+    if (!host || typeof fetch === 'undefined') return;
+    var now = new Date();
+    var from = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    var p = new URLSearchParams({ api: 'teuimpexp', numOfRows: '200', sym: String(ym(from)), eym: String(ym(now)) });
+    fetch(DATAGO + '?' + p)
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res.needKey) return;
+        var items = res.data ? dgItems(res.data, 0) : null;
+        if (!items || !items.length) return;
+        /* 실적이 있는 가장 최근 월만 합산 (지역별 행이 여러 개) */
+        var latest = items.reduce(function (a, x) { return Math.max(a, Number(x.useYm) || 0); }, 0);
+        if (!latest) return;
+        var rows = items.filter(function (x) { return Number(x.useYm) === latest; });
+        var imp = 0, exp = 0;
+        rows.forEach(function (x) {
+          imp += Number(x.eContnTeuTotal) || 0;   /* e* = 수입 */
+          exp += Number(x.tContnTeuTotal) || 0;   /* t* = 수출 */
+        });
+        if (!imp && !exp) return;
+        teuData = { ym: latest, imp: imp, exp: exp };
+        renderTeu();
+      })
+      .catch(function () { /* 조회 실패 시 스트립 미표시 */ });
+  }
+
+  /* ---------- 기상특보 티커 (기상청 15000415, Edge Function datago) ----------
+     stnId=108(전국)로 최근 발표 특보를 받아 제목만 노출한다. 특보가 없으면 티커 자체를 숨긴다. */
+  var wxItems = null;
+
+  function renderWx() {
+    var host = document.getElementById('wxAlert');
+    if (!host || !wxItems || !wxItems.length) return;
+    host.innerHTML =
+      '<div class="live-chip" style="display:block; padding:10px 14px; border-left:3px solid var(--lv-congested);">' +
+      '<div class="k" style="margin-bottom:4px;">⚠ ' + t('wx.alert', '기상특보') +
+      ' <small style="color:#9db8dd;">' + t('wx.src', '기상청 · 전국') + '</small></div>' +
+      wxItems.map(function (x) {
+        return '<div class="v" style="font-size:13px; font-weight:500; line-height:1.5;">' + esc(x) + '</div>';
+      }).join('') + '</div>';
+    host.style.display = '';
+  }
+
+  function initWxAlert() {
+    var host = document.getElementById('wxAlert');
+    if (!host || typeof fetch === 'undefined') return;
+    var p = new URLSearchParams({ api: 'wthrwarn', numOfRows: '3', stnId: '108' });
+    fetch(DATAGO + '?' + p)
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res.needKey) return;
+        var items = res.data ? dgItems(res.data, 0) : null;
+        if (!items) return;
+        /* 제목에서 "[특보] 제08-5호 : " 머리말을 떼고 본문만 남긴다 */
+        wxItems = items.slice(0, 2).map(function (x) {
+          return String(x.title || '').replace(/^\[[^\]]*\]\s*[^:]*:\s*/, '').trim();
+        }).filter(Boolean);
+        if (!wxItems.length) { wxItems = null; return; }
+        renderWx();
+      })
+      .catch(function () { /* 조회 실패 시 티커 미표시 */ });
   }
 
   /* ---------- 실시간 KPI 스트립 ---------- */
