@@ -82,7 +82,7 @@ AI_SCM/
 > ⚠️ `run_berth_upload.bat` 은 **ASCII 전용 유지 필수**. cmd.exe 가 `.bat` 을 콘솔 코드페이지로 파싱하기 때문에 한글이 섞이면 줄이 깨지고, 작업이 "성공(결과 0)"으로 끝나면서 실제로는 아무 일도 하지 않습니다(2026-08-03 실측 장애).
 
 **자동 실행** (2026-08-03 기준 **7종**): ① Cowork 앱(매일 06:00 터미널 16곳 수집) · **② Windows 작업 스케줄러 `TWL_BerthUpload`(매일 07:30, `run_berth_upload.bat` → `upload_berth_sql_parts.py --rest --today`) — 앱 기동과 무관한 주 경로** · ③ Claude 앱 `berth-upload-supabase`(매일 08:03, 최근 7일 건수 비교로 미적재·부분적재 자동 복구하는 ②의 안전망) · ④ `portinsight-daily-update`(매일 08:44 — ② 이후라 부산·광양·인천 접안/대기 척수를 당일 선석 실측으로 보정) · ⑤ `ais-positions-collect`(매시 30분) · ⑥ `weather-history-collect`(6시간마다) · ⑦ `freight-index-update`(월·금 17:02). ②③ 모두 동일 수집일 replace(멱등)라 중복 실행이 안전합니다 — 시각·작업 ID·확인 위치는 `docs/06-operations/스케줄러_체계.md` 참조.
-**환경변수**: `SUPABASE_SERVICE_KEY` **등록 완료(2026-08-03, 사용자 환경변수)** — ② REST 직접 적재 가동을 위해 **②만 예외적으로 PC에 보관**(③④⑤⑥⑦은 종전대로 `--sql` 생성 후 Supabase MCP로 적재) · `AISSTREAM_API_KEY` **등록 완료** → ⑤ 가동 · `UNIPASS_API_KEY`(Edge Function `track`)·`DATA_GO_KR_KEY`(Edge Function `datago`)는 **미등록 대기** — 등록 즉시 코드 수정 없이 동작.
+**환경변수**: `SUPABASE_SERVICE_KEY` **등록 완료(2026-08-03, 사용자 환경변수)** — ② REST 직접 적재 가동을 위해 **②만 예외적으로 PC에 보관**(③④⑤⑥⑦은 종전대로 `--sql` 생성 후 Supabase MCP로 적재) · `AISSTREAM_API_KEY` **등록 완료** → ⑤ 가동 · `DATA_GO_KR_KEY`(Edge Function `datago`) **등록 완료(2026-08-03)** — 활용신청 12종 승인 + 별칭 15종 실조회 검증 · `UNIPASS_API_KEY`(Edge Function `track`)는 **미등록 대기** — 등록 즉시 코드 수정 없이 동작.
 수집 스크립트에는 `env_key()` 가 있어 환경변수가 상속되지 않으면 Windows 사용자 환경변수 레지스트리에서 키를 직접 읽습니다(`setx` 직후 재시작 불필요).
 **무인 실행 설정**: Claude 앱 예약 작업이 도구 승인 대기로 멈추지 않도록 `~/.claude/settings.json` 의 `permissions.allow` 에 `PowerShell(python *)`·`Bash(python *)`·`Read`·Supabase `execute_sql` 을, `additionalDirectories` 에 `%TEMP%\berth_sql_parts` 를 등록해 둡니다.
 **패키지**: `pip install openpyxl requests`
@@ -133,7 +133,7 @@ React+TS(Vite) 이관 시안은 검토 결과 **채택 보류**하고 `app/` 폴
 ### B. 자원·결정 필요 (막힘 — 확보 시 즉시 동작)
 4. **FR-04/05** 해외 스케줄 실데이터 — 데이터 소스 확정(스크래핑/OCR/공개API)
 5. **화물 추적 실조회** — `UNIPASS_API_KEY` (Edge Function `track` 배포 완료 · 키 등록만 남음)
-6. **해수부/공항 본선·화물편** — `DATA_GO_KR_KEY` (Edge Function `datago` 배포 완료 — 별칭 화이트리스트 `portmis`·`aircargo`, 키 미등록 시 `needKey` 안내 · 키 등록만 남음)
+6. ~~**해수부/공항 본선·화물편** — `DATA_GO_KR_KEY`~~ — **완료(2026-08-03)**: 활용신청 12종 승인 + 키 등록 + Edge Function `datago` 별칭 **15종**(해수부 6·인천공항 5·인천항만 2·기상청 2) 실조회 검증. 후속은 P1 화면 개발(로드맵 §6-B)
 7. **선사 무료 API(HMM DCSA 등)** — 개발자 등록·무료 키 (조사 완료)
 8. ~~AIS 레이어 키~~ — **완료(2026-08-03)**: `AISSTREAM_API_KEY` 등록 → 스케줄러 ⑤ 가동·`vessel_positions` 적재·선박위치 자체 지도 표출. 내륙 최적화(ORS 키)는 미확보
 9. ~~Windows 예비 스케줄러~~ — **완료(2026-08-03)**: `SUPABASE_SERVICE_KEY` 등록 + 작업 스케줄러 `TWL_BerthUpload`(07:30)로 승격 — 예비가 아닌 **주 경로**
@@ -169,7 +169,7 @@ React+TS(Vite) 이관 시안은 검토 결과 **채택 보류**하고 `app/` 폴
 | 정시 적재 이중화(2026-08-03) | **스케줄러 7종 체계 확립** — Windows 작업 스케줄러 `TWL_BerthUpload`(07:30) 신설로 앱 기동과 무관한 **주 경로** 확보, 기존 Claude 앱 08:03은 최근 7일 건수 비교 **자동 복구(안전망)** 로 역할 전환. `upload_berth_sql_parts.py --rest`(REST 직접 적재)·`--today`(당일 파일 자동 탐색) 모드 및 `run_berth_upload.bat` 신규. `SUPABASE_SERVICE_KEY`·`AISSTREAM_API_KEY` 환경변수 등록, `env_key()`(사용자 환경변수 레지스트리 직접 조회)로 `setx` 직후 재시작 불필요 |
 | 이력·AIS(2026-08-03) | 신규 테이블 3종(RLS+익명 select) — `pi_history`(일별 PCI, unique(snap_date,name_en)) · `weather_history`(파고·주기·풍속·돌풍) · `vessel_positions`(AIS, 48h 보존). 스케줄러 ⑤ AIS 매시 30분 · ⑥ 기상 6시간마다 신설. `vessel.html/js` 에 **PORT-MIS 입출항 실적 조회** + **자체 AIS 수신 지도**(Leaflet, 5분 재조회) 추가. 스키마 `sql/setup_history.sql` |
 | 운영보드 신뢰성(2026-08-03) | 신규 RPC `berth_daily_counts(days int default 7)`(stable·security invoker, anon/authenticated 실행 허용 — PostgREST 집계 비활성 대응) 도입 후 `js/status.js` 최근 7일 타임라인을 `bs_collect_log` 기준 → **실적 건수 기준**으로 전환(실적 있으면 ✓건수, 실적 없이 실패 로그만 있으면 ✗). 로그 누락·건수 불일치에 좌우되지 않음 |
-| Edge Function(2026-08-03) | `datago` 신규 — data.go.kr 공용 프록시(별칭 화이트리스트 `portmis`·`aircargo`, `DATA_GO_KR_KEY` 미등록 시 `needKey` 안내). 기존 `track`(유니패스)·`send-code`(인증코드)와 합쳐 **Edge Function 3종** |
+| Edge Function(2026-08-03) | `datago` 신규 — data.go.kr 공용 프록시. 별칭 화이트리스트 **15종**(해수부 6·인천공항 5·인천항만 2·기상청 2), 기관별 JSON 파라미터·페이징 자동 분기, XML→JSON 변환, 인증키 형태 정규화. `DATA_GO_KR_KEY` 등록 완료로 실조회 가동(미등록 시 `needKey` 안내). 기존 `track`(유니패스)·`send-code`(인증코드)와 합쳐 **Edge Function 3종** |
 | React | app/ 기반 + 선석배정 + 데이터현황 이관 → 최종 채택 보류, app/ 제거(2026-07-28): 사유는 SEO 후퇴·번들 무게·빌드/인수인계 복잡도 |
 | 부가 산출물 | 위험물 물류 통합 플랫폼 발표 PPT·Connect DG 통합본·화물 무료 API 조사(59건) |
 

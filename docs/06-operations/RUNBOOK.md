@@ -141,6 +141,27 @@ select index_code, route, value, pct_change, pub_date, updated_at
   4. Actions 실행이 초록 체크인지 확인 → 30초~2분 후 접속 확인.
   5. 접속은 되는데 내용이 예전 것이면 브라우저 캐시 — `Ctrl+F5`.
 
+### 3-f2. data.go.kr 조회 실패 (Edge Function `datago`)
+
+- **증상**: vessel 화면의 PORT-MIS 입출항 실적 조회가 "조회 결과가 없습니다" 또는 키 안내 카드 표시. status.html SECTION 05 의 datago 카드가 주의/확인불가.
+- **1차 확인** (브라우저 주소창에 그대로 입력 — 키 불필요):
+  ```
+  https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/datago?api=list
+  ```
+  `needKey: true` → 시크릿 미등록/삭제됨. `needKey: false` → 키는 살아 있음(아래 표로 원인 판별).
+- **응답 코드별 원인·조치**:
+
+| 응답 | 의미 | 조치 |
+|---|---|---|
+| `needKey: true` | `DATA_GO_KR_KEY` 시크릿 없음 | Supabase → Edge Functions → Secrets 에 재등록. **Decoding·Encoding 어느 형태든 무관**(함수가 정규화) |
+| `SERVICE_KEY_IS_NOT_REGISTERED_ERROR`(코드 30) | 키가 게이트웨이에 없음 | ① 신규 발급 직후면 반영까지 최대 1시간 대기 ② data.go.kr 마이페이지에서 해당 API 활용신청이 **만료(2028-08-03)** 되지 않았는지 확인 |
+| `INVALID_REQUEST_PARAMETER_ERROR`(코드 11) | 파라미터명·형식 오류 | API.md §2.3 "업스트림 규격 파라미터" 표와 대조. 흔한 실수: 통계 3종은 **소문자 `sym`/`eym`**, PORT-MIS는 `sde`/`ede`(YYYYMMDD) |
+| 코드 99 `Invalid parameter for function` | 인천항만공사 계열에 `pageNo` 전달됨 | 해당 별칭은 `paging: "row"`(skipRow/endRow)로 등록되어야 한다 — `ALIASES` 확인 |
+| `NORMAL_SERVICE` 인데 `totalCount: 0` | 조회 조건에 해당 데이터 없음 | 인천항만 계열은 날짜가 **`YYYY-MM-DD` 하이픈 형식**이어야 한다(붙여 쓰면 오류 없이 0건) |
+| `LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR` | 일 트래픽 초과(개발계정 10,000건/일) | 익일 자동 초기화. 상시 초과면 data.go.kr 에서 **운영계정 전환** 신청 |
+
+- 별칭 추가·수정은 `supabase/functions/datago/index.ts` 의 `ALIASES` 만 고치고 재배포하면 되며, 화면 코드는 손대지 않는다.
+
 ### 3-g. Netlify 미러 실패 (크레딧 소진)
 
 - **증상**: Netlify 미러 사이트만 미갱신, Netlify 대시보드에 "production deploys are paused" 배너. GitHub Pages(주 배포)는 정상.

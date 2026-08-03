@@ -125,9 +125,9 @@ flowchart LR
 |---|---|---|
 | `send-code` | 가입·비밀번호 재설정 인증코드 이메일 발송 (denomailer + 본인 SMTP, 네이버 `smtp.naver.com:465`) | `SMTP_HOST/PORT/USER/PASS/FROM` |
 | `track` | 관세청 UNIPASS 화물통관진행정보 프록시 (정적 사이트에서 직접 호출, `verify_jwt=false`). 키 미등록 시 `needKey` 안내 반환 | `UNIPASS_API_KEY`(미등록 대기) |
-| `datago` | data.go.kr 공용 API 프록시 — 별칭 화이트리스트 **15종**(해수부 6 · 인천공항 5 · 인천항만 2 · 기상청 2)으로 허용 대상만 중계. 기관별 JSON 파라미터(`type`/`dataType`/미지원) 자동 처리 + XML 응답 JSON 변환. `?api=list`로 별칭 조회, 키 미등록 시 `needKey` 안내 반환 | `DATA_GO_KR_KEY`(미등록 대기 — 활용신청 12종 승인 완료) |
+| `datago` | data.go.kr 공용 API 프록시 — 별칭 화이트리스트 **15종**(해수부 6 · 인천공항 5 · 인천항만 2 · 기상청 2)으로 허용 대상만 중계. 기관별 JSON 파라미터(`type`/`dataType`/미지원)·페이징(`pageNo` / `skipRow`+`endRow`) 자동 분기 + XML 응답 JSON 변환 + 인증키 Decoding/Encoding 정규화. `?api=list`로 별칭 조회, 키 미등록 시 `needKey` 안내 반환 | `DATA_GO_KR_KEY`(**등록 완료 2026-08-03**, 15종 실조회 검증) |
 
-`UNIPASS_API_KEY`·`DATA_GO_KR_KEY`는 2026-08-03 기준 미등록 상태이며, 시크릿 등록 즉시 코드 수정 없이 동작한다.
+`DATA_GO_KR_KEY`는 2026-08-03 등록 완료(별칭 15종 실조회 검증). `UNIPASS_API_KEY`는 미등록 상태이며, 시크릿 등록 즉시 코드 수정 없이 동작한다.
 
 ### 3.4 인증 서브시스템
 
@@ -299,7 +299,7 @@ flowchart LR
 | 인증 테이블 | `app_users`·`app_sessions`·`email_codes`는 RLS 활성화 + **정책 없음** → anon 직접 접근 차단. 접근은 **SECURITY DEFINER 함수 8종**(anon execute grant)으로만 |
 | 비밀번호 | bcrypt 해시(`crypt` + `gen_salt('bf')`, pgcrypto). 평문 미저장 |
 | service_role 키 | 원칙은 **PC 미보관**(수집기는 `--sql` 모드로 SQL 파일만 생성하고 DB 쓰기는 스케줄러 세션이 Supabase MCP로 실행). **②(Windows 작업 스케줄러)만 예외** — 앱과 무관한 정시 REST 적재를 위해 2026-08-03부터 `SUPABASE_SERVICE_KEY`를 PC 사용자 환경변수로 보관한다. 저장소 커밋은 금지 |
-| 시크릿 위치 | GitHub Secrets: `NETLIFY_BUILD_HOOK` · Supabase Edge Functions Secrets: `SMTP_HOST/PORT/USER/PASS/FROM`, `UNIPASS_API_KEY`(미등록), `DATA_GO_KR_KEY`(미등록) · 수집 PC 사용자 환경변수: `SUPABASE_SERVICE_KEY`(②), `AISSTREAM_API_KEY`(⑤) |
+| 시크릿 위치 | GitHub Secrets: `NETLIFY_BUILD_HOOK` · Supabase Edge Functions Secrets: `SMTP_HOST/PORT/USER/PASS/FROM`, `UNIPASS_API_KEY`(미등록), `DATA_GO_KR_KEY`(등록 완료 2026-08-03) · 수집 PC 사용자 환경변수: `SUPABASE_SERVICE_KEY`(②), `AISSTREAM_API_KEY`(⑤) |
 | 무인 실행 권한 | Claude 앱 스케줄(③~⑦)이 승인 대기 없이 돌도록 `~/.claude/settings.json`의 `permissions.allow`에 필요한 도구만 한정 허용(PowerShell `python *` · Bash `python *` · Read · Supabase `execute_sql`), `additionalDirectories`에 `%TEMP%\berth_sql_parts` 추가 |
 | 화면 게이트 | 미로그인 blur 게이트(`auth-gate.js`)는 정적 사이트 특성상 UX 억제 수준 — 데이터 자체는 RLS select-only로 보호 |
 

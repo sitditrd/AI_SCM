@@ -13,7 +13,8 @@ const GUIDE =
 
 // alias → data.go.kr 엔드포인트 (검증된 경로만 등록; 신규 추가 시 여기에만 추가)
 // fmt: JSON 요청 파라미터명. 미지정이면 XML 전용 API(응답을 아래에서 JSON 으로 변환).
-type Alias = { base: string; fmt?: "type" | "dataType"; note: string };
+// paging: 기본값 주입 방식. "page"(기본) = pageNo·numOfRows / "row" = skipRow·endRow(인천항만공사 계열)
+type Alias = { base: string; fmt?: "type" | "dataType"; paging?: "page" | "row"; note: string };
 const ALIASES: Record<string, Alias> = {
   /* --- 해양수산부 1192000 (XML 전용) --- */
   // 선박운항정보 = PORT-MIS 입출항현황 (15006353) · 파라미터: prtAgCd·sde·ede·deGb·clsgn
@@ -40,9 +41,9 @@ const ALIASES: Record<string, Alias> = {
   airscheddep: { base: "https://apis.data.go.kr/B551177/StatusOfCgoFltSched/getCgoFltSchedDeparturesDeOdp", fmt: "type", note: "정기 화물편 출발 스케줄" },
 
   /* --- 인천항만공사 B551504 (XML 전용) --- */
-  // 인천항 선박 입출항 정보 (15157706) · 파라미터: arvlDtFrom·arvlDtTo·callLetter·ocCt
-  incheonship: { base: "https://apis.data.go.kr/B551504/ipaShipEtryptTkoff/getShipEtryptTkoffSttemnt", note: "인천항 선박 입출항" },
-  incheonctrl: { base: "https://apis.data.go.kr/B551504/ipaShipEtryptTkoff/getShipCntrl", note: "인천항 선박 관제" },
+  // 인천항 선박 입출항 정보 (15157706) · 파라미터: arvlDtFrom·arvlDtTo·callLetter·ocCt (pageNo 없음 — skipRow/endRow 페이징)
+  incheonship: { base: "https://apis.data.go.kr/B551504/ipaShipEtryptTkoff/getShipEtryptTkoffSttemnt", paging: "row", note: "인천항 선박 입출항" },
+  incheonctrl: { base: "https://apis.data.go.kr/B551504/ipaShipEtryptTkoff/getShipCntrl", paging: "row", note: "인천항 선박 관제" },
 
   /* --- 기상청 1360000 (dataType=JSON) --- */
   // 기상특보 조회 (15000415)
@@ -64,6 +65,20 @@ function aliasList() {
   return Object.keys(ALIASES).map((k) => ({ api: k, note: ALIASES[k].note }));
 }
 
+// data.go.kr 인증키는 마이페이지에서 Decoding·Encoding 두 형태로 제공된다.
+// URLSearchParams 가 값을 1회 인코딩하므로 Encoding 키를 그대로 쓰면 이중 인코딩되어
+// SERVICE_KEY_IS_NOT_REGISTERED_ERROR(코드 30)가 난다. 퍼센트 이스케이프가 보이면 1회 디코드해
+// Decoding 형태로 정규화한다 — 둘 중 어느 것을 시크릿에 넣어도 동작하게 하기 위한 방어 로직.
+function normalizeKey(k: string): string {
+  if (!/%[0-9A-Fa-f]{2}/.test(k)) return k;
+  try {
+    const d = decodeURIComponent(k);
+    return d || k;
+  } catch {
+    return k;
+  }
+}
+
 // XML 파서 출력에서 선언("?xml")·주석을 제거하고 루트 요소 내용만 반환 (track/index.ts 와 동일 규약)
 function unwrap(doc: unknown): unknown {
   if (doc && typeof doc === "object" && !Array.isArray(doc)) {
@@ -83,7 +98,7 @@ Deno.serve(async (req) => {
     const target = ALIASES[alias];
     if (!target) return j({ error: "unknown api alias", allowed: aliasList() }, 400);
 
-    const key = Deno.env.get("DATA_GO_KR_KEY") ?? "";
+    const key = normalizeKey(Deno.env.get("DATA_GO_KR_KEY") ?? "");
     if (!key) return j({ needKey: true, guide: GUIDE });
 
     const params = new URLSearchParams();
@@ -93,7 +108,13 @@ Deno.serve(async (req) => {
     params.set("serviceKey", key);
     if (target.fmt && !params.has(target.fmt)) params.set(target.fmt, target.fmt === "dataType" ? "JSON" : "json");
     if (!params.has("numOfRows")) params.set("numOfRows", "30");
-    if (!params.has("pageNo")) params.set("pageNo", "1");
+    if (target.paging === "row") {
+      // 인천항만공사 계열은 pageNo 를 받지 않는다 — 주입하면 업스트림이 코드 99(Invalid parameter)로 거부한다.
+      if (!params.has("skipRow")) params.set("skipRow", "0");
+      if (!params.has("endRow")) params.set("endRow", params.get("numOfRows") ?? "30");
+    } else if (!params.has("pageNo")) {
+      params.set("pageNo", "1");
+    }
 
     const r = await fetch(`${target.base}?${params}`, {
       headers: { "User-Agent": "TWL-Portal/1.0" },

@@ -118,7 +118,7 @@ nlic.go.kr은 현재 **2개 포털이 병존**한다.
 | VTS 관제 교신 기반 입출항 이벤트 타임라인 | 관제정보 (15006354) | 중 | P2 |
 | 연안 AIS 통계 레이어(iframe 의존 완화) | 연안AIS 통계 (15084033, WMS/WFS) | 중 | P2 |
 | 자체 실시간 위치 지도(§5 참조) — **구현 완료(2026-08-03)**: 매시 30분 AISStream 웹소켓 90초 수신 → `vessel_positions`(48h 보존) → vessel.html Leaflet 지도(5분 재조회) | AISStream.io + PORT-MIS | 중 | P2 → 완료 |
-| PORT-MIS 입출항 실적 조회 섹션 — **구현 완료(2026-07-31, 키 대기)**: Edge Function `datago` 경유, `DATA_GO_KR_KEY` 등록 시 실조회 | 선박운항정보 (15006353) | 하 | P1 (키 대기) |
+| PORT-MIS 입출항 실적 조회 섹션 — **실조회 가동(2026-08-03)**: Edge Function `datago?api=portmis` 경유, 키 등록·파라미터 규격 교정(`sde`/`ede`) 완료 | 선박운항정보 (15006353) | 하 | P1 → 완료 |
 
 ### cargo (통관/화물)
 | 후보 기능 | 필요 API | 난이도 | 우선순위 |
@@ -181,7 +181,7 @@ nlic.go.kr은 현재 **2개 포털이 병존**한다.
 
 | 순서 | 액션 | 소요/방식 |
 |---|---|---|
-| A-1 | ~~**data.go.kr 회원가입 + 활용신청**~~ → **활용신청 완료(2026-08-03)**: 12종 전부 자동승인(15006353, 15055851, 15006354, 15059059, 15059131, 15057250, 15095068, 15113461, 15114086, 15157706, 15000415, 15059468 — 만료 2028-08-03). **남은 절차는 마이페이지 → 일반 인증키(Decoding) 를 Supabase Secrets `DATA_GO_KR_KEY` 로 등록하는 것뿐**<br>※ 15084033(연안AIS 통계)·3068846(수출입은행 환율)은 **API 유형 LINK** — data.go.kr이 키를 발급하지 않고 외부 포털(WMS/WFS, oapi.koreaexim.go.kr)로 연결되므로 활용신청 대상이 아니다. 환율이 필요하면 수출입은행 자체 포털에서 별도 발급해야 한다(A-7). | 승인 완료 — 키 등록만 남음 |
+| A-1 | ~~**data.go.kr 회원가입 + 활용신청 + 키 등록**~~ → **완료(2026-08-03)**: 12종 전부 자동승인(15006353, 15055851, 15006354, 15059059, 15059131, 15057250, 15095068, 15113461, 15114086, 15157706, 15000415, 15059468 — 만료 2028-08-03) + `DATA_GO_KR_KEY` Supabase Secrets 등록 + **별칭 15종 실조회 검증 완료(NORMAL_SERVICE)**<br>※ 15084033(연안AIS 통계)·3068846(수출입은행 환율)은 **API 유형 LINK** — data.go.kr이 키를 발급하지 않고 외부 포털(WMS/WFS, oapi.koreaexim.go.kr)로 연결되므로 활용신청 대상이 아니다. 환율이 필요하면 수출입은행 자체 포털에서 별도 발급해야 한다(A-7). | 완료 |
 | A-2 | **UNI-PASS 회원가입 + OpenAPI 별도 신청** → `UNIPASS_API_KEY` 확보 (화물통관진행정보 15126268 등) | data.go.kr 자동승인과 다른 별도 절차 |
 | A-3 | ~~**AISStream.io 키 발급**~~ → **완료(2026-08-03)**: `AISSTREAM_API_KEY` 등록, 스케줄러 ⑤ 가동 | 즉시 — 완료 |
 | A-4 | 기상청 data.kma.go.kr API허브 가입 (해양부이 관측) | 별도 포털 |
@@ -190,14 +190,15 @@ nlic.go.kr은 현재 **2개 포털이 병존**한다.
 | A-7 | (index 환율 KPI 착수 시) 한국수출입은행 **oapi.koreaexim.go.kr 자체 포털**에서 환율 API 키 발급 — data.go.kr 3068846은 LINK형이라 키를 주지 않음 | 별도 포털 |
 
 > **구현 현황 (2026-08-03)**
-> - **완료**: data.go.kr **활용신청 12종 승인**(A-1). 이에 맞춰 `datago` 프록시를 **v2로 확장** — 별칭 15종(해수부 6·인천공항 5·인천항만 2·기상청 2), 기관별 JSON 파라미터(`type`/`dataType`/미지원) 자동 처리, **XML 응답 자동 JSON 변환**, `?api=list` 별칭 조회. 기존 `track`(유니패스)·`send-code`(인증코드)와 합쳐 Edge Function 3종.
-> - **완료(버그 수정)**: ① 해수부 계열은 XML 전용이라 v1에서는 `data`가 비어 vessel.html이 결과를 표시하지 못하던 문제를 XML→JSON 변환으로 해소 ② vessel.js의 PORT-MIS 날짜 파라미터를 규격에 맞게 `fromDt/toDt` → **`sde`/`ede`** 로 수정.
+> - **완료**: data.go.kr **활용신청 12종 승인 + `DATA_GO_KR_KEY` 등록 + 실조회 검증**(A-1). 이에 맞춰 `datago` 프록시를 **v5까지 확장** — 별칭 15종(해수부 6·인천공항 5·인천항만 2·기상청 2), 기관별 JSON 파라미터(`type`/`dataType`/미지원)·페이징(`pageNo` / `skipRow`+`endRow`) 자동 분기, **XML 응답 자동 JSON 변환**, 인증키 Decoding/Encoding 정규화, `?api=list` 별칭 조회. 기존 `track`(유니패스)·`send-code`(인증코드)와 합쳐 Edge Function 3종.
+> - **완료(버그 수정 4건)**: ① 해수부·인천항만 계열은 XML 전용이라 v1에서는 `data`가 비어 vessel.html이 결과를 표시하지 못하던 문제 → XML→JSON 변환으로 해소 ② vessel.js의 PORT-MIS 날짜 파라미터를 규격에 맞게 `fromDt/toDt` → **`sde`/`ede`** 로 수정 ③ Encoding 키 등록 시 이중 인코딩으로 `SERVICE_KEY_IS_NOT_REGISTERED_ERROR`(코드 30) → `normalizeKey()` 도입 ④ 인천항만공사 계열에 `pageNo`를 주입해 코드 99(`Invalid parameter`) → `paging: "row"`(skipRow/endRow) 분기.
+> - **실조회 검증 결과(15/15 NORMAL_SERVICE)**: portmis 296건·shipspec 145건·vtscontrol 321건·portstat 90건·teuimpexp 36건·teunation 508건·aircargoarr 739건·aircargodep 744건·airschedarr 485건·airscheddep 499건 등. 파라미터 규격은 API.md §2.3 표 참조(특히 통계 3종은 **소문자 `sym`/`eym`**, 인천항만은 **`YYYY-MM-DD` 하이픈 날짜**).
 > - **완료**: 선박 위치 1단계 PoC(§5-2) — `AISSTREAM_API_KEY` 등록 → 스케줄러 ⑤ `ais-positions-collect`(매시 30분) → `vessel_positions` → vessel.html 자체 지도.
-> - **대기**: `DATA_GO_KR_KEY` **키 등록만 남음**(활용신청은 승인 완료) · `UNIPASS_API_KEY`(A-2) 미등록. 두 키 모두 Supabase Secrets에 등록하는 즉시 **코드 수정 없이** 실조회가 켜진다.
+> - **대기**: `UNIPASS_API_KEY`(A-2)만 미등록. Supabase Secrets에 등록하는 즉시 **코드 수정 없이** 통관 실조회가 켜진다.
 
 ### B. 키 확보 즉시 개발 가능 (P1 — 난이도 하)
 
-> 전제: 아래 1~5는 `DATA_GO_KR_KEY` 등록만 되면 착수 가능. **프록시 별칭은 2026-08-03에 미리 열어두었으므로**(§6-A 구현 현황) 각 항목은 Edge Function 수정 없이 화면 코드만 붙이면 된다.
+> **선결 조건 해소 완료(2026-08-03)** — `DATA_GO_KR_KEY` 등록·검증이 끝나 아래 1~5는 **즉시 착수 가능**하다. 프록시 별칭 15종이 이미 열려 있으므로 각 항목은 Edge Function 수정 없이 화면 코드만 붙이면 된다.
 
 1. index: 물동량 TEU KPI(`datago?api=teuimpexp`) · 기상특보 티커(`api=wthrwarn`) — 환율 KPI는 A-7(수출입은행 자체 포털 키) 선결
 2. vessel: 선박 제원 팝업 (15055851 · `api=shipspec`)

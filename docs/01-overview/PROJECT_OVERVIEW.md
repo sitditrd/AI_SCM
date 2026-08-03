@@ -86,7 +86,7 @@ C:\Users\Administrator\Documents\내문서\1. 태웅로직스\3. 기타\11. 내�
 
 ## 6. 남은 과제
 1. 해외 스케줄 실데이터 — 데이터 소스 확정(스크래핑/OCR/공개 API)
-2. 외부 키 등록 대기 — `UNIPASS_API_KEY`(Edge Function track)·`DATA_GO_KR_KEY`(Edge Function datago). 두 함수 모두 배포 완료 상태로, 키 등록 즉시 코드 수정 없이 동작
+2. 외부 키 — `DATA_GO_KR_KEY`(Edge Function datago) **등록 완료(2026-08-03)**: data.go.kr 활용신청 12종 승인 + 별칭 15종 실조회 검증 완료. `UNIPASS_API_KEY`(Edge Function track)만 등록 대기이며, 등록 즉시 코드 수정 없이 동작
 3. 터미널 원본 양식 대응 — PNCT(원본 엑셀 컬럼 3개로 대부분 필드 미해결)·DDCT(열밀림)·KITL(2026-08-03 헤더 변형 경고) 06시 수집 지침 보완
 4. 자체 AIS 활용 심화 — 수신·지도 표출은 가동(스케줄러 ⑤), 묘박지 대기 척수 실측 지표화는 이력 축적 후 적용
 5. v3 지표: UNCTAD 선석점유율 + Erlang C 대기시간, CPPI형 생산성 (방법론 실데이터 검증 완료, 이력 축적 후 적용)
