@@ -71,7 +71,7 @@ select index_code, route, value, pct_change, pub_date, updated_at
   1. Claude 앱을 켠다 → 예정됨에서 `berth-upload-supabase` 자동 캐치업 완료까지 대기(수 분). 급하면 해당 작업 "지금 실행".
   2. 즉시 필요하면 §4-1 수동 재적재.
   3. 확인: `SELECT collected_date, count(*) FROM bs_vessel_calls WHERE collected_date >= current_date - 3 GROUP BY collected_date ORDER BY 1 DESC;`
-- **재발 방지(정시 보장)**: `scripts\run_berth_upload.bat` 을 Windows 작업 스케줄러에 06:40로 등록하면 앱과 무관하게 OS가 적재한다(멱등이라 ②와 중복 안전). 단 이 경로는 `SUPABASE_SERVICE_KEY` 를 PC에 저장해야 하므로 키 보관 정책을 감안해 선택한다 — 절차는 `docs/06-operations/스케줄러_체계.md` §이중화.
+- **정시 보장(2026-08-03 적용 완료)**: Windows 작업 `TWL_BerthUpload` 가 **매일 07:30** `scripts\run_berth_upload.bat` 을 실행해 앱과 무관하게 적재한다(멱등이라 ②와 중복 안전). 로그 `logs/berth_upload.log` 에 `[OK] … 적재 완료` + `exit=0` 이면 정상. 등록·변경 절차는 `docs/06-operations/스케줄러_체계.md` §이중화.
 
 ### 3-b. 적재 실패·건수 불일치
 
