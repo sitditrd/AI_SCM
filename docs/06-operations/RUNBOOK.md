@@ -63,6 +63,16 @@ select index_code, route, value, pct_change, pub_date, updated_at
   4. 08:03 이 이미 지났다면 §4 수동 재적재 실행 (②의 다음 회차를 기다려도 최근 7일 캐치업으로 적재됨).
   5. 재발 방지: Windows 절전 모드 해제 확인.
 
+### 3-a2. 파일은 있는데 아침에 화면·DB에 오늘 데이터가 없음 (정시 누락)
+
+- **증상**: `D:\터미널 스케쥴 정보` 에 오늘자 xlsx는 정상 생성됐는데, 08:03이 지나도 `bs_vessel_calls` 에 오늘 날짜가 없고 berth 화면이 전일 데이터를 표시.
+- **원인**: ②는 **Claude 앱이 켜져 있어야 실행**된다. 08:03에 PC·앱이 꺼져 있으면 그 회차는 정시에 돌지 않고, 앱을 켜는 시점에 캐치업으로 실행된다. (2026-08-03 실측: 08-02·08-03 두 날짜분이 앱 기동 후 09:10~09:27에 함께 적재됨 — 데이터 유실은 아니고 **지연**이다.)
+- **조치 순서**:
+  1. Claude 앱을 켠다 → 예정됨에서 `berth-upload-supabase` 자동 캐치업 완료까지 대기(수 분). 급하면 해당 작업 "지금 실행".
+  2. 즉시 필요하면 §4-1 수동 재적재.
+  3. 확인: `SELECT collected_date, count(*) FROM bs_vessel_calls WHERE collected_date >= current_date - 3 GROUP BY collected_date ORDER BY 1 DESC;`
+- **재발 방지(정시 보장)**: `scripts\run_berth_upload.bat` 을 Windows 작업 스케줄러에 06:40로 등록하면 앱과 무관하게 OS가 적재한다(멱등이라 ②와 중복 안전). 단 이 경로는 `SUPABASE_SERVICE_KEY` 를 PC에 저장해야 하므로 키 보관 정책을 감안해 선택한다 — 절차는 `docs/06-operations/스케줄러_체계.md` §이중화.
+
 ### 3-b. 적재 실패·건수 불일치
 
 - **증상**: `bs_collect_log` 에 오늘 SUCCESS 없음, 또는 `total_rows` 가 평소 대비 급감. status.html 타임라인에 공백.
