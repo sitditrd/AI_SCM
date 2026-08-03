@@ -14,3 +14,4 @@ sql/upload_ais.sql
 # 수집 데이터 스냅샷 — 원본은 D:\터미널 스케쥴 정보, 정규화본은 Supabase(bs_vessel_calls)
 터미널 스케쥴 수집/
 logs/
+logs/
