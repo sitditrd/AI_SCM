@@ -1,9 +1,9 @@
 # TWL 물류 포털 — API 인터페이스 명세
 
-> **v1.0 · 2026-07-31**
+> **v1.1 · 2026-08-03**
 >
 > 본 문서는 실제 코드에서 확인된 인터페이스만 기술한다.
-> 근거: `supabase/functions/track/index.ts` · `supabase/functions/send-code/index.ts` · `supabase/auth_setup.sql` · `server.py` · `js/auth.js` · `js/cargo.js` · `js/data.js` · `js/data_berth.js` · `js/vessel.js` · `js/landing.js` · `js/status.js` · `js/weather.js` · `vessel.html` · `sql/setup_supabase*.sql` · `scripts/collect_*.py`
+> 근거: `supabase/functions/track/index.ts` · `supabase/functions/send-code/index.ts` · `supabase/functions/datago/index.ts` · `supabase/auth_setup.sql` · `sql/setup_history.sql` · `server.py` · `js/auth.js` · `js/cargo.js` · `js/data.js` · `js/data_berth.js` · `js/vessel.js` · `js/landing.js` · `js/status.js` · `js/weather.js` · `vessel.html` · `sql/setup_supabase*.sql` · `scripts/collect_*.py` · `scripts/upload_berth_sql_parts.py`
 
 ---
 
@@ -24,17 +24,20 @@ Authorization: Bearer <publishable key>
 Content-Type: application/json     (POST일 때)
 ```
 
-단, Edge Function `track`은 `verify_jwt=false`로 배포되어 `js/cargo.js`가 **헤더 없이** 직접 `fetch`한다.
+단, Edge Function `track`·`datago`는 `verify_jwt=false`로 배포되어 `js/cargo.js`·`js/vessel.js`가 **헤더 없이** 직접 `fetch`한다.
 
 **권한 모델 (RLS)**
 
-- 데이터 테이블(`pi_ports`, `pi_snapshot`, `bs_terminals`, `bs_vessel_calls`, `bs_collect_log`)은 RLS 활성 + `for select using (true)` 정책 → anon(publishable 키)은 **조회(select) 전용**. INSERT/UPDATE/DELETE 정책 없음.
+- 데이터 테이블(`pi_ports`, `pi_snapshot`, `pi_history`, `bs_terminals`, `bs_vessel_calls`, `bs_collect_log`, `freight_index`, `weather_history`, `vessel_positions`)은 RLS 활성 + `for select using (true)` 정책 → anon(publishable 키)은 **조회(select) 전용**. INSERT/UPDATE/DELETE 정책 없음.
 - 인증 테이블(`app_users`, `app_sessions`, `email_codes`)은 RLS 활성 + **정책 없음** → anon 직접 접근 불가. 오직 `SECURITY DEFINER` RPC 함수를 통해서만 접근.
-- 쓰기(적재)는 서버 측에서만: 수집 스크립트(`scripts/collect_*.py`)는 환경변수 `SUPABASE_SERVICE_KEY`, Edge Function `send-code`는 시크릿 `SUPABASE_SERVICE_ROLE_KEY` 사용.
+- 쓰기(적재)는 서버 측에서만: 수집 스크립트(`scripts/collect_*.py`, `scripts/upload_berth_sql_parts.py --rest`)는 환경변수 `SUPABASE_SERVICE_KEY`, Edge Function `send-code`는 시크릿 `SUPABASE_SERVICE_ROLE_KEY` 사용.
+- 수집 스크립트는 `env_key()`로 환경변수가 상속되지 않은 경우 Windows 사용자 환경변수 레지스트리에서 키를 직접 읽는다(`setx` 직후 재시작 불필요).
 
 ---
 
 ## 2. Edge Functions
+
+배포된 함수 3종: `track`(유니패스) · `send-code`(인증코드) · `datago`(data.go.kr 프록시).
 
 ### 2.1 `GET /functions/v1/track` — 관세청 유니패스 화물통관진행정보 프록시
 
@@ -108,11 +111,43 @@ POST /functions/v1/send-code
 { "login": "user@twsc.co.kr", "purpose": "reset" }
 ```
 
+### 2.3 `GET /functions/v1/datago` — data.go.kr 공용 프록시 (2026-08-03 신설)
+
+- 배포 옵션: `verify_jwt=false`, CORS `*`, 허용 메서드 `GET, OPTIONS`
+- 시크릿 의존: `DATA_GO_KR_KEY` (미등록 시 조회 대신 발급 안내 `needKey` 반환)
+- **별칭(alias) 화이트리스트** 방식 — 등록된 경로만 프록시하여 개방 프록시가 되는 것을 막는다. 신규 API 추가는 `ALIASES` 등록으로만 가능.
+
+**요청 파라미터**
+
+| 파라미터 | 필수 | 설명 |
+|---|---|---|
+| `api` | 필수 | 별칭 — `portmis`(해수부 선박 입출항 `1192000/VsslEtrynd5/Info5`) \| `aircargo`(인천공항 화물편 도착 `B551177/StatusOfCargoFlights/getCargoArrivals`) |
+| 그 외 | 선택 | `api`를 제외한 빈 값 아닌 쿼리스트링을 업스트림에 그대로 전달 (예: `clsgn`, `prtAgCd`, `fromDt`, `toDt`, `flight_id`) |
+
+- 기본값 보충: `type=json`(미지정 시) · `numOfRows=30` · `pageNo=1`. `serviceKey`는 서버가 주입한다. 타임아웃 25초.
+
+**응답 형태**
+
+| 케이스 | HTTP | 본문 |
+|---|---|---|
+| 키 미등록 | 200 | `{"needKey": true, "guide": "data.go.kr 회원가입 → … DATA_GO_KR_KEY 로 등록"}` |
+| 미등록 별칭 | 400 | `{"error": "unknown api alias", "allowed": ["portmis","aircargo"]}` |
+| 정상 조회 | 200 | `{"needKey": false, "api": "<별칭>", "data": {…JSON…}}` |
+| JSON 파싱 실패(XML 오류 등) | 200 | `{"needKey": false, "api": "<별칭>", "raw": "<원문 4000자>", "error": null 또는 "HTTP <코드>"}` |
+| GET 외 메서드 | 405 | `{"error": "method"}` |
+| 업스트림 예외 | 502 | `{"error": "조회 실패: …"}` |
+
+**호출 예시** (`js/vessel.js` 입출항 실적 조회 — 헤더 없음):
+
+```
+GET https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/datago?api=portmis&clsgn=<호출부호>&prtAgCd=<항만코드>&fromDt=20260801&toDt=20260803
+```
+
 ---
 
 ## 3. RPC (PostgREST `POST /rest/v1/rpc/<함수명>`)
 
-`supabase/auth_setup.sql` 정의. 전 함수 공통:
+3.1~3.8은 `supabase/auth_setup.sql` 정의(인증 계열). 인증 계열 공통:
 
 - `language plpgsql` **`SECURITY DEFINER`** + `set search_path=public, extensions`
 - `grant execute … to anon` — publishable 키로 호출 가능 (공통 헤더 필수)
@@ -200,6 +235,19 @@ POST /rest/v1/rpc/app_admin_reset_pw
 { "p_token": "<admin uuid>", "p_id": "<user uuid>", "p_new_password": "Temp#123" }
 ```
 
+### 3.9 `berth_daily_counts(days int default 7)` — 데이터 RPC (2026-08-03 신설)
+
+- 정의 위치가 다르다: `sql/setup_history.sql`. `language sql` **`stable`·`security invoker`** + `set search_path=public`, `grant execute … to anon, authenticated`.
+- 반환 타입 `returns table(collected_date date, cnt bigint)` — `bs_vessel_calls`를 `collected_date >= current_date - days` 범위로 집계해 일별 적재 건수를 내림차순 반환.
+- 도입 배경: PostgREST 집계(aggregate)가 비활성이라 클라이언트에서 일별 건수를 직접 구할 수 없다. `js/status.js`의 최근 7일 타임라인은 이 RPC의 **실적 기준**으로 판정한다(적재 로그 `bs_collect_log`가 누락돼도 화면이 '없음'으로 오표시되지 않음 — 2026-08-01 사례 대응).
+
+```
+POST /rest/v1/rpc/berth_daily_counts
+{ "days": 7 }
+
+GET  /rest/v1/rpc/berth_daily_counts?days=7      ← js/status.js 실제 패턴(공통 헤더 포함)
+```
+
 ---
 
 ## 4. 테이블 조회 API (PostgREST `GET /rest/v1/<table>`)
@@ -251,7 +299,23 @@ GET /rest/v1/freight_index?select=index_code,route,value,pct_change,pub_date&ord
 GET /rest/v1/pi_snapshot?select=period_end,updated_at,tpfs&id=eq.1
 GET /rest/v1/freight_index?select=pub_date,value,index_code,route&order=pub_date.desc&limit=20
 GET /rest/v1/bs_collect_log?select=*&order=created_at.desc&limit=14
+GET /rest/v1/rpc/berth_daily_counts?days=7        ← 최근 7일 타임라인(실적 기준, §3.9)
 ```
+
+- 타임라인 판정 규칙: 실적(RPC 건수)이 있으면 ✓와 건수, 실적이 없고 실패 로그만 있으면 ✗. `bs_collect_log`는 실패 사유 표시용 보조 자료로만 쓰인다.
+- 같은 화면의 외부 연동 헬스체크는 `/functions/v1/track`·`/functions/v1/datago`(둘 다 `needKey` 응답도 정상=키 대기로 판정)·`/functions/v1/send-code`(OPTIONS)를 호출한다.
+
+### 4.6 자체 AIS 수신 위치 — `vessel_positions` (`js/vessel.js`)
+
+```
+GET /rest/v1/vessel_positions
+  ?select=mmsi,ship_name,lat,lng,sog,cog,received_at
+  &received_at=gt.<현재-2시간 ISO8601>
+  &order=received_at.desc&limit=900
+```
+
+- 행 컬럼: `mmsi, ship_name, lat, lng, sog, cog, received_at` (적재는 스케줄 ⑤ 매시 30분, **48시간 보존**).
+- 클라이언트는 최근 2시간 행을 받아 `mmsi` 기준 최신 1건만 남겨 Leaflet 지도에 마커로 표시하고 **5분 주기**로 재조회한다.
 
 ---
 
@@ -273,10 +337,11 @@ GET /rest/v1/bs_collect_log?select=*&order=created_at.desc&limit=14
 
 - 해수부 선박 입출항(data.go.kr `VsslEtrynd5/Info5`) 프록시. 파라미터는 있는 것만 전달, 고정값 `numOfRows=30, pageNo=1, type=json`.
 - 키: 환경변수 `DATA_GO_KR_KEY`. 미설정 시 200 `{"needKey": true, "guide": …}` / 정상 200 `{"needKey": false, "data": …}` / 예외 502 `{"error": …}`.
+- 배포판(정적 호스팅)에서는 동일 업스트림을 Edge Function `datago?api=portmis`(§2.3)가 대신한다.
 
 ### 5.4 `GET /api/aircargo?flight_id=&airline=&from_time=&to_time=`
 
-- 인천공항 화물편 도착(data.go.kr `StatusOfCargoFlights/getCargoArrivals`) 프록시. 고정값 `numOfRows=30, pageNo=1, type=json, lang=K`. 키·응답 규약은 5.3과 동일.
+- 인천공항 화물편 도착(data.go.kr `StatusOfCargoFlights/getCargoArrivals`) 프록시. 고정값 `numOfRows=30, pageNo=1, type=json, lang=K`. 키·응답 규약은 5.3과 동일. 배포판 대체 경로는 `datago?api=aircargo`(§2.3).
 
 ---
 
@@ -285,13 +350,23 @@ GET /rest/v1/bs_collect_log?select=*&order=created_at.desc&limit=14
 | 외부 서비스 | 엔드포인트 | 인증 | 호출 주체 | 용도 |
 |---|---|---|---|---|
 | IMF PortWatch (ArcGIS) | `https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/Daily_Ports_Data/FeatureServer/0/query` | 불필요 | `scripts/collect_portinsight_api.py` (배치) | Focus 93개 항만 일별 portcalls·물동량 → PCI 산출 후 `pi_ports`/`pi_snapshot` 적재 |
-| Open-Meteo Marine | `https://marine-api.open-meteo.com/v1/marine` | 불필요 | 브라우저 (`js/weather.js`, `js/status.js`) | 항만 파고·파주기 (부산신항·광양항·인천항, 30분 주기) |
-| Open-Meteo Forecast | `https://api.open-meteo.com/v1/forecast` | 불필요 | 브라우저 (`js/weather.js`) | 풍속·돌풍 (`wind_speed_10m`, `wind_gusts_10m`) |
+| Open-Meteo Marine | `https://marine-api.open-meteo.com/v1/marine` | 불필요 | 브라우저 (`js/weather.js`, `js/status.js`) + `scripts/collect_weather_history.py` (배치) | 항만 파고·파주기 (부산신항·광양항·인천항, 브라우저 30분 주기 / 배치 6시간 주기 → `weather_history` 적재) |
+| Open-Meteo Forecast | `https://api.open-meteo.com/v1/forecast` | 불필요 | 브라우저 (`js/weather.js`) + `scripts/collect_weather_history.py` (배치) | 풍속·돌풍 (`wind_speed_10m`, `wind_gusts_10m`) |
+| AISStream | `wss://stream.aisstream.io/v0/stream` (WebSocket) | **필요** — `AISSTREAM_API_KEY` (aisstream.io 무료 발급, **2026-08-03 등록 완료**) | `scripts/collect_ais_positions.py` (배치, 매시 30분 90초 수신) | 자체 AIS 선박 위치 스냅샷 → `vessel_positions` 적재(48시간 보존) |
 | 상하이해운거래소 (SSE) | `https://en.sse.net.cn/currentIndex?indexName=SCFI\|CCFI` | 불필요 (Referer 헤더 부착) | `scripts/collect_freight_index.py` (배치) | SCFI/CCFI 주간 지수 → `freight_index` 적재 |
 | KOBC KCCI | `https://www.kobc.or.kr/ebz/shippinginfo/kcci/gridList.do` | 불필요 (HTML 파싱) | `scripts/collect_freight_index.py` (배치) | KCCI 주간 지수 → `freight_index` 적재 |
 | VesselFinder 임베드 | `https://www.vesselfinder.com/aismap.js` (+ 딥링크 `/vessels?name=`) | 불필요 (공개 위젯) | 브라우저 (`vessel.html`, `js/vessel.js`) | Live AIS 지도 임베드·선박 실시간 위치 링크 |
-| 관세청 UNIPASS | `https://unipass.customs.go.kr:38010/ext/rest/cargCsclPrgsInfoQry/retrieveCargCsclPrgsInfo` | **필요** — 발급 키(`crkyCn`), Edge 시크릿/환경변수 `UNIPASS_API_KEY` | Edge Function `track` / `server.py` (프록시) | 화물통관진행정보 (MBL/HBL) |
-| data.go.kr 선박 입출항 | `http://apis.data.go.kr/1192000/VsslEtrynd5/Info5` | **필요** — `DATA_GO_KR_KEY` | `server.py` (로컬 전용) | 본선 ATA/ATD 확인 |
-| data.go.kr 인천공항 화물편 | `http://apis.data.go.kr/B551177/StatusOfCargoFlights/getCargoArrivals` | **필요** — `DATA_GO_KR_KEY` | `server.py` (로컬 전용) | 화물편 도착 현황 |
+| 관세청 UNIPASS | `https://unipass.customs.go.kr:38010/ext/rest/cargCsclPrgsInfoQry/retrieveCargCsclPrgsInfo` | **필요** — 발급 키(`crkyCn`), Edge 시크릿/환경변수 `UNIPASS_API_KEY` (**미등록 대기**) | Edge Function `track` / `server.py` (프록시) | 화물통관진행정보 (MBL/HBL) |
+| data.go.kr 선박 입출항 | `http://apis.data.go.kr/1192000/VsslEtrynd5/Info5` | **필요** — `DATA_GO_KR_KEY` (**미등록 대기**) | Edge Function `datago`(별칭 `portmis`, 배포판) / `server.py` (로컬 전용) | 본선 ATA/ATD 확인 |
+| data.go.kr 인천공항 화물편 | `http://apis.data.go.kr/B551177/StatusOfCargoFlights/getCargoArrivals` | **필요** — `DATA_GO_KR_KEY` (**미등록 대기**) | Edge Function `datago`(별칭 `aircargo`, 배포판) / `server.py` (로컬 전용) | 화물편 도착 현황 |
 
-※ 그 밖의 외부 의존: 지도 타일 `basemaps.cartocdn.com`(Leaflet, `js/insight.js`), Deno 모듈 `deno.land/x/xml`·`deno.land/x/denomailer`(Edge Function 빌드 시). API 호출이 아니므로 표에서 제외.
+**키 현황 (2026-08-03 기준)**
+
+| 키 | 보관 위치 | 상태 |
+|---|---|---|
+| `SUPABASE_SERVICE_KEY` | PC 사용자 환경변수 | 등록 완료 — 07:30 선석 REST 적재(`upload_berth_sql_parts.py --rest`) 가동. 키를 PC에 두지 않는 원칙의 **유일한 예외**(무인 정시 적재를 위해 필요) |
+| `AISSTREAM_API_KEY` | PC 사용자 환경변수 | 등록 완료 — 매시 30분 AIS 수신 가동 |
+| `UNIPASS_API_KEY` | Supabase Edge 시크릿 | **미등록 대기** — 등록 즉시 코드 수정 없이 `track` 동작(현재는 `needKey` 안내 반환) |
+| `DATA_GO_KR_KEY` | Supabase Edge 시크릿 | **미등록 대기** — 등록 즉시 코드 수정 없이 `datago` 동작(현재는 `needKey` 안내 반환) |
+
+※ 그 밖의 외부 의존: 지도 타일 `basemaps.cartocdn.com`(Leaflet, `js/insight.js`·`js/vessel.js` AIS 지도), Deno 모듈 `deno.land/x/xml`·`deno.land/x/denomailer`(Edge Function 빌드 시). API 호출이 아니므로 표에서 제외.
