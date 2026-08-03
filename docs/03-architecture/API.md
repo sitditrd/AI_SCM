@@ -111,36 +111,51 @@ POST /functions/v1/send-code
 { "login": "user@twsc.co.kr", "purpose": "reset" }
 ```
 
-### 2.3 `GET /functions/v1/datago` — data.go.kr 공용 프록시 (2026-08-03 신설)
+### 2.3 `GET /functions/v1/datago` — data.go.kr 공용 프록시 (2026-08-03 신설 · 동일자 v2 확장)
 
 - 배포 옵션: `verify_jwt=false`, CORS `*`, 허용 메서드 `GET, OPTIONS`
-- 시크릿 의존: `DATA_GO_KR_KEY` (미등록 시 조회 대신 발급 안내 `needKey` 반환)
+- 시크릿 의존: `DATA_GO_KR_KEY` (미등록 시 조회 대신 발급 안내 `needKey` 반환). **일반 인증키 Decoding**을 등록할 것 — 함수가 `URLSearchParams`로 1회 인코딩하므로 Encoding 키는 이중 인코딩되어 실패한다.
 - **별칭(alias) 화이트리스트** 방식 — 등록된 경로만 프록시하여 개방 프록시가 되는 것을 막는다. 신규 API 추가는 `ALIASES` 등록으로만 가능.
+- v2(2026-08-03): 활용신청 승인 12종에 맞춰 별칭 **15종**으로 확장, 기관별 JSON 파라미터 차이(`type` / `dataType` / 미지원) 대응, **XML 응답 자동 JSON 변환** 추가.
+
+**허용 별칭 15종** (런타임 확인: `?api=list`)
+
+| 그룹 | 별칭 | 업스트림 | JSON 파라미터 |
+|---|---|---|---|
+| 해수부 1192000 | `portmis`(선박 입출항 15006353) · `shipspec`(선박제원 15055851) · `vtscontrol`(관제 15006354) · `portstat`(항만별 입출항실적 15059059) · `teuimpexp`(수출입 컨테이너 15059131) · `teunation`(국가별 컨테이너 15057250) | `apis.data.go.kr/1192000/…` | 없음(XML 전용) → 함수가 JSON 변환 |
+| 인천공항 B551177 | `aircargo`(15095068) · `aircargoarr`/`aircargodep`(15113461) · `airschedarr`/`airscheddep`(15114086) | `apis.data.go.kr/B551177/…` | `type=json` |
+| 인천항만 B551504 | `incheonship` · `incheonctrl` (15157706) | `apis.data.go.kr/B551504/ipaShipEtryptTkoff/…` | 없음(XML 전용) |
+| 기상청 1360000 | `wthrwarn`(기상특보 15000415) · `wthrmid`(중기예보 15059468) | `apis.data.go.kr/1360000/…` | `dataType=JSON` |
 
 **요청 파라미터**
 
 | 파라미터 | 필수 | 설명 |
 |---|---|---|
-| `api` | 필수 | 별칭 — `portmis`(해수부 선박 입출항 `1192000/VsslEtrynd5/Info5`) \| `aircargo`(인천공항 화물편 도착 `B551177/StatusOfCargoFlights/getCargoArrivals`) |
-| 그 외 | 선택 | `api`를 제외한 빈 값 아닌 쿼리스트링을 업스트림에 그대로 전달 (예: `clsgn`, `prtAgCd`, `fromDt`, `toDt`, `flight_id`) |
+| `api` | 필수 | 위 별칭 중 하나. 특수값 `list`는 허용 별칭 목록만 반환(키 불필요) |
+| 그 외 | 선택 | `api`를 제외한 빈 값 아닌 쿼리스트링을 업스트림에 그대로 전달 |
 
-- 기본값 보충: `type=json`(미지정 시) · `numOfRows=30` · `pageNo=1`. `serviceKey`는 서버가 주입한다. 타임아웃 25초.
+- 업스트림 규격 파라미터 예: `portmis` → `clsgn`(호출부호)·`prtAgCd`(항만청)·`sde`/`ede`(YYYYMMDD)·`deGb` / `shipspec` → `vsslNm`·`clsgn` / `incheonship` → `arvlDtFrom`·`arvlDtTo`·`callLetter`·`ocCt`
+- 기본값 보충: 별칭별 JSON 파라미터(위 표) · `numOfRows=30` · `pageNo=1`. `serviceKey`는 서버가 주입한다. 타임아웃 25초.
 
 **응답 형태**
 
 | 케이스 | HTTP | 본문 |
 |---|---|---|
 | 키 미등록 | 200 | `{"needKey": true, "guide": "data.go.kr 회원가입 → … DATA_GO_KR_KEY 로 등록"}` |
-| 미등록 별칭 | 400 | `{"error": "unknown api alias", "allowed": ["portmis","aircargo"]}` |
-| 정상 조회 | 200 | `{"needKey": false, "api": "<별칭>", "data": {…JSON…}}` |
-| JSON 파싱 실패(XML 오류 등) | 200 | `{"needKey": false, "api": "<별칭>", "raw": "<원문 4000자>", "error": null 또는 "HTTP <코드>"}` |
+| 별칭 목록(`api=list`) | 200 | `{"needKey": <키 미등록 여부>, "allowed": [{"api":"portmis","note":"…"}, …]}` |
+| 미등록 별칭 | 400 | `{"error": "unknown api alias", "allowed": [{"api":…,"note":…}, …]}` |
+| 정상 조회(JSON 업스트림) | 200 | `{"needKey": false, "api": "<별칭>", "format": "json", "data": {…}}` |
+| 정상 조회(XML 업스트림) | 200 | `{"needKey": false, "api": "<별칭>", "format": "xml", "data": {…파싱 결과…}}` — `track`과 동일하게 루트 요소를 벗겨 반환 |
+| 해석 실패 | 200 | `{"needKey": false, "api": "<별칭>", "format": "raw", "raw": "<원문 4000자>", "error": "…"}` |
 | GET 외 메서드 | 405 | `{"error": "method"}` |
 | 업스트림 예외 | 502 | `{"error": "조회 실패: …"}` |
+
+> 해수부·인천항만 계열은 XML 전용이라 v1에서는 `data`가 비고 `raw`만 채워져 `js/vessel.js`가 결과를 표시하지 못했다. v2의 XML→JSON 변환으로 모든 별칭이 `data`를 채운다.
 
 **호출 예시** (`js/vessel.js` 입출항 실적 조회 — 헤더 없음):
 
 ```
-GET https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/datago?api=portmis&clsgn=<호출부호>&prtAgCd=<항만코드>&fromDt=20260801&toDt=20260803
+GET https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/datago?api=portmis&clsgn=<호출부호>&prtAgCd=<항만코드>&sde=20260801&ede=20260803
 ```
 
 ---
@@ -357,8 +372,10 @@ GET /rest/v1/vessel_positions
 | KOBC KCCI | `https://www.kobc.or.kr/ebz/shippinginfo/kcci/gridList.do` | 불필요 (HTML 파싱) | `scripts/collect_freight_index.py` (배치) | KCCI 주간 지수 → `freight_index` 적재 |
 | VesselFinder 임베드 | `https://www.vesselfinder.com/aismap.js` (+ 딥링크 `/vessels?name=`) | 불필요 (공개 위젯) | 브라우저 (`vessel.html`, `js/vessel.js`) | Live AIS 지도 임베드·선박 실시간 위치 링크 |
 | 관세청 UNIPASS | `https://unipass.customs.go.kr:38010/ext/rest/cargCsclPrgsInfoQry/retrieveCargCsclPrgsInfo` | **필요** — 발급 키(`crkyCn`), Edge 시크릿/환경변수 `UNIPASS_API_KEY` (**미등록 대기**) | Edge Function `track` / `server.py` (프록시) | 화물통관진행정보 (MBL/HBL) |
-| data.go.kr 선박 입출항 | `http://apis.data.go.kr/1192000/VsslEtrynd5/Info5` | **필요** — `DATA_GO_KR_KEY` (**미등록 대기**) | Edge Function `datago`(별칭 `portmis`, 배포판) / `server.py` (로컬 전용) | 본선 ATA/ATD 확인 |
-| data.go.kr 인천공항 화물편 | `http://apis.data.go.kr/B551177/StatusOfCargoFlights/getCargoArrivals` | **필요** — `DATA_GO_KR_KEY` (**미등록 대기**) | Edge Function `datago`(별칭 `aircargo`, 배포판) / `server.py` (로컬 전용) | 화물편 도착 현황 |
+| data.go.kr 해수부 1192000 | `https://apis.data.go.kr/1192000/…` — `VsslEtrynd5/Info5`(입출항) · `SicsVsslManp3/Info3`(제원) · `CntlVssl2/Info`(관제) · `SsopVsslEtryndHarbor2/YM` · `SsopCargContnImxprt2/Ym` · `SsopCargContnNat2/Ym` | **필요** — `DATA_GO_KR_KEY` (**미등록 대기**, 활용신청은 2026-08-03 승인 완료) | Edge Function `datago`(별칭 `portmis`·`shipspec`·`vtscontrol`·`portstat`·`teuimpexp`·`teunation`) / `server.py` (로컬 전용) | 본선 ATA/ATD·선박 제원·물동량 통계 |
+| data.go.kr 인천공항 B551177 | `https://apis.data.go.kr/B551177/…` — `StatusOfCargoFlights/getCargoArrivals` · `StatusOfCargoFlightsDeOdp/*` · `StatusOfCgoFltSched/*` | **필요** — `DATA_GO_KR_KEY` (**미등록 대기**) | Edge Function `datago`(별칭 `aircargo`·`aircargoarr`·`aircargodep`·`airschedarr`·`airscheddep`) | 화물편 도착·출발·정기 스케줄 |
+| data.go.kr 인천항만 B551504 | `https://apis.data.go.kr/B551504/ipaShipEtryptTkoff/…` | **필요** — `DATA_GO_KR_KEY` (**미등록 대기**) | Edge Function `datago`(별칭 `incheonship`·`incheonctrl`) | 인천항 선박 입출항·관제 |
+| data.go.kr 기상청 1360000 | `https://apis.data.go.kr/1360000/WthrWrnInfoService/getWthrWrnList` · `MidFcstInfoService/getMidFcst` | **필요** — `DATA_GO_KR_KEY` (**미등록 대기**) | Edge Function `datago`(별칭 `wthrwarn`·`wthrmid`) | 기상특보 티커·중기예보 |
 
 **키 현황 (2026-08-03 기준)**
 
@@ -367,6 +384,6 @@ GET /rest/v1/vessel_positions
 | `SUPABASE_SERVICE_KEY` | PC 사용자 환경변수 | 등록 완료 — 07:30 선석 REST 적재(`upload_berth_sql_parts.py --rest`) 가동. 키를 PC에 두지 않는 원칙의 **유일한 예외**(무인 정시 적재를 위해 필요) |
 | `AISSTREAM_API_KEY` | PC 사용자 환경변수 | 등록 완료 — 매시 30분 AIS 수신 가동 |
 | `UNIPASS_API_KEY` | Supabase Edge 시크릿 | **미등록 대기** — 등록 즉시 코드 수정 없이 `track` 동작(현재는 `needKey` 안내 반환) |
-| `DATA_GO_KR_KEY` | Supabase Edge 시크릿 | **미등록 대기** — 등록 즉시 코드 수정 없이 `datago` 동작(현재는 `needKey` 안내 반환) |
+| `DATA_GO_KR_KEY` | Supabase Edge 시크릿 | **미등록 대기** — data.go.kr 활용신청 12종은 2026-08-03 승인 완료. 마이페이지의 **일반 인증키(Decoding)** 를 등록하면 코드 수정 없이 `datago` 15종 별칭이 즉시 동작(현재는 `needKey` 안내 반환) |
 
 ※ 그 밖의 외부 의존: 지도 타일 `basemaps.cartocdn.com`(Leaflet, `js/insight.js`·`js/vessel.js` AIS 지도), Deno 모듈 `deno.land/x/xml`·`deno.land/x/denomailer`(Edge Function 빌드 시). API 호출이 아니므로 표에서 제외.

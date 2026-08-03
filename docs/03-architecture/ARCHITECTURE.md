@@ -125,7 +125,7 @@ flowchart LR
 |---|---|---|
 | `send-code` | 가입·비밀번호 재설정 인증코드 이메일 발송 (denomailer + 본인 SMTP, 네이버 `smtp.naver.com:465`) | `SMTP_HOST/PORT/USER/PASS/FROM` |
 | `track` | 관세청 UNIPASS 화물통관진행정보 프록시 (정적 사이트에서 직접 호출, `verify_jwt=false`). 키 미등록 시 `needKey` 안내 반환 | `UNIPASS_API_KEY`(미등록 대기) |
-| `datago` | data.go.kr 공용 API 프록시 — 별칭 화이트리스트(`portmis` 입출항 실적 · `aircargo`)로 허용 대상만 중계. 키 미등록 시 `needKey` 안내 반환 | `DATA_GO_KR_KEY`(미등록 대기) |
+| `datago` | data.go.kr 공용 API 프록시 — 별칭 화이트리스트 **15종**(해수부 6 · 인천공항 5 · 인천항만 2 · 기상청 2)으로 허용 대상만 중계. 기관별 JSON 파라미터(`type`/`dataType`/미지원) 자동 처리 + XML 응답 JSON 변환. `?api=list`로 별칭 조회, 키 미등록 시 `needKey` 안내 반환 | `DATA_GO_KR_KEY`(미등록 대기 — 활용신청 12종 승인 완료) |
 
 `UNIPASS_API_KEY`·`DATA_GO_KR_KEY`는 2026-08-03 기준 미등록 상태이며, 시크릿 등록 즉시 코드 수정 없이 동작한다.
 

@@ -21,6 +21,7 @@
 | 12. 07-31 운영 자동화·정비 | ① 선석배정 파서 헤더 변형 대응 확대(462→516건) ② 수집 스크립트 경로 수정 ③ Netlify 선별 게시+빌드 훅 완성(GitHub Pages 주경로의 미러) ④ 유니패스 화물 추적 Edge Function(track) 배포 ⑤ 스케줄러 3종 등록·스케줄러 체계 문서 신설 ⑥ i18n 대량 보강 ⑦ 07-31분 515건 적재 | scripts/collect_upload_berth.py, netlify.toml, supabase/functions/track, docs/06-operations/스케줄러_체계.md |
 | 13. 07-31 status 헬스체크 | 외부 연동 헬스체크 섹션(SECTION 05) 신설 — Edge Function track·datago(needKey 응답은 "정상(키 대기)" 판정)·send-code(OPTIONS)·Open-Meteo marine 4종을 45초 주기 점검, 응답시간 게이지(3초 기준)·8초 타임아웃, 신규 문구 i18n(EN/ZH) 반영 (로드맵 §4 status P1) | status.html/js/status.js, js/i18n.js |
 | 14. 08-01~03 운영 안정화·이력 축적 | ① 예측분석 Phase 1 이력 테이블 3종 신설(pi_history·weather_history·vessel_positions, 전부 RLS+익명 select) ② RPC berth_daily_counts(days=7) 도입(PostgREST 집계 비활성 대체) ③ Edge Function datago 신설(data.go.kr 공용 프록시, 별칭 화이트리스트 portmis·aircargo) → Edge Function 3종 ④ 자체 AIS 수신 PoC(AISStream 웹소켓 90초 스냅샷 + vessel 지도 레이어) ⑤ **Windows 작업 스케줄러 TWL_BerthUpload 07:30 신설**로 선석 적재 정시 보장(--rest 직접 적재, 08:03 Claude 작업은 안전망으로 이중화) ⑥ status 7일 타임라인을 로그 기준 → **적재 실적(berth_daily_counts) 기준**으로 전환 ⑦ 무인 실행용 도구 권한 사전 허용(~/.claude/settings.json) | sql/setup_history.sql, scripts/upload_berth_sql_parts.py, scripts/run_berth_upload.bat, supabase/functions/datago, js/status.js, vessel.html/js |
+| 15. 08-03 data.go.kr 활용신청·프록시 v2 | ① **data.go.kr 오픈API 활용신청 12종 자동승인 완료**(PORT-MIS 입출항·선박제원·관제·항만별 입출항실적·수출입/국가별 컨테이너·인천공항 화물편 3종·인천항 입출항·기상특보·중기예보, 만료 2028-08-03). 15084033(연안AIS)·3068846(환율)은 **LINK형**이라 신청 대상 아님을 확인 ② Edge Function `datago` **v2 배포** — 별칭 2종 → **15종** 확장, 기관별 JSON 파라미터(`type`/`dataType`/미지원) 자동 처리, **XML→JSON 자동 변환**(해수부·인천항만은 XML 전용), `?api=list` 별칭 조회 추가 ③ **버그 수정 2건**: XML 전용 API가 `data` 없이 `raw`만 반환해 vessel 화면이 결과를 못 그리던 문제, vessel.js PORT-MIS 날짜 파라미터 `fromDt/toDt` → 규격 `sde/ede` | supabase/functions/datago/index.ts, js/vessel.js, docs/03-architecture/API.md |
 
 ## 2. 최종 기능 (8개 화면, 전부 실데이터)
 
@@ -84,7 +85,7 @@ C:\Temp\AI_SCM\
 
 ## 6. 남은 과제
 1. ~~`SUPABASE_SERVICE_KEY`(sb_secret) → Windows 스케줄러 활성~~ **완료(2026-08-03)** — 사용자 환경변수 등록으로 ② TWL_BerthUpload 07:30 REST 직접 적재 가동
-2. `UNIPASS_API_KEY`(Edge Function track) → 화물 추적 실조회(통관 타임라인) · `DATA_GO_KR_KEY`(Edge Function datago) → PORT-MIS 입출항 실적 조회 — 둘 다 미등록 대기, 등록 즉시 코드 수정 없이 동작
+2. `UNIPASS_API_KEY`(Edge Function track) → 화물 추적 실조회(통관 타임라인) · `DATA_GO_KR_KEY`(Edge Function datago) → **활용신청 12종은 2026-08-03 승인 완료, 마이페이지의 일반 인증키(Decoding)를 Supabase Secrets에 등록하는 것만 남음**. 둘 다 등록 즉시 코드 수정 없이 동작(datago는 별칭 15종 선반영)
 3. ~~AISStream 무료 키 → 자체 AIS 레이어~~ **키 등록·수신 PoC 완료(2026-08-03)** — vessel_positions 매시 30분 축적 중, 묘박지 대기 실측 활용은 이력 축적 후
 4. ORS 키 → 내륙 운송 경로 최적화 탭(제안 ③)
 5. KCCI 파서 보완(KOBC 그리드 비동기) · Figma 편집 좌석(기획 이관)
