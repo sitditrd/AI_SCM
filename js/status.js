@@ -130,6 +130,10 @@
     var pLog = sb('/rest/v1/bs_collect_log?select=*&order=created_at.desc&limit=14')
       .then(function (rows) { results.logs = rows; }).catch(function () {});
 
+    /* 7일 타임라인은 적재 로그가 아닌 실제 적재 실적 기준 (로그 누락·건수 불일치에 영향받지 않음) */
+    var pDaily = sb('/rest/v1/rpc/berth_daily_counts?days=7')
+      .then(function (rows) { results.daily = rows; }).catch(function () {});
+
     /* 외부 연동 헬스체크 — track·datago는 needKey 응답도 정상(키 대기)으로 판정 */
     var pHcTrack = timedFetch(FN_BASE + '/track?type=mbl&no=TWLHEALTH01')
       .then(function (t) {
@@ -148,7 +152,7 @@
         results.hc.sendcode = t.res.ok ? { ms: t.ms } : { ms: t.ms, http: t.res.status };
       }).catch(function () {});
 
-    Promise.all([pBerth, pPi, pFx, pWx, pLog, pHcTrack, pHcDatago, pHcSend]).then(function () { render(results, today); });
+    Promise.all([pBerth, pPi, pFx, pWx, pLog, pDaily, pHcTrack, pHcDatago, pHcSend]).then(function () { render(results, today); });
     lastUpdateTs = Date.now();
     updateStamp();
   }
@@ -237,13 +241,23 @@
       var cur = byDate[l.collected_date];
       if (!cur || l.status === 'SUCCESS') byDate[l.collected_date] = l;
     });
+    /* 실제 적재 실적(RPC) 우선 — 로그 누락·건수 불일치에 좌우되지 않도록 */
+    var byCnt = {};
+    (r.daily || []).forEach(function (x) { byCnt[x.collected_date] = x.cnt; });
     var chips = [];
     for (var i = 6; i >= 0; i--) {
       var d = new Date(now - i * 86400000);
       var ds = dstr(d);
       var log = byDate[ds];
-      var cls = log ? (log.status === 'SUCCESS' ? 'dg-ok' : 'dg-fail') : 'dg-none';
-      var mark = log ? (log.status === 'SUCCESS' ? '✓ ' + log.total_rows + '건' : '✗ 실패') : '· 없음';
+      var cnt = byCnt[ds];
+      var cls, mark;
+      if (cnt) {                                   /* DB에 실제 데이터 있음 = 적재 완료 */
+        cls = 'dg-ok'; mark = '✓ ' + cnt + '건';
+      } else if (log && log.status !== 'SUCCESS') { /* 실적 없음 + 실패 로그 */
+        cls = 'dg-fail'; mark = '✗ 실패';
+      } else {
+        cls = 'dg-none'; mark = '· 없음';
+      }
       chips.push('<div class="day-chip ' + cls + '"><small>' + ds.slice(5) + (i === 0 ? ' (오늘)' : '') + '</small><b>' + mark + '</b></div>');
     }
     el('dayGrid').innerHTML = chips.join('');

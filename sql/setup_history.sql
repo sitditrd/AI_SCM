@@ -32,3 +32,18 @@ create table if not exists public.weather_history (
 alter table public.weather_history enable row level security;
 create policy "weather_history_anon_select" on public.weather_history for select using (true);
 create index if not exists idx_weather_history_port_ts on public.weather_history (port, obs_ts desc);
+
+-- 데이터 현황 7일 타임라인용 RPC (2026-08-03)
+-- 적재 로그(bs_collect_log)가 아닌 실제 적재 실적 기준으로 일별 건수를 반환한다.
+-- (로그 누락 시 화면이 '없음'으로 오표시되던 문제 — 2026-08-01 사례 대응)
+create or replace function public.berth_daily_counts(days int default 7)
+returns table(collected_date date, cnt bigint)
+language sql stable security invoker set search_path = public
+as $$
+  select collected_date, count(*)::bigint
+  from public.bs_vessel_calls
+  where collected_date >= current_date - greatest(days, 0)
+  group by collected_date
+  order by collected_date desc;
+$$;
+grant execute on function public.berth_daily_counts(int) to anon, authenticated;
