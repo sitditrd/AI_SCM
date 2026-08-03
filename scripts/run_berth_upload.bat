@@ -1,7 +1,8 @@
 @echo off
 REM ============================================================
 REM  TWL berth upload - Windows Task Scheduler entry (app-independent)
-REM  Register : Register-ScheduledTask -TaskName "TWL_BerthUpload" ... -Daily -At 06:40
+REM  Register : Register-ScheduledTask -TaskName "TWL_BerthUpload" ... -Daily -At 07:30
+REM             (07:30 = after the 06:00 collector finishes writing the xlsx)
 REM  Requires : user env var SUPABASE_SERVICE_KEY
 REM             (the python script also falls back to the user Environment registry)
 REM  Behavior : same collected_date is replaced (idempotent) - safe to run
