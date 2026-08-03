@@ -136,10 +136,32 @@
           <button class="btn btn-primary" id="pmBtn" type="button">실적 조회</button>
         </div>
         <p class="sc-sub" style="margin:10px 0 0; color:var(--muted); font-size:12px;">
-          데이터: 해양수산부 선박운항정보(PORT-MIS) — data.go.kr 키 등록 후 동작 · 호출부호는 터미널 공표 자료에서 확인
+          데이터: 해양수산부 선박운항정보(PORT-MIS) · 호출부호는 터미널 공표 자료에서 확인 · 조회 기간은 시작·종료일 모두 필수
         </p>
       </div>
       <div id="pmOut"></div>
+    </div>
+  </section>
+
+  <!-- ============ 선박 제원 조회 (선박제원정보 15055851 · 2026-08-03) ============ -->
+  <section class="dash-section" id="shipspec" style="padding-top:0;">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SHIP SPEC</span>
+        <h2>선박 제원 조회</h2>
+        <span class="hint">해양수산부 선박제원정보 · 선종·국적·총톤수·전장/폭/흘수</span>
+      </div>
+      <div class="card reveal" style="margin-bottom:14px;">
+        <div class="berth-toolbar" style="margin:0;">
+          <input type="search" class="focus-search" id="ssName" placeholder="선박명 (예: HANJIN)" style="max-width:260px;">
+          <input type="search" class="focus-search" id="ssClsgn" placeholder="호출부호 (예: 3FPQ7)" style="max-width:200px;">
+          <button class="btn btn-primary" id="ssBtn" type="button">제원 조회</button>
+        </div>
+        <p class="sc-sub" style="margin:10px 0 0; color:var(--muted); font-size:12px;">
+          선박명 또는 호출부호 중 하나 이상 입력 · 선박명은 부분 일치 검색 · 결과 행을 누르면 상세 제원이 펼쳐집니다
+        </p>
+      </div>
+      <div id="ssOut"></div>
     </div>
   </section>
 
@@ -180,9 +202,9 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="js/common.js?v=2026-4"></script>
-  <script src="js/i18n.js?v=2026-07-31d"></script>
+  <script src="js/i18n.js?v=2026-08-03a"></script>
   <script src="js/auth.js?v=2026-07-29f"></script>
   <script src="js/auth-gate.js?v=2026-07-30a"></script>
-  <script src="js/vessel.js?v=2026-07-31b"></script>
+  <script src="js/vessel.js?v=2026-08-03a"></script>
 </body>
 </html>

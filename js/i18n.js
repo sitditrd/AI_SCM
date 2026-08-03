@@ -995,6 +995,22 @@
       '에서 조회': '',
       '수집': 'collected',
 
+      /* --- 선박 제원 조회 (vessel.js · 2026-08-03) --- */
+      '선박 제원 조회': 'Ship Particulars',
+      '해양수산부 선박제원정보 · 선종·국적·총톤수·전장/폭/흘수': 'MOF ship particulars · type, flag, gross tonnage, LOA/beam/draft',
+      '선박명 또는 호출부호 중 하나 이상 입력 · 선박명은 부분 일치 검색 · 결과 행을 누르면 상세 제원이 펼쳐집니다': 'Enter a ship name or call sign · partial name match · click a row to expand full particulars',
+      '제원 조회': 'Search',
+      '선박 제원 조회 중…': 'Loading ship particulars...',
+      '선박명 또는 호출부호를 입력하십시오.': 'Enter a ship name or call sign.',
+      '조회 결과가 없습니다. 선박명 일부(예: HANJIN) 또는 호출부호로 다시 시도하십시오.': 'No results. Try part of the ship name (e.g. HANJIN) or a call sign.',
+      '선박 제원': 'Ship particulars',
+      '해양수산부 선박제원정보': 'MOF ship particulars',
+      '선박명': 'Ship name', '호출부호': 'Call sign', '선종': 'Ship type', '국적': 'Flag',
+      '총톤수': 'Gross tonnage', '전장': 'LOA', '상세 ▾': 'Details ▾',
+      '영문 선박명': 'Ship name (EN)', 'IMO 번호': 'IMO number', '항해 형태': 'Service type', '외/내항': 'Ocean/coastal',
+      '총톤수(G/T)': 'Gross tonnage (G/T)', '순톤수(N/T)': 'Net tonnage (N/T)', '전장(LOA)': 'LOA', '수선간장(LBP)': 'LBP',
+      '폭(Beam)': 'Beam', '깊이(Depth)': 'Depth', '흘수(Draft)': 'Draft', '건조일': 'Built',
+
       /* --- 홈 (index.html) --- */
       '실시간 지표 — Port Insight 대시보드로 이동': 'Live indicators - go to the Port Insight dashboard',
       '주간 해상운임지수': 'Weekly ocean freight indices'
@@ -1539,6 +1555,22 @@
       '선석배정 DB 기준 · MBL/HBL/AWB는': '基于泊位分配 DB · MBL/HBL/AWB 请在',
       '에서 조회': '中查询',
       '수집': '采集',
+
+      /* --- 선박 제원 조회 (vessel.js · 2026-08-03) --- */
+      '선박 제원 조회': '船舶诸元查询',
+      '해양수산부 선박제원정보 · 선종·국적·총톤수·전장/폭/흘수': '海洋水产部船舶诸元信息 · 船种·船籍·总吨位·全长/船宽/吃水',
+      '선박명 또는 호출부호 중 하나 이상 입력 · 선박명은 부분 일치 검색 · 결과 행을 누르면 상세 제원이 펼쳐집니다': '请输入船名或呼号 · 船名支持部分匹配 · 点击结果行可展开详细诸元',
+      '제원 조회': '查询诸元',
+      '선박 제원 조회 중…': '正在查询船舶诸元...',
+      '선박명 또는 호출부호를 입력하십시오.': '请输入船名或呼号。',
+      '조회 결과가 없습니다. 선박명 일부(예: HANJIN) 또는 호출부호로 다시 시도하십시오.': '无查询结果。请用船名的一部分（例如 HANJIN）或呼号重试。',
+      '선박 제원': '船舶诸元',
+      '해양수산부 선박제원정보': '海洋水产部船舶诸元信息',
+      '선박명': '船名', '호출부호': '呼号', '선종': '船种', '국적': '船籍',
+      '총톤수': '总吨位', '전장': '全长', '상세 ▾': '详情 ▾',
+      '영문 선박명': '英文船名', 'IMO 번호': 'IMO 编号', '항해 형태': '航行形态', '외/내항': '外航/内航',
+      '총톤수(G/T)': '总吨位(G/T)', '순톤수(N/T)': '净吨位(N/T)', '전장(LOA)': '全长(LOA)', '수선간장(LBP)': '垂线间长(LBP)',
+      '폭(Beam)': '船宽(Beam)', '깊이(Depth)': '型深(Depth)', '흘수(Draft)': '吃水(Draft)', '건조일': '建造日期',
 
       /* --- 홈 (index.html) --- */
       '실시간 지표 — Port Insight 대시보드로 이동': '实时指标 - 前往 Port Insight 看板',

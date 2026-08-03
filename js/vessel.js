@@ -198,6 +198,109 @@
     btn.addEventListener('click', pmSearch);
   });
 
+  /* ================= 선박 제원 조회 (선박제원정보 15055851, 2026-08-03) ================= */
+
+  /* 값이 "41[풀컨테이너선]" 처럼 코드+설명으로 오는 필드에서 설명만 뽑는다 */
+  function ssLabel(v) {
+    if (v == null || v === '') return '—';
+    var m = String(v).match(/\[([^\]]+)\]/);
+    return m ? m[1] : String(v);
+  }
+  function ssNum(v, unit) {
+    if (v == null || v === '' || Number(v) === 0) return '—';
+    return Number(v).toLocaleString('ko-KR') + (unit || '');
+  }
+
+  /* 상세 패널에 펼칠 항목 — [라벨, 값] */
+  function ssDetail(it) {
+    var rows = [
+      ['영문 선박명', it.vsslEngNm || '—'],
+      ['호출부호', it.clsgn || '—'],
+      ['IMO 번호', it.imoNo || '—'],
+      ['선종', ssLabel(it.vsslKnd)],
+      ['국적', ssLabel(it.vsslNlty)],
+      ['항해 형태', it.nvgShapNm || '—'],
+      ['외/내항', ssLabel(it.ibobprt)],
+      ['총톤수(G/T)', ssNum(it.grtg, ' t')],
+      ['순톤수(N/T)', ssNum(it.ntng, ' t')],
+      ['전장(LOA)', ssNum(it.vsslTotLt, ' m')],
+      ['수선간장(LBP)', ssNum(it.vsslLt, ' m')],
+      ['폭(Beam)', ssNum(it.shdth, ' m')],
+      ['깊이(Depth)', ssNum(it.vsslDp, ' m')],
+      ['흘수(Draft)', ssNum(it.vsslDrft, ' m')],
+      ['건조일', it.vsslCnstrDt ? String(it.vsslCnstrDt).slice(0, 10) : '—']
+    ];
+    return '<div class="ss-detail" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:8px 18px; padding:12px 4px 4px;">' +
+      rows.map(function (r) {
+        return '<div><small style="color:var(--muted); display:block; font-size:11px;">' + esc(r[0]) + '</small>' +
+          '<b style="font-size:13px;">' + esc(r[1]) + '</b></div>';
+      }).join('') + '</div>';
+  }
+
+  function ssSearch() {
+    var out = el('ssOut');
+    var nm = el('ssName').value.trim(), cs = el('ssClsgn').value.trim();
+    if (!nm && !cs) {
+      out.innerHTML = pmCard('<div class="sc-sub">선박명 또는 호출부호를 입력하십시오.</div>');
+      return;
+    }
+    out.innerHTML = pmCard('<div class="sc-sub">선박 제원 조회 중…</div>');
+    var p = new URLSearchParams({ api: 'shipspec', numOfRows: '30' });
+    if (nm) p.set('vsslNm', nm);
+    if (cs) p.set('clsgn', cs);
+    fetch(DATAGO + '?' + p)
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res.needKey) {
+          out.innerHTML = pmCard('<h3 style="margin-top:0; font-size:15px;">data.go.kr 공공 API 키가 아직 등록되지 않았습니다</h3>' +
+            '<p class="sc-sub">' + esc(res.guide) + '</p>');
+          return;
+        }
+        var items = res.data ? pmFindItems(res.data, 0) : null;
+        if (!items || !items.length) {
+          out.innerHTML = pmCard('<div class="sc-sub">조회 결과가 없습니다. 선박명 일부(예: HANJIN) 또는 호출부호로 다시 시도하십시오.</div>');
+          return;
+        }
+        out.innerHTML = pmCard(
+          '<h3 style="margin-top:0; font-size:15px;">선박 제원 <small style="color:var(--muted);">' + items.length + '건 · 해양수산부 선박제원정보</small></h3>' +
+          '<div class="tbl-scroll"><table class="tw"><thead><tr>' +
+          '<th>선박명</th><th>호출부호</th><th>선종</th><th>국적</th><th class="num">총톤수</th><th class="num">전장</th><th></th>' +
+          '</tr></thead><tbody>' +
+          items.map(function (it, i) {
+            return '<tr class="ss-row" data-i="' + i + '" style="cursor:pointer;">' +
+              '<td>' + esc(it.vsslKorNm || it.vsslEngNm || '—') + '</td>' +
+              '<td>' + esc(it.clsgn || '—') + '</td>' +
+              '<td>' + esc(ssLabel(it.vsslKnd)) + '</td>' +
+              '<td>' + esc(ssLabel(it.vsslNlty)) + '</td>' +
+              '<td class="num">' + esc(ssNum(it.grtg)) + '</td>' +
+              '<td class="num">' + esc(ssNum(it.vsslTotLt, ' m')) + '</td>' +
+              '<td style="color:var(--muted); font-size:11px;">상세 ▾</td></tr>' +
+              '<tr class="ss-panel" data-p="' + i + '" hidden><td colspan="7" style="background:color-mix(in srgb, var(--muted) 7%, transparent);">' +
+              ssDetail(it) + '</td></tr>';
+          }).join('') + '</tbody></table></div>');
+
+        /* 행 클릭 → 해당 상세 패널 토글 */
+        out.querySelectorAll('.ss-row').forEach(function (tr) {
+          tr.addEventListener('click', function () {
+            var panel = out.querySelector('.ss-panel[data-p="' + tr.getAttribute('data-i') + '"]');
+            if (panel) panel.hidden = !panel.hidden;
+          });
+        });
+      })
+      .catch(function () {
+        out.innerHTML = pmCard('<div class="sc-sub">조회 실패 — 잠시 후 다시 시도하십시오.</div>');
+      });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var b = el('ssBtn');
+    if (!b) return;
+    b.addEventListener('click', ssSearch);
+    ['ssName', 'ssClsgn'].forEach(function (id) {
+      el(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') ssSearch(); });
+    });
+  });
+
   /* ================= 자체 AIS 수신 지도 (AISStream PoC, 2026-07-31) ================= */
   var aisMap = null, aisLayer = null;
 
