@@ -27,6 +27,7 @@
       renderMap();
       initPortSearch();
       initFocusList();
+      initTeuTrend();
       initScrollSpy();
       initStampTicker();
       updateSourceBadge();
@@ -545,6 +546,118 @@
     }
     input.addEventListener('input', function () { render(input.value); });
     render('');
+  }
+
+  /* ================= 국내 컨테이너 물동량 추이 (해수부 15059131, 2026-08-03) =================
+     Edge Function `datago?api=teuimpexp` 경유. 주의사항 2가지:
+     ① 응답 필드 접두사가 직관과 반대 — e* = 수입, t* = 수출 (data.go.kr 출력결과 정의 기준)
+     ② 이 API는 numOfRows 상한이 50이라 12개월×12지역(144행)을 한 번에 못 받는다 → 페이지 순회 */
+  var DATAGO = 'https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/datago';
+  var TEU_MONTHS = 12;
+
+  function dgItems(o, depth) {
+    if (depth > 6 || o == null) return null;
+    if (Array.isArray(o)) return (o.length && typeof o[0] === 'object') ? o : null;
+    if (typeof o === 'object') {
+      for (var k in o) {
+        var f = dgItems(o[k], depth + 1);
+        if (f) return f;
+      }
+    }
+    return null;
+  }
+  function ymNum(d) { return d.getFullYear() * 100 + (d.getMonth() + 1); }
+  function ymShort(v) { var s = String(v); return s.slice(2, 4) + '.' + s.slice(4, 6); }
+  function teuFmt(n) { return Math.round(n).toLocaleString('ko-KR'); }
+
+  /* 50건 상한 때문에 페이지를 순차 조회해 전부 모은다 (144행 → 3페이지) */
+  function fetchTeuPages(sym, eym, page, acc, done) {
+    var p = new URLSearchParams({ api: 'teuimpexp', numOfRows: '50', pageNo: String(page), sym: sym, eym: eym });
+    fetch(DATAGO + '?' + p)
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res.needKey) { done(null); return; }
+        var rows = res.data ? dgItems(res.data, 0) : null;
+        if (!rows || !rows.length) { done(acc); return; }
+        acc = acc.concat(rows);
+        if (rows.length < 50 || page >= 6) done(acc);
+        else fetchTeuPages(sym, eym, page + 1, acc, done);
+      })
+      .catch(function () { done(acc.length ? acc : null); });
+  }
+
+  function initTeuTrend() {
+    var box = el('teuTrend');
+    if (!box || typeof fetch === 'undefined') return;
+    var now = new Date();
+    var from = new Date(now.getFullYear(), now.getMonth() - (TEU_MONTHS - 1), 1);
+    fetchTeuPages(String(ymNum(from)), String(ymNum(now)), 1, [], function (rows) {
+      if (!rows || !rows.length) {
+        box.innerHTML = '<p class="sc-sub" style="color:var(--muted);">물동량 데이터를 불러오지 못했습니다. (해수부 원천은 약 2개월 지연 공표됩니다)</p>';
+        return;
+      }
+      renderTeuTrend(box, rows);
+    });
+  }
+
+  function renderTeuTrend(box, rows) {
+    /* 월별 집계 */
+    var byMonth = {};
+    rows.forEach(function (r) {
+      var m = Number(r.useYm);
+      if (!m) return;
+      if (!byMonth[m]) byMonth[m] = { imp: 0, exp: 0 };
+      byMonth[m].imp += Number(r.eContnTeuTotal) || 0;   /* e* = 수입 */
+      byMonth[m].exp += Number(r.tContnTeuTotal) || 0;   /* t* = 수출 */
+    });
+    var months = Object.keys(byMonth).map(Number).sort(function (a, b) { return a - b; });
+    if (!months.length) return;
+    var latest = months[months.length - 1];
+    var max = months.reduce(function (a, m) { return Math.max(a, byMonth[m].imp + byMonth[m].exp); }, 0) || 1;
+
+    /* 월별 누적 막대 — 기존 bn-chart 톤에 맞춘 인라인 스타일 */
+    var bars = months.map(function (m) {
+      var d = byMonth[m], tot = d.imp + d.exp;
+      var h = tot / max * 100;
+      var tip = ymShort(m) + ' · 수입 ' + teuFmt(d.imp) + ' / 수출 ' + teuFmt(d.exp) + ' TEU';
+      return '<div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; min-width:0;" title="' + esc(tip) + '">' +
+        '<div style="width:100%; height:150px; display:flex; flex-direction:column; justify-content:flex-end;">' +
+          '<div style="height:' + (h * d.exp / (tot || 1)) + '%; background:var(--series-2); border-radius:3px 3px 0 0;"></div>' +
+          '<div style="height:' + (h * d.imp / (tot || 1)) + '%; background:var(--series-1);"></div>' +
+        '</div>' +
+        '<small style="color:var(--muted); font-size:10.5px; white-space:nowrap;">' + ymShort(m) + '</small></div>';
+    }).join('');
+
+    /* 최신월 지역별 순위 */
+    var areas = rows.filter(function (r) { return Number(r.useYm) === latest; })
+      .map(function (r) {
+        return {
+          nm: r.areaNm || '—',
+          imp: Number(r.eContnTeuTotal) || 0,
+          exp: Number(r.tContnTeuTotal) || 0
+        };
+      })
+      .sort(function (a, b) { return (b.imp + b.exp) - (a.imp + a.exp); });
+    var aMax = areas.length ? (areas[0].imp + areas[0].exp) : 1;
+
+    var lt = byMonth[latest];
+    box.innerHTML =
+      '<div style="display:flex; align-items:flex-end; gap:6px; padding:4px 0 2px;">' + bars + '</div>' +
+      '<p class="sc-sub" style="color:var(--muted); font-size:12px; margin:12px 0 20px;">' +
+        '최신 ' + ymShort(latest).replace('.', '년 ') + '월 · 수입 ' + teuFmt(lt.imp) + ' TEU · 수출 ' + teuFmt(lt.exp) +
+        ' TEU · 합계 <b style="color:var(--fg);">' + teuFmt(lt.imp + lt.exp) + ' TEU</b>' +
+      '</p>' +
+      '<div class="bn-chart">' + areas.map(function (a) {
+        var tot = a.imp + a.exp;
+        return '<div class="bn-row" data-tip="<b>' + esc(a.nm) + '</b><br>수입 ' + teuFmt(a.imp) + ' TEU · 수출 ' + teuFmt(a.exp) + ' TEU">' +
+          '<div class="bn-name">' + esc(a.nm) + '</div>' +
+          '<div class="bn-bars">' +
+            '<div class="bn-bar bn-wait" style="width:' + (a.imp / aMax * 100) + '%;"></div>' +
+            '<div class="bn-bar bn-service" style="width:' + (a.exp / aMax * 100) + '%;"></div>' +
+          '</div>' +
+          '<div class="bn-ratio">' + teuFmt(tot) + '<small>TEU</small></div>' +
+          '</div>';
+      }).join('') + '</div>';
   }
 
   /* ================= 스크롤 스파이 ================= */

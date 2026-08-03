@@ -1004,6 +1004,14 @@
       '에서 조회': '',
       '수집': 'collected',
 
+      /* --- 물동량 추이 (insight.js · 2026-08-03) --- */
+      '국내 컨테이너 물동량 추이': 'Korea Container Volume Trend',
+      '해양수산부 수출입컨테이너처리실적 · 최근 12개월 · 상대 지역별 수출입 TEU': 'MOF import/export container throughput · last 12 months · TEU by counterpart region',
+      '수입 TEU': 'Import TEU', '수출 TEU': 'Export TEU',
+      '물동량 조회 중…': 'Loading volume data...',
+      '물동량 데이터를 불러오지 못했습니다. (해수부 원천은 약 2개월 지연 공표됩니다)': 'Could not load volume data. (MOF source is published with about a 2-month lag)',
+      '수입': 'Import', '수출': 'Export', '합계': 'Total', '최신': 'Latest',
+
       /* --- 선박 제원 조회 (vessel.js · 2026-08-03) --- */
       '선박 제원 조회': 'Ship Particulars',
       '해양수산부 선박제원정보 · 선종·국적·총톤수·전장/폭/흘수': 'MOF ship particulars · type, flag, gross tonnage, LOA/beam/draft',
@@ -1564,6 +1572,14 @@
       '선석배정 DB 기준 · MBL/HBL/AWB는': '基于泊位分配 DB · MBL/HBL/AWB 请在',
       '에서 조회': '中查询',
       '수집': '采集',
+
+      /* --- 물동량 추이 (insight.js · 2026-08-03) --- */
+      '국내 컨테이너 물동량 추이': '韩国集装箱吞吐量趋势',
+      '해양수산부 수출입컨테이너처리실적 · 최근 12개월 · 상대 지역별 수출입 TEU': '海洋水产部进出口集装箱处理实绩 · 最近12个月 · 按对方地区的进出口TEU',
+      '수입 TEU': '进口 TEU', '수출 TEU': '出口 TEU',
+      '물동량 조회 중…': '正在查询吞吐量...',
+      '물동량 데이터를 불러오지 못했습니다. (해수부 원천은 약 2개월 지연 공표됩니다)': '无法加载吞吐量数据。（海洋水产部原始数据约延迟2个月公布）',
+      '수입': '进口', '수출': '出口', '합계': '合计', '최신': '最新',
 
       /* --- 선박 제원 조회 (vessel.js · 2026-08-03) --- */
       '선박 제원 조회': '船舶诸元查询',

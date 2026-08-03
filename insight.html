@@ -83,6 +83,7 @@
       <a href="#map-sec">Map</a>
       <a href="#waiting">Waiting</a>
       <a href="#bottleneck">Bottleneck</a>
+      <a href="#teutrend">Volume</a>
     </div>
   </nav>
 
@@ -250,6 +251,24 @@
     </div>
   </section>
 
+  <!-- ============ 국내 컨테이너 물동량 추이 (해수부 15059131 · 2026-08-03) ============ -->
+  <section class="dash-section" id="teutrend">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 07</span>
+        <h2>국내 컨테이너 물동량 추이</h2>
+        <span class="hint">해양수산부 수출입컨테이너처리실적 · 최근 12개월 · 상대 지역별 수출입 TEU</span>
+      </div>
+      <div class="card reveal">
+        <div class="legend-row" style="margin-bottom:18px;">
+          <span class="item"><span class="sw" style="background:var(--series-1);"></span>수입 TEU</span>
+          <span class="item"><span class="sw" style="background:var(--series-2);"></span>수출 TEU</span>
+        </div>
+        <div id="teuTrend"><p class="sc-sub" style="color:var(--muted);">물동량 조회 중…</p></div>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ Focus Port List ============ -->
   <section class="dash-section" id="focuslist">
     <div class="container">
@@ -299,9 +318,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="js/data.js"></script>
   <script src="js/common.js?v=2026-4"></script>
-  <script src="js/i18n.js?v=2026-08-03b"></script>
+  <script src="js/i18n.js?v=2026-08-03c"></script>
   <script src="js/auth.js?v=2026-07-29f"></script>
   <script src="js/auth-gate.js?v=2026-07-30a"></script>
-  <script src="js/insight.js?v=2026-07-31a"></script>
+  <script src="js/insight.js?v=2026-08-03a"></script>
 </body>
 </html>
