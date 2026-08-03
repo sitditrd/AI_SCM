@@ -134,6 +134,35 @@
     </div>
   </section>
 
+  <!-- ============ 항공 화물편 스케줄 (인천공항 15095068·15113461·15114086 · 2026-08-03) ============ -->
+  <section class="dash-section" id="aircargo">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">AIR CARGO</span>
+        <h2 data-i18n="schedule.air.h">항공 화물편 스케줄 (인천공항)</h2>
+        <span class="hint" data-i18n="schedule.air.hint">인천국제공항공사 공공 API · 실데이터 조회 가능</span>
+      </div>
+
+      <div class="view-tabs" role="tablist" aria-label="항공 화물편 조회 방식">
+        <button class="view-tab active" data-air="arr" role="tab" aria-selected="true" data-i18n="schedule.air.arr">도착 · 운항현황</button>
+        <button class="view-tab" data-air="dep" role="tab" aria-selected="false" data-i18n="schedule.air.dep">출발 · 운항현황</button>
+        <button class="view-tab" data-air="sched" role="tab" aria-selected="false" data-i18n="schedule.air.sched">정기 운항편</button>
+      </div>
+
+      <div class="card reveal" style="margin-bottom:14px;">
+        <div class="berth-toolbar" style="margin:0;">
+          <input type="search" class="focus-search" id="airFlight" placeholder="편명 (예: KE251) — 선택" style="max-width:200px;">
+          <input type="search" class="focus-search" id="airPort" placeholder="공항코드 (예: LEJ) — 선택" style="max-width:190px;">
+          <button class="btn btn-primary" id="airBtn" type="button" data-i18n="schedule.air.btn">화물편 조회</button>
+        </div>
+        <p class="sc-sub" style="margin:10px 0 0; color:var(--muted); font-size:12px;" data-i18n="schedule.air.note">
+          조건 없이 조회하면 최근 화물편 전체를 표시합니다 · 정기 운항편 탭은 시즌 단위 요일별 운항 계획입니다
+        </p>
+      </div>
+      <div id="airOut"></div>
+    </div>
+  </section>
+
   <!-- ============ 해외 터미널 현황 (FR-04) ============ -->
   <section class="dash-section" id="overseas-terminal">
     <div class="container">
@@ -179,13 +208,17 @@
   </footer>
 
   <script src="js/common.js?v=2026-4"></script>
-  <script src="js/i18n.js?v=2026-08-03c"></script>
+  <script src="js/i18n.js?v=2026-08-03d"></script>
   <script src="js/auth.js?v=2026-07-29f"></script>
   <script src="js/auth-gate.js?v=2026-07-30a"></script>
+  <script src="js/schedule.js?v=2026-08-03a"></script>
   <script>
+    /* 선박 스케줄(준비중) 3-뷰 탭 — 항공 화물편 탭(#aircargo)과 섞이지 않도록 섹션 안으로 한정한다 */
     (function () {
-      var tabs = document.querySelectorAll('.view-tab');
-      var panels = document.querySelectorAll('.view-panel');
+      var sec = document.getElementById('shipschedule');
+      if (!sec) return;
+      var tabs = sec.querySelectorAll('.view-tab[data-view]');
+      var panels = sec.querySelectorAll('.view-panel');
       tabs.forEach(function (t) {
         t.addEventListener('click', function () {
           var v = t.getAttribute('data-view');
