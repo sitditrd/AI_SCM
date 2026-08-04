@@ -36,6 +36,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from collect_upload_berth import (MAP, parse_dt, parse_int, norm_status,
                                   to_tz, sb, sql_q, sql_ts)
 import openpyxl
+from xls_compat import ensure_xlsx
 
 # ---------- 헤더 변형 대응표 (필드별 대체 후보, 공백 정규화 후 비교) ----------
 VARIANTS = {
@@ -58,7 +59,8 @@ VARIANTS = {
 # '양하/적하/Shift'가 한 컬럼으로 합쳐진 변형 (값: '618/675/0')
 COMBINED_QTY = ['양하/적하/Shift', '작업량 양하/적하/Shift', '작업량 양하 / 적하 / Shift']
 
-FNAME_RE = re.compile(r'터미널_선석배정현황_통합_(\d{8})\.xlsx$')
+# 통합 파일명 → 수집일. 수집기가 .xls(SpreadsheetML)로 저장하는 경우도 있어 두 확장자 모두 허용
+FNAME_RE = re.compile(r'터미널_선석배정현황_통합_(\d{8})\.xlsx?$', re.I)
 
 
 def norm_h(h):
@@ -105,7 +107,7 @@ def build_idx(header, sheet):
 def parse_workbook_v(path, cdate):
     """변형 대응 파서 — 반환 스키마는 일일 수집기와 동일"""
     ref = cdate.strftime('%Y-%m-%d 06:00')
-    wb = openpyxl.load_workbook(path, data_only=True)
+    wb = openpyxl.load_workbook(ensure_xlsx(path), data_only=True)
     out, per_terminal, warns = [], {}, []
     for sheet in MAP:
         if sheet not in wb.sheetnames:

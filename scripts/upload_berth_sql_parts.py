@@ -64,9 +64,12 @@ def main():
         args = []
         for back in range(0, 3):
             d = today - datetime.timedelta(days=back)
-            p = os.path.join(DATA_DIR, '터미널_선석배정현황_통합_%s.xlsx' % d.strftime('%Y%m%d'))
-            if os.path.exists(p):
-                args.append(p)
+            # 수집기가 .xlsx / .xls(SpreadsheetML) 중 어느 쪽으로 저장해도 잡히도록 두 확장자 모두 확인
+            for ext in ('.xlsx', '.xls'):
+                p = os.path.join(DATA_DIR, '터미널_선석배정현황_통합_%s%s' % (d.strftime('%Y%m%d'), ext))
+                if os.path.exists(p):
+                    args.append(p)
+                    break
         if not args:
             # ※ 과거 파일로 대체 적재하지 않는다 — 어제 데이터를 오늘 날짜로 넣는 것은 무의미하고,
             #    exit=0 으로 끝나 "정상"처럼 보여 수집 실패를 감춘다(2026-08-04 실측 사례).
