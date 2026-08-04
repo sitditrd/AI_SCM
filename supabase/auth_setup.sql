@@ -128,11 +128,19 @@ grant execute on function public.app_login(text,text), public.app_me(uuid), publ
   public.app_signup_verified(text,text,text,text), public.app_reset_with_code(text,text,text),
   public.app_admin_list(uuid), public.app_admin_set_status(uuid,uuid,text), public.app_admin_reset_pw(uuid,uuid,text) to anon;
 
--- 관리자 계정 시드 (초기 비번은 반드시 변경 권장). 운영 관리자: sitditrd2@naver.com
+-- 관리자 계정 시드 — 운영 관리자: sitditrd2@naver.com
+-- ⚠ 비밀번호는 이 파일에 넣지 않는다. 저장소가 공개(PUBLIC)이고 깃 이력은 영구 보존되므로,
+--    평문을 한 번이라도 적으면 이후 지워도 히스토리에서 계속 조회된다.
+--    'CHANGE_ME' 같은 고정 기본값도 마찬가지로 위험하다 — 교체 전까지 그 값으로 로그인이 뚫린다.
+--    아래는 추측 불가능한 임의값으로 계정 골격만 만들며, 이 상태로는 로그인할 수 없다.
+--    설치 직후 SQL Editor에서 실제 비밀번호를 지정할 것(교체 시 기존 세션은 자동 무효화):
+--      update public.app_users set pass_hash = crypt('실제_비밀번호', gen_salt('bf'))
+--       where login_id = 'sitditrd2@naver.com';
+--    실행 후 SQL Editor 편집기 내용을 지울 것(쿼리 이력이 남는다).
 -- 이메일 인증코드 발송: Edge Function send-code + 네이버 SMTP(smtp.naver.com:465, 앱 비밀번호).
 --   시크릿(대시보드 → Edge Functions → Secrets): SMTP_HOST/PORT/USER/PASS/FROM
 insert into public.app_users(login_id, pass_hash, status, role, display_name)
-values ('sitditrd2@naver.com', crypt('CHANGE_ME', gen_salt('bf')), 'approved', 'admin', '관리자')
+values ('sitditrd2@naver.com', crypt(gen_random_uuid()::text, gen_salt('bf')), 'approved', 'admin', '관리자')
 on conflict (login_id) do nothing;
 
 notify pgrst, 'reload schema';

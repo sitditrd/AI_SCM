@@ -143,6 +143,34 @@
     </div>
   </section>
 
+  <!-- ============ VTS 관제 이벤트 (해수부 관제정보 15006354 · 2026-08-03) ============ -->
+  <section class="dash-section" id="vtscontrol" style="padding-top:0;">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">VTS</span>
+        <h2 data-i18n="vessel.vts.h">VTS 관제 이벤트</h2>
+        <span class="hint" data-i18n="vessel.vts.hint">해양수산부 관제정보 · 항만청별 선박 관제 기록</span>
+      </div>
+      <div class="card reveal" style="margin-bottom:14px;">
+        <div class="berth-toolbar" style="margin:0;">
+          <select id="vtsPort" class="focus-search" style="max-width:180px;" aria-label="항만청 선택">
+            <option value="020">부산</option>
+            <option value="030">인천</option>
+            <option value="031">평택</option>
+            <option value="050">경인</option>
+          </select>
+          <input type="date" class="focus-search" id="vtsFrom" style="max-width:160px;" aria-label="관제 조회 시작일">
+          <input type="date" class="focus-search" id="vtsTo" style="max-width:160px;" aria-label="관제 조회 종료일">
+          <button class="btn btn-primary" id="vtsBtn" type="button" data-i18n="vessel.vts.btn">관제 조회</button>
+        </div>
+        <p class="sc-sub" style="margin:10px 0 0; color:var(--muted); font-size:12px;" data-i18n="vessel.vts.note">
+          데이터: 해양수산부 관제정보(VTS) · 항만청 단위 입항 선박 관제 기록 · 기본 조회 기간은 최근 3일 · 최대 30건 표시
+        </p>
+      </div>
+      <div id="vtsOut"></div>
+    </div>
+  </section>
+
   <!-- ============ 선박 제원 조회 (선박제원정보 15055851 · 2026-08-03) ============ -->
   <section class="dash-section" id="shipspec" style="padding-top:0;">
     <div class="container">
@@ -202,9 +230,9 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="js/common.js?v=2026-4"></script>
-  <script src="js/i18n.js?v=2026-08-03d"></script>
+  <script src="js/i18n.js?v=2026-08-03e"></script>
   <script src="js/auth.js?v=2026-07-29f"></script>
   <script src="js/auth-gate.js?v=2026-07-30a"></script>
-  <script src="js/vessel.js?v=2026-08-03a"></script>
+  <script src="js/vessel.js?v=2026-08-03b"></script>
 </body>
 </html>

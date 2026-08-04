@@ -219,6 +219,31 @@
     </div>
   </section>
 
+  <!-- ============ 인천항 선박 입출항 (인천항만공사 15157706 · 2026-08-03) ============ -->
+  <section class="dash-section" id="incheonship">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">INCHEON</span>
+        <h2 data-i18n="berth.incheon.h">인천항 선박 입출항</h2>
+        <span class="hint" data-i18n="berth.incheon.hint">인천항만공사 공공 API · 선석배정 수집분 보완</span>
+      </div>
+
+      <div class="card reveal" style="margin-bottom:14px;">
+        <div class="berth-toolbar" style="margin:0;">
+          <input type="date" class="focus-search" id="icFrom" style="max-width:160px;" aria-label="입항 조회 시작일">
+          <input type="date" class="focus-search" id="icTo" style="max-width:160px;" aria-label="입항 조회 종료일">
+          <input type="search" class="focus-search" id="icCall" style="max-width:230px;" aria-label="호출부호 필터"
+                 placeholder="호출부호 (예: D5OI9) — 선택" data-i18n-ph="berth.incheon.ph.call">
+          <button class="btn btn-primary" id="icBtn" type="button" data-i18n="berth.incheon.btn">입출항 조회</button>
+        </div>
+        <p class="sc-sub" style="margin:10px 0 0; color:var(--muted); font-size:12px;" data-i18n="berth.incheon.note">
+          선석배정 수집 대상은 컨테이너 터미널(E1CT·ICON)뿐이라 일반부두 선박이 빠집니다 · 본 표는 인천항 전체 부두의 입출항 실적으로 이를 보완합니다 (기간은 입항일 기준 · 최대 30건)
+        </p>
+      </div>
+      <div id="icOut"></div>
+    </div>
+  </section>
+
   <!-- ================= 푸터 ================= -->
   <footer class="site-footer">
     <div class="container footer-grid">
@@ -240,10 +265,10 @@
 
   <script src="js/data_berth.js?v=2026-07-28"></script>
   <script src="js/common.js?v=2026-4"></script>
-  <script src="js/i18n.js?v=2026-08-03d"></script>
+  <script src="js/i18n.js?v=2026-08-03e"></script>
   <script src="js/auth.js?v=2026-07-29f"></script>
   <script src="js/auth-gate.js?v=2026-07-30a"></script>
-  <script src="js/berth.js?v=2026-07-31a"></script>
+  <script src="js/berth.js?v=2026-08-03b"></script>
   <script src="js/weather.js?v=2026-07-31a"></script>
 </body>
 </html>

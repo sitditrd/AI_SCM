@@ -198,6 +198,96 @@
     btn.addEventListener('click', pmSearch);
   });
 
+  /* ================= VTS 관제 이벤트 (해수부 관제정보 15006354, 2026-08-03) ================= */
+
+  /* 해수부 계열은 XML→JSON 변환분이라 items.item 이 1건일 때 배열이 아니라 객체로 온다.
+     게다가 각 item 안에 details.detail[] 배열이 들어 있어 pmFindItems 로 관대하게 훑으면
+     선박 목록 대신 상세 배열을 먼저 잡아버린다 → 표준 경로를 직접 짚고 배열로 정규화한다.
+     (경로가 없을 때만 pmFindItems 로 후퇴) */
+  function vtsItems(data) {
+    var body = data && data.response && data.response.body;
+    var it = (body && body.items) ? body.items.item : null;
+    if (it == null) return pmFindItems(data, 0);
+    return Array.isArray(it) ? it : [it];
+  }
+
+  /* aprtfEtryptDt 는 "2026-08-02T14:00:00+09:00" 형태 → "08-02 14:00" 으로 압축 */
+  function vtsDt(v) {
+    var s = String(v == null ? '' : v);
+    var m = s.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+    if (m) return m[2] + '-' + m[3] + ' ' + m[4] + ':' + m[5];
+    var d = s.replace(/[^0-9]/g, '');
+    if (d.length >= 12) return d.slice(4, 6) + '-' + d.slice(6, 8) + ' ' + d.slice(8, 10) + ':' + d.slice(10, 12);
+    return s || '—';
+  }
+  function vtsTon(v) {
+    var n = Number(v);
+    if (v == null || v === '' || !isFinite(n) || n === 0) return '—';
+    return n.toLocaleString('ko-KR') + ' t';
+  }
+  /* toISOString 은 UTC 기준이라 KST 새벽에 하루 밀린다 — 로컬 날짜로 직접 조립 */
+  function vtsYmd(d) {
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
+
+  function vtsSearch() {
+    var out = el('vtsOut');
+    var sel = el('vtsPort');
+    var from = el('vtsFrom').value.replace(/-/g, ''), to = el('vtsTo').value.replace(/-/g, '');
+    if (!from || !to) {
+      out.innerHTML = pmCard('<div class="sc-sub">조회 시작일과 종료일을 모두 지정하십시오.</div>');
+      return;
+    }
+    out.innerHTML = pmCard('<div class="sc-sub">VTS 관제 기록 조회 중…</div>');
+    var agNm = sel.options[sel.selectedIndex].text;
+    /* 관제정보(15006354) 규격 파라미터: prtAgCd(항만청)·sde/ede(조회 시작·종료일 YYYYMMDD) */
+    var p = new URLSearchParams({ api: 'vtscontrol', numOfRows: '30', prtAgCd: sel.value, sde: from, ede: to });
+    fetch(DATAGO + '?' + p)
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res.needKey) {
+          out.innerHTML = pmCard('<h3 style="margin-top:0; font-size:15px;">data.go.kr 공공 API 키가 아직 등록되지 않았습니다</h3>' +
+            '<p class="sc-sub">' + esc(res.guide) + '</p>' +
+            '<a class="btn btn-primary" target="_blank" rel="noopener" href="https://www.data.go.kr/data/15006354/openapi.do">data.go.kr 활용신청 페이지 ↗</a>');
+          return;
+        }
+        var items = res.data ? vtsItems(res.data) : null;
+        if (!items || !items.length) {
+          var extra = res.error ? ' (' + esc(res.error) + ')' : '';
+          out.innerHTML = pmCard('<div class="sc-sub">관제 기록이 없습니다. 항만청 또는 조회 기간을 바꿔 다시 시도하십시오.' + extra + '</div>');
+          return;
+        }
+        items = items.slice(0, 30);
+        out.innerHTML = pmCard(
+          '<h3 style="margin-top:0; font-size:15px;">VTS 관제 기록 <small style="color:var(--muted);">' +
+            items.length + '건 · ' + esc(items[0].prtAgNm || agNm) + ' 항만청 · 해양수산부 관제정보</small></h3>' +
+          '<div class="tbl-scroll"><table class="tw"><thead><tr>' +
+          '<th>선박명</th><th>호출부호</th><th>선종</th><th class="num">총톤수</th><th>선적국</th><th>입항일시</th>' +
+          '</tr></thead><tbody>' +
+          items.map(function (it) {
+            return '<tr>' +
+              '<td>' + esc(it.vsslNm || '—') + '</td>' +
+              '<td>' + esc(it.clsgn == null || it.clsgn === '' ? '—' : it.clsgn) + '</td>' +
+              '<td>' + esc(it.vsslKndNm || '—') + '</td>' +
+              '<td class="num">' + esc(vtsTon(it.vsslGrtg)) + '</td>' +
+              '<td>' + esc(it.vsslNltyNm || '—') + '</td>' +
+              '<td>' + esc(vtsDt(it.aprtfEtryptDt)) + '</td></tr>';
+          }).join('') + '</tbody></table></div>');
+      })
+      .catch(function () {
+        out.innerHTML = pmCard('<div class="sc-sub">조회 실패 — 잠시 후 다시 시도하십시오.</div>');
+      });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var btn = el('vtsBtn');
+    if (!btn) return;
+    var now = new Date();
+    el('vtsFrom').value = vtsYmd(new Date(now.getTime() - 3 * 86400000));
+    el('vtsTo').value = vtsYmd(now);
+    btn.addEventListener('click', vtsSearch);
+  });
+
   /* ================= 선박 제원 조회 (선박제원정보 15055851, 2026-08-03) ================= */
 
   /* 값이 "41[풀컨테이너선]" 처럼 코드+설명으로 오는 필드에서 설명만 뽑는다 */

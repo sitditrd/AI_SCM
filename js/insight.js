@@ -28,6 +28,7 @@
       initPortSearch();
       initFocusList();
       initTeuTrend();
+      initPortStat();
       initScrollSpy();
       initStampTicker();
       updateSourceBadge();
@@ -658,6 +659,157 @@
           '<div class="bn-ratio">' + teuFmt(tot) + '<small>TEU</small></div>' +
           '</div>';
       }).join('') + '</div>';
+  }
+
+  /* ================= 항만별 선박 입출항 실적 (해수부 15059059, 2026-08-03) =================
+     Edge Function `datago?api=portstat` 경유. 주의사항 2가지:
+     ① 해수부 통계는 약 2개월 지연 공표라 최신월을 고정 조회할 수 없다 → 실적이 있는 달을 역순 탐색
+     ② XML→JSON 변환분이라 items.item / details.detail 이 1건일 때 배열이 아닌 객체로 온다 → 배열 정규화 필수 */
+  var PS_TOP = 15;                                   /* 표에 노출할 상위 항만청 수 */
+  var PS_KINDS = ['국적선', '외국선', '연안선'];      /* details.detail[].nm 구분 */
+  var PS_COLOR = { '국적선': 'var(--series-1)', '외국선': 'var(--series-2)', '연안선': 'var(--muted)' };
+
+  function psArr(v) { return v == null ? [] : (Array.isArray(v) ? v : [v]); }
+  function psNum(v) { var n = Number(v); return isFinite(n) ? n : 0; }
+  function psFmt(n) { return Math.round(n).toLocaleString('ko-KR'); }
+  function psPct(part, whole) { return whole > 0 ? Math.round(part / whole * 1000) / 10 : 0; }
+  function psCard(html) { return '<div class="card reveal in">' + html + '</div>'; }
+
+  /* pmFindItems 와 동일한 관대한 탐색: 정규 경로를 먼저 보고, 구조가 바뀌면 dgItems 로 폴백 */
+  function psItems(data) {
+    if (!data) return [];
+    var body = data.response && data.response.body;
+    var rows = psArr(body && body.items ? body.items.item : null);
+    if (!rows.length) rows = psArr(dgItems(data, 0));
+    return rows.filter(function (r) { return r && r.prtAgNm != null; });
+  }
+
+  function psYm(back) {
+    var d = new Date();
+    d = new Date(d.getFullYear(), d.getMonth() - back, 1);
+    return String(d.getFullYear() * 100 + (d.getMonth() + 1));
+  }
+
+  function psFetch(ym) {
+    var p = new URLSearchParams({ api: 'portstat', numOfRows: '50', sym: ym, eym: ym });
+    return fetch(DATAGO + '?' + p)
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res.needKey) return { needKey: true, guide: res.guide };
+        return { rows: psItems(res.data) };
+      })
+      .catch(function () { return { rows: [] }; });
+  }
+
+  /* 실적이 존재하는 최신월 탐색 (1개월 전부터 역순, 최대 6개월) */
+  function psFindLatest(back) {
+    if (back > 6) return Promise.resolve(null);
+    var ym = psYm(back);
+    return psFetch(ym).then(function (res) {
+      if (res.needKey) return res;
+      if (res.rows.length) return { ym: ym, rows: res.rows };
+      return psFindLatest(back + 1);
+    });
+  }
+
+  function initPortStat() {
+    var box = el('portStat');
+    if (!box || typeof fetch === 'undefined') return;
+    function fail() {
+      box.innerHTML = psCard('<p class="sc-sub" style="color:var(--muted); margin:0;">입출항 실적 데이터를 불러오지 못했습니다. (해수부 원천은 약 2개월 지연 공표됩니다)</p>');
+    }
+    psFindLatest(1).then(function (r) {
+      if (!r) { fail(); return; }
+      if (r.needKey) {
+        box.innerHTML = psCard('<h3 style="margin-top:0; font-size:15px;">data.go.kr 공공 API 키가 아직 등록되지 않았습니다</h3>' +
+          '<p class="sc-sub">' + esc(r.guide) + '</p>' +
+          '<a class="btn btn-primary" target="_blank" rel="noopener" href="https://www.data.go.kr/data/15059059/openapi.do">data.go.kr 활용신청 페이지 ↗</a>');
+        return;
+      }
+      renderPortStat(box, r.ym, r.rows);
+    }).catch(fail);
+  }
+
+  function renderPortStat(box, ym, rows) {
+    var tot = { etr: 0, sat: 0, grt: 0 };
+    var kindAll = { '국적선': 0, '외국선': 0, '연안선': 0 };
+
+    var ports = rows.map(function (r) {
+      var o = { nm: r.prtAgNm || '—', etr: 0, sat: 0, grt: 0, kind: {} };
+      psArr(r.details ? r.details.detail : null).forEach(function (d) {
+        if (!d) return;
+        var k = String(d.nm == null ? '' : d.nm);
+        var e = psNum(d.etrVsslCo);
+        o.etr += e;
+        o.sat += psNum(d.satVsslCo);
+        o.grt += psNum(d.etrGrtg);
+        o.kind[k] = (o.kind[k] || 0) + e;
+        if (kindAll[k] != null) kindAll[k] += e;
+      });
+      tot.etr += o.etr; tot.sat += o.sat; tot.grt += o.grt;
+      return o;
+    }).sort(function (a, b) { return b.etr - a.etr; });
+
+    if (!ports.length) {
+      box.innerHTML = psCard('<p class="sc-sub" style="color:var(--muted); margin:0;">입출항 실적 데이터를 불러오지 못했습니다. (해수부 원천은 약 2개월 지연 공표됩니다)</p>');
+      return;
+    }
+
+    var ymLabel = String(ym).slice(0, 4) + '년 ' + Number(String(ym).slice(4, 6)) + '월';
+    var oceanPct = psPct(kindAll['국적선'] + kindAll['외국선'], tot.etr);
+
+    /* 국적선/외국선/연안선 구성 미니 스택바 (teuTrend 와 동일하게 인라인 스타일 사용) */
+    function kindBar(kind, base) {
+      var tip = PS_KINDS.map(function (k) { return k + ' ' + psPct(kind[k] || 0, base) + '%'; }).join(' · ');
+      var segs = PS_KINDS.map(function (k) {
+        return '<div style="width:' + psPct(kind[k] || 0, base) + '%; background:' + PS_COLOR[k] + ';"></div>';
+      }).join('');
+      return '<div title="' + esc(tip) + '" style="display:flex; height:8px; min-width:110px; border-radius:4px; overflow:hidden; background:var(--surface-2);">' + segs + '</div>';
+    }
+
+    var kpis =
+      '<div class="grid-3" style="margin-bottom:14px;">' +
+        '<div class="kpi reveal in"><div class="k">총 입항 척수</div>' +
+          '<div class="v">' + psFmt(tot.etr) + '<small>척</small></div>' +
+          '<div class="sub">' + ymLabel + ' 기준 · 전국 ' + ports.length + '개 항만청 합계</div></div>' +
+        '<div class="kpi reveal in"><div class="k">입항 총톤수</div>' +
+          '<div class="v">' + psFmt(tot.grt / 10000) + '<small>만 GT</small></div>' +
+          '<div class="sub">총 출항 척수 ' + psFmt(tot.sat) + '척</div></div>' +
+        '<div class="kpi reveal in"><div class="k">외항선 비중</div>' +
+          '<div class="v">' + oceanPct + '<small>%</small></div>' +
+          '<div class="sub">국적선 ' + psPct(kindAll['국적선'], tot.etr) + '% · 외국선 ' + psPct(kindAll['외국선'], tot.etr) +
+            '% · 연안선 ' + psPct(kindAll['연안선'], tot.etr) + '% (입항 척수 기준)</div></div>' +
+      '</div>';
+
+    var body = ports.slice(0, PS_TOP).map(function (p, i) {
+      return '<tr><td class="rank">' + (i + 1) + '</td>' +
+        '<td><b>' + esc(p.nm) + '</b></td>' +
+        '<td class="num"><b>' + psFmt(p.etr) + '</b></td>' +
+        '<td class="num">' + psFmt(p.sat) + '</td>' +
+        '<td class="num">' + psFmt(p.grt) + '</td>' +
+        '<td>' + kindBar(p.kind, p.etr) + '</td></tr>';
+    }).join('') +
+      '<tr style="border-top:2px solid var(--border);"><td></td>' +
+      '<td><b>전국 합계</b></td>' +
+      '<td class="num"><b>' + psFmt(tot.etr) + '</b></td>' +
+      '<td class="num"><b>' + psFmt(tot.sat) + '</b></td>' +
+      '<td class="num"><b>' + psFmt(tot.grt) + '</b></td>' +
+      '<td>' + kindBar(kindAll, tot.etr) + '</td></tr>';
+
+    box.innerHTML = kpis +
+      '<div class="tbl-card reveal in">' +
+        '<div class="tbl-scroll"><table class="tw"><thead><tr>' +
+          '<th>#</th><th>항만</th><th class="num">입항 척수</th><th class="num">출항 척수</th>' +
+          '<th class="num">입항 총톤 (GT)</th><th>선적 구성</th>' +
+        '</tr></thead><tbody>' + body + '</tbody></table></div>' +
+      '</div>' +
+      '<div class="legend-row" style="margin-top:14px;">' +
+        PS_KINDS.map(function (k) {
+          return '<span class="item"><span class="sw" style="background:' + PS_COLOR[k] + ';"></span>' + k + '</span>';
+        }).join('') +
+      '</div>' +
+      '<p class="sc-sub" style="color:var(--muted); font-size:12px; margin:10px 0 0;">' +
+        '입항 척수 상위 항만청만 표시하며, 합계 행은 전국 전체 항만청 기준입니다. 선적 구성은 입항 척수 기준입니다.</p>';
   }
 
   /* ================= 스크롤 스파이 ================= */

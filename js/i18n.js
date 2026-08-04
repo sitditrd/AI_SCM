@@ -88,6 +88,12 @@
       'berth.meta.mid': '06:00 KST (일일 자동 수집) · 총',
       'berth.meta.unit': '건',
       'berth.stale': '실시간 연결 지연 — 마지막 수신 데이터를 표시 중입니다.',
+      /* 인천항 선박 입출항 (berth.html #incheonship · 2026-08-03) */
+      'berth.incheon.h': '인천항 선박 입출항',
+      'berth.incheon.hint': '인천항만공사 공공 API · 선석배정 수집분 보완',
+      'berth.incheon.ph.call': '호출부호 (예: D5OI9) — 선택',
+      'berth.incheon.btn': '입출항 조회',
+      'berth.incheon.note': '선석배정 수집 대상은 컨테이너 터미널(E1CT·ICON)뿐이라 일반부두 선박이 빠집니다 · 본 표는 인천항 전체 부두의 입출항 실적으로 이를 보완합니다 (기간은 입항일 기준 · 최대 30건)',
       /* --- 선박 위치 (vessel.html) --- */
       'vessel.hero.title': '선박 위치 <span style="font-weight:300; opacity:.75;">— 실시간 AIS 지도</span>',
       'vessel.hero.sub': '항만 주변 선박의 현재 위치를 실시간으로 표시합니다 (AIS 기반)',
@@ -96,6 +102,11 @@
       'vessel.find.note': '선석배정 DB 기준 · MBL/HBL/AWB는 <a href="cargo.html">화물 추적</a>에서 조회',
       'vessel.map.fallback': '실시간 지도를 불러오지 못했습니다 (네트워크/차단 환경).<br>인터넷 연결 확인 후 새로고침하십시오.',
       'vessel.map.notice': '본 지도는 VesselFinder의 공개 AIS 서비스를 임베드한 것으로, 선박 위치는 수 분 지연될 수 있습니다. 운항·안전 판단 용도가 아닌 업무 참고용입니다. 특정 모선 추적이 필요하면 IT 담당에게 MMSI 기반 추적 화면을 요청하십시오.',
+      /* VTS 관제 이벤트 (vessel.html #vtscontrol · 2026-08-03) */
+      'vessel.vts.h': 'VTS 관제 이벤트',
+      'vessel.vts.hint': '해양수산부 관제정보 · 항만청별 선박 관제 기록',
+      'vessel.vts.btn': '관제 조회',
+      'vessel.vts.note': '데이터: 해양수산부 관제정보(VTS) · 항만청 단위 입항 선박 관제 기록 · 기본 조회 기간은 최근 3일 · 최대 30건 표시',
       /* --- 경로 분석 (route.html) --- */
       'route.hero.title': '경로 분석 <span style="font-weight:300; opacity:.75;">— 해상 항로·소요일 시뮬레이터</span>',
       'route.hero.sub': '주요 항만 93개(Focus Port) 간 항로 거리 산출 + 몬테카를로 1만 회로 소요일 분포를 추정합니다',
@@ -235,6 +246,12 @@
       'berth.meta.mid': '06:00 KST (daily auto collection) · Total',
       'berth.meta.unit': ' records',
       'berth.stale': 'Live connection delayed - showing the last received data.',
+      /* Incheon Port vessel calls (berth.html #incheonship · 2026-08-03) */
+      'berth.incheon.h': 'Incheon Port Vessel Calls',
+      'berth.incheon.hint': 'Incheon Port Authority open API · complements the berth-plan collection',
+      'berth.incheon.ph.call': 'Call sign (e.g. D5OI9) — optional',
+      'berth.incheon.btn': 'Search calls',
+      'berth.incheon.note': 'The berth-plan collection covers only the container terminals (E1CT·ICON), so vessels at general wharves are missing · this table complements it with arrivals and departures across every wharf in Incheon Port (period is based on the arrival date · up to 30 records)',
       /* --- Vessel Positions (vessel.html) --- */
       'vessel.hero.title': 'Vessel Positions <span style="font-weight:300; opacity:.75;">— Live AIS Map</span>',
       'vessel.hero.sub': 'Shows current vessel positions around ports in real time (AIS-based)',
@@ -243,6 +260,11 @@
       'vessel.find.note': 'Based on berth-plan DB · Search MBL/HBL/AWB in <a href="cargo.html">Cargo Tracking</a>',
       'vessel.map.fallback': 'Could not load the live map (network or blocked environment).<br>Check the internet connection and refresh.',
       'vessel.map.notice': 'This map embeds VesselFinder\'s public AIS service; vessel positions may be delayed by several minutes. It is for business reference only, not for navigation or safety decisions. If you need to track a specific vessel, ask the IT team for an MMSI-based tracking view.',
+      /* VTS control events (vessel.html #vtscontrol · 2026-08-03) */
+      'vessel.vts.h': 'VTS Control Events',
+      'vessel.vts.hint': 'MOF VTS control data · vessel control records by port authority',
+      'vessel.vts.btn': 'Search VTS',
+      'vessel.vts.note': 'Data: MOF vessel traffic service (VTS) · arrival control records by port authority · default period is the last 3 days · up to 30 records',
       /* --- Route Analysis (route.html) --- */
       'route.hero.title': 'Route Analysis <span style="font-weight:300; opacity:.75;">— Ocean Route & Transit-Time Simulator</span>',
       'route.hero.sub': 'Computes route distances between 93 Focus Ports and estimates transit-time distributions with 10,000 Monte Carlo runs',
@@ -382,6 +404,12 @@
       'berth.meta.mid': '06:00 KST（每日自动采集）· 共',
       'berth.meta.unit': ' 条',
       'berth.stale': '实时连接延迟 - 正在显示最后接收的数据。',
+      /* 仁川港船舶进出港 (berth.html #incheonship · 2026-08-03) */
+      'berth.incheon.h': '仁川港船舶进出港',
+      'berth.incheon.hint': '仁川港湾公社公共API · 补充泊位分配采集数据',
+      'berth.incheon.ph.call': '呼号(例: D5OI9) — 可选',
+      'berth.incheon.btn': '查询进出港',
+      'berth.incheon.note': '泊位分配的采集对象仅为集装箱码头(E1CT·ICON)，因此不含普通码头的船舶 · 本表以仁川港全部码头的进出港实绩加以补充（期间以进港日为准 · 最多30条）',
       /* --- 船舶位置 (vessel.html) --- */
       'vessel.hero.title': '船舶位置 <span style="font-weight:300; opacity:.75;">— 实时 AIS 地图</span>',
       'vessel.hero.sub': '实时显示港口周边船舶当前位置（基于 AIS）',
@@ -390,6 +418,11 @@
       'vessel.find.note': '基于泊位分配 DB · MBL/HBL/AWB 请在<a href="cargo.html">货物追踪</a>中查询',
       'vessel.map.fallback': '无法加载实时地图（网络或阻止环境）。<br>请确认网络连接后刷新。',
       'vessel.map.notice': '本地图嵌入 VesselFinder 公开 AIS 服务，船舶位置可能延迟数分钟。仅供业务参考，不用于航行·安全判断。如需追踪特定船舶，请向 IT 负责人申请基于 MMSI 的追踪画面。',
+      /* VTS 管制事件 (vessel.html #vtscontrol · 2026-08-03) */
+      'vessel.vts.h': 'VTS 管制事件',
+      'vessel.vts.hint': '海洋水产部管制信息 · 按港务局的船舶管制记录',
+      'vessel.vts.btn': '查询管制',
+      'vessel.vts.note': '数据：海洋水产部管制信息(VTS) · 以港务局为单位的进港船舶管制记录 · 默认查询期间为最近3天 · 最多显示30条',
       /* --- 航线分析 (route.html) --- */
       'route.hero.title': '航线分析 <span style="font-weight:300; opacity:.75;">— 海运航线与运输天数模拟器</span>',
       'route.hero.sub': '测算 93 个重点港口（Focus Port）间航线距离，并以 1 万次蒙特卡洛模拟估算运输天数分布',
@@ -1053,6 +1086,55 @@
       '총톤수(G/T)': 'Gross tonnage (G/T)', '순톤수(N/T)': 'Net tonnage (N/T)', '전장(LOA)': 'LOA', '수선간장(LBP)': 'LBP',
       '폭(Beam)': 'Beam', '깊이(Depth)': 'Depth', '흘수(Draft)': 'Draft', '건조일': 'Built',
 
+      /* --- VTS 관제 이벤트 (vessel.js · 2026-08-03) --- */
+      '항만청 선택': 'Port authority',
+      '관제 조회 시작일': 'VTS start date',
+      '관제 조회 종료일': 'VTS end date',
+      'VTS 관제 기록 조회 중…': 'Loading VTS control records...',
+      '조회 시작일과 종료일을 모두 지정하십시오.': 'Specify both the start and end dates.',
+      '관제 기록이 없습니다. 항만청 또는 조회 기간을 바꿔 다시 시도하십시오.': 'No control records found. Change the port authority or the period and try again.',
+      'VTS 관제 기록': 'VTS control records',
+      '해양수산부 관제정보': 'MOF VTS control data',
+      /* 결과 헤더의 항만청명은 API 응답값 — 조회 대상 4곳만 사전에 담아 둔다 */
+      '부산 항만청': 'Busan Port Authority', '인천 항만청': 'Incheon Port Authority',
+      '평택 항만청': 'Pyeongtaek Port Authority', '경인 항만청': 'Gyeongin Port Authority',
+      '항만청': 'Port Authority',
+      '선적국': 'Flag state',
+      '입항일시': 'Arrival time',
+
+      /* --- 항만별 선박 입출항 실적 (insight.js · 2026-08-03) --- */
+      '항만별 선박 입출항 실적': 'Vessel Calls by Port',
+      '해양수산부 항만별 선박입출항실적 · 실적이 공표된 최신월 · 항만청 기준 입출항 척수와 총톤수': 'MOF vessel arrival/departure statistics by port · latest published month · number of vessels and gross tonnage by port authority',
+      '입출항 실적 조회 중…': 'Loading vessel call statistics...',
+      '입출항 실적 데이터를 불러오지 못했습니다. (해수부 원천은 약 2개월 지연 공표됩니다)': 'Could not load vessel call statistics. (The MOF source is published with about a 2-month lag)',
+      '총 입항 척수': 'Total arrivals',
+      '입항 총톤수': 'Arrival gross tonnage',
+      '외항선 비중': 'Ocean-going share',
+      '만 GT': '×10k GT',
+      '총 출항 척수': 'Total departures',
+      '입항 척수 기준': 'by number of arrivals',
+      '입항 척수': 'Arrivals',
+      '출항 척수': 'Departures',
+      '입항 총톤 (GT)': 'Arrival GT',
+      '선적 구성': 'Flag mix',
+      '국적선': 'Domestic vessels', '외국선': 'Foreign vessels', '연안선': 'Coastal vessels',
+      '전국 합계': 'National total',
+      '입항 척수 상위 항만청만 표시하며, 합계 행은 전국 전체 항만청 기준입니다. 선적 구성은 입항 척수 기준입니다.': 'Only the port authorities with the most arrivals are listed; the total row covers every port authority nationwide. The flag mix is based on the number of arrivals.',
+
+      /* --- 인천항 선박 입출항 (berth.js · 2026-08-03) --- */
+      '입항 조회 시작일': 'Arrival start date',
+      '입항 조회 종료일': 'Arrival end date',
+      '호출부호 필터': 'Call sign filter',
+      '인천항 입출항 조회 중…': 'Loading Incheon port calls...',
+      '조회 시작일과 종료일을 모두 입력하십시오.': 'Enter both the start and end dates.',
+      '조회 결과가 없습니다. 조건(기간·호출부호)을 바꿔 다시 시도하십시오.': 'No results. Change the conditions (period / call sign) and try again.',
+      '인천항 입출항': 'Incheon port calls',
+      '인천항만공사': 'Incheon Port Authority',
+      '출항일시': 'Departure time',
+      '목적항 / 차항지': 'Destination / Next port',
+      '입항목적': 'Purpose of call',
+      '대리점': 'Shipping agent',
+
       /* --- 홈 (index.html) --- */
       '실시간 지표 — Port Insight 대시보드로 이동': 'Live indicators - go to the Port Insight dashboard',
       '주간 해상운임지수': 'Weekly ocean freight indices'
@@ -1632,6 +1714,55 @@
       '총톤수(G/T)': '总吨位(G/T)', '순톤수(N/T)': '净吨位(N/T)', '전장(LOA)': '全长(LOA)', '수선간장(LBP)': '垂线间长(LBP)',
       '폭(Beam)': '船宽(Beam)', '깊이(Depth)': '型深(Depth)', '흘수(Draft)': '吃水(Draft)', '건조일': '建造日期',
 
+      /* --- VTS 관제 이벤트 (vessel.js · 2026-08-03) --- */
+      '항만청 선택': '选择港务局',
+      '관제 조회 시작일': '管制查询开始日',
+      '관제 조회 종료일': '管制查询结束日',
+      'VTS 관제 기록 조회 중…': '正在查询 VTS 管制记录...',
+      '조회 시작일과 종료일을 모두 지정하십시오.': '请同时指定查询开始日和结束日。',
+      '관제 기록이 없습니다. 항만청 또는 조회 기간을 바꿔 다시 시도하십시오.': '无管制记录。请更改港务局或查询期间后重试。',
+      'VTS 관제 기록': 'VTS 管制记录',
+      '해양수산부 관제정보': '海洋水产部管制信息',
+      /* 결과 헤더의 항만청명은 API 응답값 — 조회 대상 4곳만 사전에 담아 둔다 */
+      '부산 항만청': '釜山港务局', '인천 항만청': '仁川港务局',
+      '평택 항만청': '平泽港务局', '경인 항만청': '京仁港务局',
+      '항만청': '港务局',
+      '선적국': '船籍国',
+      '입항일시': '进港时间',
+
+      /* --- 항만별 선박 입출항 실적 (insight.js · 2026-08-03) --- */
+      '항만별 선박 입출항 실적': '各港口船舶进出港实绩',
+      '해양수산부 항만별 선박입출항실적 · 실적이 공표된 최신월 · 항만청 기준 입출항 척수와 총톤수': '海洋水产部各港口船舶进出港实绩 · 已公布实绩的最新月份 · 按港务局的进出港艘数与总吨位',
+      '입출항 실적 조회 중…': '正在查询进出港实绩...',
+      '입출항 실적 데이터를 불러오지 못했습니다. (해수부 원천은 약 2개월 지연 공표됩니다)': '无法加载进出港实绩数据。（海洋水产部原始数据约延迟2个月公布）',
+      '총 입항 척수': '进港总艘数',
+      '입항 총톤수': '进港总吨位',
+      '외항선 비중': '外航船占比',
+      '만 GT': '万 GT',
+      '총 출항 척수': '离港总艘数',
+      '입항 척수 기준': '以进港艘数为准',
+      '입항 척수': '进港艘数',
+      '출항 척수': '离港艘数',
+      '입항 총톤 (GT)': '进港总吨 (GT)',
+      '선적 구성': '船籍构成',
+      '국적선': '国籍船', '외국선': '外国船', '연안선': '沿岸船',
+      '전국 합계': '全国合计',
+      '입항 척수 상위 항만청만 표시하며, 합계 행은 전국 전체 항만청 기준입니다. 선적 구성은 입항 척수 기준입니다.': '仅显示进港艘数靠前的港务局，合计行以全国全部港务局为准。船籍构成以进港艘数为准。',
+
+      /* --- 인천항 선박 입출항 (berth.js · 2026-08-03) --- */
+      '입항 조회 시작일': '进港查询开始日',
+      '입항 조회 종료일': '进港查询结束日',
+      '호출부호 필터': '呼号筛选',
+      '인천항 입출항 조회 중…': '正在查询仁川港进出港...',
+      '조회 시작일과 종료일을 모두 입력하십시오.': '请同时输入查询开始日和结束日。',
+      '조회 결과가 없습니다. 조건(기간·호출부호)을 바꿔 다시 시도하십시오.': '无查询结果。请更改条件(期间·呼号)后重试。',
+      '인천항 입출항': '仁川港进出港',
+      '인천항만공사': '仁川港湾公社',
+      '출항일시': '离港时间',
+      '목적항 / 차항지': '目的港 / 下一港',
+      '입항목적': '进港目的',
+      '대리점': '船舶代理',
+
       /* --- 홈 (index.html) --- */
       '실시간 지표 — Port Insight 대시보드로 이동': '实时指标 - 前往 Port Insight 看板',
       '주간 해상운임지수': '每周海运运价指数'
@@ -1652,6 +1783,9 @@
       [/(\d[\d,]*)건 전체 표시/g, 'Showing all $1 records'],
       [/(\d[\d,]*)건 모두 표시됨/g, 'All $1 records shown'],
       [/더 보기 \(\+(\d[\d,]*)\)/g, 'Load more (+$1)'],
+      /* '항만청' 은 아래 '개 항만' 규칙에 먼저 걸리므로 반드시 그보다 앞에 둔다 (insight.js portstat) */
+      [/(\d{4})년\s*(\d{1,2})월 기준 · 전국\s*(\d[\d,]*)개 항만청 합계/g, 'As of $1-$2 · total of $3 port authorities nationwide'],
+      [/(\d[\d,]*)개 항만청/g, '$1 port authorities'],
       [/총\s*(\d[\d,]*)개/g, 'Total $1'],
       [/(\d[\d,]*)개 일치/g, '$1 matches'],
       [/(\d[\d,]*)개 항만/g, '$1 ports'],
@@ -1671,7 +1805,12 @@
       /* 단독 단위 텍스트 노드 (예: <small>척</small>) — 전체가 해당 글자일 때만 치환 */
       [/^(\s*)척(\s*)$/g, '$1 vessels$2'],
       [/^(\s*)건(\s*)$/g, '$1 records$2'],
-      [/^(\s*)개(\s*)$/g, '$1$2']
+      [/^(\s*)개(\s*)$/g, '$1$2'],
+      /* 항만청 선택 셀렉트 옵션 (vessel.html #vtscontrol) — 노드 전체가 해당 지명일 때만 */
+      [/^(\s*)부산(\s*)$/g, '$1Busan$2'],
+      [/^(\s*)인천(\s*)$/g, '$1Incheon$2'],
+      [/^(\s*)평택(\s*)$/g, '$1Pyeongtaek$2'],
+      [/^(\s*)경인(\s*)$/g, '$1Gyeongin$2']
     ],
     zh: [
       [/(\d+)\s*초 전 업데이트/g, '$1秒前更新'],
@@ -1686,6 +1825,9 @@
       [/(\d[\d,]*)건 전체 표시/g, '显示全部 $1 条'],
       [/(\d[\d,]*)건 모두 표시됨/g, '已显示全部 $1 条'],
       [/더 보기 \(\+(\d[\d,]*)\)/g, '查看更多 (+$1)'],
+      /* '항만청' 은 아래 '개 항만' 규칙에 먼저 걸리므로 반드시 그보다 앞에 둔다 (insight.js portstat) */
+      [/(\d{4})년\s*(\d{1,2})월 기준 · 전국\s*(\d[\d,]*)개 항만청 합계/g, '截至 $1年$2月 · 全国 $3 个港务局合计'],
+      [/(\d[\d,]*)개 항만청/g, '$1 个港务局'],
       [/총\s*(\d[\d,]*)개/g, '共 $1 个'],
       [/(\d[\d,]*)개 일치/g, '$1 个匹配'],
       [/(\d[\d,]*)개 항만/g, '$1 个港口'],
@@ -1705,7 +1847,12 @@
       /* 단독 단위 텍스트 노드 (예: <small>척</small>) — 전체가 해당 글자일 때만 치환 */
       [/^(\s*)척(\s*)$/g, '$1 艘$2'],
       [/^(\s*)건(\s*)$/g, '$1 条$2'],
-      [/^(\s*)개(\s*)$/g, '$1 个$2']
+      [/^(\s*)개(\s*)$/g, '$1 个$2'],
+      /* 항만청 선택 셀렉트 옵션 (vessel.html #vtscontrol) — 노드 전체가 해당 지명일 때만 */
+      [/^(\s*)부산(\s*)$/g, '$1釜山$2'],
+      [/^(\s*)인천(\s*)$/g, '$1仁川$2'],
+      [/^(\s*)평택(\s*)$/g, '$1平泽$2'],
+      [/^(\s*)경인(\s*)$/g, '$1京仁$2']
     ]
   };
 

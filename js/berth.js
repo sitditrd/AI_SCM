@@ -770,4 +770,127 @@
     e.textContent = sec < 5 ? '방금 업데이트' : sec + '초 전 업데이트';
   }
   function initStampTicker() { setInterval(updateStamp, 5000); }
+
+  /* ================= 인천항 선박 입출항 (인천항만공사 15157706, 2026-08-03) =================
+     선석배정 수집 대상은 컨테이너 터미널(E1CT·ICON)뿐이라 일반부두 입출항이 빠진다.
+     본 섹션은 인천항 전체 부두의 입출항 실적으로 그 공백을 보완한다.
+     주의: 이 계열은 조회일자를 YYYY-MM-DD 하이픈 형식으로 받는다(PORT-MIS 등의 YYYYMMDD와 다름).
+           pageNo 는 받지 않으며 프록시가 skipRow/endRow 로 처리한다. */
+  var DATAGO = 'https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/datago';
+
+  function icCard(html) { return '<div class="card reveal in">' + html + '</div>'; }
+
+  function icItems(o, depth) {
+    /* XML→JSON 변환분은 결과가 1건일 때 items.item 이 배열이 아니라 객체로 온다 → 배열 정규화 */
+    if (depth > 6 || o == null) return null;
+    if (Array.isArray(o)) return (o.length && typeof o[0] === 'object') ? o : null;
+    if (typeof o === 'object') {
+      if (o.item != null && typeof o.item === 'object') {
+        return Array.isArray(o.item) ? o.item : [o.item];
+      }
+      for (var k in o) {
+        var f = icItems(o[k], depth + 1);
+        if (f) return f;
+      }
+    }
+    return null;
+  }
+
+  /* "2026-08-04 03:25:00.000" → "08-04 03:25" */
+  function icDt(v) {
+    if (!v) return '—';
+    var s = String(v).replace('T', ' ');
+    return s.length >= 16 ? s.slice(5, 16) : s;
+  }
+  /* "03[적하]" 처럼 코드+설명으로 오는 값에서 설명만 뽑는다 */
+  function icLabel(v) {
+    if (v == null || v === '' || v === '-') return '—';
+    var m = String(v).match(/\[([^\]]+)\]/);
+    return m ? m[1] : String(v);
+  }
+  function icPort(nm, cd) {
+    nm = nm == null ? '' : String(nm).trim();
+    cd = cd == null ? '' : String(cd).trim();
+    if (cd === '-') cd = '';
+    if (!nm) return cd;
+    return cd ? nm + ' (' + cd + ')' : nm;
+  }
+  /* 목적항(dstPrt)이 비어 있는 건이 많아 차항지(nxtPrt)로 대체 표기 */
+  function icDest(it) {
+    return icPort(it.dstPrtEnm, it.dstPrt_1) || icPort(it.nxtPrtEnm, it.nxtPrt_1) || '—';
+  }
+
+  function icSearch() {
+    var out = el('icOut');
+    if (!out) return;
+    var from = el('icFrom').value.trim(), to = el('icTo').value.trim(), call = el('icCall').value.trim();
+    if (!from || !to) {
+      out.innerHTML = icCard('<div class="sc-sub">조회 시작일과 종료일을 모두 입력하십시오.</div>');
+      return;
+    }
+    out.innerHTML = icCard('<div class="sc-sub">인천항 입출항 조회 중…</div>');
+
+    var p = new URLSearchParams({ api: 'incheonship', numOfRows: '30' });
+    p.set('arvlDtFrom', from);
+    p.set('arvlDtTo', to);
+    if (call) p.set('callLetter', call);
+
+    fetch(DATAGO + '?' + p)
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res.needKey) {
+          out.innerHTML = icCard('<h3 style="margin-top:0; font-size:15px;">data.go.kr 공공 API 키가 아직 등록되지 않았습니다</h3>' +
+            '<p class="sc-sub">' + esc(res.guide) + '</p>' +
+            '<a class="btn btn-primary" target="_blank" rel="noopener" href="https://www.data.go.kr/data/15157706/openapi.do">data.go.kr 활용신청 페이지 ↗</a>');
+          return;
+        }
+        var items = res.data ? icItems(res.data, 0) : null;
+        if (!items || !items.length) {
+          var extra = res.error ? ' (' + esc(res.error) + ')' : '';
+          out.innerHTML = icCard('<div class="sc-sub">조회 결과가 없습니다. 조건(기간·호출부호)을 바꿔 다시 시도하십시오.' + extra + '</div>');
+          return;
+        }
+        items = items.slice(0, 30).sort(function (a, b) {
+          return String(a.arvlDt || '').localeCompare(String(b.arvlDt || ''));
+        });
+        out.innerHTML = icCard(
+          '<h3 style="margin-top:0; font-size:15px;">인천항 입출항 ' +
+            '<small style="color:var(--muted);">' + items.length + '건 · 인천항만공사</small></h3>' +
+          '<div class="tbl-scroll"><table class="tw"><thead><tr>' +
+          '<th>선박명</th><th>호출부호</th><th>입항일시</th><th>출항일시</th>' +
+          '<th>목적항 / 차항지</th><th>입항목적</th><th>대리점</th>' +
+          '</tr></thead><tbody>' +
+          items.map(function (it) {
+            return '<tr>' +
+              '<td>' + esc(it.vsslNm || '—') + '</td>' +
+              '<td>' + esc(it.callLetter || '—') + '</td>' +
+              '<td>' + esc(icDt(it.arvlDt)) + '</td>' +
+              '<td>' + esc(icDt(it.depDt)) + '</td>' +
+              '<td>' + esc(icDest(it)) + '</td>' +
+              '<td>' + esc(icLabel(it.arvlObjCode)) + '</td>' +
+              '<td>' + esc(it.agentNm || '—') + '</td>' +
+              '</tr>';
+          }).join('') + '</tbody></table></div>');
+      })
+      .catch(function () {
+        out.innerHTML = icCard('<div class="sc-sub">조회 실패 — 잠시 후 다시 시도하십시오.</div>');
+      });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var btn = el('icBtn');
+    if (!btn) return;
+    /* 기본 조회 구간: 오늘 ~ 3일 후 (KST 기준 로컬 날짜) */
+    function ymd(d) {
+      return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    }
+    var t = new Date();
+    el('icFrom').value = ymd(t);
+    el('icTo').value = ymd(new Date(t.getTime() + 3 * 86400000));
+    btn.addEventListener('click', icSearch);
+    ['icFrom', 'icTo', 'icCall'].forEach(function (id) {
+      el(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') icSearch(); });
+    });
+    icSearch();
+  });
 })();
