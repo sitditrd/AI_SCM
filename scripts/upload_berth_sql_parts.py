@@ -58,16 +58,47 @@ def main():
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
     rest_mode = '--rest' in flags
     if not args and '--today' in flags:
-        args = [os.path.join(DATA_DIR, '터미널_선석배정현황_통합_%s.xlsx'
-                             % datetime.date.today().strftime('%Y%m%d'))]
-        if not os.path.exists(args[0]):     # 06시 수집 미실행 — 가장 최근 파일로 대체
-            cand = sorted(glob.glob(os.path.join(DATA_DIR, '터미널_선석배정현황_통합_*.xlsx')))
-            if not cand:
-                sys.exit('[FAIL] 수집 파일 없음: %s' % DATA_DIR)
-            print('[WARN] 오늘 수집 파일 없음 — 최근 파일로 대체: %s' % os.path.basename(cand[-1]))
-            args = [cand[-1]]
+        # 미적재 날짜 자동 캐치업: 최근 3일치 중 로컬 파일이 있는 날짜를 모두 대상으로 삼는다.
+        # (수집이 늦어 07:30 배치가 헛돌아도, 이후 재시도 트리거에서 자동으로 잡힌다)
+        today = datetime.date.today()
+        args = []
+        for back in range(0, 3):
+            d = today - datetime.timedelta(days=back)
+            p = os.path.join(DATA_DIR, '터미널_선석배정현황_통합_%s.xlsx' % d.strftime('%Y%m%d'))
+            if os.path.exists(p):
+                args.append(p)
+        if not args:
+            # ※ 과거 파일로 대체 적재하지 않는다 — 어제 데이터를 오늘 날짜로 넣는 것은 무의미하고,
+            #    exit=0 으로 끝나 "정상"처럼 보여 수집 실패를 감춘다(2026-08-04 실측 사례).
+            sys.exit('[SKIP] 최근 3일치 수집 파일이 없습니다 — 06시 수집기 실행 여부를 확인하십시오: %s' % DATA_DIR)
+        print('[INFO] 캐치업 대상 %d개: %s' % (len(args), ', '.join(os.path.basename(a) for a in args)))
     if not args:
         sys.exit('사용법: upload_berth_sql_parts.py [--rest] [--today] <통합 xlsx 경로>')
+
+    # --rest 는 여러 날짜를 연속 적재할 수 있다(캐치업). SQL 파트 생성은 단일 파일만.
+    if rest_mode:
+        ok = 0
+        for path in args:
+            m = FNAME_RE.search(os.path.basename(path))
+            if not m or not os.path.exists(path):
+                print('[SKIP] 대상 아님: %s' % path)
+                continue
+            cdate = datetime.datetime.strptime(m.group(1), '%Y%m%d').date()
+            rows, per_terminal, warns = parse_workbook_v(path, cdate)
+            if not rows:
+                print('[FAIL] %s 정규화 결과 0건 — 원본 확인 필요' % cdate)
+                continue
+            upload_rest(rows, per_terminal, cdate, os.path.basename(path))
+            print('[OK] %s %d건 REST 적재 완료' % (cdate, len(rows)))
+            for k in sorted(per_terminal):
+                print('  %s: %s' % (k, per_terminal[k]))
+            for w in warns:
+                print('[WARN] ' + w)
+            ok += 1
+        if not ok:
+            sys.exit('[FAIL] 적재된 날짜가 없습니다')
+        return
+
     path = args[0]
     m = FNAME_RE.search(os.path.basename(path))
     if not m:
@@ -79,15 +110,6 @@ def main():
     rows, per_terminal, warns = parse_workbook_v(path, cdate)
     if not rows:
         sys.exit('[FAIL] 정규화 결과 0건 — 원본 확인 필요')
-
-    if rest_mode:
-        upload_rest(rows, per_terminal, cdate, os.path.basename(path))
-        print('[OK] %s %d건 REST 적재 완료' % (cdate, len(rows)))
-        for k in sorted(per_terminal):
-            print('  %s: %s' % (k, per_terminal[k]))
-        for w in warns:
-            print('[WARN] ' + w)
-        return
 
     if os.path.isdir(OUT_DIR):
         shutil.rmtree(OUT_DIR)
