@@ -127,7 +127,12 @@
       .then(function (js) { if (js && js.current) results.wx = { wave: js.current.wave_height, time: js.current.time }; })
       .catch(function () {});
 
-    var pLog = sb('/rest/v1/bs_collect_log?select=*&order=created_at.desc&limit=14')
+    /* 적재 이력 상세: 최근 7일(수집일 기준)만 표시 — 오래된 백필·수동 이력이 섞이지 않게.
+       gte 기준일은 로컬(KST) 날짜로 계산한다 (toISOString 은 UTC 라 새벽에 하루 밀림). */
+    var d7 = new Date(Date.now() - 6 * 864e5);
+    var d7s = d7.getFullYear() + '-' + String(d7.getMonth() + 1).padStart(2, '0') + '-' + String(d7.getDate()).padStart(2, '0');
+    var pLog = sb('/rest/v1/bs_collect_log?select=*&collected_date=gte.' + d7s +
+      '&order=collected_date.desc,created_at.desc&limit=30')
       .then(function (rows) { results.logs = rows; }).catch(function () {});
 
     /* 7일 타임라인은 적재 로그가 아닌 실제 적재 실적 기준 (로그 누락·건수 불일치에 영향받지 않음) */
