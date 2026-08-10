@@ -1,6 +1,6 @@
 # TWL 물류 포털 — 개발 이력 전체 정리
 
-작성일 2026-07-27 · 최종 개정 2026-08-03 (v1.7) · 저장소 https://github.com/sitditrd/AI_SCM · 문의 itt@twsc.co.kr
+작성일 2026-07-27 · 최종 개정 2026-08-10 (v1.8) · 저장소 https://github.com/sitditrd/AI_SCM · 문의 itt@twsc.co.kr
 
 ## 1. 개발 타임라인 (2026-07-24 ~ 08-03)
 
@@ -24,6 +24,7 @@
 | 15. 08-03 data.go.kr 활용신청·키 등록·프록시 v5 | ① **data.go.kr 오픈API 활용신청 12종 자동승인 완료**(PORT-MIS 입출항·선박제원·관제·항만별 입출항실적·수출입/국가별 컨테이너·인천공항 화물편 3종·인천항 입출항·기상특보·중기예보, 만료 2028-08-03). 15084033(연안AIS)·3068846(환율)은 **LINK형**이라 신청 대상 아님을 확인 ② **`DATA_GO_KR_KEY` 등록 완료 → 별칭 15종 전부 실조회 검증(NORMAL_SERVICE)** ③ Edge Function `datago` **v5 배포** — 별칭 2종 → **15종** 확장, 기관별 JSON 파라미터(`type`/`dataType`/미지원)·페이징(`pageNo` / `skipRow`+`endRow`) 자동 분기, **XML→JSON 자동 변환**, 인증키 Decoding/Encoding 정규화, `?api=list` 별칭 조회 ④ **버그 수정 4건**: XML 전용 API가 `data` 없이 `raw`만 반환해 vessel 화면이 결과를 못 그리던 문제 / vessel.js PORT-MIS 날짜 파라미터 `fromDt,toDt` → 규격 `sde,ede` / Encoding 키 이중 인코딩(코드 30) / 인천항만공사에 `pageNo` 주입 시 코드 99 | supabase/functions/datago/index.ts, js/vessel.js, docs/03-architecture/API.md |
 | 16. 08-03 P1 화면 5종 구현 | `DATA_GO_KR_KEY` 등록 후 로드맵 §6-B P1을 화면에 반영 — ① **vessel**: SHIP SPEC 섹션(선박명/호출부호 조회, 행 클릭 시 상세 15항목) ② **index**: 월간 컨테이너 TEU 스트립 + 기상특보 티커(특보 없으면 자동 숨김) ③ **insight**: SECTION 07 물동량 추이(12개월 수입/수출 누적 막대 + 최신월 지역별 순위, 앵커탭 Volume) ④ **route**: 시뮬레이션 KPI에 '한국↔도착국가' 실적 카드 ⑤ **schedule**: AIR CARGO 섹션(도착/출발 운항현황·정기 운항편 3탭, js/schedule.js 신설). **환율 KPI·UNIPASS 통관은 보류**(각각 수출입은행 자체 포털 키·`UNIPASS_API_KEY` 필요) | js/vessel.js, js/landing.js, js/insight.js, js/route.js, js/schedule.js(신규), js/i18n.js |
 | 17. 08-03 P2 화면 3종 구현 | 프록시에 열려 있으나 화면 미연결 상태였던 별칭 3종을 연결 — ① **vessel**: VTS 관제 이벤트 섹션(`vtscontrol`, 항만청 선택+기간 조회 → 선박명·호출부호·선종·총톤수·선적국·입항일시). 실측상 데이터가 나오는 항만청은 부산020·인천030·평택031·경인050 **4곳뿐**이라 셀렉트를 이 4개로 한정 ② **insight**: SECTION 08 항만별 선박 입출항 실적(`portstat`, 앵커탭 Calls) — KPI 3종(총 입항 척수·입항 총톤수·외항선 비중) + 상위 15개 항만 표 + 국적선/외국선/연안선 구성 스택바. 해수부 약 2개월 지연 공표 특성상 **실적 있는 최신월 탐색** 방식 적용 ③ **berth**: 인천항 선박 입출항 섹션(`incheonship`, 입출항 일시·목적항/차항지·입항목적·대리점). 목적항이 비는 건이 많아 **차항지 폴백** 처리 ④ 다국어: T 키 9개(ko/en/zh 27항목)·PHRASES 88쌍·RULES 12개 추가, 캐시버전 2026-08-03e 통일 ⑤ **잠재 버그 수정**: 기존 `N개 항만` 규칙이 "15개 항만청 합계"를 `15 ports청 합계`로 깨뜨리던 문제 → 더 구체적인 규칙을 앞에 배치 | vessel.html/js, insight.html/js, berth.html/js, js/i18n.js |
+| 18. 08-10 AIS 수집 장애 원인 규명·실패 분류 | ⑥ AIS 수집이 08-04 이후 계속 실패하던 건을 재진단 — **원인은 aisstream.io 업스트림 무응답**으로 확정(핸드셰이크·API 키 정상, 전세계 bbox·필터 해제에도 프레임 0개, 잘못된 키에도 오류 응답조차 없음 → 서버 애플리케이션 계층 무응답. 동일 증상 업스트림 이슈 미해결·BETA/SLA 없음). `collect_ais_positions.py`가 모든 실패를 `수신 0건 — 키/네트워크/바운딩박스 확인`으로 뭉뚱그려 **로컬 설정을 반복 점검하게 만들던 오진**을 수정: 종료 코드 0/1/2/3 분리(정상/키 미등록/접속 실패/업스트림 무응답), 핸드셰이크 예외를 HTTP 상태까지 노출, 연결 종료 사유 보존. 스케줄 지침도 코드 3은 **재시도 없이 건너뜀**으로 변경(짧은 간격 재시도가 429를 유발) | scripts/collect_ais_positions.py, docs/06-operations/스케줄러_체계.md, scheduled-tasks/ais-positions-collect/SKILL.md |
 
 ## 2. 최종 기능 (8개 화면, 전부 실데이터)
 

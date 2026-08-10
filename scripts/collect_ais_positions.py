@@ -11,6 +11,10 @@ vessel_positions 테이블 적재용 SQL을 생성한다. 상주 프로세스 �
   출력:   sql/upload_ais.sql (48시간 경과분 정리 + 스냅샷 insert)
 
 커버리지 유의: 지상파 AIS 특성상 연안 ~200km 이내만 수신됨 (원양 불가).
+
+종료 코드: 0 정상 / 1 설정 오류(키 미등록) / 2 접속·핸드셰이크 실패
+          3 업스트림 무응답 — 접속·구독은 되나 서버가 프레임을 전혀 안 보냄
+             (aisstream.io는 BETA·SLA 없음. 이 경우 로컬 조치 사항 없음)
 """
 import sys, os, json, time
 
@@ -43,6 +47,12 @@ BBOX = [[[32.5, 124.0], [39.0, 131.5]]]
 WS_URL = 'wss://stream.aisstream.io/v0/stream'
 
 
+def die(code, msg):
+    """종료 코드를 구분해 실패 사유를 분류한다 (sys.exit(str)은 항상 1이라 쓰지 않음)."""
+    sys.stderr.write(msg + '\n')
+    sys.exit(code)
+
+
 def q(v):
     if v is None or v == '':
         return 'null'
@@ -63,14 +73,25 @@ def main():
     seconds, cap = opt('seconds', 90), opt('max', 350)
 
     if not API_KEY:
-        sys.exit('환경변수 AISSTREAM_API_KEY 미설정 — aisstream.io에서 무료 발급 후 '
-                 'setx AISSTREAM_API_KEY "<키>" 로 등록하십시오.')
+        die(1, '환경변수 AISSTREAM_API_KEY 미설정 — aisstream.io에서 무료 발급 후 '
+               'setx AISSTREAM_API_KEY "<키>" 로 등록하십시오.')
 
     latest = {}   # mmsi → row (최신 위치만 유지)
     got = [0]
+    frames = [0]      # 종류 불문 수신 프레임 수 — 업스트림 무응답 판별용
+    closed = ['']     # 서버가 연결을 끊은 사유
     deadline = time.time() + seconds
 
-    ws = websocket.create_connection(WS_URL, timeout=10)
+    try:
+        ws = websocket.create_connection(WS_URL, timeout=10)
+    except websocket.WebSocketBadStatusException as e:
+        # 429/503 등 — 엣지(envoy)가 핸드셰이크 단계에서 거부. 재시도해도 대개 동일.
+        die(2, '[FAIL/2] AISStream 핸드셰이크 거부: %s '
+               '— 서버측 rate limit/장애로 로컬 조치 불가' % e)
+    except Exception as e:
+        die(2, '[FAIL/2] AISStream 접속 실패: %s: %s' % (type(e).__name__, e))
+
+    # 구독 메시지는 접속 후 3초 이내 전송 필수 (AISStream 규격)
     ws.send(json.dumps({
         'APIKey': API_KEY,
         'BoundingBoxes': BBOX,
@@ -82,15 +103,17 @@ def main():
             raw = ws.recv()
         except websocket.WebSocketTimeoutException:
             continue
-        except Exception:
+        except Exception as e:
+            closed[0] = '%s: %s' % (type(e).__name__, e)
             break
+        frames[0] += 1
         try:
             m = json.loads(raw)
         except ValueError:
             continue
         if m.get('MessageType') != 'PositionReport':
             if m.get('error'):
-                sys.exit('[FAIL] AISStream 오류: %s' % m['error'])
+                die(2, '[FAIL/2] AISStream 오류 응답: %s' % m['error'])
             continue
         pr = (m.get('Message') or {}).get('PositionReport') or {}
         meta = m.get('MetaData') or {}
@@ -112,7 +135,15 @@ def main():
 
     rows = list(latest.values())[:cap]
     if not rows:
-        sys.exit('[FAIL] 수신 0건 — 키/네트워크/바운딩박스 확인')
+        if frames[0] == 0:
+            # 접속·구독은 성립했는데 어떤 프레임도 오지 않은 상태.
+            # 키/네트워크/바운딩박스로는 설명되지 않는다(전세계 bbox·무필터에서도 동일).
+            # aisstream.io 업스트림 무응답으로 분류 — 로컬에서 고칠 수 있는 것이 없다.
+            die(3, '[SKIP/3] AISStream 업스트림 무응답 — %d초간 프레임 0개'
+                   '(접속·구독 정상, 서버 미송신). %s로컬 설정 문제 아님, 유입 재개 대기.'
+                % (seconds, ('연결 종료 사유=%s. ' % closed[0]) if closed[0] else ''))
+        die(3, '[SKIP/3] 위치 메시지 0건 — 프레임 %d개는 수신됨(다른 타입). '
+               '바운딩박스 내 선박 부재 가능성.' % frames[0])
 
     lines = [
         '-- 자동 생성: collect_ais_positions.py --sql (수신 %d건, 고유 선박 %d척)' % (got[0], len(rows)),
