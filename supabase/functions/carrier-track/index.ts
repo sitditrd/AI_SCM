@@ -337,13 +337,23 @@ async function trackEvergreen(no: string) {
    ※ 레이트리밋: 연속 5회째 429(45초 후 복구). 이벤트 상세는 앞 3개 컨테이너만 호출. */
 async function trackSITC(no: string) {
   const base = "https://ebusiness.sitcline.com/api/equery/cargoTrack";
-  const sr = await fetch(`${base}/searchTrack?blNo=${encodeURIComponent(no)}`, { ...FETCH_OPTS, signal: AbortSignal.timeout(12000) });
-  const sd = await sr.json();
-  const dt = sd?.data ?? {};
-  const l1 = (dt.list1 ?? [])[0];
-  const l2: Record<string, unknown>[] = dt.list2 ?? [];
-  const l3: Record<string, unknown>[] = dt.list3 ?? [];
-  if (!l1 && !l2.length) return { empty: true, upstream: sd?.code === 429 ? "rate limited" : (sd?.message || "No data") };
+  // SITC 는 연속 호출 시 429(레이트리밋)로 응답을 지연시킨다 — 타임아웃을 짧게 잡고
+  // 예외는 여기서 흡수해 raw TimeoutError 가 사용자에게 노출되지 않게 한다(2026-08-11 실측).
+  let sd: Record<string, unknown> | null = null;
+  try {
+    const sr = await fetch(`${base}/searchTrack?blNo=${encodeURIComponent(no)}`, { ...FETCH_OPTS, signal: AbortSignal.timeout(8000) });
+    sd = await sr.json();
+  } catch {
+    return { empty: true, upstream: "선사 서버 응답 지연(호출 제한) — 잠시 후 다시 시도하십시오." };
+  }
+  const dt = (sd as Record<string, Record<string, unknown[]>>)?.data ?? {};
+  const l1 = ((dt.list1 ?? []) as Record<string, unknown>[])[0];
+  const l2 = (dt.list2 ?? []) as Record<string, unknown>[];
+  const l3 = (dt.list3 ?? []) as Record<string, unknown>[];
+  if (!l1 && !l2.length) {
+    const code = (sd as Record<string, unknown>)?.code;
+    return { empty: true, upstream: code === 429 ? "선사 서버 호출 제한(429) — 잠시 후 다시 시도하십시오." : "No data" };
+  }
 
   const voyages = l2.map((v) => ({
     vessel: pick(v, "vesselName"),
@@ -433,11 +443,26 @@ Deno.serve(async (req) => {
       });
     }
 
-    const res = await adapter.run(no);
+    // 어댑터가 업스트림 지연/오류로 던지면 raw 예외 문구 대신 사용자용 메시지로 바꾼다.
+    let res: Record<string, unknown>;
+    try {
+      res = await adapter.run(no);
+    } catch (err) {
+      const timeout = String(err).indexOf("Timeout") >= 0 || String(err).indexOf("abort") >= 0;
+      return j({
+        carrier, carrierName: adapter.name, supported: true, query: { no },
+        error: timeout
+          ? "선사 서버 응답이 지연되고 있습니다 — 잠시 후 다시 시도하십시오."
+          : "선사 서버 조회에 실패했습니다 — 잠시 후 다시 시도하십시오.",
+      });
+    }
     if (res.empty) {
       return j({
         carrier, carrierName: adapter.name, supported: true, query: { no },
-        error: "조회 결과가 없습니다 — 번호·선사를 확인하십시오.", upstream: res.upstream,
+        error: typeof res.upstream === "string" && /지연|제한/.test(res.upstream)
+          ? res.upstream
+          : "조회 결과가 없습니다 — 번호·선사를 확인하십시오.",
+        upstream: res.upstream,
       });
     }
     return j({
