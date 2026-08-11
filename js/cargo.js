@@ -309,10 +309,12 @@
   var WATCH_PAGE = 20;                     /* 페이지당 행수 */
   var watchState = { items: [], page: 1, q: '', carrier: '', active: 'all', carriers: null };
 
-  function myEmail() {
-    try { var s = JSON.parse(localStorage.getItem('twl-auth') || 'null'); return (s && (s.email || s.login_id)) || ''; }
-    catch (e) { return ''; }
+  function mySession() {
+    try { return JSON.parse(localStorage.getItem('twl-auth') || 'null') || {}; } catch (e) { return {}; }
   }
+  function myEmail() { var s = mySession(); return s.email || s.login_id || s.login || ''; }
+  /* 세션 토큰 — 서버(app_me)가 검증한다. 클라이언트가 신원을 위조할 수 없다. */
+  function myToken() { return mySession().token || ''; }
 
   /* 지원 선사 목록(1회 로드) — 등록 가능 여부·실조회/딥링크 구분 안내에 사용 */
   function loadCarriers(cb) {
@@ -372,8 +374,8 @@
       var msg = el2(ov, 'regMsg');
       el2(ov, 'regOk').disabled = true; el2(ov, 'regOk').textContent = '등록 중…';
       var body = many
-        ? { action: 'bulk', term_months: term, notify_email: mail, created_by: myEmail(), rows: rows }
-        : { action: 'add', mbl_no: rows[0].mbl_no, carrier: rows[0].carrier, term_months: term, notify_email: mail, created_by: myEmail() };
+        ? { action: 'bulk', token: myToken(), term_months: term, notify_email: mail, rows: rows }
+        : { action: 'add', token: myToken(), mbl_no: rows[0].mbl_no, carrier: rows[0].carrier, term_months: term, notify_email: mail };
       fetch(WATCH_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
         .then(function (r) { return r.json(); }).then(function (d) {
           if (d.error) { msg.innerHTML = '<span class="reg-err">' + esc(d.error) + '</span>'; el2(ov, 'regOk').disabled = false; el2(ov, 'regOk').textContent = '등록'; return; }
@@ -429,6 +431,7 @@
         ? '<span title="' + esc(ch.map(function (c) { return c.field + ': ' + c.old_value + ' → ' + c.new_value; }).join('\n')) + '" style="color:var(--up);font-weight:700;">' + ch.length + '건</span>'
         : '<span class="na">-</span>') + '</td>' +
       '<td class="dt">' + expTxt + '</td>' +
+      (watchState.admin ? '<td>' + esc(it.created_by || '-') + '</td>' : '') +
       '<td>' + esc(it.notify_email || '-') + '</td>' +
       '<td class="dt">' + esc(fmtShort(it.last_polled_at) || '-') + '</td>' +
       '<td>' + (it.active ? '<button class="btn btn-ghost trk-mini" type="button" data-off="' + esc(it.mbl_no) + '">해제</button>' : '') + '</td>' +
@@ -438,9 +441,22 @@
   function renderWatch() {
     var box = el('watchOut'); if (!box) return;
     var all = watchState.items;
+    if (watchState.needLogin) {
+      box.innerHTML = '<div class="card"><p class="sc-sub" style="margin:0;">추적 감시는 <b>로그인 후</b> 이용할 수 있습니다. ' +
+        '등록한 화물은 <b>본인에게만</b> 보이며, 관리자는 전체를 조회할 수 있습니다.</p></div>';
+      return;
+    }
     if (!all.length) {
-      box.innerHTML = '<div class="card"><p class="sc-sub" style="margin:0;">등록된 추적 화물이 없습니다. 위에서 B/L 을 조회한 뒤 <b>추적 등록</b>을 누르거나, 아래 <b>일괄 등록</b>으로 여러 건을 한 번에 넣으세요. ' +
-        '스케줄러가 매일 08:20 / 20:20 에 조회해 <b>출항·도착 예정일시가 바뀌면 메일로 알려드립니다.</b></p></div>';
+      /* 비어 있어도 일괄 등록 버튼은 반드시 보여야 한다 — 첫 등록의 진입점이기 때문 */
+      box.innerHTML = '<div class="card trk-card">' +
+        '<div class="trk-head"><span class="trk-bl">추적 등록 화물</span>' +
+        '<span class="trk-carrier">등록 0건</span><span class="trk-spacer"></span>' +
+        '<button class="btn btn-primary" id="wf_bulk" type="button">' + SVG.upload + ' 일괄 등록</button></div>' +
+        '<div class="trk-sec" style="padding-top:16px;"><p class="sc-sub" style="margin:0;">' +
+        '등록된 추적 화물이 없습니다. 위에서 B/L 을 조회한 뒤 <b>추적 등록</b>을 누르거나, 오른쪽 위 <b>일괄 등록</b>으로 여러 건을 한 번에 넣으세요. ' +
+        '스케줄러가 매일 08:20 / 20:20 에 조회해 <b>출항·도착 예정일시가 바뀌면 메일로 알려드립니다.</b></p></div></div>';
+      var b0 = el('wf_bulk');
+      if (b0) b0.addEventListener('click', openBulkDialog);
       return;
     }
     var rows = watchFiltered();
@@ -457,6 +473,8 @@
       '<div class="trk-head">' +
       '<span class="trk-bl">추적 등록 화물</span>' +
       '<span class="trk-carrier">감시 중 ' + actCnt + '건 / 전체 ' + all.length + '건</span>' +
+      (watchState.admin ? '<span class="trk-badge is-move">관리자 · 전체 조회</span>'
+        : '<span class="trk-carrier">' + esc(watchState.me || '') + ' 등록분</span>') +
       '<span class="trk-spacer"></span>' +
       '<span class="trk-asof">매일 08:20 · 20:20 · ETD/ETA 변경 시 메일</span>' +
       '</div>' +
@@ -474,8 +492,8 @@
       '</div>' +
       '<div class="trk-sec" style="padding-top:14px;"><div class="trk-tbl-wrap"><table class="trk-tbl">' +
       '<thead><tr><th>B/L No.</th><th>선사</th><th>상태</th><th>진행</th><th>구간</th><th>ETD</th><th>ETA</th>' +
-      '<th>변경</th><th>남은기간</th><th>알림 수신</th><th>최근 수집</th><th></th></tr></thead><tbody>' +
-      (pageRows.length ? pageRows.map(watchRowHtml).join('') : '<tr><td colspan="12" class="na" style="text-align:center;padding:18px;">조건에 맞는 화물이 없습니다.</td></tr>') +
+      '<th>변경</th><th>남은기간</th>' + (watchState.admin ? '<th>등록자</th>' : '') + '<th>알림 수신</th><th>최근 수집</th><th></th></tr></thead><tbody>' +
+      (pageRows.length ? pageRows.map(watchRowHtml).join('') : '<tr><td colspan="' + (watchState.admin ? 13 : 12) + '" class="na" style="text-align:center;padding:18px;">조건에 맞는 화물이 없습니다.</td></tr>') +
       '</tbody></table></div>' +
       /* 페이지네이션 */
       (pages > 1 ? '<div class="wf-pager">' +
@@ -504,8 +522,10 @@
         var mbl = btn.getAttribute('data-off');
         if (!window.confirm(mbl + ' 추적을 해제할까요?\n(기록은 남고 이후 수집·알림만 중단됩니다)')) return;
         btn.disabled = true;
-        fetch(WATCH_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'remove', mbl_no: mbl }) })
-          .then(function () { loadWatchList(); }).catch(function () { btn.disabled = false; alert('해제 실패 — 잠시 후 다시.'); });
+        fetch(WATCH_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'remove', token: myToken(), mbl_no: mbl }) })
+          .then(function (r) { return r.json(); })
+          .then(function (d) { if (d.error) { btn.disabled = false; alert(d.error); return; } loadWatchList(); })
+          .catch(function () { btn.disabled = false; alert('해제 실패 — 잠시 후 다시.'); });
       });
     });
   }
@@ -515,8 +535,11 @@
   function loadWatchList() {
     var box = el('watchOut'); if (!box) return;
     loadCarriers(function () {
-      fetch(WATCH_API + '?action=list').then(function (r) { return r.json(); }).then(function (d) {
+      fetch(WATCH_API + '?action=list&token=' + encodeURIComponent(myToken())).then(function (r) { return r.json(); }).then(function (d) {
         watchState.items = d.items || [];
+        watchState.me = d.me || null;
+        watchState.admin = !!d.admin;
+        watchState.needLogin = !!d.needLogin;
         renderWatch();
       }).catch(function () { box.innerHTML = '<div class="card"><p class="sc-sub" style="margin:0;">추적 목록을 불러오지 못했습니다.</p></div>'; });
     });
@@ -554,7 +577,7 @@
         if (!uniq.length) { msg.innerHTML = '<span class="reg-err">등록할 B/L 이 없습니다.</span>'; return; }
         el2(ov, 'bulkOk').disabled = true; el2(ov, 'bulkOk').textContent = '등록 중… (' + uniq.length + '건)';
         fetch(WATCH_API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'bulk', term_months: term, notify_email: el2(ov, 'bulkMail').value.trim(), created_by: myEmail(), rows: uniq.map(function (m) { return { mbl_no: m }; }) }) })
+          body: JSON.stringify({ action: 'bulk', token: myToken(), term_months: term, notify_email: el2(ov, 'bulkMail').value.trim(), rows: uniq.map(function (m) { return { mbl_no: m }; }) }) })
           .then(function (r) { return r.json(); }).then(function (d) {
             if (d.error) { msg.innerHTML = '<span class="reg-err">' + esc(d.error) + '</span>'; el2(ov, 'bulkOk').disabled = false; el2(ov, 'bulkOk').textContent = '등록'; return; }
             msg.innerHTML = '<span class="reg-ok">등록 ' + d.added + '건 · 실패 ' + d.failed + '건</span>' +
