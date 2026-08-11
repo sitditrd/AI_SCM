@@ -211,18 +211,199 @@ async function trackCOSCO(no: string) {
   };
 }
 
+/* ---------------- SM Line (SMLM) — 2026-08-11 실 BL(태웅 ELVIS_TWSC) 로 검증 완료 ----------------
+   POST https://esvc.smlines.com/smline/CUP_HOM_3301GS.do  (f_cmd 으로 기능 분기, 스테이트리스)
+   121=통합검색(컨테이너 그리드) · 124=항차 · 125=이벤트. 본문 Content-Type 은 text/html 이나 JSON.
+   ※ SMLM 프리픽스를 뗀 번호로 조회한다(붙이면 count 0). */
+async function smPost(fcmd: string, extra: Record<string, string>) {
+  const body = new URLSearchParams({ f_cmd: fcmd, cust_cd: "", ...extra });
+  const r = await fetch("https://esvc.smlines.com/smline/CUP_HOM_3301GS.do", {
+    method: "POST",
+    headers: { ...FETCH_OPTS.headers, "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+    body: body.toString(), signal: AbortSignal.timeout(12000),
+  });
+  const t = await r.text();
+  try { return JSON.parse(t); } catch { return null; }
+}
+async function trackSM(no: string) {
+  const bl = no.replace(/^SMLM/i, "");
+  const sd = await smPost("121", { search_type: "B", search_name: bl });
+  const rows: Record<string, unknown>[] = sd && Array.isArray(sd.list) ? sd.list : [];
+  if (!rows.length) return { empty: true, upstream: sd ? "No data" : "parse fail" };
+  const bkg = String(pick(rows[0], "bkgNo", "dspBkgNo") ?? "");
+
+  let voyages: Array<Record<string, unknown>> = [];
+  const vd = await smPost("124", { bkg_no: bkg });
+  if (vd && Array.isArray(vd.list)) {
+    voyages = vd.list.map((v: unknown) => ({
+      vessel: pick(v, "vslEngNm"), voyage: pick(v, "skdVoyNo"),
+      pol: { name: pick(v, "polNm"), date: pick(v, "etd"), actual: pick(v, "etdFlag") === "A" },
+      pod: { name: pick(v, "podNm"), date: pick(v, "eta"), actual: pick(v, "etaFlag") === "A" },
+    }));
+  }
+  const containers = await Promise.all(rows.slice(0, 6).map(async (row) => {
+    const cop = String(pick(row, "copNo") ?? "");
+    const ed = await smPost("125", { bkg_no: bkg, cop_no: cop, cntr_no: "" });
+    const evs: Record<string, unknown>[] = ed && Array.isArray(ed.list) ? ed.list : [];
+    return {
+      cntrNo: String(pick(row, "cntrNo") ?? "").replace(/[^A-Za-z0-9]/g, ""),
+      szTp: pick(row, "cntrTpszNm"),
+      events: evs
+        .sort((a, b) => Number(pick(a, "no") ?? 0) - Number(pick(b, "no") ?? 0))
+        .map((e) => ({
+          name: pick(e, "statusNm"), location: pick(e, "placeNm"), yard: pick(e, "yardNm"),
+          timeLocal: pick(e, "eventDt"), actual: pick(e, "actTpCd") === "A",
+        })),
+    };
+  }));
+  return {
+    summary: {
+      blNo: no,
+      por: voyages.length ? (voyages[0].pol as Record<string, unknown>).name : pick(rows[0], "polNm"),
+      pod: voyages.length ? (voyages[voyages.length - 1].pod as Record<string, unknown>).name : undefined,
+      vessel: voyages.length ? voyages[0].vessel : undefined,
+      voyage: voyages.length ? voyages[0].voyage : undefined,
+    },
+    voyages, containers,
+  };
+}
+
+/* ---------------- Evergreen (EGLV) — 2026-08-11 실 BL 로 검증 완료 (ShipmentLink) ----------------
+   POST https://ct.shipmentlink.com/servlet/TDB1_CargoTracking.do  (TYPE 으로 분기, 응답은 HTML/JSP)
+   TYPE=BL(기본정보+컨테이너 목록) · TYPE=CntrMove(컨테이너별 이벤트 타임라인).
+   ※ EGLV 프리픽스를 뗀 숫자만 전송. 값은 HTML hex 엔티티라 디코드 필요. */
+function heDecode(s: unknown): string {
+  return String(s ?? "")
+    .replace(/&#x([0-9a-fA-F]+);/g, (_m, h) => String.fromCharCode(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_m, d) => String.fromCharCode(Number(d)))
+    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ").trim();
+}
+function monToIso(s: string): string {
+  const m = /^([A-Za-z]{3})-(\d{2})-(\d{4})$/.exec(s.trim());
+  if (!m) return s;
+  const mo: Record<string, string> = { JAN: "01", FEB: "02", MAR: "03", APR: "04", MAY: "05", JUN: "06", JUL: "07", AUG: "08", SEP: "09", OCT: "10", NOV: "11", DEC: "12" };
+  const mm = mo[m[1].toUpperCase()];
+  return mm ? `${m[3]}-${mm}-${m[2]}` : s;
+}
+async function egPost(data: string): Promise<string> {
+  const r = await fetch("https://ct.shipmentlink.com/servlet/TDB1_CargoTracking.do", {
+    method: "POST",
+    headers: { ...FETCH_OPTS.headers, "Content-Type": "application/x-www-form-urlencoded" },
+    body: data, signal: AbortSignal.timeout(12000),
+  });
+  return await r.text();
+}
+function thTd(html: string, label: string): string | undefined {
+  const re = new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s*<\\/th>\\s*<td[^>]*>([^<]+)<", "i");
+  const m = re.exec(html);
+  return m ? heDecode(m[1]) : undefined;
+}
+async function trackEvergreen(no: string) {
+  const bl = no.replace(/^EGLV/i, "");
+  const html = await egPost(`TYPE=BL&BL=${encodeURIComponent(bl)}`);
+  if (/No information on B\/L No\.|is not valid|Illegal parameters/i.test(html) || !/EGLV\s*[0-9A-Z]/i.test(html)) {
+    return { empty: true, upstream: "No data" };
+  }
+  const vessel = thTd(html, "Vessel Voyage on B/L");
+  const summary = {
+    blNo: no,
+    por: thTd(html, "Port of Loading") ?? thTd(html, "Place of Receipt"),
+    pod: thTd(html, "Port of Discharge") ?? thTd(html, "Place of Delivery"),
+    vessel,
+  };
+  // 컨테이너 번호 추출
+  const cset = new Set<string>();
+  for (const m of html.matchAll(/frmCntrMoveDetail\('([A-Z]{4}\d{7})'\)/g)) cset.add(m[1]);
+  const cntrList = [...cset].slice(0, 6);
+
+  const containers = await Promise.all(cntrList.map(async (cntr) => {
+    const mv = await egPost(`TYPE=CntrMove&bl_no=${encodeURIComponent(bl)}&cntr_no=${encodeURIComponent(cntr)}`);
+    const events: unknown[] = [];
+    // 이벤트 행: Date / Move / Location / Vessel 4개 td
+    const rowRe = /<td[^>]*>\s*([A-Z]{3}-\d{2}-\d{4})\s*<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>/gi;
+    for (const m of mv.matchAll(rowRe)) {
+      const name = heDecode(m[2]); if (!name) continue;
+      events.push({ name, location: heDecode(m[3]) || undefined, timeLocal: monToIso(heDecode(m[1])), vesselVoyage: heDecode(m[4]) || undefined, actual: true });
+    }
+    return { cntrNo: cntr, events };
+  }));
+  return { summary, voyages: [], containers };
+}
+
+/* ---------------- SITC — 2026-08-11 실 BL 로 검증 완료 ----------------
+   GET  /api/equery/cargoTrack/searchTrack?blNo=      (list1=기본·list2=항차·list3=컨테이너 최신상태)
+   POST /api/equery/cargoTrack/movementDetail?blNo=&containerNo=  (컨테이너별 이벤트)
+   ※ 레이트리밋: 연속 5회째 429(45초 후 복구). 이벤트 상세는 앞 3개 컨테이너만 호출. */
+async function trackSITC(no: string) {
+  const base = "https://ebusiness.sitcline.com/api/equery/cargoTrack";
+  const sr = await fetch(`${base}/searchTrack?blNo=${encodeURIComponent(no)}`, { ...FETCH_OPTS, signal: AbortSignal.timeout(12000) });
+  const sd = await sr.json();
+  const dt = sd?.data ?? {};
+  const l1 = (dt.list1 ?? [])[0];
+  const l2: Record<string, unknown>[] = dt.list2 ?? [];
+  const l3: Record<string, unknown>[] = dt.list3 ?? [];
+  if (!l1 && !l2.length) return { empty: true, upstream: sd?.code === 429 ? "rate limited" : (sd?.message || "No data") };
+
+  const voyages = l2.map((v) => ({
+    vessel: pick(v, "vesselName"),
+    voyage: [pick(v, "voyageNo"), pick(v, "voyageLeg")].filter(Boolean).join(""),
+    pol: { name: pick(v, "portFromName", "portFrom"), date: pick(v, "atd") ?? pick(v, "etd"), actual: !!pick(v, "atd") },
+    pod: { name: pick(v, "portToName", "portTo"), date: pick(v, "ata") ?? pick(v, "eta"), actual: !!pick(v, "ata") },
+  }));
+
+  const detailFor = l3.slice(0, 3);
+  const detailed = await Promise.all(detailFor.map(async (c) => {
+    const cn = String(pick(c, "containerNo") ?? "");
+    let events: unknown[] = [];
+    try {
+      const er = await fetch(`${base}/movementDetail?blNo=${encodeURIComponent(no)}&containerNo=${encodeURIComponent(cn)}`, { method: "POST", ...FETCH_OPTS, signal: AbortSignal.timeout(12000) });
+      const ed = await er.json();
+      const evs: Record<string, unknown>[] = ed?.data?.list ?? [];
+      events = evs.map((e) => ({ name: pick(e, "movementNameEn", "movementName"), location: pick(e, "portName"), timeLocal: pick(e, "eventDate"), actual: true }));
+    } catch { /* 상세 실패 시 최신상태로 폴백 */ }
+    return {
+      cntrNo: cn.replace(/[^A-Za-z0-9]/g, ""),
+      szTp: pick(c, "containerType"),
+      events: events.length ? events : [{ name: pick(c, "movementNameEn", "movementName"), location: pick(c, "currentPort"), actual: true }],
+      eventsSynthesized: events.length ? undefined : true,
+    };
+  }));
+  // 나머지 컨테이너는 레이트리밋 보호를 위해 최신상태만
+  const rest = l3.slice(3).map((c) => ({
+    cntrNo: String(pick(c, "containerNo") ?? "").replace(/[^A-Za-z0-9]/g, ""),
+    szTp: pick(c, "containerType"),
+    events: [{ name: pick(c, "movementNameEn", "movementName"), location: pick(c, "currentPort"), actual: true }],
+    eventsSynthesized: true,
+  }));
+
+  return {
+    summary: {
+      blNo: no,
+      por: pick(l1, "polEn", "pol"), pod: pick(l1, "delEn", "del"),
+      vessel: voyages.length ? voyages[0].vessel : undefined,
+      voyage: voyages.length ? voyages[0].voyage : undefined,
+    },
+    voyages, containers: [...detailed, ...rest],
+  };
+}
+
 type Adapter = { name: string; blPrefixes: string[]; source: string; run: (no: string) => Promise<Record<string, unknown>> };
 const CARRIERS: Record<string, Adapter> = {
   ONEY: { name: "ONE (Ocean Network Express)", blPrefixes: ["ONEY"], source: "ecomm.one-line.com", run: trackONE },
   COSU: { name: "COSCO Shipping Lines", blPrefixes: ["COSU"], source: "elines.coscoshipping.com", run: trackCOSCO },
+  SMLM: { name: "SM Line (SM상선)", blPrefixes: ["SMLM"], source: "esvc.smlines.com", run: trackSM },
+  EGLV: { name: "Evergreen Line", blPrefixes: ["EGLV"], source: "ct.shipmentlink.com", run: trackEvergreen },
+  SITC: { name: "SITC", blPrefixes: ["SIT"], source: "ebusiness.sitcline.com", run: trackSITC },
 };
 
 function detectCarrier(no: string): string | null {
-  const m = /^([A-Za-z]{4})/.exec(no);
-  if (!m) return null;
-  const p = m[1].toUpperCase();
-  for (const [scac, a] of Object.entries(CARRIERS)) if (a.blPrefixes.includes(p)) return scac;
-  if (DEEPLINKS[p]) return p;
+  const up = no.toUpperCase();
+  // 프리픽스 매칭 (긴 프리픽스 우선 — SIT 보다 구체적인 4자 SCAC 을 먼저)
+  const entries = Object.entries(CARRIERS).sort((a, b) => (b[1].blPrefixes[0]?.length ?? 0) - (a[1].blPrefixes[0]?.length ?? 0));
+  for (const [scac, a] of entries) if (a.blPrefixes.some((p) => up.startsWith(p))) return scac;
+  const p4 = up.slice(0, 4);
+  if (DEEPLINKS[p4]) return p4;
   return null;
 }
 

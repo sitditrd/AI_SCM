@@ -9,8 +9,9 @@
   'use strict';
 
   var CARRIER_API = 'https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/carrier-track';
-  /* carrier-track 이 실조회를 지원하는 선사 (그 외는 딥링크 폴백) */
-  var LIVE_SCACS = { ONEY: 1, COSU: 1 };
+  /* carrier-track 이 실조회를 지원하는 선사 (그 외는 딥링크 폴백)
+     — 2026-08-11 태웅 실 MBL 검증 완료: ONE·COSCO·SM상선·Evergreen·SITC */
+  var LIVE_SCACS = { ONEY: 1, COSU: 1, SMLM: 1, EGLV: 1, SITC: 1 };
 
   var AIRLINES = {
     '180': ['대한항공 Cargo', 'https://cargo.koreanair.com/'],
@@ -37,14 +38,19 @@
     HDMU: ['HMM', 'https://www.hmm21.com/e-service/general/trackNTrace/TrackNTrace.do'],
     YMLU: ['Yang Ming', 'https://www.yangming.com/e-service/Track_Trace/track_trace_cargo_tracking.aspx'],
     WHLC: ['Wan Hai', 'https://www.wanhai.com/views/cargoTrack/CargoTrack.xhtml'],
-    SMLM: ['SM상선', 'https://esvc.smlines.com/smline/CUP_HOM_3301.do']
+    SMLM: ['SM상선', 'https://esvc.smlines.com/smline/CUP_HOM_3301.do'],
+    SITC: ['SITC', 'https://ebusiness.sitcline.com/#/topMenu/cargoTrack?blNo='],
+    KMTC: ['고려해운(KMTC)', 'https://www.ekmtc.com/index.html#/cargo-tracking']
   };
   function oceanInfo(no) {
     /* 프리픽스 4글자 + 영숫자 6자 이상 — 숫자만 강제하면 ONE 처럼 부킹오피스 문자가
        섞이는 BL(예: ONEYRICG34548800)을 놓친다(2026-08-11 실측). 오탐은 OCEAN 맵 조회가 걸러낸다. */
-    var m = /^([A-Za-z]{4})[A-Za-z0-9]{6,}$/.exec(String(no).replace(/[^A-Za-z0-9]/g, ''));
+    var s = String(no).replace(/[^A-Za-z0-9]/g, '');
+    var m = /^([A-Za-z]{4})[A-Za-z0-9]{6,}$/.exec(s);
     if (!m) return null;
     var scac = m[1].toUpperCase();
+    /* SITC 는 BL 이 SIT+선적지코드 형태(SITPTTA012839G)라 4글자 프리픽스로 안 잡힌다 — 3글자로 판별 */
+    if (!OCEAN[scac] && /^SIT/i.test(s)) scac = 'SITC';
     var c = OCEAN[scac];
     return { scac: scac, name: c ? c[0] : null, url: c ? (c[1].indexOf('=') > 0 || /\/$/.test(c[1]) ? c[1] + encodeURIComponent(no) : c[1]) : null };
   }
