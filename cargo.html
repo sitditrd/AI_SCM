@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>화물 추적 — 해상·항공 수입 통관 진행 | TWL Control Tower</title>
-  <meta name="description" content="MBL/HBL/AWB 번호로 해상·항공 수입 화물의 통관 진행 상태를 조회합니다 (관세청 유니패스 연계).">
+  <title>화물 추적 — 선사 직접 운송 추적 | TWL Control Tower</title>
+  <meta name="description" content="MBL 번호로 선사 운송 이벤트를 직접 조회합니다 (ONE·COSCO 실조회, 그 외 선사·항공은 공식 추적 딥링크).">
   <meta name="theme-color" content="#0a0f1e">
   <link rel="canonical" href="https://sitditrd.github.io/AI_SCM/cargo.html">
   <link rel="apple-touch-icon" href="assets/og-image.png">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="TWL Control Tower">
-  <meta property="og:title" content="화물 추적 — 해상·항공 수입 통관 진행 | TWL Control Tower">
-  <meta property="og:description" content="MBL/HBL/AWB 번호로 해상·항공 수입 화물의 통관 진행 상태를 조회합니다 (관세청 유니패스 연계).">
+  <meta property="og:title" content="화물 추적 — 선사 직접 운송 추적 | TWL Control Tower">
+  <meta property="og:description" content="MBL 번호로 선사 운송 이벤트를 직접 조회합니다 (ONE·COSCO 실조회, 그 외 선사·항공은 공식 추적 딥링크).">
   <meta property="og:url" content="https://sitditrd.github.io/AI_SCM/cargo.html">
   <meta property="og:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="화물 추적 — 해상·항공 수입 통관 진행 | TWL Control Tower">
-  <meta name="twitter:description" content="MBL/HBL/AWB 번호로 해상·항공 수입 화물의 통관 진행 상태를 조회합니다 (관세청 유니패스 연계).">
+  <meta name="twitter:title" content="화물 추적 — 선사 직접 운송 추적 | TWL Control Tower">
+  <meta name="twitter:description" content="MBL 번호로 선사 운송 이벤트를 직접 조회합니다 (ONE·COSCO 실조회, 그 외 선사·항공은 공식 추적 딥링크).">
   <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="css/style.css?v=2026-07-31a">
@@ -51,12 +51,12 @@
     <div class="container">
       <div class="dash-title-row">
         <div>
-          <h1 data-i18n-html="cargo.hero.title">화물 추적 <span style="font-weight:300; opacity:.75;">— 해상·항공 수입 통관 진행</span></h1>
-          <p class="dash-sub" data-i18n="cargo.hero.sub">MBL / HBL / AWB 번호로 관세청 통관 진행 상태를 조회합니다</p>
+          <h1 data-i18n-html="cargo.hero.title">화물 추적 <span style="font-weight:300; opacity:.75;">— 선사 직접 운송 추적</span></h1>
+          <p class="dash-sub" data-i18n="cargo.hero.sub">MBL / AWB 번호로 선사·항공사 운송 추적을 조회합니다</p>
         </div>
       </div>
       <p class="dash-sub" style="margin-top:14px; font-size:12.5px;" data-i18n="cargo.hero.note">
-        데이터: 선사 운송 추적(ONE·COSCO 실조회, 그 외 딥링크) + 관세청 유니패스 화물통관진행정보 OpenAPI · 항공 수입은 AWB 번호를 MBL로 조회
+        데이터: 선사 트래킹 API 직접 조회(ONE·COSCO) · 그 외 선사 12사/항공사 10사는 자동 감지 후 공식 추적 페이지 딥링크
       </p>
     </div>
   </section>
@@ -66,14 +66,7 @@
     <div class="container">
       <div class="card reveal" style="margin-bottom:14px;">
         <div class="berth-toolbar" style="margin:0;">
-          <div class="chip-row" id="typeChips" style="margin:0;">
-            <button class="f-chip" data-t="mbl">MBL / AWB</button>
-            <button class="f-chip off" data-t="hbl">HBL</button>
-          </div>
-          <input type="search" class="focus-search" id="blNo" placeholder="B/L 번호 (예: HDMU1234567 / 180-12345675)" style="max-width:320px;">
-          <select id="blYear" class="focus-search" style="max-width:110px;">
-            <option>2026</option><option>2025</option><option>2024</option>
-          </select>
+          <input type="search" class="focus-search" id="blNo" placeholder="MBL / AWB 번호 (예: ONEYRICG34548800 / 180-12345675)" style="max-width:380px;">
           <button class="btn btn-primary" id="traceBtn" type="button" data-i18n="cargo.trace.btn">조회</button>
         </div>
         <p class="sc-sub" id="awbHint" style="margin:10px 0 0; color:var(--muted); font-size:12px;"></p>
@@ -159,9 +152,9 @@
   </footer>
 
   <script src="js/common.js?v=2026-4"></script>
-  <script src="js/i18n.js?v=2026-08-11a"></script>
+  <script src="js/i18n.js?v=2026-08-11b"></script>
   <script src="js/auth.js?v=2026-07-29f"></script>
   <script src="js/auth-gate.js?v=2026-07-30a"></script>
-  <script src="js/cargo.js?v=2026-08-11b"></script>
+  <script src="js/cargo.js?v=2026-08-11c"></script>
 </body>
 </html>
