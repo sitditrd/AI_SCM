@@ -159,8 +159,10 @@
       '<path d="M4 12h13"/><path d="M13 7l5 5-5 5"/><path d="M20 4v16"/></svg>',
     into: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
       '<path d="M20 12H7"/><path d="M11 7l-5 5 5 5"/><path d="M4 4v16"/></svg>',
-    bell: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    bell: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
       '<path d="M18 8.5a6 6 0 10-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5"/><path d="M13.7 20a2 2 0 01-3.4 0"/></svg>',
+    bellOff: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M8.7 3.3A6 6 0 0118 8.5c0 3 .6 4.9 1.3 6"/><path d="M6 8.5c0 6-2.5 7.5-2.5 7.5h12"/><path d="M13.7 20a2 2 0 01-3.4 0"/><path d="M2 2l20 20"/></svg>',
     check: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
       '<path d="M20 6L9 17l-5-5"/></svg>',
     upload: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
@@ -458,10 +460,15 @@
     var expTxt = it.active && dl != null
       ? (dl <= 0 ? '<span style="color:var(--up);">만료</span>' : (dl <= 14 ? '<span style="color:var(--lv-busy);">' + dl + '일</span>' : dl + '일'))
       : '-';
+    /* 알림 아이콘 — 이메일 등록 여부를 한눈에. 클릭하면 이메일을 바로 수정한다(BL 재조회 불필요). */
+    var bell = it.notify_email
+      ? '<button class="wf-bell on" type="button" data-mail="' + esc(it.mbl_no) + '" title="알림 수신: ' + esc(it.notify_email) + '\n(클릭하여 변경)">' + SVG.bell + '</button>'
+      : '<button class="wf-bell off" type="button" data-mail="' + esc(it.mbl_no) + '" title="알림 없음 — 클릭하여 이메일 등록">' + SVG.bellOff + '</button>';
     return '<tr>' +
       '<td class="cn">' + SVG.box + ' ' + esc(it.mbl_no) + '</td>' +
       '<td title="' + esc(carrierName(it.carrier)) + '">' + esc(it.carrier || '') + (it.carrier && !isLive(it.carrier) ? ' <small style="color:var(--muted);">딥링크</small>' : '') + '</td>' +
       '<td>' + badge + '</td>' +
+      '<td class="wf-bell-cell">' + bell + '</td>' +
       '<td>' + esc(s.status || it.last_status || '-') + '</td>' +
       '<td>' + esc([s.por, s.pod].filter(Boolean).join(' → ') || '-') + '</td>' +
       '<td class="dt">' + esc(fmtShort(s.etd) || '-') + '</td>' +
@@ -471,7 +478,6 @@
         : '<span class="na">-</span>') + '</td>' +
       '<td class="dt">' + expTxt + '</td>' +
       (watchState.admin ? '<td>' + esc(it.created_by || '-') + '</td>' : '') +
-      '<td>' + esc(it.notify_email || '-') + '</td>' +
       '<td class="dt">' + esc(fmtShort(it.last_polled_at) || '-') + '</td>' +
       '<td>' + (it.active ? '<button class="btn btn-ghost trk-mini" type="button" data-off="' + esc(it.mbl_no) + '">해제</button>' : '') + '</td>' +
       '</tr>';
@@ -541,8 +547,8 @@
       '<button class="btn btn-ghost" id="wf_bulk" type="button">' + SVG.upload + ' 일괄 등록</button>' +
       '</div>' +
       '<div class="trk-sec" style="padding-top:14px;"><div class="trk-tbl-wrap"><table class="trk-tbl">' +
-      '<thead><tr><th>B/L No.</th><th>선사</th><th>상태</th><th>진행</th><th>구간</th><th>ETD</th><th>ETA</th>' +
-      '<th>변경</th><th>남은기간</th>' + (watchState.admin ? '<th>등록자</th>' : '') + '<th>알림 수신</th><th>최근 수집</th><th></th></tr></thead><tbody>' +
+      '<thead><tr><th>B/L No.</th><th>선사</th><th>상태</th><th title="이메일 알림 등록 여부 · 클릭하여 변경">알림</th><th>진행</th><th>구간</th><th>ETD</th><th>ETA</th>' +
+      '<th>변경</th><th>남은기간</th>' + (watchState.admin ? '<th>등록자</th>' : '') + '<th>최근 수집</th><th></th></tr></thead><tbody>' +
       (pageRows.length ? pageRows.map(watchRowHtml).join('') : '<tr><td colspan="' + (watchState.admin ? 13 : 12) + '" class="na" style="text-align:center;padding:18px;">조건에 맞는 화물이 없습니다.</td></tr>') +
       '</tbody></table></div>' +
       /* 페이지네이션 */
@@ -577,6 +583,23 @@
     if (nx) nx.addEventListener('click', function () { watchState.page++; renderWatch(); });
     var bulk = el('wf_bulk');
     if (bulk) bulk.addEventListener('click', openBulkDialog);
+    /* 알림 종 클릭 — 목록에서 바로 수신 이메일을 등록·변경·해제한다(BL 재조회 불필요) */
+    box.querySelectorAll('button[data-mail]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var mbl = btn.getAttribute('data-mail');
+        var it = findWatch(mbl) || {};
+        var cur = it.notify_email || '';
+        var v = window.prompt(mbl + '\n알림 받을 이메일 (비우면 알림 해제)', cur || myEmail());
+        if (v === null) return;
+        btn.disabled = true;
+        fetch(WATCH_API, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'notify', token: myToken(), mbl_no: mbl, notify_email: v.trim() })
+        }).then(function (r) { return r.json(); })
+          .then(function (d) { if (d.error) { btn.disabled = false; alert(d.error); return; } loadWatchList(); })
+          .catch(function () { btn.disabled = false; alert('변경 실패 — 잠시 후 다시.'); });
+      });
+    });
     box.querySelectorAll('button[data-off]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var mbl = btn.getAttribute('data-off');
