@@ -1349,3 +1349,91 @@ tr.tree-child td:first-child { padding-left: 30px; }
 .gate-toast .gt-txt small { font-size: 12px; color: var(--ink-2); margin-top: 1px; }
 .gate-toast .gt-btn { margin-left: 6px; flex: none; background: var(--brand-accent); color: #fff; font-weight: 700; font-size: 13px; padding: 8px 14px; border-radius: 9px; white-space: nowrap; }
 .gate-toast .gt-btn:hover { background: var(--brand-accent-2); }
+
+/* ============================================================
+   화물 추적 — 선사 운송 추적 (cargo.html)
+   레거시 KlnetTrackList/LogisView 그리드 구조를 계승:
+   요약 행 → 경로 시각화 → 컨테이너별 게이트 이벤트 표
+   ※ .pipe-* 는 가로 파이프라인 전용이라 여기서 재사용하지 않는다
+     (flex-direction:column 이라 배지가 전폭으로 늘어나는 문제 — 2026-08-11)
+   ============================================================ */
+.trk-card { padding: 0; overflow: hidden; }
+.trk-head {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 14px 18px; border-bottom: 1px solid var(--border); background: var(--surface-2);
+}
+.trk-bl { font-size: 16.5px; font-weight: 800; letter-spacing: .01em; }
+.trk-carrier { font-size: 13px; color: var(--muted); }
+.trk-head .trk-spacer { flex: 1 1 auto; }
+.trk-asof { font-size: 11px; color: var(--muted); }
+
+/* 상태 배지 — 인라인 고정(전폭 확장 금지) */
+.trk-badge {
+  display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto; width: auto;
+  font-size: 12.5px; font-weight: 700; line-height: 1;
+  padding: 6px 12px; border-radius: 999px; white-space: nowrap;
+}
+.trk-badge.is-done { background: color-mix(in srgb, var(--lv-low) 16%, transparent); color: var(--lv-low); border: 1px solid color-mix(in srgb, var(--lv-low) 34%, transparent); }
+.trk-badge.is-move { background: color-mix(in srgb, var(--brand-accent) 16%, transparent); color: var(--brand-accent-2); border: 1px solid color-mix(in srgb, var(--brand-accent) 34%, transparent); }
+.trk-badge.is-wait { background: color-mix(in srgb, var(--lv-stable) 18%, transparent); color: var(--lv-stable); border: 1px solid color-mix(in srgb, var(--lv-stable) 36%, transparent); }
+
+/* 경로 시각화 — 항구 노드 + 진행 구간 + 선박 마커 (SVG) */
+.trk-route { display: flex; align-items: flex-start; gap: 0; padding: 26px 20px 20px; overflow-x: auto; }
+.trk-port { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 116px; text-align: center; }
+.trk-port .p-dot {
+  width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--surface-2); border: 2px solid var(--border); color: var(--muted); flex: none;
+}
+.trk-port.done .p-dot { background: var(--brand-accent); border-color: var(--brand-accent); color: #fff; }
+.trk-port .p-cd { font-size: 14px; font-weight: 800; margin-top: 4px; letter-spacing: .01em; }
+.trk-port .p-nm { font-size: 11.5px; color: var(--muted); max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trk-port .p-dt { font-size: 11.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.trk-port .p-dt.act { color: var(--brand-accent-2); font-weight: 700; }
+
+.trk-leg { flex: 1 1 90px; min-width: 80px; position: relative; height: 30px; display: flex; align-items: center; }
+.trk-leg::before { content: ''; position: absolute; left: 0; right: 0; height: 4px; border-radius: 2px; background: var(--grid); }
+.trk-leg .l-fill { position: absolute; left: 0; height: 4px; border-radius: 2px; background: var(--brand-accent); }
+.trk-leg .l-ship {
+  position: absolute; transform: translateX(-50%); display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 50%; background: var(--surface); border: 2px solid var(--brand-accent);
+  color: var(--brand-accent-2); box-shadow: 0 2px 10px rgba(30, 111, 224, .35);
+}
+
+/* 컨테이너별 게이트 이벤트 표 — 레거시 FMS_API_CNTR 컬럼 계승 */
+.trk-sec { padding: 0 18px 16px; }
+.trk-sec h4 { margin: 14px 0 8px; font-size: 13px; font-weight: 800; color: var(--ink-2); }
+.trk-tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+table.trk-tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; white-space: nowrap; }
+table.trk-tbl th, table.trk-tbl td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+table.trk-tbl thead th { background: var(--surface-2); font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .02em; text-transform: uppercase; }
+table.trk-tbl thead tr.grp th { text-align: center; border-bottom: 1px solid var(--border); color: var(--ink-2); font-size: 12px; }
+table.trk-tbl thead tr.grp th svg { vertical-align: -2px; margin-right: 3px; }
+table.trk-tbl thead tr.grp th.dep { background: color-mix(in srgb, var(--brand-accent) 10%, var(--surface-2)); }
+table.trk-tbl thead tr.grp th.arr { background: color-mix(in srgb, var(--brand-point) 10%, var(--surface-2)); }
+table.trk-tbl tbody tr:last-child td { border-bottom: 0; }
+table.trk-tbl tbody tr:hover td { background: color-mix(in srgb, var(--brand-accent) 5%, transparent); }
+table.trk-tbl td.cn { font-weight: 700; font-variant-numeric: tabular-nums; }
+table.trk-tbl td.cn svg { vertical-align: -2px; color: var(--muted); margin-right: 2px; }
+table.trk-tbl td.dt { font-variant-numeric: tabular-nums; font-size: 12px; }
+table.trk-tbl td.dt.act { color: var(--brand-accent-2); font-weight: 600; }
+table.trk-tbl td.na { color: var(--muted); }
+
+/* 이벤트 전체 이력 (접기/펼치기) */
+.trk-more { margin-top: 8px; }
+.trk-more summary { cursor: pointer; font-size: 12px; color: var(--brand-accent-2); font-weight: 600; padding: 4px 0; list-style: none; }
+.trk-more summary::-webkit-details-marker { display: none; }
+.trk-more summary::before { content: '▸ '; }
+.trk-more[open] summary::before { content: '▾ '; }
+.trk-evlist { margin: 8px 0 0; padding: 0; list-style: none; border-left: 2px solid var(--border); }
+.trk-evlist li { position: relative; padding: 6px 0 6px 16px; font-size: 12px; }
+.trk-evlist li::before { content: ''; position: absolute; left: -5px; top: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--grid); border: 2px solid var(--surface); }
+.trk-evlist li.act::before { background: var(--brand-accent); }
+.trk-evlist li b { font-weight: 700; }
+.trk-evlist li small { display: block; color: var(--muted); font-size: 11px; margin-top: 1px; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 640px) {
+  .trk-route { padding: 16px 12px 12px; }
+  .trk-port { min-width: 96px; }
+  .trk-route { padding: 20px 12px 14px; }
+  .trk-sec { padding: 0 12px 14px; }
+}

@@ -68,65 +68,217 @@
     return null;
   }
 
-  /* ---- 선사 운송 추적 (carrier-track) ---- */
+  /* ============================================================
+     선사 운송 추적 렌더러 (carrier-track)
+     레거시 KlnetTrackList / LogisView 그리드 구조를 계승한다:
+       ① 요약 헤더(BL·선사·현재상태)  ② 경로 시각화(항구 노드+진행바+선박)
+       ③ 컨테이너별 게이트 이벤트 표(FMS_API_CNTR 컬럼 상당)  ④ 전체 이력(접기)
+     ============================================================ */
+
+  /* 선사별 이벤트 문구 → 정규 게이트 슬롯 9종.
+     문구는 선사마다 다르고 선명/항차가 끼어들기도 해서(SM: "Loaded on 'X 2608S' at ...")
+     부분 일치로 판정한다. 순서는 캐논 순서이며 표 컬럼 순서와 같다.
+     어휘 근거: 2026-08-11 태웅 실 MBL 로 5개 선사 이벤트 전수 수집 */
+  var SLOTS = [
+    { k: 'eOut', label: '공컨 반출', grp: 'dep', re: /empty\s*(container)?\s*(release|pick)/i },
+    { k: 'fIn', label: '적컨 반입', grp: 'dep', re: /gate\s*in to outbound|received \(fcl\)|outbound in cy/i },
+    { k: 'load', label: '선적', grp: 'dep', re: /loaded (on|onto|\(fcl\))/i },
+    { k: 'atd', label: '출항', grp: 'dep', re: /departure/i },
+    { k: 'ts', label: '환적', grp: 'arr', re: /transship|transshipment|feeder/i },
+    { k: 'ata', label: '입항', grp: 'arr', re: /arrival|berthing/i },
+    { k: 'unld', label: '양하', grp: 'arr', re: /unloaded|discharged \(fcl\)|inbound in cy/i },
+    { k: 'fOut', label: '적컨 반출', grp: 'arr', re: /gate\s*out from inbound|pick-up by merchant|transfer to designated/i },
+    { k: 'eIn', label: '공컨 반납', grp: 'arr', re: /empty (container )?return/i }
+  ];
+
   function fmtIso(v) {
-    /* 항만 현지시각 ISO 문자열 — new Date() 로 브라우저 TZ 변환하지 않고 문자열 그대로 자른다 */
+    /* 항만 현지시각 문자열 — new Date() 로 브라우저 TZ 변환하지 않고 문자열 그대로 자른다 */
     var s = String(v || '');
     return s.length >= 16 ? s.slice(0, 16).replace('T', ' ') : s;
   }
-  function evBadge(actual) {
-    return actual
-      ? '<span style="font-size:10px; padding:1px 6px; border-radius:8px; background:var(--brand-accent-2); color:#fff;">실제</span>'
-      : '<span style="font-size:10px; padding:1px 6px; border-radius:8px; border:1px solid var(--muted); color:var(--muted);">예정</span>';
+  function fmtShort(v) { var s = fmtIso(v); return s ? s.slice(2) : ''; }   /* 26-06-25 17:57 */
+  /* 이벤트 문구 정리 — SM 은 statusNm 안에 <br> 태그와 선명 따옴표가 들어온다(실측) */
+  function evName(s) {
+    return String(s == null ? '' : s).replace(/<br\s*\/?>/gi, ' / ').replace(/\s+/g, ' ').trim();
   }
+
+  /* 컨테이너 이벤트 배열 → 슬롯별 대표 이벤트(가장 이른 실적) */
+  function toSlots(events) {
+    var out = {};
+    (events || []).forEach(function (e) {
+      var nm = evName(e.name);
+      for (var i = 0; i < SLOTS.length; i++) {
+        if (SLOTS[i].re.test(nm)) {
+          var k = SLOTS[i].k;
+          if (!out[k] || (!out[k].actual && e.actual)) out[k] = e;
+          break;
+        }
+      }
+    });
+    return out;
+  }
+
+  /* 현재 진행 상태 — 가장 뒤쪽 슬롯의 실적 이벤트 기준 */
+  function progressOf(containers) {
+    var maxIdx = -1;
+    (containers || []).forEach(function (c) {
+      var s = toSlots(c.events);
+      for (var i = SLOTS.length - 1; i >= 0; i--) {
+        if (s[SLOTS[i].k] && s[SLOTS[i].k].actual) { if (i > maxIdx) maxIdx = i; break; }
+      }
+    });
+    return maxIdx;
+  }
+  function statusOf(idx) {
+    if (idx < 0) return { t: '조회됨', c: 'is-wait' };
+    var k = SLOTS[idx].k;
+    if (k === 'eIn') return { t: '반납 완료', c: 'is-done' };
+    if (k === 'fOut') return { t: '반출 완료', c: 'is-done' };
+    if (k === 'unld') return { t: '양하 완료', c: 'is-move' };
+    if (k === 'ata') return { t: '입항', c: 'is-move' };
+    if (k === 'ts') return { t: '환적 중', c: 'is-move' };
+    if (k === 'atd') return { t: '운송 중', c: 'is-move' };
+    if (k === 'load') return { t: '선적 완료', c: 'is-wait' };
+    return { t: '선적 대기', c: 'is-wait' };
+  }
+
+  /* ---- 인라인 SVG 아이콘 (이모지 미사용 — 렌더 일관성·크기 제어) ----
+     currentColor 를 쓰므로 부모의 color 로 테마 대응된다. */
+  var SVG = {
+    ship: '<svg viewBox="0 0 32 32" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M4 22l1.6-6.2a2 2 0 011.9-1.5H24.5a2 2 0 011.9 1.5L28 22"/>' +
+      '<path d="M10 14.3V9.5a1 1 0 011-1h5.5a1 1 0 011 1v4.8"/>' +
+      '<path d="M16 4.5v4"/>' +
+      '<path d="M2.5 22c2.2 0 2.2 2.4 4.5 2.4S9.2 22 11.5 22s2.2 2.4 4.5 2.4S18.2 22 20.5 22s2.2 2.4 4.5 2.4S27.2 22 29.5 22"/></svg>',
+    anchor: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V21"/><path d="M8.5 11H15.5"/>' +
+      '<path d="M20 16.5A8 8 0 0112 21a8 8 0 01-8-4.5"/></svg>',
+    box: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M3 7.5L12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5L12 12l9-4.5"/><path d="M12 12v9"/></svg>',
+    out: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M4 12h13"/><path d="M13 7l5 5-5 5"/><path d="M20 4v16"/></svg>',
+    into: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M20 12H7"/><path d="M11 7l-5 5 5 5"/><path d="M4 4v16"/></svg>'
+  };
+
+  /* 경로 시각화 — 항차(voyages)가 있으면 그 구간을, 없으면 POL→POD 단일 구간 */
+  function routeHtml(res, doneRatio) {
+    var legs = (res.voyages || []).slice();
+    var pts = [];
+    if (legs.length) {
+      pts.push({ nm: legs[0].pol && legs[0].pol.name, dt: legs[0].pol && legs[0].pol.date, act: !!(legs[0].pol && legs[0].pol.actual) });
+      legs.forEach(function (v) { pts.push({ nm: v.pod && v.pod.name, dt: v.pod && v.pod.date, act: !!(v.pod && v.pod.actual) }); });
+    } else {
+      var s = res.summary || {};
+      pts.push({ nm: s.por, dt: null, act: doneRatio > 0 });
+      pts.push({ nm: s.pod, dt: null, act: doneRatio >= 1 });
+    }
+    pts = pts.filter(function (p) { return p.nm; });
+    /* 연속 동일 항구는 하나로 합친다 — 환적 구간이 A→B, B→C 로 오면 B 가 두 번 잡힌다(실측).
+       뒤엣것(다음 구간 출발)의 일시를 남겨 "언제 다시 떠났는지"가 보이게 한다. */
+    pts = pts.filter(function (p, i, a) {
+      return i === 0 || String(p.nm).toUpperCase() !== String(a[i - 1].nm).toUpperCase();
+    });
+    if (pts.length < 2) return '';
+
+    /* 선박 마커는 마지막 실적 지점과 다음 지점 사이에 놓는다 */
+    var lastAct = -1;
+    pts.forEach(function (p, i) { if (p.act) lastAct = i; });
+
+    var h = '<div class="trk-route">';
+    pts.forEach(function (p, i) {
+      if (i > 0) {
+        var filled = (i - 1) < lastAct ? 100 : ((i - 1) === lastAct ? 55 : 0);
+        h += '<div class="trk-leg"><span class="l-fill" style="width:' + filled + '%;"></span>' +
+          ((i - 1) === lastAct && lastAct < pts.length - 1
+            ? '<span class="l-ship" style="left:55%;">' + SVG.ship + '</span>' : '') + '</div>';
+      }
+      var nm = String(p.nm || '');
+      var code = (/^[A-Z]{5}$/.test(nm) ? nm : nm.split(/[,(]/)[0].trim().slice(0, 14)).toUpperCase();
+      h += '<div class="trk-port' + (p.act ? ' done' : '') + '">' +
+        '<span class="p-dot">' + SVG.anchor + '</span>' +
+        '<span class="p-cd">' + esc(code) + '</span>' +
+        (nm && nm.toUpperCase() !== code ? '<span class="p-nm" title="' + esc(nm) + '">' + esc(nm) + '</span>' : '') +
+        (p.dt ? '<span class="p-dt' + (p.act ? ' act' : '') + '">' + esc(fmtShort(p.dt)) + '</span>' : '') +
+        '</div>';
+    });
+    return h + '</div>';
+  }
+
   function renderCarrier(res, no) {
     var out = el('carrierOut');
     if (!res || res.error) {
-      out.innerHTML = '<div class="card reveal in" style="margin-bottom:14px;"><b>선사 운송 추적</b>' +
+      var oc0 = oceanInfo(no);
+      out.innerHTML = '<div class="card reveal in" style="margin-bottom:14px;">' +
+        '<h3 style="margin-top:0;">선사 운송 추적</h3>' +
         '<p class="sc-sub">' + esc(res && res.error || '조회 실패') + '</p>' +
-        (function () { var oc = oceanInfo(no); return oc && oc.url ? '<a class="btn btn-ghost" target="_blank" rel="noopener" href="' + oc.url + '">' + esc(oc.name) + ' 트래킹 ↗</a>' : ''; })() +
+        (oc0 && oc0.url ? '<a class="btn btn-ghost" target="_blank" rel="noopener" href="' + oc0.url + '">' + esc(oc0.name) + ' 트래킹 ↗</a>' : '') +
         '</div>';
       return;
     }
     var s = res.summary || {};
-    var html = '<div class="card reveal in" style="margin-bottom:14px;">' +
-      '<h3 style="margin-top:0;">선사 운송 추적 <small style="color:var(--muted);">' + esc(res.carrierName || res.carrier) + ' · ' + esc((res.query || {}).no || no) + '</small></h3>';
-    if (s.por || s.pod) {
-      html += '<p class="sc-sub" style="margin:4px 0 10px;">' + esc(s.por || '?') + ' → ' + esc(s.pod || '?') +
-        (s.vessel ? ' · <span style="color:var(--muted);">' + esc(s.vessel) + (s.voyage ? ' ' + esc(s.voyage) : '') + '</span>' : '') +
-        (s.bookingNo ? ' · <span style="color:var(--muted);">Booking ' + esc(s.bookingNo) + '</span>' : '') + '</p>';
+    var cs = res.containers || [];
+    var idx = progressOf(cs);
+    var st = statusOf(idx);
+
+    var h = '<div class="card trk-card reveal in" style="margin-bottom:14px;">';
+
+    /* ① 헤더 */
+    h += '<div class="trk-head">' +
+      '<span class="trk-bl">' + esc((res.query || {}).no || no) + '</span>' +
+      '<span class="trk-carrier">' + esc(res.carrierName || res.carrier || '') + '</span>' +
+      '<span class="trk-badge ' + st.c + '">' + esc(st.t) + '</span>' +
+      '<span class="trk-spacer"></span>' +
+      (s.vessel ? '<span class="trk-carrier">' + esc(s.vessel) + (s.voyage ? ' ' + esc(s.voyage) : '') + '</span>' : '') +
+      '</div>';
+
+    /* ② 경로 */
+    h += routeHtml(res, idx / (SLOTS.length - 1));
+
+    /* ③ 컨테이너별 게이트 이벤트 표 */
+    if (cs.length) {
+      var depCols = SLOTS.filter(function (x) { return x.grp === 'dep'; });
+      var arrCols = SLOTS.filter(function (x) { return x.grp === 'arr'; });
+      h += '<div class="trk-sec"><h4>컨테이너 ' + cs.length + '건 · 게이트 이벤트</h4><div class="trk-tbl-wrap"><table class="trk-tbl">' +
+        '<thead><tr class="grp"><th rowspan="2">컨테이너</th><th rowspan="2">타입</th>' +
+        '<th class="dep" colspan="' + depCols.length + '">' + SVG.out + ' 출발지 (DEPARTURE)</th>' +
+        '<th class="arr" colspan="' + arrCols.length + '">' + SVG.into + ' 도착지 (DESTINATION)</th></tr><tr>' +
+        SLOTS.map(function (x) { return '<th>' + x.label + '</th>'; }).join('') +
+        '</tr></thead><tbody>';
+      cs.forEach(function (c) {
+        var sl = toSlots(c.events);
+        h += '<tr><td class="cn">' + SVG.box + ' ' + esc(c.cntrNo || '') + '</td><td>' + esc(c.szTp || '') + '</td>' +
+          SLOTS.map(function (x) {
+            var e = sl[x.k];
+            if (!e) return '<td class="dt na">-</td>';
+            var t = fmtShort(e.timeLocal || e.timeUtc);
+            return '<td class="dt' + (e.actual ? ' act' : '') + '" title="' + esc(evName(e.name)) + (e.location ? ' · ' + esc(e.location) : '') + '">' + esc(t || '●') + '</td>';
+          }).join('') + '</tr>';
+      });
+      h += '</tbody></table></div>';
+
+      /* ④ 전체 이력 (접기) */
+      cs.forEach(function (c) {
+        var evs = c.events || [];
+        if (!evs.length) return;
+        h += '<details class="trk-more"><summary>' + esc(c.cntrNo || '') + ' 전체 이력 ' + evs.length + '건' +
+          (c.eventsSynthesized ? ' (본선 구간 기준)' : '') + '</summary><ul class="trk-evlist">' +
+          evs.map(function (e) {
+            var t = fmtIso(e.timeLocal || e.timeUtc);
+            return '<li class="' + (e.actual ? 'act' : '') + '"><b>' + esc(evName(e.name)) + '</b>' +
+              '<small>' + esc(e.location || '') + (e.yard ? ' · ' + esc(e.yard) : '') +
+              (t ? ' · ' + esc(t) : '') + (e.actual ? '' : ' · 예정') + '</small></li>';
+          }).join('') + '</ul></details>';
+      });
+      h += '</div>';
+    } else {
+      h += '<div class="trk-sec"><p class="sc-sub">컨테이너 정보가 없습니다.</p></div>';
     }
-    /* 운송 구간(항차) — 레거시 FMS_API_TS 상당, N구간 */
-    if (res.voyages && res.voyages.length) {
-      html += '<div class="tbl-scroll"><table class="tw"><thead><tr><th>선박 / 항차</th><th>선적항</th><th>양륙항</th></tr></thead><tbody>' +
-        res.voyages.map(function (v) {
-          return '<tr><td>' + esc(v.vessel || '') + ' <span style="color:var(--muted);">' + esc(v.voyage || '') + '</span></td>' +
-            '<td>' + esc(v.pol && v.pol.name || '') + '<br><small>' + evBadge(v.pol && v.pol.actual) + ' ' + esc(fmtIso(v.pol && v.pol.date)) + '</small></td>' +
-            '<td>' + esc(v.pod && v.pod.name || '') + '<br><small>' + evBadge(v.pod && v.pod.actual) + ' ' + esc(fmtIso(v.pod && v.pod.date)) + '</small></td></tr>';
-        }).join('') + '</tbody></table></div>';
-    }
-    /* 컨테이너별 이벤트 타임라인 — 레거시 FMS_API_CNTR 상당 */
-    (res.containers || []).forEach(function (c) {
-      html += '<h3 style="font-size:15px; margin-bottom:6px;">컨테이너 <span>' + esc(c.cntrNo || '') + '</span>' +
-        (c.szTp ? ' <small style="color:var(--muted); font-weight:400;">' + esc(c.szTp) + '</small>' : '') +
-        (c.eventsSynthesized ? ' <small style="color:var(--muted); font-weight:400;">(본선 구간 기준)</small>' : '') + '</h3>';
-      var evs = c.events || [];
-      if (evs.length) {
-        html += '<div class="pipe-flow" style="flex-direction:column; gap:8px;">' + evs.map(function (e) {
-          var t = e.timeLocal || e.timeUtc;
-          return '<div class="pipe-node" style="flex:none;"><span class="pn-dot" style="background:' + (e.actual ? 'var(--brand-accent-2)' : 'var(--muted)') + ';"></span>' +
-            '<b>' + esc(e.name || '') + '</b> ' + evBadge(e.actual) +
-            '<small>' + esc(e.location || '') + (e.yard ? ' · ' + esc(e.yard) : '') + (t ? ' · ' + esc(fmtIso(t)) + ' <span style="color:var(--muted);">(현지)</span>' : '') + '</small></div>';
-        }).join('') + '</div>';
-      } else {
-        html += '<p class="sc-sub">이벤트 정보가 없습니다.</p>';
-      }
-    });
-    if (!(res.voyages || []).length && !(res.containers || []).length) {
-      html += '<p class="sc-sub">운송 정보가 없습니다.</p>';
-    }
-    html += '<p class="sc-sub" style="margin-top:10px; font-size:11px; color:var(--muted);">데이터 시점 ' + esc(fmtIso(res.fetchedAt)) + ' UTC · 출처 ' + esc(res.source || '') + ' · 시각은 항만 현지 기준</p></div>';
-    out.innerHTML = html;
+
+    h += '<div class="trk-head" style="border-bottom:0; border-top:1px solid var(--border);">' +
+      '<span class="trk-asof">데이터 시점 ' + esc(fmtIso(res.fetchedAt)) + ' UTC · 출처 ' + esc(res.source || '') + ' · 시각은 항만 현지 기준</span></div>';
+    h += '</div>';
+    out.innerHTML = h;
   }
 
   /* 딥링크 카드 — live 미지원 선사·항공사 (외부 공식 추적 페이지로 안내) */
