@@ -178,6 +178,18 @@ def main():
         return 0
     print('[INFO] 감시 대상 %d건' % len(rows))
 
+    # 만료 자동 해제 — expires_at 이 지난 건은 조회 없이 종료(3/6개월 규칙, 공컨 반납과 별개)
+    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    expired = [w for w in rows if w.get('expires_at') and w['expires_at'] <= now_iso]
+    for w in expired:
+        if not dry:
+            sb('PATCH', '/rest/v1/bl_watch?id=eq.%s' % w['id'], {'active': False, 'last_status': '기간 만료'})
+        print('[EXPIRE] %s — 추적 기간 만료(%s)로 자동 해제' % (w['mbl_no'], w.get('expires_at', '')[:10]))
+    rows = [w for w in rows if w not in expired]
+    if not rows:
+        print('[DONE] 만료 %d건 해제, 감시 대상 없음' % len(expired))
+        return 0
+
     changed_total = mailed = failed = 0
     for w in rows:
         mbl = w['mbl_no']

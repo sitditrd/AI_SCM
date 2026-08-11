@@ -181,21 +181,47 @@ async function trackCOSCO(no: string) {
     if (v.pod?.date) out.push({ name: `Vessel Arrival (${v.vessel ?? ""} ${v.voyage ?? ""})`.trim(), location: v.pod.name, timeLocal: v.pod.date, actual: v.pod.actual });
     return out;
   });
-  const containers = (Array.isArray(list) ? list : []).map((c: unknown) => {
+  // COSCO 는 bill 응답에 컨테이너 게이트 이벤트를 주지 않는다(2026-08-11 확인). 대신 컨테이너 단위
+  // /containers/{no} 의 containerCircleStatus 로 "현재 상태·위치"를 준다 — 그거라도 붙여 표를 채운다.
+  const rawList = (Array.isArray(list) ? list : []).slice(0, 8);
+  const containers = await Promise.all(rawList.map(async (c: unknown) => {
+    const cntrNo = String(pick(c, "cntrNum", "containerNumber", "cntrNo", "containerNo") ?? "").replace(/[^A-Za-z0-9]/g, "");
     const evsRaw = pick(c, "containerHistorys", "events");
-    const own = (Array.isArray(evsRaw) ? evsRaw : []).map((e: unknown) => ({
+    let own = (Array.isArray(evsRaw) ? evsRaw : []).map((e: unknown) => ({
       name: pick(e, "containerNumberStatus", "eventName", "status"),
       location: locName(pick(e, "location", "locationName")),
       timeLocal: pick(e, "timeOfIssue", "eventDate", "time"),
       actual: true,
     }));
+    let latest: Record<string, unknown> | undefined;
+    if (!own.length && cntrNo) {
+      try {
+        const cr = await fetch(`https://elines.coscoshipping.com/ebtracking/public/containers/${encodeURIComponent(cntrNo)}?timestamp=${Date.now()}`,
+          { headers: { ...FETCH_OPTS.headers, "language": "en_US" }, signal: AbortSignal.timeout(10000) });
+        const cd = await cr.json();
+        const cc = ((cd?.data?.content?.containers ?? [])[0]?.containerCircleStatus ?? [])[0];
+        if (cc) {
+          latest = { name: pick(cc, "containerNumberStatus"), location: pick(cc, "location"), timeLocal: pick(cc, "timeOfIssue") };
+          const hist = (cd?.data?.content?.containers ?? [])[0]?.containerHistorys;
+          if (Array.isArray(hist) && hist.length) {
+            own = hist.map((e: unknown) => ({
+              name: pick(e, "containerNumberStatus", "eventName", "status"),
+              location: locName(pick(e, "location", "locationName")),
+              timeLocal: pick(e, "timeOfIssue", "eventDate", "time"),
+              actual: true,
+            }));
+          }
+        }
+      } catch { /* 컨테이너 상세 실패는 치명 아님 — 본선 구간 합성으로 표시 */ }
+    }
     return {
-      cntrNo: String(pick(c, "cntrNum", "containerNumber", "cntrNo", "containerNo") ?? "").replace(/[^A-Za-z0-9]/g, ""),
+      cntrNo,
       szTp: pick(c, "containerType", "szTp"),
       events: own.length ? own : synth,
       eventsSynthesized: own.length ? undefined : true,
+      latest,
     };
-  });
+  }));
 
   return {
     summary: {

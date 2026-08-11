@@ -1444,3 +1444,42 @@ table.trk-tbl td.na { color: var(--muted); }
 .trk-watch-btn.is-on { color: var(--lv-low); border-color: color-mix(in srgb, var(--lv-low) 45%, transparent); }
 .trk-mini { font-size: 11.5px; padding: 4px 10px; }
 table.trk-tbl td .na { color: var(--muted); }
+
+/* 추적 등록 다이얼로그 · 감시 그리드 페이저 (cargo.html) */
+.reg-ov {
+  position: fixed; inset: 0; z-index: 120; background: rgba(6, 12, 26, .62);
+  backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.reg-card {
+  width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px 24px;
+  max-height: 88vh; overflow-y: auto;
+}
+.reg-card h3 { margin: 0 0 16px; font-size: 17px; }
+.reg-card h3 small { font-weight: 400; color: var(--muted); font-size: 13px; }
+.reg-l { display: block; font-size: 12px; font-weight: 700; color: var(--ink-2); margin: 12px 0 6px; }
+.reg-opt { font-weight: 400; color: var(--muted); }
+.reg-seg { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+.reg-seg button {
+  border: 0; background: var(--surface-2); color: var(--ink-2); font-size: 13px; font-weight: 700;
+  padding: 8px 18px; cursor: pointer;
+}
+.reg-seg button.on { background: var(--brand-accent); color: #fff; }
+.reg-hint { font-size: 11.5px; color: var(--muted); margin: 6px 0 0; line-height: 1.5; }
+.reg-support {
+  font-size: 11.5px; line-height: 1.6; background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 12px; margin: 10px 0 12px;
+}
+.reg-row { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; margin-top: 4px; }
+.reg-msg { margin-top: 12px; font-size: 12.5px; min-height: 18px; }
+.reg-ok { color: var(--lv-low); font-weight: 700; }
+.reg-err { color: var(--up); font-weight: 700; }
+.reg-fail {
+  margin-top: 6px; font-size: 11.5px; color: var(--muted); max-height: 130px; overflow-y: auto;
+  background: var(--surface-2); border-radius: var(--radius-sm); padding: 8px 10px; line-height: 1.6;
+}
+.reg-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+
+.wf-pager { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 14px 0 2px; }
+.wf-page { font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.wf-page small { color: var(--muted); }

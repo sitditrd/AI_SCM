@@ -162,7 +162,9 @@
     bell: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
       '<path d="M18 8.5a6 6 0 10-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5"/><path d="M13.7 20a2 2 0 01-3.4 0"/></svg>',
     check: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-      '<path d="M20 6L9 17l-5-5"/></svg>'
+      '<path d="M20 6L9 17l-5-5"/></svg>',
+    upload: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v13"/></svg>'
   };
 
   /* 경로 시각화 — 항차(voyages)가 있으면 그 구간을, 없으면 POL→POD 단일 구간 */
@@ -263,6 +265,17 @@
       });
       h += '</tbody></table></div>';
 
+      /* 게이트 이벤트를 안 주는 선사(COSCO)는 컨테이너 최신 상태라도 보여준다 */
+      var lats = cs.filter(function (c) { return c.latest && c.latest.name; });
+      if (lats.length) {
+        h += '<p class="sc-sub" style="margin:10px 0 0; font-size:12px;">최신 상태 — ' +
+          lats.map(function (c) {
+            return '<b>' + esc(c.cntrNo) + '</b> ' + esc(c.latest.name) +
+              (c.latest.location ? ' · ' + esc(String(c.latest.location).split(',')[0]) : '') +
+              (c.latest.timeLocal ? ' · ' + esc(fmtIso(c.latest.timeLocal)) : '');
+          }).join('<br>') + '</p>';
+      }
+
       /* ④ 전체 이력 (접기) */
       cs.forEach(function (c) {
         var evs = c.events || [];
@@ -289,104 +302,271 @@
   }
 
   /* ============================================================
-     추적 등록(감시) — 등록해두면 스케줄러가 1일 2회 조회해 ETD/ETA 변경 시 메일 발송
+     추적 등록·감시 그리드 (선석배정 그리드와 동일 사상: 툴바 필터 + 페이지네이션)
+     등록해두면 스케줄러가 매일 08:20/20:20 조회해 ETD/ETA 변경 시 메일 발송.
      ============================================================ */
   var WATCH_API = 'https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/bl-watch';
+  var WATCH_PAGE = 20;                     /* 페이지당 행수 */
+  var watchState = { items: [], page: 1, q: '', carrier: '', active: 'all', carriers: null };
 
   function myEmail() {
-    /* 로그인 세션의 이메일을 기본 수신처로 쓴다 */
-    try {
-      var s = JSON.parse(localStorage.getItem('twl-auth') || 'null');
-      return (s && (s.email || s.login_id)) || '';
-    } catch (e) { return ''; }
+    try { var s = JSON.parse(localStorage.getItem('twl-auth') || 'null'); return (s && (s.email || s.login_id)) || ''; }
+    catch (e) { return ''; }
   }
 
+  /* 지원 선사 목록(1회 로드) — 등록 가능 여부·실조회/딥링크 구분 안내에 사용 */
+  function loadCarriers(cb) {
+    if (watchState.carriers) { cb && cb(); return; }
+    fetch(WATCH_API + '?action=carriers').then(function (r) { return r.json(); }).then(function (d) {
+      watchState.carriers = d; cb && cb();
+    }).catch(function () { watchState.carriers = { live: [], deeplink: [] }; cb && cb(); });
+  }
+  function carrierName(scac) {
+    var c = watchState.carriers || {};
+    var f = (c.live || []).concat(c.deeplink || []).filter(function (x) { return x.scac === scac; })[0];
+    return f ? f.name : (scac || '');
+  }
+  function isLive(scac) { return ((watchState.carriers || {}).live || []).some(function (x) { return x.scac === scac; }); }
+
+  /* 조회 결과 헤더의 "추적 등록" 버튼 */
   function bindWatchBtn() {
     var b = el('watchBtn');
     if (!b) return;
     b.addEventListener('click', function () {
       var mbl = b.getAttribute('data-mbl'), carrier = b.getAttribute('data-carrier');
-      var mail = myEmail();
-      var input = window.prompt('추적 알림을 받을 이메일 주소\n(비우면 등록만 하고 메일은 보내지 않습니다)', mail);
-      if (input === null) return;                       /* 취소 */
-      b.disabled = true; b.textContent = '등록 중…';
-      fetch(WATCH_API, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'add', mbl_no: mbl, carrier: carrier, notify_email: input.trim(), created_by: mail })
-      }).then(function (r) { return r.json(); }).then(function (d) {
-        if (d.error) { b.disabled = false; b.innerHTML = SVG.bell + ' 추적 등록'; alert('등록 실패: ' + d.error); return; }
-        b.innerHTML = SVG.check + ' 등록됨';
-        b.classList.add('is-on');
-        loadWatchList();
-      }).catch(function () {
-        b.disabled = false; b.innerHTML = SVG.bell + ' 추적 등록';
-        alert('일시적 네트워크 오류입니다 — 잠시 후 다시 시도하십시오.');
+      openRegDialog([{ mbl_no: mbl, carrier: carrier }], function () {
+        b.innerHTML = SVG.check + ' 등록됨'; b.classList.add('is-on'); b.disabled = true;
       });
     });
+  }
+
+  /* 등록 다이얼로그 (단건·다건 공용) — 기간 3/6개월 선택 + 알림 이메일 */
+  function openRegDialog(rows, onDone) {
+    var ov = document.createElement('div');
+    ov.className = 'reg-ov';
+    var many = rows.length > 1;
+    ov.innerHTML = '<div class="reg-card">' +
+      '<h3>추적 등록' + (many ? ' <small>' + rows.length + '건</small>' : ' <small>' + esc(rows[0].mbl_no) + '</small>') + '</h3>' +
+      '<label class="reg-l">추적 기간</label>' +
+      '<div class="reg-seg" id="regTerm"><button data-m="3" class="on">3개월</button><button data-m="6">6개월</button></div>' +
+      '<p class="reg-hint">기간이 지나면 자동으로 추적이 해제됩니다.</p>' +
+      '<label class="reg-l">알림 이메일 <span class="reg-opt">(비우면 등록만, 메일 없음)</span></label>' +
+      '<input type="email" id="regMail" class="focus-search" placeholder="you@twsc.co.kr" value="' + esc(myEmail()) + '">' +
+      '<div id="regMsg" class="reg-msg"></div>' +
+      '<div class="reg-btns"><button class="btn btn-ghost" id="regCancel">취소</button>' +
+      '<button class="btn btn-primary" id="regOk">등록</button></div></div>';
+    document.body.appendChild(ov);
+    var term = 3;
+    ov.querySelectorAll('#regTerm button').forEach(function (x) {
+      x.addEventListener('click', function () {
+        term = Number(x.getAttribute('data-m'));
+        ov.querySelectorAll('#regTerm button').forEach(function (y) { y.classList.remove('on'); });
+        x.classList.add('on');
+      });
+    });
+    function close() { ov.remove(); }
+    ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+    el2(ov, 'regCancel').addEventListener('click', close);
+    el2(ov, 'regOk').addEventListener('click', function () {
+      var mail = el2(ov, 'regMail').value.trim();
+      var msg = el2(ov, 'regMsg');
+      el2(ov, 'regOk').disabled = true; el2(ov, 'regOk').textContent = '등록 중…';
+      var body = many
+        ? { action: 'bulk', term_months: term, notify_email: mail, created_by: myEmail(), rows: rows }
+        : { action: 'add', mbl_no: rows[0].mbl_no, carrier: rows[0].carrier, term_months: term, notify_email: mail, created_by: myEmail() };
+      fetch(WATCH_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        .then(function (r) { return r.json(); }).then(function (d) {
+          if (d.error) { msg.innerHTML = '<span class="reg-err">' + esc(d.error) + '</span>'; el2(ov, 'regOk').disabled = false; el2(ov, 'regOk').textContent = '등록'; return; }
+          if (many) {
+            msg.innerHTML = '<span class="reg-ok">등록 ' + d.added + '건 · 실패 ' + d.failed + '건</span>' +
+              (d.failed ? '<div class="reg-fail">' + (d.results || []).filter(function (x) { return !x.ok; })
+                .map(function (x) { return esc(x.mbl_no) + ' — ' + esc(x.error); }).join('<br>') + '</div>' : '');
+            setTimeout(function () { close(); loadWatchList(); onDone && onDone(); }, d.failed ? 2500 : 700);
+          } else {
+            close(); loadWatchList(); onDone && onDone();
+          }
+        }).catch(function () { msg.innerHTML = '<span class="reg-err">네트워크 오류 — 잠시 후 다시.</span>'; el2(ov, 'regOk').disabled = false; el2(ov, 'regOk').textContent = '등록'; });
+    });
+  }
+  function el2(root, id) { return root.querySelector('#' + id); }
+
+  /* 필터 적용된 결과 */
+  function watchFiltered() {
+    return watchState.items.filter(function (it) {
+      if (watchState.active === 'on' && !it.active) return false;
+      if (watchState.active === 'off' && it.active) return false;
+      if (watchState.carrier && it.carrier !== watchState.carrier) return false;
+      if (watchState.q) {
+        var q = watchState.q.toUpperCase();
+        if ((it.mbl_no || '').toUpperCase().indexOf(q) < 0 && (it.memo || '').toUpperCase().indexOf(q) < 0) return false;
+      }
+      return true;
+    });
+  }
+
+  function daysLeft(exp) {
+    if (!exp) return null;
+    return Math.ceil((new Date(exp).getTime() - Date.now()) / 86400000);
   }
 
   function watchRowHtml(it) {
     var s = it.snapshot || {};
     var ch = it.changes || [];
-    var badge = it.active
-      ? '<span class="trk-badge is-move">감시 중</span>'
-      : '<span class="trk-badge is-done">추적 종료</span>';
+    var badge = it.active ? '<span class="trk-badge is-move">감시 중</span>' : '<span class="trk-badge is-done">종료</span>';
+    var dl = daysLeft(it.expires_at);
+    var expTxt = it.active && dl != null
+      ? (dl <= 0 ? '<span style="color:var(--up);">만료</span>' : (dl <= 14 ? '<span style="color:var(--lv-busy);">' + dl + '일</span>' : dl + '일'))
+      : '-';
     return '<tr>' +
       '<td class="cn">' + SVG.box + ' ' + esc(it.mbl_no) + '</td>' +
-      '<td>' + esc(it.carrier || '') + '</td>' +
+      '<td title="' + esc(carrierName(it.carrier)) + '">' + esc(it.carrier || '') + (it.carrier && !isLive(it.carrier) ? ' <small style="color:var(--muted);">딥링크</small>' : '') + '</td>' +
       '<td>' + badge + '</td>' +
       '<td>' + esc(s.status || it.last_status || '-') + '</td>' +
       '<td>' + esc([s.por, s.pod].filter(Boolean).join(' → ') || '-') + '</td>' +
       '<td class="dt">' + esc(fmtShort(s.etd) || '-') + '</td>' +
       '<td class="dt">' + esc(fmtShort(s.eta) || '-') + '</td>' +
       '<td>' + (ch.length
-        ? '<span title="' + esc(ch.map(function (c) { return c.field + ': ' + c.old_value + ' → ' + c.new_value; }).join('\n')) +
-          '" style="color:var(--up);font-weight:700;">' + ch.length + '건</span>'
+        ? '<span title="' + esc(ch.map(function (c) { return c.field + ': ' + c.old_value + ' → ' + c.new_value; }).join('\n')) + '" style="color:var(--up);font-weight:700;">' + ch.length + '건</span>'
         : '<span class="na">-</span>') + '</td>' +
+      '<td class="dt">' + expTxt + '</td>' +
       '<td>' + esc(it.notify_email || '-') + '</td>' +
       '<td class="dt">' + esc(fmtShort(it.last_polled_at) || '-') + '</td>' +
-      '<td>' + (it.active
-        ? '<button class="btn btn-ghost trk-mini" type="button" data-off="' + esc(it.mbl_no) + '">해제</button>'
-        : '') + '</td>' +
+      '<td>' + (it.active ? '<button class="btn btn-ghost trk-mini" type="button" data-off="' + esc(it.mbl_no) + '">해제</button>' : '') + '</td>' +
       '</tr>';
   }
 
-  function loadWatchList() {
-    var box = el('watchOut');
-    if (!box) return;
-    fetch(WATCH_API + '?action=list').then(function (r) { return r.json(); }).then(function (d) {
-      var items = d.items || [];
-      if (!items.length) {
-        box.innerHTML = '<div class="card"><p class="sc-sub" style="margin:0;">등록된 추적 화물이 없습니다. 위에서 B/L 을 조회한 뒤 <b>추적 등록</b>을 누르면 ' +
-          '스케줄러가 매일 08:20 / 20:20 에 조회해 <b>출항·도착 예정일시가 바뀌면 메일로 알려드립니다.</b></p></div>';
-        return;
-      }
-      var act = items.filter(function (x) { return x.active; }).length;
-      box.innerHTML = '<div class="card trk-card">' +
-        '<div class="trk-head"><span class="trk-bl">추적 등록 화물</span>' +
-        '<span class="trk-carrier">감시 중 ' + act + '건 / 전체 ' + items.length + '건</span>' +
-        '<span class="trk-spacer"></span>' +
-        '<span class="trk-asof">스케줄러 매일 08:20 · 20:20 · ETD/ETA 변경 시 메일 발송</span></div>' +
-        '<div class="trk-sec" style="padding-top:14px;"><div class="trk-tbl-wrap"><table class="trk-tbl">' +
-        '<thead><tr><th>B/L No.</th><th>선사</th><th>상태</th><th>진행</th><th>구간</th><th>ETD</th><th>ETA</th>' +
-        '<th>변경</th><th>알림 수신</th><th>최근 수집</th><th></th></tr></thead><tbody>' +
-        items.map(watchRowHtml).join('') + '</tbody></table></div></div></div>';
-      box.querySelectorAll('button[data-off]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          var mbl = btn.getAttribute('data-off');
-          if (!window.confirm(mbl + ' 추적을 해제할까요?\n(기록은 남고 이후 수집·알림만 중단됩니다)')) return;
-          btn.disabled = true;
-          fetch(WATCH_API, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'remove', mbl_no: mbl })
-          }).then(function () { loadWatchList(); })
-            .catch(function () { btn.disabled = false; alert('해제 실패 — 잠시 후 다시 시도하십시오.'); });
-        });
+  function renderWatch() {
+    var box = el('watchOut'); if (!box) return;
+    var all = watchState.items;
+    if (!all.length) {
+      box.innerHTML = '<div class="card"><p class="sc-sub" style="margin:0;">등록된 추적 화물이 없습니다. 위에서 B/L 을 조회한 뒤 <b>추적 등록</b>을 누르거나, 아래 <b>일괄 등록</b>으로 여러 건을 한 번에 넣으세요. ' +
+        '스케줄러가 매일 08:20 / 20:20 에 조회해 <b>출항·도착 예정일시가 바뀌면 메일로 알려드립니다.</b></p></div>';
+      return;
+    }
+    var rows = watchFiltered();
+    var total = rows.length, pages = Math.max(1, Math.ceil(total / WATCH_PAGE));
+    if (watchState.page > pages) watchState.page = pages;
+    var start = (watchState.page - 1) * WATCH_PAGE;
+    var pageRows = rows.slice(start, start + WATCH_PAGE);
+    var actCnt = all.filter(function (x) { return x.active; }).length;
+    var carrierOpts = ['<option value="">전체 선사</option>'].concat(
+      Array.from(new Set(all.map(function (x) { return x.carrier; }).filter(Boolean))).sort()
+        .map(function (c) { return '<option value="' + esc(c) + '"' + (watchState.carrier === c ? ' selected' : '') + '>' + esc(c) + '</option>'; })).join('');
+
+    var h = '<div class="card trk-card">' +
+      '<div class="trk-head">' +
+      '<span class="trk-bl">추적 등록 화물</span>' +
+      '<span class="trk-carrier">감시 중 ' + actCnt + '건 / 전체 ' + all.length + '건</span>' +
+      '<span class="trk-spacer"></span>' +
+      '<span class="trk-asof">매일 08:20 · 20:20 · ETD/ETA 변경 시 메일</span>' +
+      '</div>' +
+      /* 툴바: 검색·선사·상태 필터 + 일괄등록 */
+      '<div class="berth-toolbar" style="margin:0; padding:12px 18px; border-bottom:1px solid var(--border);">' +
+      '<input type="search" id="wf_q" class="focus-search" placeholder="B/L·메모 검색" value="' + esc(watchState.q) + '" style="max-width:220px;">' +
+      '<select id="wf_carrier" class="focus-search" style="max-width:150px;">' + carrierOpts + '</select>' +
+      '<div class="chip-row" style="margin:0;">' +
+      '<button class="f-chip' + (watchState.active === 'all' ? '' : ' off') + '" data-act="all">전체</button>' +
+      '<button class="f-chip' + (watchState.active === 'on' ? '' : ' off') + '" data-act="on">감시 중</button>' +
+      '<button class="f-chip' + (watchState.active === 'off' ? '' : ' off') + '" data-act="off">종료</button>' +
+      '</div>' +
+      '<span class="trk-spacer"></span>' +
+      '<button class="btn btn-ghost" id="wf_bulk" type="button">' + SVG.upload + ' 일괄 등록</button>' +
+      '</div>' +
+      '<div class="trk-sec" style="padding-top:14px;"><div class="trk-tbl-wrap"><table class="trk-tbl">' +
+      '<thead><tr><th>B/L No.</th><th>선사</th><th>상태</th><th>진행</th><th>구간</th><th>ETD</th><th>ETA</th>' +
+      '<th>변경</th><th>남은기간</th><th>알림 수신</th><th>최근 수집</th><th></th></tr></thead><tbody>' +
+      (pageRows.length ? pageRows.map(watchRowHtml).join('') : '<tr><td colspan="12" class="na" style="text-align:center;padding:18px;">조건에 맞는 화물이 없습니다.</td></tr>') +
+      '</tbody></table></div>' +
+      /* 페이지네이션 */
+      (pages > 1 ? '<div class="wf-pager">' +
+        '<button class="btn btn-ghost trk-mini" id="wf_prev"' + (watchState.page <= 1 ? ' disabled' : '') + '>이전</button>' +
+        '<span class="wf-page">' + watchState.page + ' / ' + pages + ' <small>(' + total + '건)</small></span>' +
+        '<button class="btn btn-ghost trk-mini" id="wf_next"' + (watchState.page >= pages ? ' disabled' : '') + '>다음</button>' +
+        '</div>' : '') +
+      '</div></div>';
+    box.innerHTML = h;
+
+    /* 이벤트 바인딩 */
+    var qEl = el('wf_q');
+    if (qEl) qEl.addEventListener('input', debounce(function () { watchState.q = qEl.value; watchState.page = 1; renderWatch(); }, 250));
+    var cEl = el('wf_carrier');
+    if (cEl) cEl.addEventListener('change', function () { watchState.carrier = cEl.value; watchState.page = 1; renderWatch(); });
+    box.querySelectorAll('.f-chip[data-act]').forEach(function (btn) {
+      btn.addEventListener('click', function () { watchState.active = btn.getAttribute('data-act'); watchState.page = 1; renderWatch(); });
+    });
+    var pv = el('wf_prev'), nx = el('wf_next');
+    if (pv) pv.addEventListener('click', function () { if (watchState.page > 1) { watchState.page--; renderWatch(); } });
+    if (nx) nx.addEventListener('click', function () { watchState.page++; renderWatch(); });
+    var bulk = el('wf_bulk');
+    if (bulk) bulk.addEventListener('click', openBulkDialog);
+    box.querySelectorAll('button[data-off]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var mbl = btn.getAttribute('data-off');
+        if (!window.confirm(mbl + ' 추적을 해제할까요?\n(기록은 남고 이후 수집·알림만 중단됩니다)')) return;
+        btn.disabled = true;
+        fetch(WATCH_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'remove', mbl_no: mbl }) })
+          .then(function () { loadWatchList(); }).catch(function () { btn.disabled = false; alert('해제 실패 — 잠시 후 다시.'); });
       });
-    }).catch(function () {
-      box.innerHTML = '<div class="card"><p class="sc-sub" style="margin:0;">추적 목록을 불러오지 못했습니다.</p></div>';
     });
   }
+
+  function debounce(fn, ms) { var t; return function () { clearTimeout(t); t = setTimeout(fn, ms); }; }
+
+  function loadWatchList() {
+    var box = el('watchOut'); if (!box) return;
+    loadCarriers(function () {
+      fetch(WATCH_API + '?action=list').then(function (r) { return r.json(); }).then(function (d) {
+        watchState.items = d.items || [];
+        renderWatch();
+      }).catch(function () { box.innerHTML = '<div class="card"><p class="sc-sub" style="margin:0;">추적 목록을 불러오지 못했습니다.</p></div>'; });
+    });
+  }
+
+  /* 일괄 등록 다이얼로그 — BL 목록 붙여넣기(줄바꿈/쉼표 구분) */
+  function openBulkDialog() {
+    loadCarriers(function () {
+      var live = ((watchState.carriers || {}).live || []).map(function (x) { return x.scac + '(' + x.name + ')'; }).join(' · ');
+      var ov = document.createElement('div'); ov.className = 'reg-ov';
+      ov.innerHTML = '<div class="reg-card" style="max-width:560px;">' +
+        '<h3>B/L 일괄 등록</h3>' +
+        '<p class="reg-hint">B/L 번호를 <b>줄바꿈 또는 쉼표</b>로 구분해 붙여넣으세요 (최대 500건). 선사는 번호로 자동 판별됩니다.</p>' +
+        '<div class="reg-support"><b>실시간 조회:</b> ' + esc(live) + '<br><span style="color:var(--muted);">그 외 선사는 등록되어도 목록에만 표시되고 자동 조회는 되지 않습니다.</span></div>' +
+        '<textarea id="bulkTxt" class="focus-search" style="width:100%; min-height:150px; font-family:monospace; resize:vertical;" placeholder="COSU6504130030&#10;SMLMSEL6C8710500&#10;ONEYSELG97346400"></textarea>' +
+        '<div class="reg-row"><div><label class="reg-l">추적 기간</label>' +
+        '<div class="reg-seg" id="bulkTerm"><button data-m="3" class="on">3개월</button><button data-m="6">6개월</button></div></div>' +
+        '<div style="flex:1;"><label class="reg-l">알림 이메일 <span class="reg-opt">(선택)</span></label>' +
+        '<input type="email" id="bulkMail" class="focus-search" value="' + esc(myEmail()) + '" style="width:100%;"></div></div>' +
+        '<div id="bulkMsg" class="reg-msg"></div>' +
+        '<div class="reg-btns"><button class="btn btn-ghost" id="bulkCancel">취소</button>' +
+        '<button class="btn btn-primary" id="bulkOk">등록</button></div></div>';
+      document.body.appendChild(ov);
+      var term = 3;
+      ov.querySelectorAll('#bulkTerm button').forEach(function (x) {
+        x.addEventListener('click', function () { term = Number(x.getAttribute('data-m')); ov.querySelectorAll('#bulkTerm button').forEach(function (y) { y.classList.remove('on'); }); x.classList.add('on'); });
+      });
+      function close() { ov.remove(); }
+      ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+      el2(ov, 'bulkCancel').addEventListener('click', close);
+      el2(ov, 'bulkOk').addEventListener('click', function () {
+        var raw = el2(ov, 'bulkTxt').value.split(/[\s,;]+/).map(function (x) { return x.replace(/[^A-Za-z0-9]/g, '').toUpperCase(); }).filter(Boolean);
+        var uniq = Array.from(new Set(raw));
+        var msg = el2(ov, 'bulkMsg');
+        if (!uniq.length) { msg.innerHTML = '<span class="reg-err">등록할 B/L 이 없습니다.</span>'; return; }
+        el2(ov, 'bulkOk').disabled = true; el2(ov, 'bulkOk').textContent = '등록 중… (' + uniq.length + '건)';
+        fetch(WATCH_API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'bulk', term_months: term, notify_email: el2(ov, 'bulkMail').value.trim(), created_by: myEmail(), rows: uniq.map(function (m) { return { mbl_no: m }; }) }) })
+          .then(function (r) { return r.json(); }).then(function (d) {
+            if (d.error) { msg.innerHTML = '<span class="reg-err">' + esc(d.error) + '</span>'; el2(ov, 'bulkOk').disabled = false; el2(ov, 'bulkOk').textContent = '등록'; return; }
+            msg.innerHTML = '<span class="reg-ok">등록 ' + d.added + '건 · 실패 ' + d.failed + '건</span>' +
+              (d.failed ? '<div class="reg-fail">' + (d.results || []).filter(function (x) { return !x.ok; }).map(function (x) { return esc(x.mbl_no) + ' — ' + esc(x.error); }).join('<br>') + '</div>' : '');
+            loadWatchList();
+            if (!d.failed) setTimeout(close, 800);
+            else { el2(ov, 'bulkOk').disabled = false; el2(ov, 'bulkOk').textContent = '닫기'; el2(ov, 'bulkOk').onclick = close; }
+          }).catch(function () { msg.innerHTML = '<span class="reg-err">네트워크 오류.</span>'; el2(ov, 'bulkOk').disabled = false; el2(ov, 'bulkOk').textContent = '등록'; });
+      });
+    });
+  }
+
 
   /* 딥링크 카드 — live 미지원 선사·항공사 (외부 공식 추적 페이지로 안내) */
   function renderDeeplink(title, name, url, note) {
