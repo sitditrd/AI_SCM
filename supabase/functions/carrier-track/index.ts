@@ -140,40 +140,74 @@ async function trackONE(no: string) {
   return { summary, voyages, containers };
 }
 
-/* ---------------- COSCO (COSU) — 공개 JSON 확인, 필드 매핑은 베스트에포트 ----------------
-   GET https://elines.coscoshipping.com/ebtracking/public/bill/{no}
-   실 BL 표본이 없어(2026-08-11) 알려진 구조로 관대 추출 + 원문 일부를 raw 로 동봉한다. */
+/* ---------------- COSCO (COSU) — 2026-08-11 실 BL(태웅 ELVIS_TWSC) 로 검증 완료 ----------------
+   GET https://elines.coscoshipping.com/ebtracking/public/bill/{COSU 뗀 번호}
+   응답: data.content = { trackingPath(BL 요약), actualShipment[](구간별 항차), cargoTrackingContainer[](번호) } */
 async function trackCOSCO(no: string) {
   const r = await fetch(
-    `https://elines.coscoshipping.com/ebtracking/public/bill/${encodeURIComponent(no)}?timestamp=${Date.now()}`,
+    // ONE 과 마찬가지로 SCAC 프리픽스를 뗀 번호로 조회해야 한다.
+    // COSU 를 붙인 채 보내면 HTTP 200 + "No data" 로 조용히 빈 응답이 온다(2026-08-11 실 BL 로 확인).
+    `https://elines.coscoshipping.com/ebtracking/public/bill/${encodeURIComponent(no.replace(/^COSU/i, ""))}?timestamp=${Date.now()}`,
     { headers: { ...FETCH_OPTS.headers, "language": "en_US" }, signal: AbortSignal.timeout(15000) },
   );
   const d = await r.json();
   const content = d?.data?.content;
-  if (!content || d?.message === "No data") return { empty: true, upstream: d?.message ?? `HTTP ${r.status}` };
-
-  const containers: unknown[] = [];
-  const list = pick(content, "cargoTrackingContainer", "containerList", "containers");
-  if (Array.isArray(list)) {
-    for (const c of list) {
-      const evsRaw = pick(c, "containerHistorys", "events", "trackingPath");
-      containers.push({
-        cntrNo: String(pick(c, "containerNumber", "cntrNo", "containerNo") ?? "").replace(/[^A-Za-z0-9]/g, ""),
-        szTp: pick(c, "containerType", "szTp"),
-        events: (Array.isArray(evsRaw) ? evsRaw : []).map((e: unknown) => ({
-          name: pick(e, "containerNumberStatus", "eventName", "status"),
-          location: locName(pick(e, "location", "locationName")),
-          timeLocal: pick(e, "timeOfIssue", "eventDate", "time"),
-          actual: true,
-        })),
-      });
-    }
+  if (!content || d?.message === "No data" || content?.isbillOfLadingExist === false) {
+    return { empty: true, upstream: d?.message || "No data" };
   }
+
+  // trackingPath = BL 요약(FMS_API_MST 상당), actualShipment[] = 구간별 항차(FMS_API_TS 상당)
+  const tp = pick(content, "trackingPath") as Record<string, unknown> | undefined;
+  const legs = pick(content, "actualShipment");
+  const voyages = (Array.isArray(legs) ? legs : [])
+    .sort((a, b) => Number(pick(a, "sequenceNumber") ?? 0) - Number(pick(b, "sequenceNumber") ?? 0))
+    .map((v: unknown) => {
+      const polAct = pick(v, "actualDepartureDate");
+      const podAct = pick(v, "actualArrivalDate");
+      return {
+        vessel: pick(v, "vesselName"),
+        voyage: pick(v, "voyageNo"),
+        pol: { name: pick(v, "portOfLoading"), date: polAct ?? pick(v, "expectedDateOfDeparture"), actual: !!polAct },
+        pod: { name: pick(v, "portOfDischarge"), date: podAct ?? pick(v, "estimatedDateOfArrival"), actual: !!podAct },
+      };
+    });
+
+  // 컨테이너: 공개 API 는 번호만 주고 게이트 이벤트는 비어 있는 경우가 많다.
+  // 그럴 때는 구간 항차에서 선적/양하 이벤트를 합성해 타임라인이 비지 않게 한다.
+  const list = pick(content, "cargoTrackingContainer", "containerList", "containers");
+  const synth = voyages.flatMap((v) => {
+    const out: unknown[] = [];
+    if (v.pol?.date) out.push({ name: `Vessel Departure (${v.vessel ?? ""} ${v.voyage ?? ""})`.trim(), location: v.pol.name, timeLocal: v.pol.date, actual: v.pol.actual });
+    if (v.pod?.date) out.push({ name: `Vessel Arrival (${v.vessel ?? ""} ${v.voyage ?? ""})`.trim(), location: v.pod.name, timeLocal: v.pod.date, actual: v.pod.actual });
+    return out;
+  });
+  const containers = (Array.isArray(list) ? list : []).map((c: unknown) => {
+    const evsRaw = pick(c, "containerHistorys", "events");
+    const own = (Array.isArray(evsRaw) ? evsRaw : []).map((e: unknown) => ({
+      name: pick(e, "containerNumberStatus", "eventName", "status"),
+      location: locName(pick(e, "location", "locationName")),
+      timeLocal: pick(e, "timeOfIssue", "eventDate", "time"),
+      actual: true,
+    }));
+    return {
+      cntrNo: String(pick(c, "cntrNum", "containerNumber", "cntrNo", "containerNo") ?? "").replace(/[^A-Za-z0-9]/g, ""),
+      szTp: pick(c, "containerType", "szTp"),
+      events: own.length ? own : synth,
+      eventsSynthesized: own.length ? undefined : true,
+    };
+  });
+
   return {
-    summary: { blNo: no, por: locName(pick(content, "porName", "por")), pod: locName(pick(content, "podName", "pod")) },
-    voyages: [],
+    summary: {
+      blNo: no,
+      por: pick(tp, "fromCity") ?? locName(pick(content, "porName", "por")),
+      pod: pick(tp, "toCity") ?? locName(pick(content, "podName", "pod")),
+      place: pick(tp, "pol"),
+      vessel: pick(tp, "vslNme"),
+      voyage: pick(tp, "voyNumber"),
+    },
+    voyages,
     containers,
-    raw: containers.length ? undefined : JSON.stringify(content).slice(0, 3000),
   };
 }
 

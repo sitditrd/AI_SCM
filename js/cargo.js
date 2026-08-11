@@ -87,6 +87,7 @@
       '<h3 style="margin-top:0;">선사 운송 추적 <small style="color:var(--muted);">' + esc(res.carrierName || res.carrier) + ' · ' + esc((res.query || {}).no || no) + '</small></h3>';
     if (s.por || s.pod) {
       html += '<p class="sc-sub" style="margin:4px 0 10px;">' + esc(s.por || '?') + ' → ' + esc(s.pod || '?') +
+        (s.vessel ? ' · <span style="color:var(--muted);">' + esc(s.vessel) + (s.voyage ? ' ' + esc(s.voyage) : '') + '</span>' : '') +
         (s.bookingNo ? ' · <span style="color:var(--muted);">Booking ' + esc(s.bookingNo) + '</span>' : '') + '</p>';
     }
     /* 운송 구간(항차) — 레거시 FMS_API_TS 상당, N구간 */
@@ -101,7 +102,8 @@
     /* 컨테이너별 이벤트 타임라인 — 레거시 FMS_API_CNTR 상당 */
     (res.containers || []).forEach(function (c) {
       html += '<h3 style="font-size:15px; margin-bottom:6px;">컨테이너 <span>' + esc(c.cntrNo || '') + '</span>' +
-        (c.szTp ? ' <small style="color:var(--muted); font-weight:400;">' + esc(c.szTp) + '</small>' : '') + '</h3>';
+        (c.szTp ? ' <small style="color:var(--muted); font-weight:400;">' + esc(c.szTp) + '</small>' : '') +
+        (c.eventsSynthesized ? ' <small style="color:var(--muted); font-weight:400;">(본선 구간 기준)</small>' : '') + '</h3>';
       var evs = c.events || [];
       if (evs.length) {
         html += '<div class="pipe-flow" style="flex-direction:column; gap:8px;">' + evs.map(function (e) {
