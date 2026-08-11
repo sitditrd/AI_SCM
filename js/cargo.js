@@ -307,7 +307,7 @@
      ============================================================ */
   var WATCH_API = 'https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/bl-watch';
   var WATCH_PAGE = 20;                     /* 페이지당 행수 */
-  var watchState = { items: [], page: 1, q: '', carrier: '', active: 'all', carriers: null };
+  var watchState = { items: [], page: 1, q: '', carrier: '', active: 'all', status: '', route: '', sort: 'reg', carriers: null };
 
   function mySession() {
     try { return JSON.parse(localStorage.getItem('twl-auth') || 'null') || {}; } catch (e) { return {}; }
@@ -393,17 +393,35 @@
   function el2(root, id) { return root.querySelector('#' + id); }
 
   /* 필터 적용된 결과 */
+  function progOf(it) { var s = it.snapshot || {}; return s.status || it.last_status || ''; }
+  function routeOf(it) { var s = it.snapshot || {}; return [s.por, s.pod].filter(Boolean).join(' → '); }
+
   function watchFiltered() {
-    return watchState.items.filter(function (it) {
+    var rows = watchState.items.filter(function (it) {
       if (watchState.active === 'on' && !it.active) return false;
       if (watchState.active === 'off' && it.active) return false;
       if (watchState.carrier && it.carrier !== watchState.carrier) return false;
+      if (watchState.status && progOf(it) !== watchState.status) return false;
+      if (watchState.route) {
+        if (routeOf(it).toUpperCase().indexOf(watchState.route.toUpperCase()) < 0) return false;
+      }
       if (watchState.q) {
         var q = watchState.q.toUpperCase();
         if ((it.mbl_no || '').toUpperCase().indexOf(q) < 0 && (it.memo || '').toUpperCase().indexOf(q) < 0) return false;
       }
       return true;
     });
+    /* 정렬 — 등록순(기본)·ETD·ETA·남은기간 */
+    var sort = watchState.sort;
+    if (sort !== 'reg') {
+      rows = rows.slice().sort(function (a, b) {
+        if (sort === 'exp') return (daysLeft(a.expires_at) ?? 9e9) - (daysLeft(b.expires_at) ?? 9e9);
+        var ka = ((a.snapshot || {})[sort] || ''), kb = ((b.snapshot || {})[sort] || '');
+        if (!ka && !kb) return 0; if (!ka) return 1; if (!kb) return -1;
+        return String(ka) < String(kb) ? -1 : 1;
+      });
+    }
+    return rows;
   }
 
   function daysLeft(exp) {
@@ -468,6 +486,13 @@
     var carrierOpts = ['<option value="">전체 선사</option>'].concat(
       Array.from(new Set(all.map(function (x) { return x.carrier; }).filter(Boolean))).sort()
         .map(function (c) { return '<option value="' + esc(c) + '"' + (watchState.carrier === c ? ' selected' : '') + '>' + esc(c) + '</option>'; })).join('');
+    /* 진행상태 옵션은 실제 데이터에서 뽑는다(운송중·입항·양하·선적 등) */
+    var statusOpts = ['<option value="">진행 전체</option>'].concat(
+      Array.from(new Set(all.map(progOf).filter(Boolean))).sort()
+        .map(function (st) { return '<option value="' + esc(st) + '"' + (watchState.status === st ? ' selected' : '') + '>' + esc(st) + '</option>'; })).join('');
+    var sortOpts = [['reg', '등록순'], ['etd', 'ETD 순'], ['eta', 'ETA 순'], ['exp', '남은기간 순']]
+      .map(function (o) { return '<option value="' + o[0] + '"' + (watchState.sort === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('');
+    var hasFilter = watchState.q || watchState.carrier || watchState.status || watchState.route || watchState.active !== 'all';
 
     var h = '<div class="card trk-card">' +
       '<div class="trk-head">' +
@@ -478,16 +503,20 @@
       '<span class="trk-spacer"></span>' +
       '<span class="trk-asof">매일 08:20 · 20:20 · ETD/ETA 변경 시 메일</span>' +
       '</div>' +
-      /* 툴바: 검색·선사·상태 필터 + 일괄등록 */
-      '<div class="berth-toolbar" style="margin:0; padding:12px 18px; border-bottom:1px solid var(--border);">' +
-      '<input type="search" id="wf_q" class="focus-search" placeholder="B/L·메모 검색" value="' + esc(watchState.q) + '" style="max-width:220px;">' +
-      '<select id="wf_carrier" class="focus-search" style="max-width:150px;">' + carrierOpts + '</select>' +
+      /* 툴바: 검색·선사·진행·구간·정렬 필터 + 일괄등록 (선석배정 조회 영역 사상) */
+      '<div class="berth-toolbar" style="margin:0; padding:12px 18px; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:8px;">' +
+      '<input type="search" id="wf_q" class="focus-search" placeholder="B/L·메모 검색" value="' + esc(watchState.q) + '" style="max-width:180px;">' +
+      '<select id="wf_carrier" class="focus-search" style="max-width:130px;">' + carrierOpts + '</select>' +
+      '<select id="wf_status" class="focus-search" style="max-width:130px;">' + statusOpts + '</select>' +
+      '<input type="search" id="wf_route" class="focus-search" placeholder="구간(항구) 검색" value="' + esc(watchState.route) + '" style="max-width:150px;">' +
       '<div class="chip-row" style="margin:0;">' +
       '<button class="f-chip' + (watchState.active === 'all' ? '' : ' off') + '" data-act="all">전체</button>' +
       '<button class="f-chip' + (watchState.active === 'on' ? '' : ' off') + '" data-act="on">감시 중</button>' +
       '<button class="f-chip' + (watchState.active === 'off' ? '' : ' off') + '" data-act="off">종료</button>' +
       '</div>' +
+      (hasFilter ? '<button class="btn btn-ghost trk-mini" id="wf_reset" type="button">필터 초기화</button>' : '') +
       '<span class="trk-spacer"></span>' +
+      '<select id="wf_sort" class="focus-search" style="max-width:120px;">' + sortOpts + '</select>' +
       '<button class="btn btn-ghost" id="wf_bulk" type="button">' + SVG.upload + ' 일괄 등록</button>' +
       '</div>' +
       '<div class="trk-sec" style="padding-top:14px;"><div class="trk-tbl-wrap"><table class="trk-tbl">' +
@@ -509,6 +538,16 @@
     if (qEl) qEl.addEventListener('input', debounce(function () { watchState.q = qEl.value; watchState.page = 1; renderWatch(); }, 250));
     var cEl = el('wf_carrier');
     if (cEl) cEl.addEventListener('change', function () { watchState.carrier = cEl.value; watchState.page = 1; renderWatch(); });
+    var stEl = el('wf_status');
+    if (stEl) stEl.addEventListener('change', function () { watchState.status = stEl.value; watchState.page = 1; renderWatch(); });
+    var rtEl = el('wf_route');
+    if (rtEl) rtEl.addEventListener('input', debounce(function () { watchState.route = rtEl.value; watchState.page = 1; renderWatch(); }, 250));
+    var srtEl = el('wf_sort');
+    if (srtEl) srtEl.addEventListener('change', function () { watchState.sort = srtEl.value; renderWatch(); });
+    var rst = el('wf_reset');
+    if (rst) rst.addEventListener('click', function () {
+      watchState.q = ''; watchState.carrier = ''; watchState.status = ''; watchState.route = ''; watchState.active = 'all'; watchState.page = 1; renderWatch();
+    });
     box.querySelectorAll('.f-chip[data-act]').forEach(function (btn) {
       btn.addEventListener('click', function () { watchState.active = btn.getAttribute('data-act'); watchState.page = 1; renderWatch(); });
     });

@@ -167,10 +167,41 @@ def mark_notified(mbl, kinds, err, since):
             print('     → 알림 상태 기록 실패(%s): %s' % (k, str(e)[:80]))
 
 
+def parse_dt(v):
+    """선사가 주는 시각 문자열 → datetime(UTC). 형식이 제각각이라 관대하게 판단한다."""
+    if not v:
+        return None
+    s = str(v).strip().replace('T', ' ').replace('Z', '')
+    for fmt in ('%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%d'):
+        try:
+            return datetime.datetime.strptime(s[:len(fmt) + 6], fmt).replace(tzinfo=datetime.timezone.utc)
+        except ValueError:
+            continue
+    return None
+
+
+# 폴링 등급 — 총 호출량을 늘리지 않으면서 "바뀔 만한 때"만 자주 본다.
+# 근거: 선사 스케줄은 실시간이 아니라 하루 1~2회 갱신되고, SITC 는 연속 5~6회에 429(실측).
+TIERS = {'near': 3, 'transit': 12, 'pre': 24}   # 시간 단위
+
+
+def poll_tier(status, etd, eta):
+    """ETD/ETA 가 ±3일 안이면 near(3h). 출항했으면 transit(12h). 그 전이면 pre(24h)."""
+    now = datetime.datetime.now(datetime.timezone.utc)
+    for v in (etd, eta):
+        d = parse_dt(v)
+        if d and abs((d - now).total_seconds()) <= 3 * 86400:
+            return 'near'
+    if status in ('운송 중', '환적 중', '입항', '양하 완료'):
+        return 'transit'
+    return 'pre'
+
+
 def main():
     flags = [a for a in sys.argv[1:] if a.startswith('--')]
     dry = '--dry' in flags
     no_mail = '--no-mail' in flags or dry
+    force = '--force' in flags        # next_poll_at 무시하고 전건 조회
 
     rows = sb('GET', '/rest/v1/bl_watch?active=eq.true&select=*&order=id')
     if not rows:
@@ -186,9 +217,32 @@ def main():
             sb('PATCH', '/rest/v1/bl_watch?id=eq.%s' % w['id'], {'active': False, 'last_status': '기간 만료'})
         print('[EXPIRE] %s — 추적 기간 만료(%s)로 자동 해제' % (w['mbl_no'], w.get('expires_at', '')[:10]))
     rows = [w for w in rows if w not in expired]
+
+    # 적응형 폴링 — next_poll_at 이 지난 건만 이번 회차에 조회한다.
+    # (스케줄러는 2시간마다 깨어나지만 등급별 간격에 따라 실제 조회 대상은 매번 다르다)
+    if not force:
+        due = [w for w in rows if not w.get('next_poll_at') or w['next_poll_at'] <= now_iso]
+        skipped = len(rows) - len(due)
+        if skipped:
+            print('[INFO] 이번 회차 조회 대상 %d건 (등급 대기 %d건 건너뜀)' % (len(due), skipped))
+        rows = due
     if not rows:
-        print('[DONE] 만료 %d건 해제, 감시 대상 없음' % len(expired))
+        print('[DONE] 만료 %d건 해제, 이번 회차 조회 대상 없음' % len(expired))
         return 0
+
+    # 같은 선사를 연속 호출하면 SITC 가 429 를 낸다(실측) — 선사가 번갈아 나오게 재배치해 간격을 벌린다.
+    def carrier_of(w):
+        c = (w.get('carrier') or '')
+        return c if c else (w['mbl_no'][:4])
+    buckets = {}
+    for w in rows:
+        buckets.setdefault(carrier_of(w), []).append(w)
+    interleaved = []
+    while any(buckets.values()):
+        for c in list(buckets):
+            if buckets[c]:
+                interleaved.append(buckets[c].pop(0))
+    rows = interleaved
 
     changed_total = mailed = failed = 0
     for w in rows:
@@ -199,8 +253,11 @@ def main():
             failed += 1
             print('[FAIL] %s — %s' % (mbl, res['error']))
             if not dry:
+                # 실패 시엔 30분 뒤 재시도(레이트리밋·일시장애 회복 시간)
+                retry = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=30)).isoformat()
                 sb('PATCH', '/rest/v1/bl_watch?id=eq.%s' % w['id'],
-                   {'last_polled_at': datetime.datetime.now(datetime.timezone.utc).isoformat(), 'poll_error': res['error'][:200]})
+                   {'last_polled_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                    'poll_error': res['error'][:200], 'next_poll_at': retry})
             time.sleep(2)
             continue
 
@@ -227,12 +284,20 @@ def main():
 
         snap = dict(cur); snap['mbl_no'] = mbl; snap['payload'] = res
         sb('POST', '/rest/v1/bl_snapshot', snap)
+
+        # 다음 조회 시각을 등급에 따라 계산 — 종료 건은 더 안 본다
+        tier = poll_tier(cur['status'], cur['etd'], cur['eta'])
+        nxt = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=TIERS[tier])).isoformat()
         sb('PATCH', '/rest/v1/bl_watch?id=eq.%s' % w['id'], {
             'last_polled_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
             'last_status': cur['status'], 'poll_error': None,
             'carrier': cur['carrier'] or w.get('carrier'),
             'active': (not done),
+            'poll_tier': (None if done else tier),
+            'next_poll_at': (None if done else nxt),
         })
+        if not changes:
+            print('     · 등급 %s → 다음 조회 %+dh' % (tier, TIERS[tier]))
 
         notify_list = []
         for c in changes:
