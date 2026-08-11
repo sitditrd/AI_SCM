@@ -207,7 +207,15 @@ select index_code, route, value, pct_change, pub_date, updated_at
 
 ---
 
-## 4-3. `git push` 가 인증에 실패할 때 (현재 이 PC 해당)
+## 4-3. `git push` 가 인증에 실패할 때 (2026-08-12 응급 수리 완료 — 기록 보존)
+
+> **2026-08-12 수리됨**: `usr\bin\sh.exe`(2026-07 빌드, 구 DLL 과 불일치)를 같은 폴더의
+> `bash.exe`(2024 빌드, DLL 과 짝이 맞음) 사본으로 교체했다. MSYS2 에서 sh.exe 는 원래
+> bash 의 복사본이므로 동작 차이가 없다. 원본은 `sh.exe.broken-20260731` 로 백업.
+> 이후 `git push` 정상 동작 확인. 단 `usr\bin` 의 다른 2026-07 빌드 유틸(patch·openssl 등)은
+> 여전히 구 DLL 과 불일치 상태이므로, **한가할 때 Git for Windows 정식 재설치 권장**
+> (모든 터미널·Claude 앱 종료 후 실행해야 DLL 이 교체된다). 재설치하면 백업 파일은 지워도 된다.
+> `scripts/gh_push.py` 는 만일에 대비해 남겨둔다. 아래는 당시 진단 기록이다.
 
 증상:
 
