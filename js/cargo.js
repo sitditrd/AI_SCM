@@ -42,7 +42,9 @@
     SMLM: ['SM상선', 'https://esvc.smlines.com/smline/CUP_HOM_3301.do']
   };
   function oceanInfo(no) {
-    var m = /^([A-Za-z]{4})[0-9]{6,}$/.exec(String(no).replace(/[^A-Za-z0-9]/g, ''));
+    /* 프리픽스 4글자 + 영숫자 6자 이상 — 숫자만 강제하면 ONE 처럼 부킹오피스 문자가
+       섞이는 BL(예: ONEYRICG34548800)을 놓친다(2026-08-11 실측). 오탐은 OCEAN 맵 조회가 걸러낸다. */
+    var m = /^([A-Za-z]{4})[A-Za-z0-9]{6,}$/.exec(String(no).replace(/[^A-Za-z0-9]/g, ''));
     if (!m) return null;
     var scac = m[1].toUpperCase();
     var c = OCEAN[scac];
