@@ -330,16 +330,37 @@
   }
   function isLive(scac) { return ((watchState.carriers || {}).live || []).some(function (x) { return x.scac === scac; }); }
 
-  /* 조회 결과 헤더의 "추적 등록" 버튼 */
+  /* 등록 목록에서 이 BL 을 찾는다(대소문자·특수문자 무시) */
+  function findWatch(mbl) {
+    var m = String(mbl || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    return (watchState.items || []).filter(function (x) { return String(x.mbl_no).toUpperCase() === m; })[0];
+  }
+
+  /* 조회 결과 헤더의 "추적 등록" 버튼 —
+     이미 등록된 BL 이면 버튼이 "감시 중" 상태로 나타나고, 눌러도 재등록이 아니라 목록으로 이동한다.
+     (재조회해도 등록 여부가 버튼에 그대로 반영된다) */
   function bindWatchBtn() {
     var b = el('watchBtn');
     if (!b) return;
+    var mbl = b.getAttribute('data-mbl'), carrier = b.getAttribute('data-carrier');
+    var w = findWatch(mbl);
+    if (w && w.active) { markBtnWatching(b); return; }
     b.addEventListener('click', function () {
-      var mbl = b.getAttribute('data-mbl'), carrier = b.getAttribute('data-carrier');
-      openRegDialog([{ mbl_no: mbl, carrier: carrier }], function () {
-        b.innerHTML = SVG.check + ' 등록됨'; b.classList.add('is-on'); b.disabled = true;
-      });
+      openRegDialog([{ mbl_no: mbl, carrier: carrier }], function () { markBtnWatching(b); });
     });
+  }
+  function markBtnWatching(b) {
+    b.innerHTML = SVG.check + ' 감시 중';
+    b.classList.add('is-on');
+    b.title = '이미 추적 등록됨 — 아래 목록에서 관리';
+    b.onclick = function () { var s = el('watch'); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  }
+  /* 목록이 (조회 이후) 늦게 로드된 경우에도 버튼 상태를 맞춘다 */
+  function syncWatchBtn() {
+    var b = el('watchBtn');
+    if (!b || b.classList.contains('is-on')) return;
+    var w = findWatch(b.getAttribute('data-mbl'));
+    if (w && w.active) markBtnWatching(b);
   }
 
   /* 등록 다이얼로그 (단건·다건 공용) — 기간 3/6개월 선택 + 알림 이메일 */
@@ -580,6 +601,7 @@
         watchState.admin = !!d.admin;
         watchState.needLogin = !!d.needLogin;
         renderWatch();
+        syncWatchBtn();      // 조회 결과가 이미 떠 있으면 등록 상태를 버튼에 반영
       }).catch(function () { box.innerHTML = '<div class="card"><p class="sc-sub" style="margin:0;">추적 목록을 불러오지 못했습니다.</p></div>'; });
     });
   }
