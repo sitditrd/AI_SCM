@@ -158,7 +158,11 @@
     out: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
       '<path d="M4 12h13"/><path d="M13 7l5 5-5 5"/><path d="M20 4v16"/></svg>',
     into: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-      '<path d="M20 12H7"/><path d="M11 7l-5 5 5 5"/><path d="M4 4v16"/></svg>'
+      '<path d="M20 12H7"/><path d="M11 7l-5 5 5 5"/><path d="M4 4v16"/></svg>',
+    bell: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M18 8.5a6 6 0 10-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5"/><path d="M13.7 20a2 2 0 01-3.4 0"/></svg>',
+    check: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M20 6L9 17l-5-5"/></svg>'
   };
 
   /* 경로 시각화 — 항차(voyages)가 있으면 그 구간을, 없으면 POL→POD 단일 구간 */
@@ -230,6 +234,8 @@
       '<span class="trk-badge ' + st.c + '">' + esc(st.t) + '</span>' +
       '<span class="trk-spacer"></span>' +
       (s.vessel ? '<span class="trk-carrier">' + esc(s.vessel) + (s.voyage ? ' ' + esc(s.voyage) : '') + '</span>' : '') +
+      '<button class="btn btn-ghost trk-watch-btn" type="button" id="watchBtn" data-mbl="' + esc((res.query || {}).no || no) +
+      '" data-carrier="' + esc(res.carrier || '') + '">' + SVG.bell + ' 추적 등록</button>' +
       '</div>';
 
     /* ② 경로 */
@@ -279,6 +285,107 @@
       '<span class="trk-asof">데이터 시점 ' + esc(fmtIso(res.fetchedAt)) + ' UTC · 출처 ' + esc(res.source || '') + ' · 시각은 항만 현지 기준</span></div>';
     h += '</div>';
     out.innerHTML = h;
+    bindWatchBtn();
+  }
+
+  /* ============================================================
+     추적 등록(감시) — 등록해두면 스케줄러가 1일 2회 조회해 ETD/ETA 변경 시 메일 발송
+     ============================================================ */
+  var WATCH_API = 'https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/bl-watch';
+
+  function myEmail() {
+    /* 로그인 세션의 이메일을 기본 수신처로 쓴다 */
+    try {
+      var s = JSON.parse(localStorage.getItem('twl-auth') || 'null');
+      return (s && (s.email || s.login_id)) || '';
+    } catch (e) { return ''; }
+  }
+
+  function bindWatchBtn() {
+    var b = el('watchBtn');
+    if (!b) return;
+    b.addEventListener('click', function () {
+      var mbl = b.getAttribute('data-mbl'), carrier = b.getAttribute('data-carrier');
+      var mail = myEmail();
+      var input = window.prompt('추적 알림을 받을 이메일 주소\n(비우면 등록만 하고 메일은 보내지 않습니다)', mail);
+      if (input === null) return;                       /* 취소 */
+      b.disabled = true; b.textContent = '등록 중…';
+      fetch(WATCH_API, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'add', mbl_no: mbl, carrier: carrier, notify_email: input.trim(), created_by: mail })
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        if (d.error) { b.disabled = false; b.innerHTML = SVG.bell + ' 추적 등록'; alert('등록 실패: ' + d.error); return; }
+        b.innerHTML = SVG.check + ' 등록됨';
+        b.classList.add('is-on');
+        loadWatchList();
+      }).catch(function () {
+        b.disabled = false; b.innerHTML = SVG.bell + ' 추적 등록';
+        alert('일시적 네트워크 오류입니다 — 잠시 후 다시 시도하십시오.');
+      });
+    });
+  }
+
+  function watchRowHtml(it) {
+    var s = it.snapshot || {};
+    var ch = it.changes || [];
+    var badge = it.active
+      ? '<span class="trk-badge is-move">감시 중</span>'
+      : '<span class="trk-badge is-done">추적 종료</span>';
+    return '<tr>' +
+      '<td class="cn">' + SVG.box + ' ' + esc(it.mbl_no) + '</td>' +
+      '<td>' + esc(it.carrier || '') + '</td>' +
+      '<td>' + badge + '</td>' +
+      '<td>' + esc(s.status || it.last_status || '-') + '</td>' +
+      '<td>' + esc([s.por, s.pod].filter(Boolean).join(' → ') || '-') + '</td>' +
+      '<td class="dt">' + esc(fmtShort(s.etd) || '-') + '</td>' +
+      '<td class="dt">' + esc(fmtShort(s.eta) || '-') + '</td>' +
+      '<td>' + (ch.length
+        ? '<span title="' + esc(ch.map(function (c) { return c.field + ': ' + c.old_value + ' → ' + c.new_value; }).join('\n')) +
+          '" style="color:var(--up);font-weight:700;">' + ch.length + '건</span>'
+        : '<span class="na">-</span>') + '</td>' +
+      '<td>' + esc(it.notify_email || '-') + '</td>' +
+      '<td class="dt">' + esc(fmtShort(it.last_polled_at) || '-') + '</td>' +
+      '<td>' + (it.active
+        ? '<button class="btn btn-ghost trk-mini" type="button" data-off="' + esc(it.mbl_no) + '">해제</button>'
+        : '') + '</td>' +
+      '</tr>';
+  }
+
+  function loadWatchList() {
+    var box = el('watchOut');
+    if (!box) return;
+    fetch(WATCH_API + '?action=list').then(function (r) { return r.json(); }).then(function (d) {
+      var items = d.items || [];
+      if (!items.length) {
+        box.innerHTML = '<div class="card"><p class="sc-sub" style="margin:0;">등록된 추적 화물이 없습니다. 위에서 B/L 을 조회한 뒤 <b>추적 등록</b>을 누르면 ' +
+          '스케줄러가 매일 08:20 / 20:20 에 조회해 <b>출항·도착 예정일시가 바뀌면 메일로 알려드립니다.</b></p></div>';
+        return;
+      }
+      var act = items.filter(function (x) { return x.active; }).length;
+      box.innerHTML = '<div class="card trk-card">' +
+        '<div class="trk-head"><span class="trk-bl">추적 등록 화물</span>' +
+        '<span class="trk-carrier">감시 중 ' + act + '건 / 전체 ' + items.length + '건</span>' +
+        '<span class="trk-spacer"></span>' +
+        '<span class="trk-asof">스케줄러 매일 08:20 · 20:20 · ETD/ETA 변경 시 메일 발송</span></div>' +
+        '<div class="trk-sec" style="padding-top:14px;"><div class="trk-tbl-wrap"><table class="trk-tbl">' +
+        '<thead><tr><th>B/L No.</th><th>선사</th><th>상태</th><th>진행</th><th>구간</th><th>ETD</th><th>ETA</th>' +
+        '<th>변경</th><th>알림 수신</th><th>최근 수집</th><th></th></tr></thead><tbody>' +
+        items.map(watchRowHtml).join('') + '</tbody></table></div></div></div>';
+      box.querySelectorAll('button[data-off]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var mbl = btn.getAttribute('data-off');
+          if (!window.confirm(mbl + ' 추적을 해제할까요?\n(기록은 남고 이후 수집·알림만 중단됩니다)')) return;
+          btn.disabled = true;
+          fetch(WATCH_API, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'remove', mbl_no: mbl })
+          }).then(function () { loadWatchList(); })
+            .catch(function () { btn.disabled = false; alert('해제 실패 — 잠시 후 다시 시도하십시오.'); });
+        });
+      });
+    }).catch(function () {
+      box.innerHTML = '<div class="card"><p class="sc-sub" style="margin:0;">추적 목록을 불러오지 못했습니다.</p></div>';
+    });
   }
 
   /* 딥링크 카드 — live 미지원 선사·항공사 (외부 공식 추적 페이지로 안내) */
@@ -327,5 +434,6 @@
   document.addEventListener('DOMContentLoaded', function () {
     el('traceBtn').addEventListener('click', trace);
     el('blNo').addEventListener('keydown', function (e) { if (e.key === 'Enter') trace(); });
+    loadWatchList();
   });
 })();

@@ -1437,3 +1437,10 @@ table.trk-tbl td.na { color: var(--muted); }
   .trk-route { padding: 20px 12px 14px; }
   .trk-sec { padding: 0 12px 14px; }
 }
+
+/* 추적 등록 버튼 (헤더 우측) · 목록의 해제 버튼 */
+.trk-watch-btn { flex: 0 0 auto; font-size: 12.5px; padding: 7px 13px; display: inline-flex; align-items: center; gap: 6px; }
+.trk-watch-btn svg { flex: none; }
+.trk-watch-btn.is-on { color: var(--lv-low); border-color: color-mix(in srgb, var(--lv-low) 45%, transparent); }
+.trk-mini { font-size: 11.5px; padding: 4px 10px; }
+table.trk-tbl td .na { color: var(--muted); }
