@@ -30,6 +30,24 @@ OUT_DIR = os.path.join(os.environ.get('TEMP', r'C:\Temp'), 'berth_sql_parts')
 ROWS_PER_PART = 120
 DATA_DIR = r'D:\터미널 스케쥴 정보'      # 06시 수집기 산출 위치 (--today 자동 탐색)
 
+
+def integrated_path(d):
+    """수집일 d 의 통합 파일 경로를 찾는다(없으면 None).
+
+    06시 수집기가 2026-08-09 부터 통합 파일을 `통합\\YYYY\\MM\\` 로 아카이브하도록 바뀌어
+    루트만 보던 탐색이 08-10·08-11 분을 놓쳤다(실측). 두 위치를 모두 확인한다.
+    확장자는 수집기가 .xlsx / .xls(SpreadsheetML) 중 무엇으로 저장해도 잡히도록 둘 다 본다.
+    """
+    ymd = d.strftime('%Y%m%d')
+    dirs = (DATA_DIR, os.path.join(DATA_DIR, '통합', d.strftime('%Y'), d.strftime('%m')))
+    for base in dirs:
+        for ext in ('.xlsx', '.xls'):
+            p = os.path.join(base, '터미널_선석배정현황_통합_%s%s' % (ymd, ext))
+            if os.path.exists(p):
+                return p
+    return None
+
+
 COLS = ('  (collected_date, terminal_cd, sub_terminal, berth, carrier, vessel_name, voyage, route,\n'
         '   cct, eta, etd, work_start, work_end, discharge_qty, load_qty, shift_qty, status) values\n')
 
@@ -63,17 +81,14 @@ def main():
         today = datetime.date.today()
         args = []
         for back in range(0, 3):
-            d = today - datetime.timedelta(days=back)
-            # 수집기가 .xlsx / .xls(SpreadsheetML) 중 어느 쪽으로 저장해도 잡히도록 두 확장자 모두 확인
-            for ext in ('.xlsx', '.xls'):
-                p = os.path.join(DATA_DIR, '터미널_선석배정현황_통합_%s%s' % (d.strftime('%Y%m%d'), ext))
-                if os.path.exists(p):
-                    args.append(p)
-                    break
+            p = integrated_path(today - datetime.timedelta(days=back))
+            if p:
+                args.append(p)
         if not args:
             # ※ 과거 파일로 대체 적재하지 않는다 — 어제 데이터를 오늘 날짜로 넣는 것은 무의미하고,
             #    exit=0 으로 끝나 "정상"처럼 보여 수집 실패를 감춘다(2026-08-04 실측 사례).
-            sys.exit('[SKIP] 최근 3일치 수집 파일이 없습니다 — 06시 수집기 실행 여부를 확인하십시오: %s' % DATA_DIR)
+            sys.exit('[SKIP] 최근 3일치 수집 파일이 없습니다 — 06시 수집기 실행 여부를 확인하십시오: '
+                     '%s (및 %s\\통합\\YYYY\\MM)' % (DATA_DIR, DATA_DIR))
         print('[INFO] 캐치업 대상 %d개: %s' % (len(args), ', '.join(os.path.basename(a) for a in args)))
     if not args:
         sys.exit('사용법: upload_berth_sql_parts.py [--rest] [--today] <통합 xlsx 경로>')
