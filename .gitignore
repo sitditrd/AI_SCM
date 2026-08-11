@@ -3,6 +3,25 @@ __pycache__/
 *.local
 _site/
 
+# ===== 절대 커밋 금지 — 계정정보·시크릿 (회사 기밀) =====
+# MCP·Claude 로컬 설정: DB 계정/비밀번호가 담길 수 있음 (실체는 홈 ~/.claude.json)
+.claude/
+.mcp.json
+mcp.json
+# 자격증명·환경파일 일반 패턴
+.env
+.env.*
+*.env
+*credentials*
+*secret*
+*.pem
+*.key
+*.pfx
+# 오라클 접속설정
+tnsnames.ora
+sqlnet.ora
+wallet/
+
 # 생성 산출물 — 스케줄러가 매 실행 시 재생성하므로 커밋 금지
 sql/backfill_berth.sql
 sql/upload_berth.sql
