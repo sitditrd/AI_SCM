@@ -207,6 +207,41 @@ select index_code, route, value, pct_change, pub_date, updated_at
 
 ---
 
+## 4-3. `git push` 가 인증에 실패할 때 (현재 이 PC 해당)
+
+증상:
+
+```
+fatal: could not read Username for 'https://github.com'
+```
+
+원인은 자격증명이 아니라 **Git for Windows 설치본 손상**이다. `C:\Program Files\Git\usr\bin\sh.exe` 가 `STATUS_ENTRYPOINT_NOT_FOUND(0xC0000139)` 로 즉사한다 — 실행파일은 2026-07-10(Git 2.55.0) 인데 `msys-2.0.dll` 만 2024-05-02(3.4.10) 로 남아 업데이트 때 교체되지 않았다. git 은 **모든** 자격증명 헬퍼를 `sh -c` 로 띄우므로 gh·GCM 이 다 조용히 실패한다. 헬퍼 자체는 멀쩡해서 직접 실행하면 정상 응답한다.
+
+진단:
+
+```bash
+"C:/Program Files/Git/usr/bin/sh.exe" -c "echo ok"
+```
+
+`ok` 가 안 나오면 이 문제다. 같은 이유로 훅·rebase 스크립트·submodule 도 깨져 있다.
+
+**우회 — `gh` 는 sh 를 안 거치므로 멀쩡하다:**
+
+```bash
+python scripts/gh_push.py
+```
+
+GitHub Git Data API 로 blob → tree → commit → ref 순으로 올린다. author·committer·date·message·tree·parents 를 원본 그대로 복제하므로 **커밋 SHA 가 로컬과 완전히 일치**한다. 분기가 생기지 않고 fast-forward 로 붙으며, 끝나면 `git fetch` 까지 해서 로컬 `origin/master` 도 맞춘다. 토큰은 gh 가 처리하므로 스크립트가 다루지 않는다.
+
+- 올리기 전에 계획만 보려면 `--dry-run`
+- 브랜치·원격 지정은 `--branch` / `--remote`
+- 각 단계에서 SHA 를 검증하고, 하나라도 어긋나면 **ref 를 갱신하지 않고 중단**한다
+- 원격이 로컬 HEAD 의 조상이 아니면(즉 강제 푸시가 필요한 상황) 거부한다 — 먼저 fetch·rebase 할 것
+
+**근본 해결**: Git for Windows 를 같은 버전으로 덮어 설치한다. 모든 Git Bash·MSYS 프로세스를 닫아야 DLL 이 교체된다. 복구 후에는 `git push` 를 쓰면 되고 이 스크립트는 필요 없다.
+
+---
+
 ## 5. 시크릿·키 관리
 
 ### 무엇이 어디에 있나
