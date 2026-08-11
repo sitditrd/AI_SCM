@@ -1495,3 +1495,6 @@ table.trk-tbl td .na { color: var(--muted); }
 .wf-bell.off { color: var(--muted); }
 .wf-bell:hover { border-color: var(--brand-accent); color: var(--brand-accent-2); }
 .wf-bell:disabled { opacity: .5; cursor: default; }
+/* 추적 종료 행의 알림 종 — 수집이 멈춰 알림이 나가지 않음을 시각적으로 명확히 */
+.wf-bell.dead { color: var(--muted); opacity: .38; border-style: dashed; cursor: not-allowed; background: transparent; }
+.wf-bell.dead:hover { border-color: var(--border); color: var(--muted); }

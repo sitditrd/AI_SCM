@@ -460,10 +460,15 @@
     var expTxt = it.active && dl != null
       ? (dl <= 0 ? '<span style="color:var(--up);">만료</span>' : (dl <= 14 ? '<span style="color:var(--lv-busy);">' + dl + '일</span>' : dl + '일'))
       : '-';
-    /* 알림 아이콘 — 이메일 등록 여부를 한눈에. 클릭하면 이메일을 바로 수정한다(BL 재조회 불필요). */
-    var bell = it.notify_email
-      ? '<button class="wf-bell on" type="button" data-mail="' + esc(it.mbl_no) + '" title="알림 수신: ' + esc(it.notify_email) + '\n(클릭하여 변경)">' + SVG.bell + '</button>'
-      : '<button class="wf-bell off" type="button" data-mail="' + esc(it.mbl_no) + '" title="알림 없음 — 클릭하여 이메일 등록">' + SVG.bellOff + '</button>';
+    /* 알림 아이콘 — 이메일 등록 여부를 한눈에. 클릭하면 이메일을 바로 수정한다(BL 재조회 불필요).
+       추적이 종료된 건(반납 완료·기간 만료)은 수집 자체가 멈춰 알림이 나가지 않으므로
+       종을 비활성으로 그린다 — 켜진 채 두면 "계속 알림이 가는 것"처럼 보인다. */
+    var bell = !it.active
+      ? '<button class="wf-bell dead" type="button" disabled title="추적 종료 — 알림 발송 안 함' +
+        (it.notify_email ? '\n(종료 전 수신: ' + esc(it.notify_email) + ')' : '') + '">' + SVG.bellOff + '</button>'
+      : (it.notify_email
+        ? '<button class="wf-bell on" type="button" data-mail="' + esc(it.mbl_no) + '" title="알림 수신: ' + esc(it.notify_email) + '\n(클릭하여 변경)">' + SVG.bell + '</button>'
+        : '<button class="wf-bell off" type="button" data-mail="' + esc(it.mbl_no) + '" title="알림 없음 — 클릭하여 이메일 등록">' + SVG.bellOff + '</button>');
     return '<tr>' +
       '<td class="cn">' + SVG.box + ' ' + esc(it.mbl_no) + '</td>' +
       '<td title="' + esc(carrierName(it.carrier)) + '">' + esc(it.carrier || '') + (it.carrier && !isLive(it.carrier) ? ' <small style="color:var(--muted);">딥링크</small>' : '') + '</td>' +
@@ -585,30 +590,20 @@
     if (bulk) bulk.addEventListener('click', openBulkDialog);
     /* 알림 종 클릭 — 목록에서 바로 수신 이메일을 등록·변경·해제한다(BL 재조회 불필요) */
     box.querySelectorAll('button[data-mail]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var mbl = btn.getAttribute('data-mail');
-        var it = findWatch(mbl) || {};
-        var cur = it.notify_email || '';
-        var v = window.prompt(mbl + '\n알림 받을 이메일 (비우면 알림 해제)', cur || myEmail());
-        if (v === null) return;
-        btn.disabled = true;
-        fetch(WATCH_API, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'notify', token: myToken(), mbl_no: mbl, notify_email: v.trim() })
-        }).then(function (r) { return r.json(); })
-          .then(function (d) { if (d.error) { btn.disabled = false; alert(d.error); return; } loadWatchList(); })
-          .catch(function () { btn.disabled = false; alert('변경 실패 — 잠시 후 다시.'); });
-      });
+      btn.addEventListener('click', function () { openNotifyDialog(btn.getAttribute('data-mail')); });
     });
     box.querySelectorAll('button[data-off]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var mbl = btn.getAttribute('data-off');
-        if (!window.confirm(mbl + ' 추적을 해제할까요?\n(기록은 남고 이후 수집·알림만 중단됩니다)')) return;
-        btn.disabled = true;
-        fetch(WATCH_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'remove', token: myToken(), mbl_no: mbl }) })
-          .then(function (r) { return r.json(); })
-          .then(function (d) { if (d.error) { btn.disabled = false; alert(d.error); return; } loadWatchList(); })
-          .catch(function () { btn.disabled = false; alert('해제 실패 — 잠시 후 다시.'); });
+        openConfirm({
+          title: '추적 해제', sub: mbl, ok: '해제',
+          body: '이후 <b>수집과 알림이 중단</b>됩니다.<br>지금까지의 조회 이력과 변경 기록은 그대로 남습니다.'
+        }, function (setErr, close) {
+          fetch(WATCH_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'remove', token: myToken(), mbl_no: mbl }) })
+            .then(function (r) { return r.json(); })
+            .then(function (d) { if (d.error) { setErr(d.error); return; } close(); loadWatchList(); })
+            .catch(function () { setErr('해제 실패 — 잠시 후 다시 시도하십시오.'); });
+        });
       });
     });
   }
@@ -627,6 +622,74 @@
         syncWatchBtn();      // 조회 결과가 이미 떠 있으면 등록 상태를 버튼에 반영
       }).catch(function () { box.innerHTML = '<div class="card"><p class="sc-sub" style="margin:0;">추적 목록을 불러오지 못했습니다.</p></div>'; });
     });
+  }
+
+  /* 확인 다이얼로그 — 브라우저 confirm() 대신 사이트 모달.
+     onOk 는 (setErr, close) 를 받아 실패 시 모달 안에 사유를 표시할 수 있다. */
+  function openConfirm(opts, onOk) {
+    var ov = document.createElement('div');
+    ov.className = 'reg-ov';
+    ov.innerHTML = '<div class="reg-card" style="max-width:380px;">' +
+      '<h3>' + esc(opts.title || '확인') + (opts.sub ? ' <small>' + esc(opts.sub) + '</small>' : '') + '</h3>' +
+      '<p class="reg-hint" style="font-size:12.5px;">' + (opts.body || '') + '</p>' +
+      '<div id="cfMsg" class="reg-msg"></div>' +
+      '<div class="reg-btns"><button class="btn btn-ghost" id="cfCancel">취소</button>' +
+      '<button class="btn btn-primary" id="cfOk">' + esc(opts.ok || '확인') + '</button></div></div>';
+    document.body.appendChild(ov);
+    function close() { ov.remove(); }
+    ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+    el2(ov, 'cfCancel').addEventListener('click', close);
+    el2(ov, 'cfOk').addEventListener('click', function () {
+      var b = el2(ov, 'cfOk');
+      b.disabled = true; b.textContent = '처리 중…';
+      onOk(function (err) {
+        el2(ov, 'cfMsg').innerHTML = '<span class="reg-err">' + esc(err) + '</span>';
+        b.disabled = false; b.textContent = opts.ok || '확인';
+      }, close);
+    });
+  }
+
+  /* 알림 수신 이메일 다이얼로그 — 브라우저 prompt() 대신 사이트 모달을 쓴다 */
+  function openNotifyDialog(mbl) {
+    var it = findWatch(mbl) || {};
+    var cur = it.notify_email || '';
+    var ov = document.createElement('div');
+    ov.className = 'reg-ov';
+    ov.innerHTML = '<div class="reg-card">' +
+      '<h3>알림 수신 설정 <small>' + esc(mbl) + '</small></h3>' +
+      '<p class="reg-hint" style="margin:0 0 4px;">출항·도착 예정일시(ETD/ETA)가 바뀌면 이 주소로 메일을 보냅니다.</p>' +
+      '<label class="reg-l">알림 이메일 <span class="reg-opt">(비우고 저장하면 알림 해제)</span></label>' +
+      '<input type="email" id="ntMail" class="focus-search" style="width:100%;" placeholder="you@twsc.co.kr" value="' + esc(cur || myEmail()) + '">' +
+      (cur ? '<p class="reg-hint">현재 수신: <b>' + esc(cur) + '</b></p>' : '<p class="reg-hint">현재 알림이 설정돼 있지 않습니다.</p>') +
+      '<div id="ntMsg" class="reg-msg"></div>' +
+      '<div class="reg-btns">' +
+      (cur ? '<button class="btn btn-ghost" id="ntClear">알림 해제</button>' : '') +
+      '<button class="btn btn-ghost" id="ntCancel">취소</button>' +
+      '<button class="btn btn-primary" id="ntOk">저장</button></div></div>';
+    document.body.appendChild(ov);
+    function close() { ov.remove(); }
+    ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+    el2(ov, 'ntCancel').addEventListener('click', close);
+    var input = el2(ov, 'ntMail');
+    input.focus(); input.select();
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') el2(ov, 'ntOk').click(); });
+
+    function save(val) {
+      var msg = el2(ov, 'ntMsg'), ok = el2(ov, 'ntOk');
+      ok.disabled = true; ok.textContent = '저장 중…';
+      fetch(WATCH_API, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'notify', token: myToken(), mbl_no: mbl, notify_email: val })
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        if (d.error) { msg.innerHTML = '<span class="reg-err">' + esc(d.error) + '</span>'; ok.disabled = false; ok.textContent = '저장'; return; }
+        close(); loadWatchList();
+      }).catch(function () {
+        msg.innerHTML = '<span class="reg-err">네트워크 오류 — 잠시 후 다시.</span>'; ok.disabled = false; ok.textContent = '저장';
+      });
+    }
+    el2(ov, 'ntOk').addEventListener('click', function () { save(input.value.trim()); });
+    var clr = el2(ov, 'ntClear');
+    if (clr) clr.addEventListener('click', function () { save(''); });
   }
 
   /* 일괄 등록 다이얼로그 — BL 목록 붙여넣기(줄바꿈/쉼표 구분) */
