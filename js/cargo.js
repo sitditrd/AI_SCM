@@ -1,6 +1,8 @@
 /* =========================================================
-   TWL 화물 추적 — 유니패스 통관진행 + AWB 항공사 딥링크
-   로컬(localhost)은 server.py /api/track, 배포판은 Supabase Edge Function `track` 호출
+   TWL 화물 추적 — 선사 직접 운송추적 + 유니패스 통관진행 + AWB 항공사 딥링크
+   · 선사 운송: Edge Function `carrier-track` (키 불요 — 로컬에서도 배포 함수 직접 호출)
+   · 통관: 로컬(localhost)은 server.py /api/track, 배포판은 Edge Function `track`
+   설계 근거: docs/03-architecture/화물추적_선사직접조회_설계.md (KLNET 레거시 분석)
    ========================================================= */
 (function () {
   'use strict';
@@ -8,6 +10,9 @@
   var TRACK_API = (location.protocol === 'file:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname))
     ? '/api/track'
     : 'https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/track';
+  var CARRIER_API = 'https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/carrier-track';
+  /* carrier-track 이 실조회를 지원하는 선사 (그 외는 기존 딥링크 폴백) */
+  var LIVE_SCACS = { ONEY: 1, COSU: 1 };
 
   var AIRLINES = {
     '180': ['대한항공 Cargo', 'https://cargo.koreanair.com/'],
@@ -89,6 +94,65 @@
     return v;
   }
 
+  /* ---- 선사 운송 추적 (carrier-track) ---- */
+  function fmtIso(v) {
+    /* 항만 현지시각 ISO 문자열 — new Date() 로 브라우저 TZ 변환하지 않고 문자열 그대로 자른다 */
+    var s = String(v || '');
+    return s.length >= 16 ? s.slice(0, 16).replace('T', ' ') : s;
+  }
+  function evBadge(actual) {
+    return actual
+      ? '<span style="font-size:10px; padding:1px 6px; border-radius:8px; background:var(--brand-accent-2); color:#fff;">실제</span>'
+      : '<span style="font-size:10px; padding:1px 6px; border-radius:8px; border:1px solid var(--muted); color:var(--muted);">예정</span>';
+  }
+  function renderCarrier(res, no) {
+    var out = el('carrierOut');
+    if (!res || res.error) {
+      out.innerHTML = '<div class="card reveal in" style="margin-bottom:14px;"><b>선사 운송 추적</b>' +
+        '<p class="sc-sub">' + esc(res && res.error || '조회 실패') + '</p>' +
+        (function () { var oc = oceanInfo(no); return oc && oc.url ? '<a class="btn btn-ghost" target="_blank" rel="noopener" href="' + oc.url + '">' + esc(oc.name) + ' 트래킹 ↗</a>' : ''; })() +
+        '</div>';
+      return;
+    }
+    var s = res.summary || {};
+    var html = '<div class="card reveal in" style="margin-bottom:14px;">' +
+      '<h3 style="margin-top:0;">선사 운송 추적 <small style="color:var(--muted);">' + esc(res.carrierName || res.carrier) + ' · ' + esc((res.query || {}).no || no) + '</small></h3>';
+    if (s.por || s.pod) {
+      html += '<p class="sc-sub" style="margin:4px 0 10px;">' + esc(s.por || '?') + ' → ' + esc(s.pod || '?') +
+        (s.bookingNo ? ' · <span style="color:var(--muted);">Booking ' + esc(s.bookingNo) + '</span>' : '') + '</p>';
+    }
+    /* 운송 구간(항차) — 레거시 FMS_API_TS 상당, N구간 */
+    if (res.voyages && res.voyages.length) {
+      html += '<div class="tbl-scroll"><table class="tw"><thead><tr><th>선박 / 항차</th><th>선적항</th><th>양륙항</th></tr></thead><tbody>' +
+        res.voyages.map(function (v) {
+          return '<tr><td>' + esc(v.vessel || '') + ' <span style="color:var(--muted);">' + esc(v.voyage || '') + '</span></td>' +
+            '<td>' + esc(v.pol && v.pol.name || '') + '<br><small>' + evBadge(v.pol && v.pol.actual) + ' ' + esc(fmtIso(v.pol && v.pol.date)) + '</small></td>' +
+            '<td>' + esc(v.pod && v.pod.name || '') + '<br><small>' + evBadge(v.pod && v.pod.actual) + ' ' + esc(fmtIso(v.pod && v.pod.date)) + '</small></td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+    /* 컨테이너별 이벤트 타임라인 — 레거시 FMS_API_CNTR 상당 */
+    (res.containers || []).forEach(function (c) {
+      html += '<h3 style="font-size:15px; margin-bottom:6px;">컨테이너 ' + esc(c.cntrNo || '') +
+        (c.szTp ? ' <small style="color:var(--muted); font-weight:400;">' + esc(c.szTp) + '</small>' : '') + '</h3>';
+      var evs = c.events || [];
+      if (evs.length) {
+        html += '<div class="pipe-flow" style="flex-direction:column; gap:8px;">' + evs.map(function (e) {
+          var t = e.timeLocal || e.timeUtc;
+          return '<div class="pipe-node" style="flex:none;"><span class="pn-dot" style="background:' + (e.actual ? 'var(--brand-accent-2)' : 'var(--muted)') + ';"></span>' +
+            '<b>' + esc(e.name || '') + '</b> ' + evBadge(e.actual) +
+            '<small>' + esc(e.location || '') + (e.yard ? ' · ' + esc(e.yard) : '') + (t ? ' · ' + esc(fmtIso(t)) + ' <span style="color:var(--muted);">(현지)</span>' : '') + '</small></div>';
+        }).join('') + '</div>';
+      } else {
+        html += '<p class="sc-sub">이벤트 정보가 없습니다.</p>';
+      }
+    });
+    if (!(res.voyages || []).length && !(res.containers || []).length) {
+      html += '<p class="sc-sub">운송 정보가 없습니다.</p>';
+    }
+    html += '<p class="sc-sub" style="margin-top:10px; font-size:11px; color:var(--muted);">데이터 시점 ' + esc(fmtIso(res.fetchedAt)) + ' UTC · 출처 ' + esc(res.source || '') + ' · 시각은 항만 현지 기준</p></div>';
+    out.innerHTML = html;
+  }
+
   function render(res, no) {
     var out = el('traceOut');
     if (res.needKey) {
@@ -141,9 +205,22 @@
       ? ('AWB 감지 (프리픽스 ' + awb.prefix + (awb.name ? ' · ' + esc(awb.name) : '') + ') — 항공 수입은 MBL 탭으로 조회됩니다.' +
          (awb.url ? ' <a target="_blank" rel="noopener" href="' + awb.url + '">항공사 추적 페이지 ↗</a>' : ''))
       : (oc && oc.name
-        ? ('해상 선사 감지 (' + oc.scac + ' · ' + esc(oc.name) + ') — 컨테이너 리스트·ETD/ETA/ATD/ATA는 선사 트래킹에서 확인. ' +
-           '<a target="_blank" rel="noopener" href="' + oc.url + '">' + esc(oc.name) + ' 트래킹 ↗</a>')
+        ? (LIVE_SCACS[oc.scac]
+          ? ('해상 선사 감지 (' + oc.scac + ' · ' + esc(oc.name) + ') — 운송 이벤트를 선사에서 직접 조회합니다.')
+          : ('해상 선사 감지 (' + oc.scac + ' · ' + esc(oc.name) + ') — 컨테이너 리스트·ETD/ETA/ATD/ATA는 선사 트래킹에서 확인. ' +
+             '<a target="_blank" rel="noopener" href="' + oc.url + '">' + esc(oc.name) + ' 트래킹 ↗</a>'))
         : '');
+    /* 선사 운송 추적 — live 지원 선사만 (그 외는 힌트의 딥링크가 폴백) */
+    var co = el('carrierOut');
+    if (oc && LIVE_SCACS[oc.scac] && !awb) {
+      co.innerHTML = '<div class="card reveal in" style="margin-bottom:14px;"><div class="sc-sub">선사 운송 정보 조회 중…</div></div>';
+      fetch(CARRIER_API + '?no=' + encodeURIComponent(no))
+        .then(function (r) { return r.json(); })
+        .then(function (res) { renderCarrier(res, no); })
+        .catch(function () { renderCarrier({ error: '일시적 네트워크 오류입니다 — 잠시 후 다시 시도하십시오.' }, no); });
+    } else {
+      co.innerHTML = '';
+    }
     el('traceOut').innerHTML = '<div class="card reveal in"><div class="sc-sub">관세청 유니패스 조회 중…</div></div>';
     fetch(TRACK_API + '?type=' + type + '&no=' + encodeURIComponent(no) + '&year=' + el('blYear').value)
       .then(function (r) { return r.json(); })
