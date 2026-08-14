@@ -589,18 +589,31 @@ async function maerskHeaders(): Promise<Record<string, string>> {
   }
   return h;
 }
+/* 무료 경로만 사용한다(2026-08-14 요금 실사 · 사용자 지시 "무조건 무료만").
+
+   머스크 트래킹 상품은 둘인데 과금 성격이 정반대다 — 포털 카탈로그 API 실조회로 확인:
+     · Track and Trace Plus (DCSA T&T Private)  monetized:false · trialDuration:0 · 4,000콜/시간
+       → 영구 무료. 단 OAuth 클라이언트에 등록된 Maersk Customer Code 가 그 선적의 당사자인
+         건만 조회되고 아니면 404 (= 태웅이 머스크에 직접 부킹한 화물). 자사 물동량이 목적이니 충분.
+     · Ocean Track & Trace Public Access        monetized:true · trialDuration:30 · Starter/Growth/Scale
+       → 30일 체험 후 유료. 약관 4.2 조가 체험기간의 영리 목적 사용을 금지하고, 6.3 조는
+         연간 최소 지출 약정(환불 불가)을 요구한다. **호출 자체를 하지 않는다.**
+
+   따라서 기본 경로는 Private 단독이다. 유료 상품을 쓰려면 담당자가 계약을 맺은 뒤
+   MAERSK_ALLOW_PAID=1 을 명시적으로 등록해야만 Public 이 폴백에 추가된다(사고 방지 장치). */
 async function trackMaersk(no: string) {
   const digits = no.replace(/^MAEU/i, "");
   const q = (p: string) => (bl: string) =>
     `https://api.maersk.com/${p}?transportDocumentReference=${encodeURIComponent(bl)}&limit=200&sort=eventDateTime:ASC`;
-  // OAuth 자격이 있으면 Private 을 먼저 — 없으면 Consumer-Key 단독인 Public 을 먼저 시도한다.
-  const hasOAuth = !!(Deno.env.get("MAERSK_CLIENT_ID") && Deno.env.get("MAERSK_CLIENT_SECRET"));
-  const paths = hasOAuth
-    ? ["track-and-trace-private/events", "track-and-trace/public-events"]
-    : ["track-and-trace/public-events", "track-and-trace-private/events"];
+  const paths = ["track-and-trace-private/events"];
+  if (Deno.env.get("MAERSK_ALLOW_PAID") === "1") paths.push("track-and-trace/public-events");
   return dcsaFetch("Maersk", [digits, no], paths.map(q), await maerskHeaders());
 }
 
+/* CMA CGM — 2026-08-14 실사 결과 **영구 무료 티어가 없다**(30일 체험 후 비활성, 유료 구독은
+   월정액 + 초과단가이며 400 응답까지 과금 대상). 무료 정책상 신청 대상에서 제외했으므로
+   CMACGM_API_KEY 는 등록하지 않는 것이 원칙이다. 어댑터는 향후 정책이 바뀔 때를 위해 남겨두되,
+   키가 없으면 ready()=false 라 호출되지 않는다. */
 async function trackCMA(no: string) {
   return dcsaFetch("CMA CGM", [no, no.replace(/^CMDU/i, "")],
     [(bl) => `https://apis.cma-cgm.net/operation/trackandtrace/v1/events?transportDocumentReference=${encodeURIComponent(bl)}&limit=200`],
