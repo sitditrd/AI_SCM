@@ -33,7 +33,7 @@ if hasattr(sys.stdout, 'reconfigure'):
     sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from collect_upload_berth import (MAP, parse_dt, parse_int, norm_status,
+from collect_upload_berth import (MAP, parse_dt, parse_int, norm_status, log_verdict,
                                   to_tz, sb, sql_q, sql_ts)
 import openpyxl
 from xls_compat import ensure_xlsx
@@ -259,10 +259,10 @@ def main():
         sb('DELETE', '/rest/v1/bs_vessel_calls?collected_date=eq.%s' % cdate)
         for i in range(0, len(rows), 100):
             sb('POST', '/rest/v1/bs_vessel_calls', [to_tz(x) for x in rows[i:i + 100]])
+        st, msg = log_verdict(per_terminal, '백필 적재 (backfill_upload_berth.py)')
         sb('POST', '/rest/v1/bs_collect_log', {
             'collected_date': str(cdate), 'file_name': fname, 'total_rows': len(rows),
-            'per_terminal': per_terminal, 'status': 'SUCCESS',
-            'message': '백필 적재 (backfill_upload_berth.py)',
+            'per_terminal': per_terminal, 'status': st, 'message': msg,
         })
 
     for w in all_warns:

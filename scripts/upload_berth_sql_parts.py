@@ -55,7 +55,7 @@ COLS = ('  (collected_date, terminal_cd, sub_terminal, berth, carrier, vessel_na
 def upload_rest(rows, per_terminal, cdate, fname):
     """--rest 모드: SQL 파일 없이 REST 직접 적재 (동일 수집일 replace — 멱등)"""
     from urllib.parse import quote
-    from collect_upload_berth import sb, to_tz, SERVICE_KEY
+    from collect_upload_berth import sb, to_tz, SERVICE_KEY, log_verdict
     if not SERVICE_KEY:
         sys.exit('[FAIL] 환경변수 SUPABASE_SERVICE_KEY 미설정 — REST 적재 불가 '
                  '(키 없이 쓰려면 --rest 없이 실행해 SQL 파트를 생성하십시오)')
@@ -64,10 +64,10 @@ def upload_rest(rows, per_terminal, cdate, fname):
         sb('POST', '/rest/v1/bs_vessel_calls', [to_tz(x) for x in rows[i:i + 100]])
     sb('DELETE', '/rest/v1/bs_collect_log?collected_date=eq.%s&message=like.%s'
        % (cdate, quote('스케줄 적재*')))
+    st, msg = log_verdict(per_terminal, '스케줄 적재 (upload_berth_sql_parts.py --rest)')
     sb('POST', '/rest/v1/bs_collect_log', {
         'collected_date': str(cdate), 'file_name': fname, 'total_rows': len(rows),
-        'per_terminal': per_terminal, 'status': 'SUCCESS',
-        'message': '스케줄 적재 (upload_berth_sql_parts.py --rest)',
+        'per_terminal': per_terminal, 'status': st, 'message': msg,
     })
 
 

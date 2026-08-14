@@ -189,6 +189,40 @@ def parse_workbook(path, cdate):
     return out, per_terminal
 
 
+def log_verdict(per_terminal, note=None):
+    """적재 로그의 status·message 를 per_terminal 실적으로 판정한다.
+
+    이전에는 status 가 'SUCCESS' 로 하드코딩되어 있었다. 그래서 원본 엑셀에 터미널
+    시트가 통째로 빠져 있어도(=수집기가 그 터미널을 못 긁은 날) 화면에는 초록색
+    SUCCESS 로 떴다 — 2026-08-12(3곳)·08-13(4곳 누락, 건수 510→363)이 그렇게
+    정상으로 보였다. 적재 자체는 성공이지만 데이터는 불완전하므로 구분해야 한다.
+
+    판정:
+      per_terminal 이 비어 있으면     UNKNOWN  (적재가 일어나지 않음 — 아래 주의 참조)
+      MISSING 시트가 있으면          PARTIAL  (시트 자체가 없음 = 수집 실패)
+      시트는 있는데 0건인 곳이 있으면 PARTIAL  (긁었으나 데이터가 비어 있음)
+      그 외                          SUCCESS
+    message 에 어느 터미널이 왜 빠졌는지 남겨 화면 '비고' 에서 바로 보이게 한다.
+
+    주의 — **이 함수는 적재가 실제로 일어난 뒤에만 부른다.** per_terminal 이 비면
+    '문제 없음'이 아니라 '판단 근거 없음'이므로 SUCCESS 를 돌려주면 안 된다. 과거 로그를
+    일괄 재판정하다 '수집 파일 없음' 으로 FAIL 이던 행(per_terminal=None)이 SUCCESS 로
+    뒤집힌 적이 있다(2026-08-14, 즉시 복구). 그래서 빈 입력은 UNKNOWN 으로 돌려
+    호출자가 기존 상태를 덮지 않도록 한다.
+    """
+    if not per_terminal:
+        return 'UNKNOWN', note
+    missing = sorted(k for k, v in (per_terminal or {}).items() if v == 'MISSING')
+    empty = sorted(k for k, v in (per_terminal or {}).items() if v == 0)
+    parts = [note] if note else []
+    if missing:
+        parts.append('미수집 %d곳: %s' % (len(missing), ','.join(missing)))
+    if empty:
+        parts.append('0건 %d곳: %s' % (len(empty), ','.join(empty)))
+    status = 'PARTIAL' if (missing or empty) else 'SUCCESS'
+    return status, (' | '.join(parts) if parts else None)
+
+
 def sb(method, path, body=None):
     r = requests.request(method, SUPABASE_URL + path, json=body, timeout=30, headers={
         'apikey': SERVICE_KEY,
@@ -279,9 +313,10 @@ def main():
         for i in range(0, len(rows), 100):
             sb('POST', '/rest/v1/bs_vessel_calls', [to_tz(x) for x in rows[i:i + 100]])
 
+        st, msg = log_verdict(per_terminal)
         sb('POST', '/rest/v1/bs_collect_log', {
             'collected_date': str(cdate), 'file_name': fname, 'total_rows': len(rows),
-            'per_terminal': per_terminal, 'status': 'SUCCESS', 'message': None,
+            'per_terminal': per_terminal, 'status': st, 'message': msg,
         })
         print(f'[OK] {cdate} {len(rows)}건 적재 완료 — {json.dumps(per_terminal, ensure_ascii=False)}')
     except Exception as e:
