@@ -190,37 +190,31 @@ def parse_workbook(path, cdate):
 
 
 def log_verdict(per_terminal, note=None):
-    """적재 로그의 status·message 를 per_terminal 실적으로 판정한다.
+    """적재 로그의 status·message 를 만든다.
 
-    이전에는 status 가 'SUCCESS' 로 하드코딩되어 있었다. 그래서 원본 엑셀에 터미널
-    시트가 통째로 빠져 있어도(=수집기가 그 터미널을 못 긁은 날) 화면에는 초록색
-    SUCCESS 로 떴다 — 2026-08-12(3곳)·08-13(4곳 누락, 건수 510→363)이 그렇게
-    정상으로 보였다. 적재 자체는 성공이지만 데이터는 불완전하므로 구분해야 한다.
+    **status 는 '적재 작업이 성공했는가' 만 나타낸다.** 이 함수는 적재가 끝난 뒤에만
+    호출되므로 정상 경로는 언제나 SUCCESS 다. 원본 엑셀에 터미널 시트가 빠져 있는 것은
+    적재 실패가 아니라 06시 수집 쪽 사실이므로, 상태를 깎지 않고 message(화면 '비고')
+    에만 어느 터미널이 빠졌는지 적는다.
 
-    판정:
-      per_terminal 이 비어 있으면     UNKNOWN  (적재가 일어나지 않음 — 아래 주의 참조)
-      MISSING 시트가 있으면          PARTIAL  (시트 자체가 없음 = 수집 실패)
-      시트는 있는데 0건인 곳이 있으면 PARTIAL  (긁었으나 데이터가 비어 있음)
-      그 외                          SUCCESS
-    message 에 어느 터미널이 왜 빠졌는지 남겨 화면 '비고' 에서 바로 보이게 한다.
+    설계 경위 — 한때 누락이 있으면 PARTIAL 로 낮췄으나, 적재는 실제로 성공한 건이라
+    화면에서 실패처럼 읽히는 문제가 있었다(2026-08-14 되돌림). 상태와 데이터 완전성은
+    분리한다: 상태=적재 성공 여부, 비고=수집 완전성.
 
-    주의 — **이 함수는 적재가 실제로 일어난 뒤에만 부른다.** per_terminal 이 비면
-    '문제 없음'이 아니라 '판단 근거 없음'이므로 SUCCESS 를 돌려주면 안 된다. 과거 로그를
-    일괄 재판정하다 '수집 파일 없음' 으로 FAIL 이던 행(per_terminal=None)이 SUCCESS 로
-    뒤집힌 적이 있다(2026-08-14, 즉시 복구). 그래서 빈 입력은 UNKNOWN 으로 돌려
-    호출자가 기존 상태를 덮지 않도록 한다.
+    주의 — per_terminal 이 비면 UNKNOWN 을 돌려준다. 빈 값은 '문제 없음'이 아니라
+    '판단 근거 없음'이며, 과거 로그를 일괄 재판정하다 '수집 파일 없음' FAIL 행이
+    SUCCESS 로 뒤집힌 적이 있어(2026-08-14, 즉시 복구) 넣은 가드다.
     """
     if not per_terminal:
         return 'UNKNOWN', note
-    missing = sorted(k for k, v in (per_terminal or {}).items() if v == 'MISSING')
-    empty = sorted(k for k, v in (per_terminal or {}).items() if v == 0)
+    missing = sorted(k for k, v in per_terminal.items() if v == 'MISSING')
+    empty = sorted(k for k, v in per_terminal.items() if v == 0)
     parts = [note] if note else []
     if missing:
         parts.append('미수집 %d곳: %s' % (len(missing), ','.join(missing)))
     if empty:
         parts.append('0건 %d곳: %s' % (len(empty), ','.join(empty)))
-    status = 'PARTIAL' if (missing or empty) else 'SUCCESS'
-    return status, (' | '.join(parts) if parts else None)
+    return 'SUCCESS', (' | '.join(parts) if parts else None)
 
 
 def sb(method, path, body=None):

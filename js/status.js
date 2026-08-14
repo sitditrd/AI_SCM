@@ -241,9 +241,8 @@
       pipeNode('④ 대시보드', '45초 폴링', r.berth ? 'ok' : 'off');
 
     /* ---- 최근 7일 타임라인 ---- */
-    /* 같은 날 로그가 여러 건이면 SUCCESS > PARTIAL > 그 외 순으로 대표를 고른다.
-       (예전엔 SUCCESS 만 우선해 PARTIAL 이 실패 로그에 밀릴 수 있었다) */
-    var RANK = { SUCCESS: 3, PARTIAL: 2 };
+    /* 같은 날 로그가 여러 건이면 SUCCESS 를 대표로 고른다 */
+    var RANK = { SUCCESS: 3 };
     var byDate = {};
     (r.logs || []).forEach(function (l) {
       var cur = byDate[l.collected_date];
@@ -259,9 +258,7 @@
       var log = byDate[ds];
       var cnt = byCnt[ds];
       var cls, mark;
-      if (cnt && log && log.status === 'PARTIAL') { /* 적재는 됐지만 터미널 일부 누락 */
-        cls = 'dg-warn'; mark = '△ ' + cnt + '건';
-      } else if (cnt) {                            /* DB에 실제 데이터 있음 = 적재 완료 */
+      if (cnt) {                                   /* DB에 실제 데이터 있음 = 적재 완료 */
         cls = 'dg-ok'; mark = '✓ ' + cnt + '건';
       } else if (log && log.status !== 'SUCCESS') { /* 실적 없음 + 실패 로그 */
         cls = 'dg-fail'; mark = '✗ 실패';
@@ -273,18 +270,17 @@
     el('dayGrid').innerHTML = chips.join('');
 
     /* ---- 이력 테이블 ---- */
-    /* 상태는 3단계다. 예전에는 SUCCESS/FAIL 2단계였는데, 적재기가 status 를 'SUCCESS'
-       로 하드코딩해 두어서 원본 엑셀에 터미널 시트가 통째로 빠진 날(수집 실패)도 초록색
-       SUCCESS 로 떴다 — 08-12·08-13 이 그렇게 정상으로 보였다(건수 510→363).
-       이제 적재기가 PARTIAL 을 기록하므로 주황으로 구분하고, 어느 터미널이 빠졌는지는
-       message(비고)에 담겨 온다. */
+    /* 상태는 '적재 작업이 성공했는가' 만 나타낸다(SUCCESS/FAIL).
+       원본 엑셀에 터미널 시트가 빠진 것은 적재 실패가 아니라 06시 수집 쪽 사실이므로
+       상태를 깎지 않고 비고에 '(N곳 누락)' 으로만 알린다 — 적재된 건을 실패로 읽히게
+       하지 않기 위함이다(2026-08-14 사용자 지적 반영). */
     el('logBody').innerHTML = (r.logs || []).map(function (l) {
-      var st = l.status === 'SUCCESS' ? { c: 'lv-low', t: 'SUCCESS' }
-             : l.status === 'PARTIAL' ? { c: 'lv-busy', t: 'PARTIAL' }
-             : { c: 'lv-congested', t: l.status || 'FAIL' };
-      var missing = 0, pt = l.per_terminal || {};
-      for (var k in pt) if (pt[k] === 'MISSING' || pt[k] === 0) missing++;
-      var note = esc(l.message || '') + (missing ? ' <b style="color:var(--lv-busy)">(' + missing + '곳 누락)</b>' : '');
+      var ok = l.status === 'SUCCESS';
+      var st = ok ? { c: 'lv-low', t: 'SUCCESS' } : { c: 'lv-congested', t: l.status || 'FAIL' };
+      /* 누락 터미널은 적재기가 message 에 '미수집 N곳: ...' 로 이미 적어 보낸다.
+         화면에서 개수를 또 붙이면 중복이므로, 눈에 띄게 색만 입힌다. */
+      var note = esc(l.message || '').replace(/(미수집 \d+곳|0건 \d+곳)/g,
+        '<b style="color:var(--lv-busy)">$1</b>');
       return '<tr><td>' + esc(l.collected_date) + '</td>' +
         '<td style="max-width:280px; overflow:hidden; text-overflow:ellipsis;">' + esc(l.file_name || '—') + '</td>' +
         '<td class="num">' + (l.total_rows || 0) + '</td>' +
