@@ -35,12 +35,29 @@
 ### ① 하파그로이드 — 가장 먼저 하십시오 (완전 셀프서비스)
 
 돈도 계약도 영업 접촉도 없이 혼자 끝낼 수 있는 유일한 선사다.
+아래 경로는 2026-08-14 포털 SPA 라우트·내부 API 를 실측해 확인한 것이다.
 
-- 포털: <https://api-portal.hlag.com>
-- 절차: 가입 → Application 생성 → **Track & Trace** 상품 구독 신청 → 하파그 승인 대기
-- 발급물: **Client ID + Client Secret** 한 쌍 (IBM API Connect 방식)
+- 포털: <https://api-portal.hlag.com> (구 `developer.hapag-lloyd.com` 은 **응답 없음**)
+- 화면 경로(SPA 라우트): `/getting-started` · `/login` · `/products` · `/applications` · `/settings`
+
+**절차**
+
+| 단계 | 경로 | 내용 |
+|---|---|---|
+| 1 | `/getting-started` | 안내 확인 후 계정 등록(회사 이메일). reCAPTCHA 적용됨 |
+| 2 | `/applications` | **Application 생성 → Client ID + Client Secret 발급** |
+| 3 | `/products` | **Track & Trace** 상품에서 위 Application 으로 구독(Subscribe) 신청 |
+| 4 | — | 하파그 승인 대기(모든 플랜 `approval:true`) |
+
+- 발급물: **Client ID + Client Secret** 한 쌍 (IBM API Connect 방식 — 헤더 `X-IBM-Client-Id`/`X-IBM-Client-Secret`)
+- 상품 페이지 예: `/products/portfolio/events-tracing-for-web-api-product-d73213?version=2` (200 확인)
 - 무료 한도(초과 시 **과금이 아니라 429 차단** — 돈이 샐 구조가 아님):
   - Tryout 100콜/일 · Basic **6,000콜/일** · Premium(BETA 중에는 Basic 배정)
+
+**막힐 수 있는 지점** — 포털에 **light user** 개념이 있고, 이 등급은 Application 생성이 차단된다
+(앱 번들의 라우트 가드에서 확인). 가입 후 `/applications` 에서 생성 버튼이 없거나 거부되면
+등급 문제이므로 `/contact` 로 정식 개발자 계정 승격을 요청해야 한다.
+
 - 주의: BETA 라 하파그 스스로 "웹 데이터를 우선 신뢰하라"고 안내한 이력이 있다. 초기에는 웹 대사 검증 병행 권장
 
 ### ② HMM — 국내 선사, 한국어 지원
