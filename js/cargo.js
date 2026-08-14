@@ -10,8 +10,14 @@
 
   var CARRIER_API = 'https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/carrier-track';
   /* carrier-track 이 실조회를 지원하는 선사 (그 외는 딥링크 폴백)
-     — 2026-08-11 태웅 실 MBL 검증 완료: ONE·COSCO·SM상선·Evergreen·SITC */
+     — 2026-08-11 태웅 실 MBL 검증 완료: ONE·COSCO·SM상선·Evergreen·SITC
+     기본값은 확정 5사만 두고, 페이지 로드 시 서버 ?api=list 의 live 목록을 merge 한다.
+     DCSA 3사(머스크·CMA·하파그)는 Supabase Secrets 에 키가 등록되는 순간 서버 목록에
+     올라오므로 화면 재배포 없이 실조회로 전환된다(2026-08-12). */
   var LIVE_SCACS = { ONEY: 1, COSU: 1, SMLM: 1, EGLV: 1, SITC: 1 };
+  fetch(CARRIER_API + '?api=list').then(function (r) { return r.json(); }).then(function (d) {
+    (d.live || []).forEach(function (c) { if (c && c.scac) LIVE_SCACS[c.scac] = 1; });
+  }).catch(function () { /* 목록 실패 시 기본 5사로 동작 */ });
 
   var AIRLINES = {
     '180': ['대한항공 Cargo', 'https://cargo.koreanair.com/'],
@@ -778,7 +784,7 @@
       return;
     }
     renderDeeplink('선사 미감지', null, null,
-      '번호에서 선사를 식별하지 못했습니다. 실조회 지원: ONE·COSCO / 딥링크: Maersk·MSC·HMM 등 12사. 번호를 확인하거나 아래 무료 조회 채널을 이용하십시오.');
+      '번호에서 선사를 식별하지 못했습니다. 실조회 지원: ONE·COSCO·SM상선·Evergreen·SITC(키 등록 시 머스크·CMA CGM·하파그로이드 자동 확장) / 그 외 선사는 딥링크. 번호를 확인하거나 아래 무료 조회 채널을 이용하십시오.');
   }
 
   document.addEventListener('DOMContentLoaded', function () {

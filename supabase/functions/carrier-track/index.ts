@@ -1,6 +1,8 @@
 // TWL Control Tower — 선사 직접 화물추적 프록시 Edge Function
 // 배포: Supabase Edge Function `carrier-track` (verify_jwt=false — 정적 사이트에서 직접 호출)
-// 시크릿: 없음 — 선사 공개 트래킹 페이지의 백엔드 JSON API 를 그대로 사용한다 (키·인증 불요)
+// 시크릿: 기본 5사(ONE·COSCO·SM·EGLV·SITC)는 없음 — 선사 공개 백엔드 JSON 을 그대로 사용.
+//   DCSA 3사는 Secrets 등록 시에만 활성: MAERSK_CONSUMER_KEY(+MAERSK_CLIENT_ID/MAERSK_CLIENT_SECRET),
+//   CMACGM_API_KEY, HLAG_CLIENT_ID/HLAG_CLIENT_SECRET — 미등록이면 딥링크 폴백(2026-08-12)
 //
 // 배경: 레거시(TWSC)는 KLNET PLISM 유료 API 로 MBL 추적 이벤트를 수집해 KlnetTrackList 화면에
 //   표시했다. 이 함수는 그 대체 경로 — 사용자가 MBL 을 입력하면 선사 사이트에서 직접 조회한다.
@@ -9,8 +11,11 @@
 // 지원 정책(개방 프록시 방지 — datago 의 별칭 화이트리스트와 동일 사상):
 //   · live 어댑터: CARRIERS 맵에 등록된 선사만 실조회 (2026-08-11 기준 ONEY 검증 완료·COSU 베스트에포트)
 //   · 그 외 선사: supported:false + 딥링크 정보 반환 (화면이 기존 딥링크 폴백)
-//   · 안티봇(TLS 지문 차단) 선사는 서버사이드 조회가 원천 불가라 어댑터를 만들지 않는다
-//     (2026-08-11 실측: MSC·Maersk·HL·CMA·OOCL·YML·WHL 403, KMTC·HMM TLS 차단)
+//   · 안티봇(TLS 지문 차단) 선사는 공개 페이지 스크래핑 어댑터를 만들지 않는다
+//     (2026-08-11 실측: MSC·OOCL·YML·WHL 403, KMTC·HMM TLS 차단)
+//   · 단 공식 API 를 제공하는 선사(머스크·CMA·하파그 — DCSA 표준)는 키 기반 어댑터로 지원한다.
+//     이들의 "웹 스크래핑 불가"(Akamai) 판정은 유효하나 공식 API 게이트웨이는 키만 있으면 통과
+//     (2026-08-12 실측: track-and-trace-private 401 ERR_GW_001 — 봇차단 아닌 키 검증 단계 도달)
 //
 // 정규화 응답 계약 (레거시 FMS_API_* 3레벨 구조를 계승):
 //   { carrier, carrierName, supported, query:{no},
@@ -424,14 +429,188 @@ async function trackSITC(no: string) {
   };
 }
 
-type Adapter = { name: string; blPrefixes: string[]; source: string; run: (no: string) => Promise<Record<string, unknown>> };
+/* ---------------- DCSA Track & Trace 공용 코어 — 머스크·CMA CGM·하파그로이드 ----------------
+   3사 모두 DCSA T&T v2.2 계열이라 이벤트 파싱을 공용화하고 인증 헤더만 분기한다.
+   2026-08-12 실측: Maersk `track-and-trace-private/events` 401 ERR_GW_001(Consumer-Key 요구),
+   CMA `apis.cma-cgm.net` 401(keyId 헤더), HLAG `api.hlag.com/hlag/v2/events` 401(X-IBM-Client-Id/Secret).
+   키는 Supabase Edge Function Secrets 로만 주입한다(저장소 커밋 금지). 키 미등록이면 ready()=false
+   → 목록·조회 모두 딥링크로 폴백하므로, 키 등록 즉시 코드 수정 없이 실조회로 전환된다.
+
+   이벤트 명칭은 화면(cargo.js SLOTS)·수집기(collect_bl_watch.py STAGES)의 기존 정규식에
+   부분일치하도록 고정 어휘로 발행한다 — 두 파일을 고치지 않고 9개 게이트 슬롯에 그대로 태운다. */
+
+function dcsaName(code: string, empty: boolean, seq: { firstLoad: boolean; hasLaterLoad: boolean }): string | null {
+  switch (code) {
+    case "GTOT": return empty ? "Empty Container Release (Gate Out)" : "Gate Out from Inbound CY";
+    case "GTIN": return empty ? "Empty Container Return (Gate In)" : "Gate In to Outbound CY";
+    case "LOAD": return seq.firstLoad ? "Loaded on Vessel" : "Transshipment Load";
+    case "DISC": return seq.hasLaterLoad ? "Transshipment Discharge" : "Unloaded from Vessel";
+    case "PICK": return empty ? "Empty Container Pick-up" : "Pick-up by Merchant (Gate Out)";
+    case "DROP": return empty ? "Empty Container Return (Drop-off)" : "Drop-off (Full)";
+    case "STUF": return "Stuffing";
+    case "STRP": return "Stripping";
+    default: return null;
+  }
+}
+
+function dcsaParse(no: string, raw: unknown): Record<string, unknown> {
+  const list: Record<string, unknown>[] = Array.isArray(raw)
+    ? raw as Record<string, unknown>[]
+    : ((pick(raw, "events", "data") as Record<string, unknown>[] | undefined) ?? []);
+  if (!list.length) return { empty: true, upstream: "No data" };
+
+  const timeOf = (e: unknown) => String(pick(e, "eventDateTime", "eventCreatedDateTime") ?? "");
+  const sorted = [...list].sort((a, b) => timeOf(a).localeCompare(timeOf(b)));
+  const callOf = (e: unknown) => pick(e, "transportCall") as Record<string, unknown> | undefined;
+  const locOf = (e: unknown): string | undefined => {
+    const el = pick(e, "eventLocation") as Record<string, unknown> | undefined;
+    const tc = callOf(e);
+    return (pick(el, "locationName", "UNLocationCode") ?? pick(pick(tc, "location"), "locationName", "UNLocationCode")
+      ?? pick(tc, "UNLocationCode")) as string | undefined;
+  };
+
+  const transports = sorted.filter((e) => pick(e, "eventType") === "TRANSPORT");
+  const equipments = sorted.filter((e) => pick(e, "eventType") === "EQUIPMENT");
+
+  /* TRANSPORT — 첫 DEPA=출항, 이후에 또 DEPA 가 있으면 그 앞 ARRI/DEPA 는 환적항 기항.
+     명칭은 SLOTS 오검을 피해 고른다(환적 이벤트에 departure/arrival 단어를 쓰지 않는다). */
+  const depTimes = transports.filter((e) => pick(e, "transportEventTypeCode") === "DEPA").map(timeOf);
+  const firstDep = depTimes[0];
+  const tEvents = transports.map((e) => {
+    const code = pick(e, "transportEventTypeCode");
+    const act = pick(e, "eventClassifierCode") === "ACT";
+    const t = timeOf(e);
+    let name: string;
+    if (code === "DEPA") name = t === firstDep ? "Vessel Departure" : "Transshipment — T/S Port Departed";
+    else if (code === "ARRI") name = depTimes.some((d) => d > t) ? "Transshipment — T/S Port Arrived" : "Vessel Arrival";
+    else return null;
+    return { name, code: String(code), location: locOf(e), timeLocal: t, actual: act, _tc: callOf(e) };
+  }).filter(Boolean) as Record<string, unknown>[];
+
+  /* EQUIPMENT — 컨테이너별 그룹. LOAD 1회차=선적, 2회차부터 환적 적재. */
+  const byCntr = new Map<string, Record<string, unknown>[]>();
+  for (const e of equipments) {
+    const ref = String(pick(e, "equipmentReference") ?? "").replace(/[^A-Za-z0-9]/g, "");
+    if (!byCntr.has(ref)) byCntr.set(ref, []);
+    byCntr.get(ref)!.push(e);
+  }
+  const containers = [...byCntr.entries()].map(([ref, evs]) => {
+    const loads = evs.filter((e) => pick(e, "equipmentEventTypeCode") === "LOAD").map(timeOf);
+    const mapped = evs.map((e) => {
+      const code = String(pick(e, "equipmentEventTypeCode") ?? "");
+      const empty = pick(e, "emptyIndicatorCode") === "EMPTY";
+      const t = timeOf(e);
+      const name = dcsaName(code, empty, { firstLoad: code === "LOAD" && t === loads[0], hasLaterLoad: loads.some((l) => l > t) });
+      if (!name) return null;
+      return { name, code: code + "/" + String(pick(e, "emptyIndicatorCode") ?? ""), location: locOf(e), timeLocal: t, actual: pick(e, "eventClassifierCode") === "ACT" };
+    }).filter(Boolean) as Record<string, unknown>[];
+    const all = [...mapped, ...tEvents.map((t) => ({ name: t.name, code: t.code, location: t.location, timeLocal: t.timeLocal, actual: t.actual }))]
+      .sort((a, b) => String(a.timeLocal).localeCompare(String(b.timeLocal)));
+    return { cntrNo: ref, szTp: pick(evs[0], "ISOEquipmentCode"), events: all };
+  });
+  /* 장비 이벤트가 아직 없으면(부킹 직후 등) 운송 이벤트만으로 한 줄을 만든다 */
+  if (!containers.length && tEvents.length) {
+    containers.push({ cntrNo: "(B/L)", szTp: undefined, events: tEvents.map((t) => ({ name: t.name, code: t.code, location: t.location, timeLocal: t.timeLocal, actual: t.actual })) });
+  }
+  if (!containers.length) return { empty: true, upstream: "No data" };
+
+  const firstDepEv = tEvents.filter((t) => t.name === "Vessel Departure")[0];
+  const lastArrEv = tEvents.filter((t) => t.name === "Vessel Arrival").slice(-1)[0];
+  const tc = (firstDepEv?._tc ?? {}) as Record<string, unknown>;
+  const vessel = pick(pick(tc, "vessel"), "vesselName") ?? pick(tc, "vesselName", "vesselIMONumber");
+  const voyage = pick(tc, "exportVoyageNumber", "carrierVoyageNumber", "importVoyageNumber");
+  const voyages = (firstDepEv || lastArrEv) ? [{
+    vessel, voyage,
+    pol: firstDepEv ? { name: firstDepEv.location, date: firstDepEv.timeLocal, actual: !!firstDepEv.actual } : {},
+    pod: lastArrEv ? { name: lastArrEv.location, date: lastArrEv.timeLocal, actual: !!lastArrEv.actual } : {},
+  }] : [];
+
+  return {
+    summary: { blNo: no, por: firstDepEv?.location, pod: lastArrEv?.location, vessel, voyage },
+    voyages, containers,
+  };
+}
+
+/* 공용 호출기 — 후보 번호(프리픽스 유/무)를 순서대로 시도한다. 선사별로 B/L 표기 관행이
+   달라서다: 머스크는 숫자 9자리(MAEU 는 ELVIS 측 장식), 하파그는 HLCU 포함이 정본. */
+async function dcsaFetch(carrier: string, candidates: string[], urlOf: (bl: string) => string, headers: Record<string, string>): Promise<Record<string, unknown>> {
+  let last: Record<string, unknown> = { empty: true, upstream: "No data" };
+  for (const bl of candidates) {
+    const r = await fetch(urlOf(bl), { headers: { "User-Agent": UA, Accept: "application/json", ...headers }, signal: AbortSignal.timeout(15000) });
+    if (r.status === 401 || r.status === 403) {
+      return { empty: true, upstream: `조회 제한: ${carrier} API 인증 실패(${r.status}) — Supabase Secrets 의 키 상태를 확인하십시오.` };
+    }
+    if (r.status === 429) return { empty: true, upstream: `${carrier} API 호출 제한(429) — 잠시 후 다시 시도하십시오.` };
+    if (r.status === 404) { last = { empty: true, upstream: "No data (404)" }; continue; }
+    const d = await r.json().catch(() => null);
+    if (!d) continue;
+    const parsed = dcsaParse(bl, d);
+    if (!parsed.empty) return parsed;
+    last = parsed;
+  }
+  return last;
+}
+
+/* Maersk — Consumer-Key 필수, OAuth(client_credentials)는 클라이언트 자격이 등록된 경우에만.
+   토큰은 모듈 변수로 캐시(만료 5분 전 갱신). 고객코드 미매핑 계정은 404 가 온다(포털 명세). */
+let maerskTok: { v: string; exp: number } | null = null;
+async function maerskHeaders(): Promise<Record<string, string>> {
+  const key = Deno.env.get("MAERSK_CONSUMER_KEY") ?? Deno.env.get("MAERSK_API_KEY") ?? "";
+  const h: Record<string, string> = { "Consumer-Key": key };
+  const cid = Deno.env.get("MAERSK_CLIENT_ID"), sec = Deno.env.get("MAERSK_CLIENT_SECRET");
+  if (cid && sec) {
+    if (!maerskTok || Date.now() > maerskTok.exp) {
+      const r = await fetch("https://api.maersk.com/customer-identity/oauth/v2/access_token", {
+        method: "POST",
+        headers: { "Consumer-Key": key, "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ grant_type: "client_credentials", client_id: cid, client_secret: sec }).toString(),
+        signal: AbortSignal.timeout(10000),
+      });
+      const d = await r.json().catch(() => ({} as Record<string, unknown>));
+      const tok = (d as Record<string, unknown>).access_token;
+      if (typeof tok === "string") {
+        maerskTok = { v: tok, exp: Date.now() + (Number((d as Record<string, unknown>).expires_in) || 600) * 1000 - 300000 };
+      }
+    }
+    if (maerskTok) h.Authorization = "Bearer " + maerskTok.v;
+  }
+  return h;
+}
+async function trackMaersk(no: string) {
+  const digits = no.replace(/^MAEU/i, "");
+  return dcsaFetch("Maersk", [digits, no],
+    (bl) => `https://api.maersk.com/track-and-trace-private/events?transportDocumentReference=${encodeURIComponent(bl)}&limit=200&sort=eventDateTime:ASC`,
+    await maerskHeaders());
+}
+
+async function trackCMA(no: string) {
+  return dcsaFetch("CMA CGM", [no, no.replace(/^CMDU/i, "")],
+    (bl) => `https://apis.cma-cgm.net/operation/trackandtrace/v1/events?transportDocumentReference=${encodeURIComponent(bl)}&limit=200`,
+    { keyId: Deno.env.get("CMACGM_API_KEY") ?? "" });
+}
+
+async function trackHapag(no: string) {
+  return dcsaFetch("Hapag-Lloyd", [no, no.replace(/^HLCU/i, "")],
+    (bl) => `https://api.hlag.com/hlag/v2/events?transportDocumentReference=${encodeURIComponent(bl)}`,
+    { "X-IBM-Client-Id": Deno.env.get("HLAG_CLIENT_ID") ?? "", "X-IBM-Client-Secret": Deno.env.get("HLAG_CLIENT_SECRET") ?? "" });
+}
+
+type Adapter = { name: string; blPrefixes: string[]; source: string; run: (no: string) => Promise<Record<string, unknown>>; ready?: () => boolean };
 const CARRIERS: Record<string, Adapter> = {
   ONEY: { name: "ONE (Ocean Network Express)", blPrefixes: ["ONEY"], source: "ecomm.one-line.com", run: trackONE },
   COSU: { name: "COSCO Shipping Lines", blPrefixes: ["COSU"], source: "elines.coscoshipping.com", run: trackCOSCO },
   SMLM: { name: "SM Line (SM상선)", blPrefixes: ["SMLM"], source: "esvc.smlines.com", run: trackSM },
   EGLV: { name: "Evergreen Line", blPrefixes: ["EGLV"], source: "ct.shipmentlink.com", run: trackEvergreen },
   SITC: { name: "SITC", blPrefixes: ["SIT"], source: "ebusiness.sitcline.com", run: trackSITC },
+  /* DCSA 3사 — Secrets 에 키가 등록되어야 live 로 승격된다(미등록 시 딥링크 폴백 유지) */
+  MAEU: { name: "Maersk", blPrefixes: ["MAEU"], source: "api.maersk.com (DCSA T&T)", run: trackMaersk,
+    ready: () => !!(Deno.env.get("MAERSK_CONSUMER_KEY") ?? Deno.env.get("MAERSK_API_KEY")) },
+  CMDU: { name: "CMA CGM", blPrefixes: ["CMDU"], source: "apis.cma-cgm.net (DCSA T&T)", run: trackCMA,
+    ready: () => !!Deno.env.get("CMACGM_API_KEY") },
+  HLCU: { name: "Hapag-Lloyd", blPrefixes: ["HLCU"], source: "api.hlag.com (DCSA T&T)", run: trackHapag,
+    ready: () => !!(Deno.env.get("HLAG_CLIENT_ID") && Deno.env.get("HLAG_CLIENT_SECRET")) },
 };
+function isActive(a: Adapter | undefined): a is Adapter { return !!a && (!a.ready || a.ready()); }
 
 function detectCarrier(no: string): string | null {
   const up = no.toUpperCase();
@@ -449,9 +628,13 @@ Deno.serve(async (req) => {
   try {
     const u = new URL(req.url);
     if (u.searchParams.get("api") === "list") {
+      /* live 는 지금 실제로 조회 가능한 선사만 — 키 대기 중인 DCSA 선사는 pending 으로 알리고
+         딥링크 목록에 남긴다(키 등록 즉시 다음 호출부터 live 로 승격, 화면 배포 불요). */
+      const liveScacs = new Set(Object.entries(CARRIERS).filter(([, a]) => isActive(a)).map(([s]) => s));
       return j({
-        live: Object.entries(CARRIERS).map(([scac, a]) => ({ scac, name: a.name, source: a.source })),
-        deeplink: Object.entries(DEEPLINKS).map(([scac, d]) => ({ scac, name: d.name })),
+        live: Object.entries(CARRIERS).filter(([s]) => liveScacs.has(s)).map(([scac, a]) => ({ scac, name: a.name, source: a.source })),
+        pending: Object.entries(CARRIERS).filter(([s]) => !liveScacs.has(s)).map(([scac, a]) => ({ scac, name: a.name, note: "API 키 등록 대기" })),
+        deeplink: Object.entries(DEEPLINKS).filter(([s]) => !liveScacs.has(s)).map(([scac, d]) => ({ scac, name: d.name })),
       });
     }
 
@@ -459,7 +642,7 @@ Deno.serve(async (req) => {
     if (no.length < 8 || no.length > 20) return j({ error: "B/L 번호 형식이 아닙니다 (영숫자 8~20자)." }, 400);
     const carrier = (u.searchParams.get("carrier") ?? detectCarrier(no) ?? "").toUpperCase();
 
-    const adapter = CARRIERS[carrier];
+    const adapter = isActive(CARRIERS[carrier]) ? CARRIERS[carrier] : undefined;
     if (!adapter) {
       // live 미지원 — 딥링크 정보로 폴백 (KLNET 도 6개 선사군은 자기식별이 안 됐다: 선사 선택 UI 폴백은 화면 소관)
       const dl = DEEPLINKS[carrier];
