@@ -58,15 +58,15 @@ MAP = {
  'PNC':  {'berth':'선석','carrier':'운항선사','voy':'모선코드','vessel':'모선명','route':'항로','cct':'반입마감일시','eta':'접안(예정)일시','etd':'출항(예정)일시','dis':'양하수량','lod':'선적수량','shift':'Shift'},
  'HPNT': {'berth':'선석','carrier':'선사','voy':'모선항차','vessel':'선명','route':'ROUTE','cct':'반입마감시한','eta':'접안(예정)일시','etd':'출항(예정)일시','dis':'양하','lod':'적하','shift':'Shift','status':'상태'},
  'HJNC': {'berth':'선석','carrier':'선사','voy':'모선항차','vessel':'선박명','route':'항로','cct':'반입마감일시','eta':'입항일시','etd':'출항일시','ws':'작업시작일시','we':'작업완료일시','dis':'양하','lod':'선적','shift':'S/H'},
- 'BNCT': {'berth':'선석','carrier':'선사','voy':['모선항차','모선항차(선사항차)'],'vessel':['선명','선명(ROUTE)'],'route':'ROUTE','cct':'반입마감시한','eta':'접안(예정)일시','etd':'출항(예정)일시','dis':'양하','lod':'적하','shift':'Shift','status':'상태'},
- 'DGT':  {'berth':'선석','carrier':'선사코드','voy':['모선항차','모선항차(선사항차)'],'vessel':['모선명','모선명(Route)'],'route':'Route','cct':'반입마감시한','eta':'접안예정일시','etd':'출항예정일시','ws':'작업시작시간','we':'작업완료시간','dis':'양하','lod':'적하','shift':'Shift','status':'상태'},
+ 'BNCT': {'berth':'선석','carrier':'선사','voy':['모선항차','모선항차(선사항차)'],'vessel':['선명','선명(ROUTE)'],'cct':'반입마감시한','eta':'접안(예정)일시','etd':'출항(예정)일시','dis':'양하','lod':'적하','shift':'Shift','status':'상태'},   # route 는 '선명 (ROUTE)' 괄호에서 추출 (2026-08-14 컬럼 소멸 실측)
+ 'DGT':  {'berth':'선석','carrier':'선사코드','voy':['모선항차','모선항차(선사항차)'],'vessel':['모선명','모선명(Route)'],'route':['Route','항로'],'cct':'반입마감시한','eta':'접안예정일시','etd':'출항예정일시','ws':'작업시작시간','we':'작업완료시간','dis':'양하','lod':'적하','shift':'Shift','status':'상태'},
  'GWCT': {'berth':'선석','carrier':'선사','voy':'모선항차','vessel':'선박명','route':'항로','cct':'반입마감일시','eta':'입항일시','etd':'출항일시','ws':'작업시작일시','we':'작업완료일시','dis':'양하','lod':'선적','shift':'S/H'},
  'E1CT': {'berth':'선석','carrier':'선사','voy':['모선항차','모선항차(입항차/출항차)'],'vessel':['선박명','선박명 Bitt','선박명(Bitt)'],'cct':'반입마감시한(작업완료일시)','eta':'접안(예정)일시','etd':'출항(예정)일시','dis':'양하수량','lod':'적하수량','shift':'Shift'},
  'ICON': {'berth':'선석','carrier':'선사','voy':['모선항차 입항차/출항차','모선항차(입항차/출항차)'],'vessel':['선박명 Bitt(M)','선박명(Bitt)'],'cct':'반입마감일시','eta':'접안(예정)일시','etd':'출항(예정)일시','dis':'양하수량(VAN)','lod':'적하수량(VAN)','shift':'Shift','sub':'터미널'},
  # ---- 2026-07-28 확대: 부산북항·기타 터미널 (FR-02) ----
  'HBCT': {'berth':'선석','carrier':'선사','voy':['선사항차(IN/OUT)','선사항차'],'vessel':'선명','route':'Route','cct':'Closing Time','eta':'접안예정일시','etd':'출항예정일시','ws':'작업예정일시','inout':['총물량(IN/OUT)','총물량 IN/OUT']},
  'BPT':  {'sub':'구분','berth':'선석','carrier':'선사','voy':'모선항차','vessel':'선박명','route':'항로','cct':'반입마감일시','eta':'입항일시','etd':'출항일시','we':'작업완료일시','dis':'양하','lod':'선적','shift':'S/H'},
- 'BCT':  {'berth':'선석','carrier':'선사','voy':'모선','vessel':'모선명','route':'ROUTE','cct':'CCT','eta':'접안예정시간(ETB)','etd':'출항예정시간(ETD)','dis':'양하','lod':'적하','status':'상태'},
+ 'BCT':  {'berth':'선석','carrier':'선사','voy':'모선','vessel':'모선명','route':'ROUTE','cct':'CCT','eta':['접안예정시간(ETB)','접안예정(ETB)'],'etd':['출항예정시간(ETD)','출항예정(ETD)'],'dis':'양하','lod':'적하','status':'상태'},
  'KITL': {'berth':'선석','carrier':'선사','voy':['선사항차(IN/OUT)','선사항차'],'vessel':'모선명','route':'Route','cct':'Closing Time','eta':'접안예정일시','etd':'출항예정일시','inout':['총물량(IN/OUT)','총물량 IN/OUT']},
  'PCTC': {'berth':'선석','carrier':'선사','voy':'모선항차','vessel':'선박명','route':'항로','cct':'반입마감일시','eta':'입항일시','etd':'출항일시','ws':'작업시작일시','we':'작업완료일시','dis':'양하','lod':'선적','shift':'S/H'},
  'PNCT': {'berth':'선석','carrier':'선사','voy':['모선항차(선사항차)','모선항차'],'vessel':['선명','모선항차'],'route':'Route','cct':'반입마감시한','eta':'접안(예정)일시','etd':'출항(예정)일시','status':'상태'},
