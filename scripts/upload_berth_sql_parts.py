@@ -51,6 +51,38 @@ def integrated_path(d):
 COLS = ('  (collected_date, terminal_cd, sub_terminal, berth, carrier, vessel_name, voyage, route,\n'
         '   cct, eta, etd, work_start, work_end, discharge_qty, load_qty, shift_qty, status) values\n')
 
+# ---------------- 변경 없는 날짜 건너뛰기 (--rest 캐치업용) ----------------
+# 캐치업은 매 실행 최근 3일치를 대상으로 삼는데, 예전에는 파일이 안 바뀌었어도
+# 무조건 delete→insert 를 다시 해서 과거 날짜의 '적재 시각'까지 매번 갱신됐다.
+# 사용자가 이를 잘못된 merge 로 오인할 만했고(2026-08-14 지적), 적재 시각이
+# "이 날짜 데이터가 마지막으로 실제 변경된 때" 라는 신호 역할도 잃는다.
+# 파일 서명(크기+수정시각)을 로컬 상태 파일에 기억해 두고 같으면 건너뛴다.
+# 수집기가 파일을 다시 만들면 mtime 이 바뀌므로 자동으로 재적재된다.
+# DB 를 밖에서 고쳐 강제 재적재가 필요하면 --force 를 쓴다.
+STATE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                          'logs', 'berth_upload_state.json')
+
+
+def file_sig(path):
+    st = os.stat(path)
+    return '%d:%d' % (st.st_size, int(st.st_mtime))
+
+
+def load_state():
+    try:
+        with open(STATE_PATH, encoding='utf-8') as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def save_state(state):
+    d = os.path.dirname(STATE_PATH)
+    if not os.path.isdir(d):
+        os.makedirs(d)
+    with open(STATE_PATH, 'w', encoding='utf-8') as f:
+        json.dump(state, f, ensure_ascii=False, indent=1)
+
 
 def upload_rest(rows, per_terminal, cdate, fname):
     """--rest 모드: SQL 파일 없이 REST 직접 적재 (동일 수집일 replace — 멱등)"""
@@ -95,26 +127,39 @@ def main():
 
     # --rest 는 여러 날짜를 연속 적재할 수 있다(캐치업). SQL 파트 생성은 단일 파일만.
     if rest_mode:
-        ok = 0
+        force = '--force' in flags
+        state = load_state()
+        ok = skipped = 0
         for path in args:
             m = FNAME_RE.search(os.path.basename(path))
             if not m or not os.path.exists(path):
                 print('[SKIP] 대상 아님: %s' % path)
                 continue
             cdate = datetime.datetime.strptime(m.group(1), '%Y%m%d').date()
+            sig = file_sig(path)
+            if not force and state.get(str(cdate)) == sig:
+                # 파일이 지난 적재 이후 변하지 않았다 — 다시 써봐야 같은 내용이고
+                # 적재 시각만 갱신되어 "언제 실제로 바뀌었나" 신호를 잃는다.
+                print('[SKIP] %s 변경 없음 — 재적재 생략 (강제하려면 --force)' % cdate)
+                skipped += 1
+                continue
             rows, per_terminal, warns = parse_workbook_v(path, cdate)
             if not rows:
                 print('[FAIL] %s 정규화 결과 0건 — 원본 확인 필요' % cdate)
                 continue
             upload_rest(rows, per_terminal, cdate, os.path.basename(path))
+            state[str(cdate)] = sig
+            save_state(state)
             print('[OK] %s %d건 REST 적재 완료' % (cdate, len(rows)))
             for k in sorted(per_terminal):
                 print('  %s: %s' % (k, per_terminal[k]))
             for w in warns:
                 print('[WARN] ' + w)
             ok += 1
-        if not ok:
+        if not ok and not skipped:
             sys.exit('[FAIL] 적재된 날짜가 없습니다')
+        if not ok:
+            print('[DONE] 전 날짜 변경 없음 — 적재 생략 %d건' % skipped)
         return
 
     path = args[0]
