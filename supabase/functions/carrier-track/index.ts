@@ -531,22 +531,35 @@ function dcsaParse(no: string, raw: unknown): Record<string, unknown> {
   };
 }
 
-/* 공용 호출기 — 후보 번호(프리픽스 유/무)를 순서대로 시도한다. 선사별로 B/L 표기 관행이
-   달라서다: 머스크는 숫자 9자리(MAEU 는 ELVIS 측 장식), 하파그는 HLCU 포함이 정본. */
-async function dcsaFetch(carrier: string, candidates: string[], urlOf: (bl: string) => string, headers: Record<string, string>): Promise<Record<string, unknown>> {
+/* 공용 호출기 — 엔드포인트 후보 × 번호 후보를 순서대로 시도한다.
+
+   엔드포인트가 복수인 이유: 머스크는 트래킹 상품이 둘이고 발급 결과에 따라 쓸 경로가 다르다.
+     · Ocean Track & Trace (Public)  /track-and-trace/public-events  — Consumer-Key 단독
+     · DCSA T&T (Private)            /track-and-trace-private/events — Consumer-Key + OAuth Bearer
+   어느 쪽이 승인될지 신청 시점에 알 수 없으므로 둘 다 시도하고, 인증 실패(401/403)면 다음
+   엔드포인트로 넘어간다. 전부 인증 실패일 때만 사용자에게 키 상태 확인을 안내한다.
+
+   번호 후보가 복수인 이유: 선사별 B/L 표기 관행이 달라서다(머스크는 숫자 9자리, 하파그는 HLCU 포함). */
+async function dcsaFetch(carrier: string, candidates: string[], urlOfs: Array<(bl: string) => string>, headers: Record<string, string>): Promise<Record<string, unknown>> {
   let last: Record<string, unknown> = { empty: true, upstream: "No data" };
-  for (const bl of candidates) {
-    const r = await fetch(urlOf(bl), { headers: { "User-Agent": UA, Accept: "application/json", ...headers }, signal: AbortSignal.timeout(15000) });
-    if (r.status === 401 || r.status === 403) {
-      return { empty: true, upstream: `조회 제한: ${carrier} API 인증 실패(${r.status}) — Supabase Secrets 의 키 상태를 확인하십시오.` };
+  let authFail = 0;
+  for (const urlOf of urlOfs) {
+    let denied = false;
+    for (const bl of candidates) {
+      const r = await fetch(urlOf(bl), { headers: { "User-Agent": UA, Accept: "application/json", ...headers }, signal: AbortSignal.timeout(15000) });
+      if (r.status === 401 || r.status === 403) { denied = true; break; }   // 자격 불일치 — 다음 엔드포인트
+      if (r.status === 429) return { empty: true, upstream: `${carrier} API 호출 제한(429) — 잠시 후 다시 시도하십시오.` };
+      if (r.status === 404) { last = { empty: true, upstream: "No data (404)" }; continue; }
+      const d = await r.json().catch(() => null);
+      if (!d) continue;
+      const parsed = dcsaParse(bl, d);
+      if (!parsed.empty) return parsed;
+      last = parsed;
     }
-    if (r.status === 429) return { empty: true, upstream: `${carrier} API 호출 제한(429) — 잠시 후 다시 시도하십시오.` };
-    if (r.status === 404) { last = { empty: true, upstream: "No data (404)" }; continue; }
-    const d = await r.json().catch(() => null);
-    if (!d) continue;
-    const parsed = dcsaParse(bl, d);
-    if (!parsed.empty) return parsed;
-    last = parsed;
+    if (denied) authFail++;
+  }
+  if (authFail && authFail === urlOfs.length) {
+    return { empty: true, upstream: `조회 제한: ${carrier} API 인증 실패 — Supabase Secrets 의 키 상태와 구독 승인 여부를 확인하십시오.` };
   }
   return last;
 }
@@ -578,20 +591,25 @@ async function maerskHeaders(): Promise<Record<string, string>> {
 }
 async function trackMaersk(no: string) {
   const digits = no.replace(/^MAEU/i, "");
-  return dcsaFetch("Maersk", [digits, no],
-    (bl) => `https://api.maersk.com/track-and-trace-private/events?transportDocumentReference=${encodeURIComponent(bl)}&limit=200&sort=eventDateTime:ASC`,
-    await maerskHeaders());
+  const q = (p: string) => (bl: string) =>
+    `https://api.maersk.com/${p}?transportDocumentReference=${encodeURIComponent(bl)}&limit=200&sort=eventDateTime:ASC`;
+  // OAuth 자격이 있으면 Private 을 먼저 — 없으면 Consumer-Key 단독인 Public 을 먼저 시도한다.
+  const hasOAuth = !!(Deno.env.get("MAERSK_CLIENT_ID") && Deno.env.get("MAERSK_CLIENT_SECRET"));
+  const paths = hasOAuth
+    ? ["track-and-trace-private/events", "track-and-trace/public-events"]
+    : ["track-and-trace/public-events", "track-and-trace-private/events"];
+  return dcsaFetch("Maersk", [digits, no], paths.map(q), await maerskHeaders());
 }
 
 async function trackCMA(no: string) {
   return dcsaFetch("CMA CGM", [no, no.replace(/^CMDU/i, "")],
-    (bl) => `https://apis.cma-cgm.net/operation/trackandtrace/v1/events?transportDocumentReference=${encodeURIComponent(bl)}&limit=200`,
+    [(bl) => `https://apis.cma-cgm.net/operation/trackandtrace/v1/events?transportDocumentReference=${encodeURIComponent(bl)}&limit=200`],
     { keyId: Deno.env.get("CMACGM_API_KEY") ?? "" });
 }
 
 async function trackHapag(no: string) {
   return dcsaFetch("Hapag-Lloyd", [no, no.replace(/^HLCU/i, "")],
-    (bl) => `https://api.hlag.com/hlag/v2/events?transportDocumentReference=${encodeURIComponent(bl)}`,
+    [(bl) => `https://api.hlag.com/hlag/v2/events?transportDocumentReference=${encodeURIComponent(bl)}`],
     { "X-IBM-Client-Id": Deno.env.get("HLAG_CLIENT_ID") ?? "", "X-IBM-Client-Secret": Deno.env.get("HLAG_CLIENT_SECRET") ?? "" });
 }
 
