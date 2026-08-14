@@ -72,6 +72,14 @@ Deno.serve(async (req) => {
       </tr>`;
     }).join("");
 
+    /* 제목·안내문·식별자 라벨을 호출자가 덮어쓸 수 있다(2026-08-14).
+       주간 카나리아 점검처럼 B/L 스케줄 변경이 아닌 알림도 같은 발송 경로를 쓰되,
+       "Schedule change detected for the B/L you are tracking" 라는 고정 문구가
+       오해를 부르지 않게 하기 위함이다. 미지정이면 기존 동작 그대로다. */
+    const subject = ascii(b?.subject) || `Schedule Change - ${mbl}`;
+    const intro = ascii(b?.intro) || "Schedule change detected for the B/L you are tracking.";
+    const idLabel = ascii(b?.label) || "B/L No.";
+
     const route = [esc(b?.por), esc(b?.pod)].filter(Boolean).join(" &rarr; ");
     const vsl = [esc(b?.vessel), esc(b?.voyage)].filter(Boolean).join(" ");
     const status = STATUS_EN[String(b?.status)] ?? esc(b?.status);
@@ -87,13 +95,13 @@ Deno.serve(async (req) => {
     await client.send({
       from: Deno.env.get("SMTP_FROM") ?? Deno.env.get("SMTP_USER")!,
       to: email,
-      subject: `[TWL Control Tower] Schedule Change - ${mbl}`,
+      subject: `[TWL Control Tower] ${subject}`,
       content: "text/html",
       html: `<div style="font-family:Arial,Helvetica,sans-serif;max-width:640px;margin:auto;padding:12px">
         <h2 style="color:#0b2d5b;margin:0 0 4px">TWL Control Tower</h2>
-        <p style="color:#333;margin:0 0 16px">Schedule change detected for the B/L you are tracking.</p>
+        <p style="color:#333;margin:0 0 16px">${esc(intro)}</p>
         <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:16px">
-          <tr><td style="padding:6px 10px;color:#71809b;width:110px">B/L No.</td><td style="padding:6px 10px;font-weight:700">${esc(mbl)}</td></tr>
+          <tr><td style="padding:6px 10px;color:#71809b;width:110px">${esc(idLabel)}</td><td style="padding:6px 10px;font-weight:700">${esc(mbl)}</td></tr>
           ${b?.carrier ? `<tr><td style="padding:6px 10px;color:#71809b">Carrier</td><td style="padding:6px 10px">${esc(b.carrier)}</td></tr>` : ""}
           ${route ? `<tr><td style="padding:6px 10px;color:#71809b">Route</td><td style="padding:6px 10px">${route}</td></tr>` : ""}
           ${vsl ? `<tr><td style="padding:6px 10px;color:#71809b">Vessel</td><td style="padding:6px 10px">${vsl}</td></tr>` : ""}
