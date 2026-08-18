@@ -1230,6 +1230,29 @@ tr.tree-child td:first-child { padding-left: 30px; }
 
 /* 화물 추적 — 무료 조회 채널 링크 묶음 */
 .ql-links { display: flex; flex-wrap: wrap; gap: 7px; margin: 10px 0 0; }
+/* 바로가기 그룹 행 — 왼쪽 고정 라벨 + 오른쪽 칩 묶음 (2026-08-18) */
+.ql-group { display: flex; align-items: flex-start; gap: 10px; margin: 12px 0 0; }
+.ql-group .ql-tag {
+  flex: 0 0 64px; margin-top: 6px; text-align: right;
+  font-size: 11px; font-weight: 700; letter-spacing: .02em;
+  color: var(--muted); text-transform: uppercase;
+}
+.ql-group .ql-chips { display: flex; flex-wrap: wrap; gap: 7px; flex: 1; min-width: 0; }
+.ql-group .ql-chips a {
+  font-size: 12.5px; font-weight: 700; color: var(--brand-accent-2);
+  border: 1px solid color-mix(in srgb, var(--brand-accent-2) 35%, var(--border));
+  border-radius: 999px; padding: 5px 12px;
+  transition: background .16s ease, color .16s ease, border-color .16s ease;
+}
+.ql-group .ql-chips a:hover {
+  background: color-mix(in srgb, var(--brand-accent) 12%, transparent);
+  color: var(--ink); border-color: var(--brand-accent-2);
+}
+/* 좁은 화면: 라벨을 칩 위로 올려 가로 공간 확보 */
+@media (max-width: 480px) {
+  .ql-group { flex-direction: column; gap: 6px; }
+  .ql-group .ql-tag { flex: none; margin-top: 0; text-align: left; }
+}
 .ql-links a {
   font-size: 12.5px; font-weight: 700; color: var(--brand-accent-2);
   border: 1px solid color-mix(in srgb, var(--brand-accent-2) 35%, var(--border));

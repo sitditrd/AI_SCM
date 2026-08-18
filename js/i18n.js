@@ -150,6 +150,10 @@
       'cargo.ql.carrier.d': '위 조회에서 MBL 입력 시 선사 자동 감지(SCAC 15사) — 실조회 6사 포함 전 선사 공식 추적 직접 링크',
       'cargo.ql.air.t': '항공 화물 (AWB 10사)',
       'cargo.ql.air.d': '위 조회에서 AWB 입력 시 항공사(10사) 자동 감지 — 전 항공사 공식 추적 직접 링크 + 범용조회',
+      'cargo.ql.g.busanNew': '부산신항', 'cargo.ql.g.busanNorth': '부산북항', 'cargo.ql.g.incheon': '인천',
+      'cargo.ql.g.gwangyang': '광양', 'cargo.ql.g.pyeongtaek': '평택당진', 'cargo.ql.g.daesan': '대산',
+      'cargo.ql.g.unified': '통합', 'cargo.ql.g.live': '실조회', 'cargo.ql.g.deeplink': '딥링크',
+      'cargo.ql.g.flag': '국적사', 'cargo.ql.g.foreign': '외항사', 'cargo.ql.g.express': '특송', 'cargo.ql.g.multi': '범용',
       'cargo.quicklinks.notice': '무료 API 확충 로드맵: 관세청 UNIPASS(통관 타임라인)·HMM 등 선사 무료 API(DCSA 표준)·해수부 PORT-MIS(본선 입출항)·인천공항 화물편 현황·AISStream(실시간 선박 위치)은 무료 키 발급 즉시 연동되도록 백엔드가 준비되어 있습니다. 발급 절차는 docs/05-development 문서를 참조하십시오.',
       /* --- 해외 스케줄 (schedule.html) --- */
       'schedule.hero.title': '해외 스케줄 <span style="font-weight:300; opacity:.75;">— Ship Schedule</span>',
@@ -311,6 +315,10 @@
       'cargo.ql.carrier.d': 'Entering an MBL above auto-detects the carrier (15 SCACs) - official tracking links for all carriers incl. 6 live',
       'cargo.ql.air.t': 'Air cargo (AWB, 10 airlines)',
       'cargo.ql.air.d': 'Official airline tracking by AWB · airline auto-detection for AWB above (10 airlines)',
+      'cargo.ql.g.busanNew': 'Busan New', 'cargo.ql.g.busanNorth': 'Busan North', 'cargo.ql.g.incheon': 'Incheon',
+      'cargo.ql.g.gwangyang': 'Gwangyang', 'cargo.ql.g.pyeongtaek': 'Pyeongtaek', 'cargo.ql.g.daesan': 'Daesan',
+      'cargo.ql.g.unified': 'Portal', 'cargo.ql.g.live': 'Live', 'cargo.ql.g.deeplink': 'Links',
+      'cargo.ql.g.flag': 'Korean', 'cargo.ql.g.foreign': 'Foreign', 'cargo.ql.g.express': 'Express', 'cargo.ql.g.multi': 'Multi',
       'cargo.quicklinks.notice': 'Free-API roadmap: the backend is ready to integrate Korea Customs UNIPASS (clearance timeline), free carrier APIs such as HMM (DCSA standard), MOF PORT-MIS (vessel arrivals/departures), Incheon Airport cargo flight status and AISStream (live vessel positions) as soon as free keys are issued. See the docs developer guide for the issuance procedure.',
       /* --- Overseas Schedule (schedule.html) --- */
       'schedule.hero.title': 'Overseas Schedule <span style="font-weight:300; opacity:.75;">— Ship Schedule</span>',
@@ -472,6 +480,10 @@
       'cargo.ql.carrier.d': '上方输入 MBL 时自动识别船司（15家SCAC）- 含实时查询6家的全部船司官方链接',
       'cargo.ql.air.t': '航空货物（AWB 10家）',
       'cargo.ql.air.d': '通过 AWB 进行航空公司官方追踪 · 上方输入 AWB 时自动识别航空公司（10家）',
+      'cargo.ql.g.busanNew': '釜山新港', 'cargo.ql.g.busanNorth': '釜山北港', 'cargo.ql.g.incheon': '仁川',
+      'cargo.ql.g.gwangyang': '光阳', 'cargo.ql.g.pyeongtaek': '平泽唐津', 'cargo.ql.g.daesan': '大山',
+      'cargo.ql.g.unified': '综合', 'cargo.ql.g.live': '实时', 'cargo.ql.g.deeplink': '深链',
+      'cargo.ql.g.flag': '韩籍航司', 'cargo.ql.g.foreign': '外籍航司', 'cargo.ql.g.express': '快递', 'cargo.ql.g.multi': '通用',
       'cargo.quicklinks.notice': '免费 API 扩充路线图：韩国海关 UNIPASS（通关时间线）、HMM 等船公司免费 API（DCSA 标准）、海洋水产部 PORT-MIS（本船进出港）、仁川机场货运航班状态、AISStream（实时船舶位置）— 免费密钥签发后后端即可立即对接。签发流程请参阅 docs/开发者指南文档。',
       /* --- 海外船期 (schedule.html) --- */
       'schedule.hero.title': '海外船期 <span style="font-weight:300; opacity:.75;">— Ship Schedule</span>',
