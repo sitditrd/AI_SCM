@@ -1,8 +1,10 @@
 // TWL Control Tower — 선사 직접 화물추적 프록시 Edge Function
 // 배포: Supabase Edge Function `carrier-track` (verify_jwt=false — 정적 사이트에서 직접 호출)
 // 시크릿: 기본 5사(ONE·COSCO·SM·EGLV·SITC)는 없음 — 선사 공개 백엔드 JSON 을 그대로 사용.
-//   DCSA 3사는 Secrets 등록 시에만 활성: MAERSK_CONSUMER_KEY(+MAERSK_CLIENT_ID/MAERSK_CLIENT_SECRET),
-//   HLAG_CLIENT_ID/HLAG_CLIENT_SECRET, HMM_API_KEY, ZIM_API_KEY — 미등록이면 딥링크 폴백(2026-08-14)
+//   DCSA 5사는 Secrets 등록 시에만 활성: MAERSK_CONSUMER_KEY(+MAERSK_CLIENT_ID/MAERSK_CLIENT_SECRET),
+//   HLAG_CLIENT_ID/HLAG_CLIENT_SECRET, HMM_API_KEY,
+//   ZIM_API_KEY + ZIM_CLIENT_ID + ZIM_CLIENT_SECRET (ZIM 은 구독 키·OAuth 2단이라 셋 다 필수)
+//   — 미등록이면 딥링크 폴백(2026-08-18)
 //
 // 배경: 레거시(TWSC)는 KLNET PLISM 유료 API 로 MBL 추적 이벤트를 수집해 KlnetTrackList 화면에
 //   표시했다. 이 함수는 그 대체 경로 — 사용자가 MBL 을 입력하면 선사 사이트에서 직접 조회한다.
@@ -470,8 +472,28 @@ function dcsaParse(no: string, raw: unknown): Record<string, unknown> {
       ?? pick(tc, "UNLocationCode")) as string | undefined;
   };
 
-  const transports = sorted.filter((e) => pick(e, "eventType") === "TRANSPORT");
+  const transportsRaw = sorted.filter((e) => pick(e, "eventType") === "TRANSPORT");
   const equipments = sorted.filter((e) => pick(e, "eventType") === "EQUIPMENT");
+
+  /* ZIM 실측(2026-08-18): 운송 이벤트가 두 갈래로 중복된다 —
+       ① 컨테이너 수만큼 동일 이벤트 반복(2개 컨테이너 → 같은 DEPA 2건, 시각까지 동일)
+       ② 같은 지점의 DEPA/ARRI 를 ETD·ETA 개정판마다 재방출(같은 BCT DEPA 가 날짜만 다르게 5건)
+     같은 (코드, 지점) 은 한 건으로 접는다 — ACT 가 있으면 ACT 우선, 아니면 최신 개정판만.
+     지점이 비어 있으면 잘못 합쳐질 수 있으므로 (코드, 시각) 완전 일치만 중복으로 본다.
+     타 선사(머스크·하파그)는 중복 방출이 없어 이 접기가 무해하다(항구별 키라 다구간 항차도 안전). */
+  const tSeen = new Map<string, Record<string, unknown>>();
+  for (const e of transportsRaw) {
+    const code = String(pick(e, "transportEventTypeCode") ?? "");
+    const loc = locOf(e);
+    const key = loc ? `${code}@${loc}` : `${code}#${timeOf(e)}`;
+    const prev = tSeen.get(key);
+    if (!prev) { tSeen.set(key, e); continue; }
+    const act = pick(e, "eventClassifierCode") === "ACT";
+    const prevAct = pick(prev, "eventClassifierCode") === "ACT";
+    if (act && !prevAct) { tSeen.set(key, e); continue; }
+    if (act === prevAct && timeOf(e) > timeOf(prev)) tSeen.set(key, e);
+  }
+  const transports = [...tSeen.values()].sort((a, b) => timeOf(a).localeCompare(timeOf(b)));
 
   /* TRANSPORT — 첫 DEPA=출항, 이후에 또 DEPA 가 있으면 그 앞 ARRI/DEPA 는 환적항 기항.
      명칭은 SLOTS 오검을 피해 고른다(환적 이벤트에 departure/arrival 단어를 쓰지 않는다). */
@@ -645,28 +667,64 @@ async function trackHMM(no: string) {
     { "x-Gateway-APIKey": Deno.env.get("HMM_API_KEY") ?? "" });
 }
 
-/* ZIM — DCSA Track & Trace v2 (2026-08-18 포털 규격 전문 확보 후 확정)
+/* ZIM — DCSA Track & Trace v2 (2026-08-18 실계정으로 인증 방식 실측 확정)
 
      GET https://apigw.zim.com/trackAndTrace/v2/?transportDocumentReference={B/L}
-     인증: 헤더 Ocp-Apim-Subscription-Key (Azure APIM 구독 키)
      제품: ZIM 포털 "Tracing" > "DCSA Track And Trace - v2" (DCSA.org V2.2 준거)
 
-   응답은 **DCSA 이벤트의 평면 배열**이라 공용 dcsaParse 를 그대로 쓴다(Array 입력 지원).
-   당초 ZIM 자체 규격(tracing/v1)을 추정으로 파싱했으나, 포털에서 DCSA 표준 API 를
-   제공하는 것이 확인되어 표준 경로로 교체했다 — 머스크·하파그와 같은 검증된 파서를 공유한다.
+   ★ ZIM 은 관문이 두 개다. 구독 키만으로는 절대 통과 못 한다(실측):
+       구독 키만          → 401 { "message": "JWT not present." }
+       구독 키 + 엉뚱한 JWT → 401 { "message": "Invalid JWT." }
+       JWT 만(구독 키 없음) → 401 "Access denied due to missing subscription key."
+     즉 Ocp-Apim-Subscription-Key 와 Authorization: bearer 를 **둘 다** 보내야 한다.
 
-   규격 특이점(포털 문서 실측):
+   토큰 발급(ZIM 공식 API Guide 기재 · 실측 검증):
+     POST https://apigw.zim.com/authorize/v1
+     Content-Type: application/x-www-form-urlencoded
+     grant_type=client_credentials & client_id & client_secret & scope=tracing
+     → { access_token, expires_in: 3599 }   유효 1시간, aud=9a9ec0bb-…, roles=["api"]
+
+   scope 는 Entra 의 {appIdUri}/.default 형식이 아니라 제품별 짧은 문자열이다.
+   "tracing" 이 게이트웨이 내부에서 api://apim-prod-tracing 으로 번역된다(대소문자 무시,
+   앞뒤 공백 불가). login.microsoftonline.com 을 직접 때리면 이 번역이 없어 실패한다.
+
+   ※ 사용자당 전 제품 합산 동시호출 10건 제한 → 토큰은 반드시 캐시한다(요청마다 발급 금지).
+
+   규격 특이점(포털 문서 + 실측):
      · carrierBookingReference / transportDocumentReference / equipmentReference 중 최소 1개 필수
      · limit·sort·eventType 등 나머지 필터는 "Not supported" 로 명시 → 붙이지 않는다
-     · TRANSPORT 이벤트에 transportCall 이 없다(예제 확인) → 선명·항차는 비게 된다.
+     · 이벤트가 아직 없는 B/L 은 200 이 아니라 400 invalidQuery 로 답한다 → 다음 후보로 넘어간다
+     · TRANSPORT 이벤트에 transportCall 이 없는 경우가 있다 → 선명·항차가 비어도 정상이며
        화물 진행 단계(9슬롯) 판정에는 영향 없다. */
+let zimTok: { v: string; exp: number } | null = null;
+async function zimHeaders(): Promise<Record<string, string>> {
+  const h: Record<string, string> = { "Ocp-Apim-Subscription-Key": Deno.env.get("ZIM_API_KEY") ?? "" };
+  const cid = Deno.env.get("ZIM_CLIENT_ID"), sec = Deno.env.get("ZIM_CLIENT_SECRET");
+  if (cid && sec) {
+    if (!zimTok || Date.now() > zimTok.exp) {
+      const r = await fetch("https://apigw.zim.com/authorize/v1", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ grant_type: "client_credentials", client_id: cid, client_secret: sec, scope: "tracing" }).toString(),
+        signal: AbortSignal.timeout(10000),
+      });
+      const d = await r.json().catch(() => ({} as Record<string, unknown>));
+      const tok = (d as Record<string, unknown>).access_token;
+      const ttl = Number((d as Record<string, unknown>).expires_in) || 3600;
+      // 만료 5분 전에 갱신 — 조회 도중 만료로 401 이 나는 것을 막는다.
+      if (typeof tok === "string") zimTok = { v: tok, exp: Date.now() + (ttl - 300) * 1000 };
+    }
+    if (zimTok) h.Authorization = `bearer ${zimTok.v}`;
+  }
+  return h;
+}
 async function trackZIM(no: string) {
   const base = "https://apigw.zim.com/trackAndTrace/v2/";
   // B/L 로 먼저, 안 되면 부킹번호로 — ZIM 은 양쪽 다 ZIMU 프리픽스 형식이라 구분이 안 된다.
   const q = (k: string) => (bl: string) => `${base}?${k}=${encodeURIComponent(bl)}`;
   return dcsaFetch("ZIM", [no, no.replace(/^ZIMU/i, "")],
     [q("transportDocumentReference"), q("carrierBookingReference")],
-    { "Ocp-Apim-Subscription-Key": Deno.env.get("ZIM_API_KEY") ?? "" });
+    await zimHeaders());
 }
 
 type Adapter = { name: string; blPrefixes: string[]; source: string; run: (no: string) => Promise<Record<string, unknown>>; ready?: () => boolean };
@@ -685,8 +743,9 @@ const CARRIERS: Record<string, Adapter> = {
     ready: () => !!(Deno.env.get("HLAG_CLIENT_ID") && Deno.env.get("HLAG_CLIENT_SECRET")) },
   HDMU: { name: "HMM", blPrefixes: ["HDMU"], source: "apigw.hmm21.com (DCSA)", run: trackHMM,
     ready: () => !!Deno.env.get("HMM_API_KEY") },
-  ZIMU: { name: "ZIM", blPrefixes: ["ZIMU"], source: "apigw.zim.com (tracing)", run: trackZIM,
-    ready: () => !!Deno.env.get("ZIM_API_KEY") },
+  /* ZIM 은 구독 키 + OAuth 토큰 2단이라 셋 다 있어야 live 다(하나라도 없으면 401 확정). */
+  ZIMU: { name: "ZIM", blPrefixes: ["ZIMU"], source: "apigw.zim.com (DCSA T&T v2)", run: trackZIM,
+    ready: () => !!(Deno.env.get("ZIM_API_KEY") && Deno.env.get("ZIM_CLIENT_ID") && Deno.env.get("ZIM_CLIENT_SECRET")) },
 };
 function isActive(a: Adapter | undefined): a is Adapter { return !!a && (!a.ready || a.ready()); }
 

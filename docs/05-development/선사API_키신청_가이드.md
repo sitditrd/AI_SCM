@@ -85,11 +85,25 @@
 - 제약: **태웅이 머스크에 직접 부킹한 화물만** 조회된다(당사자 아니면 404). 자사 물동량 추적이 목적이니 문제없다
 - 계약서·Order Form·결제 정보를 요구하는 화면이 나오면 **잘못된 상품(Public Access)** 이다. 즉시 중단하고 알려주십시오
 
-### ④ ZIM
+### ④ ZIM — ✅ 발급 완료 (2026-08-18)
 
 - 포털: ZIM 개발자 포털에서 무료 계정 생성 → 제품별 접근 승인 요청
 - 무료 근거: EULA 1.7 "Currently ... at no cost". 유일한 공개 한도는 **사용자당 동시 호출 10건**
 - 유의: ZIM 이 **30일 사전 서면통지**만 하면 유료 전환할 권리를 약관에 남겨뒀다. 통지 오면 알려주십시오
+
+**실발급 과정에서 확인된 함정 3가지 (2026-08-18 실측):**
+
+1. **자격증명이 세 개다.** ZIM 은 인증 관문이 2단이라 셋 다 있어야 한다.
+   - 구독 키(32자 16진수): 포털 로그인 → Profile → Subscriptions 의 **Primary key [Show]**. 메일로는 안 온다
+   - Client ID(GUID) + Client Secret(`~` 포함 40자): 승인 메일 2통으로 온다
+   - **메일의 "Secret value" 를 구독 키로 넣으면 `invalid subscription key` 로 실패한다** — 용도가 다르다
+2. **토큰 발급 주소가 비표준이다.** `POST https://apigw.zim.com/authorize/v1`
+   (`grant_type=client_credentials` + client_id + client_secret + **`scope=tracing`**).
+   scope 는 Entra 표준 `{appIdUri}/.default` 형식이 아니라 제품별 짧은 문자열이며,
+   게이트웨이가 내부에서 `api://apim-prod-tracing` 으로 번역한다.
+   `login.microsoftonline.com` 을 직접 호출하면 이 번역이 없어 **영원히 실패**한다
+3. **API 호출 시 헤더 둘 다 필수.** `Ocp-Apim-Subscription-Key` + `Authorization: bearer {jwt}`.
+   토큰 유효 1시간 — 동시 호출 10건 제한이 있으니 어댑터는 토큰을 캐시한다(구현 완료)
 
 ### ⑤ MSC — 유일하게 계약 서명이 필요
 
@@ -109,8 +123,8 @@
 | `MAERSK_CONSUMER_KEY` | 머스크 | 필수 |
 | `MAERSK_CLIENT_ID` · `MAERSK_CLIENT_SECRET` | 머스크 | Private 상품은 OAuth 필수 |
 | `HLAG_CLIENT_ID` · `HLAG_CLIENT_SECRET` | 하파그로이드 | 한 쌍 |
-| `HMM_API_KEY` | HMM | 어댑터 개발 필요 |
-| `ZIM_API_KEY` | ZIM | 어댑터 개발 필요 |
+| `HMM_API_KEY` | HMM | 어댑터 완료 — 키만 넣으면 동작(계정 승인 대기 중) |
+| `ZIM_API_KEY` · `ZIM_CLIENT_ID` · `ZIM_CLIENT_SECRET` | ZIM | ✅ 등록 완료 — 셋 다 필수(2단 인증) |
 | `MSC_API_KEY` | MSC | 어댑터 개발 필요 |
 | ~~`CMACGM_API_KEY`~~ | ~~CMA CGM~~ | **등록 금지 — 유료 선사** |
 
@@ -123,11 +137,12 @@
 |---|---|---|
 | 머스크 | DCSA 공용 | ✅ 완료 — 키만 넣으면 동작(무료 경로 단독) |
 | 하파그로이드 | DCSA 공용 | ✅ 완료 — 키만 넣으면 동작 |
-| HMM | 전용 필요 | ⬜ 미개발(자체 규격) |
-| ZIM | 미확인 | ⬜ 규격 조사 후 결정 |
+| HMM | DCSA 공용 | ✅ 완료 — 키만 넣으면 동작(계정 승인 대기 중) |
+| ZIM | DCSA 공용 + OAuth | ✅ 완료 — 2026-08-18 실조회 검증(live) |
 | MSC | 미확인 | ⬜ 계약 후 스펙 수령 시 개발 |
 
-머스크·하파그는 **키 등록 즉시 재배포 없이 실조회로 승격**된다. 나머지 3사는 어댑터 개발이 선행돼야 한다.
+머스크·하파그·HMM 은 **키 등록 즉시 재배포 없이 실조회로 승격**된다(ZIM 으로 검증된 메커니즘).
+MSC 만 어댑터 개발이 선행돼야 한다.
 
 ## 6. 공통 리스크 — 알고 계셔야 할 것
 

@@ -136,7 +136,7 @@
       /* --- 화물 추적 (cargo.html) --- */
       'cargo.hero.title': '화물 추적 <span style="font-weight:300; opacity:.75;">— 선사 직접 운송 추적</span>',
       'cargo.hero.sub': 'MBL / AWB 번호로 선사·항공사 운송 추적을 조회합니다',
-      'cargo.hero.note': '데이터: 선사 트래킹 API 직접 조회(ONE·COSCO·SM상선·Evergreen·SITC 5사) · 그 외 선사/항공사는 자동 감지 후 공식 추적 페이지 딥링크',
+      'cargo.hero.note': '데이터: 선사 트래킹 API 직접 조회(ONE·COSCO·SM상선·Evergreen·SITC·ZIM 6사) · 그 외 선사/항공사는 자동 감지 후 공식 추적 페이지 딥링크',
       'cargo.trace.btn': '조회',
       'cargo.watch.no': '추적 감시',
       'cargo.watch.h': '등록 화물 자동 감시',
@@ -297,7 +297,7 @@
       /* --- Cargo Tracking (cargo.html) --- */
       'cargo.hero.title': 'Cargo Tracking <span style="font-weight:300; opacity:.75;">— Direct Carrier Transport Tracking</span>',
       'cargo.hero.sub': 'Track carrier / airline transport events by MBL / AWB number',
-      'cargo.hero.note': 'Data: direct carrier tracking API (ONE/COSCO/SM Line/Evergreen/SITC) · other carriers and airlines are auto-detected with official tracking deep links',
+      'cargo.hero.note': 'Data: direct carrier tracking API (ONE/COSCO/SM Line/Evergreen/SITC/ZIM) · other carriers and airlines are auto-detected with official tracking deep links',
       'cargo.trace.btn': 'Search',
       'cargo.watch.no': 'Watchlist',
       'cargo.watch.h': 'Automatic monitoring of registered cargo',
@@ -458,7 +458,7 @@
       /* --- 货物追踪 (cargo.html) --- */
       'cargo.hero.title': '货物追踪 <span style="font-weight:300; opacity:.75;">— 船公司直连运输追踪</span>',
       'cargo.hero.sub': '通过 MBL / AWB 号码查询船公司/航空公司运输追踪',
-      'cargo.hero.note': '数据：船公司追踪 API 直连查询（ONE/COSCO/SM Line/Evergreen/SITC）· 其余船公司与航空公司自动识别并提供官方追踪深链接',
+      'cargo.hero.note': '数据：船公司追踪 API 直连查询（ONE/COSCO/SM Line/Evergreen/SITC/ZIM）· 其余船公司与航空公司自动识别并提供官方追踪深链接',
       'cargo.trace.btn': '查询',
       'cargo.watch.no': '追踪监控',
       'cargo.watch.h': '登记货物自动监控',

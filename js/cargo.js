@@ -785,7 +785,7 @@
       return;
     }
     renderDeeplink('선사 미감지', null, null,
-      '번호에서 선사를 식별하지 못했습니다. 실조회 지원: ONE·COSCO·SM상선·Evergreen·SITC(키 등록 시 머스크·CMA CGM·하파그로이드 자동 확장) / 그 외 선사는 딥링크. 번호를 확인하거나 아래 무료 조회 채널을 이용하십시오.');
+      '번호에서 선사를 식별하지 못했습니다. 실조회 지원: ONE·COSCO·SM상선·Evergreen·SITC·ZIM(키 등록 시 머스크·하파그로이드·HMM 자동 확장) / 그 외 선사는 딥링크. 번호를 확인하거나 아래 무료 조회 채널을 이용하십시오.');
   }
 
   document.addEventListener('DOMContentLoaded', function () {
