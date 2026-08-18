@@ -645,62 +645,28 @@ async function trackHMM(no: string) {
     { "x-Gateway-APIKey": Deno.env.get("HMM_API_KEY") ?? "" });
 }
 
-/* ZIM — Azure API Management 게이트웨이(2026-08-14 무키 실측: "missing subscription key"):
-     GET https://apigw.zim.com/tracing/v1/{B/L}
-     인증: 헤더 Ocp-Apim-Subscription-Key
-   응답 형상은 ZIM 자체 규격이라 키 발급 전에는 알 수 없다 — DCSA 이벤트 배열이면 dcsaParse,
-   아니면 컨테이너/이벤트 배열을 관용 키로 탐색하고, 그래도 못 읽으면 요약만이라도 돌려준다.
-   첫 키 등록 후 실 BL 응답을 보고 전용 매핑으로 확정한다. */
+/* ZIM — DCSA Track & Trace v2 (2026-08-18 포털 규격 전문 확보 후 확정)
+
+     GET https://apigw.zim.com/trackAndTrace/v2/?transportDocumentReference={B/L}
+     인증: 헤더 Ocp-Apim-Subscription-Key (Azure APIM 구독 키)
+     제품: ZIM 포털 "Tracing" > "DCSA Track And Trace - v2" (DCSA.org V2.2 준거)
+
+   응답은 **DCSA 이벤트의 평면 배열**이라 공용 dcsaParse 를 그대로 쓴다(Array 입력 지원).
+   당초 ZIM 자체 규격(tracing/v1)을 추정으로 파싱했으나, 포털에서 DCSA 표준 API 를
+   제공하는 것이 확인되어 표준 경로로 교체했다 — 머스크·하파그와 같은 검증된 파서를 공유한다.
+
+   규격 특이점(포털 문서 실측):
+     · carrierBookingReference / transportDocumentReference / equipmentReference 중 최소 1개 필수
+     · limit·sort·eventType 등 나머지 필터는 "Not supported" 로 명시 → 붙이지 않는다
+     · TRANSPORT 이벤트에 transportCall 이 없다(예제 확인) → 선명·항차는 비게 된다.
+       화물 진행 단계(9슬롯) 판정에는 영향 없다. */
 async function trackZIM(no: string) {
-  const key = Deno.env.get("ZIM_API_KEY") ?? "";
-  const candidates = [no, no.replace(/^ZIMU/i, "")];
-  let last: Record<string, unknown> = { empty: true, upstream: "No data" };
-  for (const bl of candidates) {
-    const r = await fetch(`https://apigw.zim.com/tracing/v1/${encodeURIComponent(bl)}`, {
-      headers: { "User-Agent": UA, Accept: "application/json", "Ocp-Apim-Subscription-Key": key },
-      signal: AbortSignal.timeout(15000),
-    });
-    if (r.status === 401 || r.status === 403) {
-      return { empty: true, upstream: "조회 제한: ZIM API 인증 실패 — Supabase Secrets 의 키 상태와 구독 승인 여부를 확인하십시오." };
-    }
-    if (r.status === 429) return { empty: true, upstream: "ZIM API 호출 제한(429) — 잠시 후 다시 시도하십시오." };
-    if (r.status === 404) { last = { empty: true, upstream: "No data (404)" }; continue; }
-    const d = await r.json().catch(() => null);
-    if (!d) continue;
-    // DCSA 형상이면 공용 파서로
-    const asDcsa = dcsaParse(bl, d);
-    if (!asDcsa.empty) return asDcsa;
-    // ZIM 자체 형상 관용 탐색 — 흔한 키 이름을 순서대로 시도
-    const cRaw = pick(d, "containers", "containerList", "trackingContainers", "consignmentContainers");
-    const cList = Array.isArray(cRaw) ? cRaw : [];
-    const containers = cList.map((c: unknown) => {
-      const evsRaw = pick(c, "events", "containerEvents", "movements", "activities");
-      const evs = (Array.isArray(evsRaw) ? evsRaw : []).map((e: unknown) => ({
-        name: pick(e, "eventName", "activityDescription", "statusDescription", "eventType", "activity"),
-        location: locName(pick(e, "location", "locationName", "port", "place")),
-        timeLocal: pick(e, "eventDateTime", "activityDateTime", "eventDate", "date"),
-        actual: pick(e, "eventClassifierCode") !== "EST",
-      })).filter((e) => e.name);
-      return {
-        cntrNo: String(pick(c, "containerNumber", "equipmentReference", "cntrNo", "containerId") ?? "").replace(/[^A-Za-z0-9]/g, ""),
-        szTp: pick(c, "containerType", "isoCode", "sizeType"),
-        events: evs,
-      };
-    }).filter((c) => c.cntrNo || c.events.length);
-    if (containers.length) {
-      return {
-        summary: {
-          blNo: no,
-          por: locName(pick(d, "portOfLoading", "pol", "origin")),
-          pod: locName(pick(d, "portOfDischarge", "pod", "destination")),
-          vessel: pick(d, "vesselName", "vessel"), voyage: pick(d, "voyage", "voyageNumber"),
-        },
-        voyages: [], containers,
-      };
-    }
-    last = { empty: true, upstream: "응답 형상 미해석 — 키 등록 후 실 응답 기준으로 파서 보정 필요" };
-  }
-  return last;
+  const base = "https://apigw.zim.com/trackAndTrace/v2/";
+  // B/L 로 먼저, 안 되면 부킹번호로 — ZIM 은 양쪽 다 ZIMU 프리픽스 형식이라 구분이 안 된다.
+  const q = (k: string) => (bl: string) => `${base}?${k}=${encodeURIComponent(bl)}`;
+  return dcsaFetch("ZIM", [no, no.replace(/^ZIMU/i, "")],
+    [q("transportDocumentReference"), q("carrierBookingReference")],
+    { "Ocp-Apim-Subscription-Key": Deno.env.get("ZIM_API_KEY") ?? "" });
 }
 
 type Adapter = { name: string; blPrefixes: string[]; source: string; run: (no: string) => Promise<Record<string, unknown>>; ready?: () => boolean };
