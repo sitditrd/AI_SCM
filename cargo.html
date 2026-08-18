@@ -99,38 +99,80 @@
       </div>
       <div class="grid-3 reveal" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
         <div class="card">
-          <h3 style="font-size:14.5px;" data-i18n="cargo.ql.terminal.t">부산신항 터미널 반출입·본선작업</h3>
-          <p style="font-size:12.5px; color:var(--muted);" data-i18n="cargo.ql.terminal.d">컨테이너 번호·모선항차로 터미널 직접 조회</p>
+          <h3 style="font-size:14.5px;" data-i18n="cargo.ql.terminal.t">터미널 반출입·본선작업 (전국 16곳)</h3>
+          <p style="font-size:12.5px; color:var(--muted);" data-i18n="cargo.ql.terminal.d">선석배정 수집 대상 16개 터미널과 동일 — 컨테이너 번호·모선항차로 직접 조회</p>
+          <!-- 링크는 선석배정 수집기가 실제로 긁는 각 터미널 선석 스케줄 화면(2026-08-18 16곳 전수 200 OK 확인) -->
+          <p class="ql-links"><span style="color:var(--muted); font-size:11.5px;">부산신항</span>
+            <a href="https://www.hjnc.co.kr/esvc/vessel/berthScheduleT" target="_blank" rel="noopener">HJNC</a>
+            <a href="https://www.pnitl.com/infoservice/vessel/vslScheduleList.jsp" target="_blank" rel="noopener">PNIT</a>
+            <a href="https://svc.pncport.com/info/CMS/Ship/Info.pnc?mCode=MN014" target="_blank" rel="noopener">PNC</a>
+            <a href="https://info.bnctkorea.com/esvc/vessel/berthScheduleT" target="_blank" rel="noopener">BNCT</a>
+            <a href="https://www.hpnt.co.kr/infoservice/vessel/vslScheduleList.jsp" target="_blank" rel="noopener">HPNT</a>
+            <a href="https://info.dgtbusan.com/DGT/esvc/vessel/berthScheduleT" target="_blank" rel="noopener">DGT</a>
+            <a href="https://info.bct2-4.com/" target="_blank" rel="noopener">BCT</a>
+          </p>
+          <p class="ql-links"><span style="color:var(--muted); font-size:11.5px;">부산북항</span>
+            <a href="https://info.bptc.co.kr/" target="_blank" rel="noopener">BPT</a>
+            <a href="https://custom.hktl.com/jsp/T01/sunsuk.jsp" target="_blank" rel="noopener">HBCT</a>
+            <span style="color:var(--muted); font-size:11.5px;">· 인천</span>
+            <a href="http://www.e1ct.co.kr/info/terminal/berthText" target="_blank" rel="noopener">E1CT</a>
+            <a href="https://scon.icpa.or.kr/vescall/list.do?menuKey=19" target="_blank" rel="noopener">ICON</a>
+          </p>
+          <p class="ql-links"><span style="color:var(--muted); font-size:11.5px;">광양</span>
+            <a href="http://www.gwct.co.kr/sub/sub_B2" target="_blank" rel="noopener">GWCT</a>
+            <a href="https://info.kitl.com/jsp/T01/sunsuk.jsp" target="_blank" rel="noopener">KITL</a>
+            <span style="color:var(--muted); font-size:11.5px;">· 평택당진</span>
+            <a href="http://www.pctc21.com/esvc/vessel/berthScheduleT" target="_blank" rel="noopener">PCTC</a>
+            <a href="http://www.pnct.co.kr/infoservice/index.html" target="_blank" rel="noopener">PNCT</a>
+            <span style="color:var(--muted); font-size:11.5px;">· 대산</span>
+            <a href="https://ds.dongbang.co.kr/infoservice/index.html" target="_blank" rel="noopener">DDCT</a>
+          </p>
           <p class="ql-links">
-            <a href="https://www.hjnc.co.kr" target="_blank" rel="noopener">HJNC</a>
-            <a href="https://www.pnitl.com" target="_blank" rel="noopener">PNIT</a>
-            <a href="https://svc.pncport.com" target="_blank" rel="noopener">PNC</a>
-            <a href="https://info.bnctkorea.com" target="_blank" rel="noopener">BNCT</a>
-            <a href="https://www.hpnt.co.kr" target="_blank" rel="noopener">HPNT</a>
-            <a href="https://www.dgtbusan.com" target="_blank" rel="noopener">DGT</a>
             <a href="https://www.chainportal.co.kr" target="_blank" rel="noopener">BPA 체인포털</a>
           </p>
         </div>
         <div class="card">
-          <h3 style="font-size:14.5px;" data-i18n="cargo.ql.carrier.t">선사 컨테이너 트래킹</h3>
-          <p style="font-size:12.5px; color:var(--muted);" data-i18n="cargo.ql.carrier.d">위 조회에서 MBL 입력 시 선사 자동 감지 딥링크 제공 (SCAC 12사) — 주요 선사 직접 링크</p>
-          <p class="ql-links">
-            <a href="https://www.hmm21.com/e-service/general/trackNTrace/TrackNTrace.do" target="_blank" rel="noopener">HMM</a>
-            <a href="https://www.msc.com/en/track-a-shipment" target="_blank" rel="noopener">MSC</a>
-            <a href="https://www.maersk.com/tracking" target="_blank" rel="noopener">Maersk</a>
+          <h3 style="font-size:14.5px;" data-i18n="cargo.ql.carrier.t">선사 컨테이너 트래킹 (해상 17사)</h3>
+          <p style="font-size:12.5px; color:var(--muted);" data-i18n="cargo.ql.carrier.d">위 조회에서 MBL 입력 시 선사 자동 감지(SCAC 15사) — 실조회 6사 포함 전 선사 공식 추적 직접 링크</p>
+          <p class="ql-links"><span style="color:var(--muted); font-size:11.5px;">실조회 지원</span>
             <a href="https://ecomm.one-line.com/one-ecom/manage-shipment/cargo-tracking" target="_blank" rel="noopener">ONE</a>
-            <a href="https://www.shipmentlink.com/servlet/TDB1_CargoTracking.do" target="_blank" rel="noopener">Evergreen</a>
-            <a href="https://www.ekmtc.com" target="_blank" rel="noopener">KMTC</a>
+            <a href="https://elines.coscoshipping.com/ebusiness/cargoTracking" target="_blank" rel="noopener">COSCO</a>
+            <a href="https://esvc.smlines.com/smline/CUP_HOM_3301.do" target="_blank" rel="noopener">SM상선</a>
+            <a href="https://ct.shipmentlink.com/servlet/TDB1_CargoTracking.do" target="_blank" rel="noopener">Evergreen</a>
+            <a href="https://ebusiness.sitcline.com/" target="_blank" rel="noopener">SITC</a>
+            <a href="https://www.zim.com/tools/track-a-shipment" target="_blank" rel="noopener">ZIM</a>
+          </p>
+          <p class="ql-links"><span style="color:var(--muted); font-size:11.5px;">딥링크</span>
+            <a href="https://www.hmm21.com/e-service/general/trackNTrace/TrackNTrace.do" target="_blank" rel="noopener">HMM</a>
+            <a href="https://www.maersk.com/tracking" target="_blank" rel="noopener">Maersk</a>
+            <a href="https://www.hapag-lloyd.com/en/online-business/track/track-by-booking-solution.html" target="_blank" rel="noopener">Hapag-Lloyd</a>
+            <a href="https://www.msc.com/en/track-a-shipment" target="_blank" rel="noopener">MSC</a>
+            <a href="https://www.cma-cgm.com/ebusiness/tracking" target="_blank" rel="noopener">CMA CGM</a>
+            <a href="https://www.oocl.com/eng/ourservices/eservices/cargotracking/" target="_blank" rel="noopener">OOCL</a>
+            <a href="https://www.yangming.com/e-service/Track_Trace/track_trace_cargo_tracking.aspx" target="_blank" rel="noopener">Yang Ming</a>
+            <a href="https://www.wanhai.com/views/cargoTrack/CargoTrack.xhtml" target="_blank" rel="noopener">Wan Hai</a>
+            <a href="https://www.ekmtc.com/index.html#/cargo-tracking" target="_blank" rel="noopener">고려해운</a>
             <a href="https://ebiz.sinokor.co.kr" target="_blank" rel="noopener">장금상선</a>
+            <a href="https://www.heungaline.com/en/index.html" target="_blank" rel="noopener">흥아라인</a>
           </p>
         </div>
         <div class="card">
-          <h3 style="font-size:14.5px;" data-i18n="cargo.ql.air.t">항공 화물 (AWB)</h3>
-          <p style="font-size:12.5px; color:var(--muted);" data-i18n="cargo.ql.air.d">AWB 번호로 항공사 공식 추적 · 위 조회에서 AWB 입력 시 항공사(10사) 자동 감지</p>
+          <h3 style="font-size:14.5px;" data-i18n="cargo.ql.air.t">항공 화물 (AWB 10사)</h3>
+          <p style="font-size:12.5px; color:var(--muted);" data-i18n="cargo.ql.air.d">위 조회에서 AWB 입력 시 항공사(10사) 자동 감지 — 전 항공사 공식 추적 직접 링크 + 범용조회</p>
           <p class="ql-links">
-            <a href="https://cargo.koreanair.com" target="_blank" rel="noopener">대한항공 Cargo</a>
-            <a href="https://asianacargo.com" target="_blank" rel="noopener">아시아나 Cargo</a>
-            <a href="https://track.champ.aero" target="_blank" rel="noopener">CHAMP 범용조회</a>
+            <a href="https://cargo.koreanair.com" target="_blank" rel="noopener">대한항공</a>
+            <a href="https://www.asianacargo.com" target="_blank" rel="noopener">아시아나</a>
+            <a href="https://www.siacargo.com" target="_blank" rel="noopener">싱가포르항공</a>
+            <a href="https://www.cathaycargo.com" target="_blank" rel="noopener">캐세이</a>
+            <a href="https://www.skycargo.com" target="_blank" rel="noopener">에미레이트</a>
+            <a href="https://www.qrcargo.com" target="_blank" rel="noopener">카타르</a>
+            <a href="https://www.cargolux.com" target="_blank" rel="noopener">카고룩스</a>
+            <a href="https://www.airchinacargo.com" target="_blank" rel="noopener">에어차이나</a>
+            <a href="https://www.fedex.com/ko-kr/tracking.html" target="_blank" rel="noopener">FedEx</a>
+            <a href="https://www.ups.com/track" target="_blank" rel="noopener">UPS</a>
+          </p>
+          <p class="ql-links"><span style="color:var(--muted); font-size:11.5px;">범용</span>
+            <a href="https://track.champ.aero" target="_blank" rel="noopener">CHAMP</a>
             <a href="https://www.track-trace.com/aircargo" target="_blank" rel="noopener">track-trace.com</a>
           </p>
         </div>
@@ -164,7 +206,7 @@
   </footer>
 
   <script src="js/common.js?v=2026-4"></script>
-  <script src="js/i18n.js?v=2026-08-18a"></script>
+  <script src="js/i18n.js?v=2026-08-18b"></script>
   <script src="js/auth.js?v=2026-07-29f"></script>
   <script src="js/auth-gate.js?v=2026-07-30a"></script>
   <script src="js/cargo.js?v=2026-08-18b"></script>
