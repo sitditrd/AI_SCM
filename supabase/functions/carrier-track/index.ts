@@ -2,7 +2,7 @@
 // 배포: Supabase Edge Function `carrier-track` (verify_jwt=false — 정적 사이트에서 직접 호출)
 // 시크릿: 기본 5사(ONE·COSCO·SM·EGLV·SITC)는 없음 — 선사 공개 백엔드 JSON 을 그대로 사용.
 //   DCSA 3사는 Secrets 등록 시에만 활성: MAERSK_CONSUMER_KEY(+MAERSK_CLIENT_ID/MAERSK_CLIENT_SECRET),
-//   CMACGM_API_KEY, HLAG_CLIENT_ID/HLAG_CLIENT_SECRET — 미등록이면 딥링크 폴백(2026-08-12)
+//   HLAG_CLIENT_ID/HLAG_CLIENT_SECRET, HMM_API_KEY, ZIM_API_KEY — 미등록이면 딥링크 폴백(2026-08-14)
 //
 // 배경: 레거시(TWSC)는 KLNET PLISM 유료 API 로 MBL 추적 이벤트를 수집해 KlnetTrackList 화면에
 //   표시했다. 이 함수는 그 대체 경로 — 사용자가 MBL 을 입력하면 선사 사이트에서 직접 조회한다.
@@ -38,6 +38,7 @@ const DEEPLINKS: Record<string, Deeplink> = {
   YMLU: { name: "Yang Ming", url: "https://www.yangming.com/e-service/Track_Trace/track_trace_cargo_tracking.aspx" },
   WHLC: { name: "Wan Hai", url: "https://www.wanhai.com/views/cargoTrack/CargoTrack.xhtml" },
   SMLM: { name: "SM상선", url: "https://esvc.smlines.com/smline/CUP_HOM_3301.do" },
+  ZIMU: { name: "ZIM", url: "https://www.zim.com/tools/track-a-shipment" },
 };
 
 const cors = {
@@ -626,6 +627,82 @@ async function trackHapag(no: string) {
     { "X-IBM-Client-Id": Deno.env.get("HLAG_CLIENT_ID") ?? "", "X-IBM-Client-Secret": Deno.env.get("HLAG_CLIENT_SECRET") ?? "" });
 }
 
+/* HMM — 포털 공개 OpenAPI 스펙(dcsaCargoTracking v1)에서 확인(2026-08-14):
+     GET https://apigw.hmm21.com/gateway/dcsaCargoTracking/v1/cargo-tracking-dcsa
+     인증: 헤더 x-Gateway-APIKey · 파라미터: carrierBookingReference, equipmentReference(스펙상 둘 다 필수)
+   응답은 DCSA 이벤트 계열로 추정되어 dcsaParse 를 그대로 태운다.
+   ※ 키 발급 전이라 실호출 미검증 — equipmentReference 없이 B/L 만으로 조회되는지, 응답이
+   표준 DCSA 형상인지는 첫 키 등록 후 실 BL 로 확인하고 필요 시 보정한다. 후보 순서:
+   빈 equipmentReference 동반 → 미동반 → HDMU 프리픽스 유지형. */
+async function trackHMM(no: string) {
+  const digits = no.replace(/^HDMU/i, "");
+  const base = "https://apigw.hmm21.com/gateway/dcsaCargoTracking/v1/cargo-tracking-dcsa";
+  return dcsaFetch("HMM", [digits, no],
+    [
+      (bl) => `${base}?carrierBookingReference=${encodeURIComponent(bl)}&equipmentReference=`,
+      (bl) => `${base}?carrierBookingReference=${encodeURIComponent(bl)}`,
+    ],
+    { "x-Gateway-APIKey": Deno.env.get("HMM_API_KEY") ?? "" });
+}
+
+/* ZIM — Azure API Management 게이트웨이(2026-08-14 무키 실측: "missing subscription key"):
+     GET https://apigw.zim.com/tracing/v1/{B/L}
+     인증: 헤더 Ocp-Apim-Subscription-Key
+   응답 형상은 ZIM 자체 규격이라 키 발급 전에는 알 수 없다 — DCSA 이벤트 배열이면 dcsaParse,
+   아니면 컨테이너/이벤트 배열을 관용 키로 탐색하고, 그래도 못 읽으면 요약만이라도 돌려준다.
+   첫 키 등록 후 실 BL 응답을 보고 전용 매핑으로 확정한다. */
+async function trackZIM(no: string) {
+  const key = Deno.env.get("ZIM_API_KEY") ?? "";
+  const candidates = [no, no.replace(/^ZIMU/i, "")];
+  let last: Record<string, unknown> = { empty: true, upstream: "No data" };
+  for (const bl of candidates) {
+    const r = await fetch(`https://apigw.zim.com/tracing/v1/${encodeURIComponent(bl)}`, {
+      headers: { "User-Agent": UA, Accept: "application/json", "Ocp-Apim-Subscription-Key": key },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (r.status === 401 || r.status === 403) {
+      return { empty: true, upstream: "조회 제한: ZIM API 인증 실패 — Supabase Secrets 의 키 상태와 구독 승인 여부를 확인하십시오." };
+    }
+    if (r.status === 429) return { empty: true, upstream: "ZIM API 호출 제한(429) — 잠시 후 다시 시도하십시오." };
+    if (r.status === 404) { last = { empty: true, upstream: "No data (404)" }; continue; }
+    const d = await r.json().catch(() => null);
+    if (!d) continue;
+    // DCSA 형상이면 공용 파서로
+    const asDcsa = dcsaParse(bl, d);
+    if (!asDcsa.empty) return asDcsa;
+    // ZIM 자체 형상 관용 탐색 — 흔한 키 이름을 순서대로 시도
+    const cRaw = pick(d, "containers", "containerList", "trackingContainers", "consignmentContainers");
+    const cList = Array.isArray(cRaw) ? cRaw : [];
+    const containers = cList.map((c: unknown) => {
+      const evsRaw = pick(c, "events", "containerEvents", "movements", "activities");
+      const evs = (Array.isArray(evsRaw) ? evsRaw : []).map((e: unknown) => ({
+        name: pick(e, "eventName", "activityDescription", "statusDescription", "eventType", "activity"),
+        location: locName(pick(e, "location", "locationName", "port", "place")),
+        timeLocal: pick(e, "eventDateTime", "activityDateTime", "eventDate", "date"),
+        actual: pick(e, "eventClassifierCode") !== "EST",
+      })).filter((e) => e.name);
+      return {
+        cntrNo: String(pick(c, "containerNumber", "equipmentReference", "cntrNo", "containerId") ?? "").replace(/[^A-Za-z0-9]/g, ""),
+        szTp: pick(c, "containerType", "isoCode", "sizeType"),
+        events: evs,
+      };
+    }).filter((c) => c.cntrNo || c.events.length);
+    if (containers.length) {
+      return {
+        summary: {
+          blNo: no,
+          por: locName(pick(d, "portOfLoading", "pol", "origin")),
+          pod: locName(pick(d, "portOfDischarge", "pod", "destination")),
+          vessel: pick(d, "vesselName", "vessel"), voyage: pick(d, "voyage", "voyageNumber"),
+        },
+        voyages: [], containers,
+      };
+    }
+    last = { empty: true, upstream: "응답 형상 미해석 — 키 등록 후 실 응답 기준으로 파서 보정 필요" };
+  }
+  return last;
+}
+
 type Adapter = { name: string; blPrefixes: string[]; source: string; run: (no: string) => Promise<Record<string, unknown>>; ready?: () => boolean };
 const CARRIERS: Record<string, Adapter> = {
   ONEY: { name: "ONE (Ocean Network Express)", blPrefixes: ["ONEY"], source: "ecomm.one-line.com", run: trackONE },
@@ -640,6 +717,10 @@ const CARRIERS: Record<string, Adapter> = {
     ready: () => !!Deno.env.get("CMACGM_API_KEY") },
   HLCU: { name: "Hapag-Lloyd", blPrefixes: ["HLCU"], source: "api.hlag.com (DCSA T&T)", run: trackHapag,
     ready: () => !!(Deno.env.get("HLAG_CLIENT_ID") && Deno.env.get("HLAG_CLIENT_SECRET")) },
+  HDMU: { name: "HMM", blPrefixes: ["HDMU"], source: "apigw.hmm21.com (DCSA)", run: trackHMM,
+    ready: () => !!Deno.env.get("HMM_API_KEY") },
+  ZIMU: { name: "ZIM", blPrefixes: ["ZIMU"], source: "apigw.zim.com (tracing)", run: trackZIM,
+    ready: () => !!Deno.env.get("ZIM_API_KEY") },
 };
 function isActive(a: Adapter | undefined): a is Adapter { return !!a && (!a.ready || a.ready()); }
 

@@ -1,8 +1,9 @@
-﻿@echo off
+@echo off
 setlocal EnableExtensions
 chcp 65001 >nul
 set "PYTHONUTF8=1"
 set "PYTHONIOENCODING=utf-8"
+set "PYTHONUNBUFFERED=1"
 set "SCRIPT=%~dp0terminal_schedule_collector.py"
 
 if not exist "%SCRIPT%" (

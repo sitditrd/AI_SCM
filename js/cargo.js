@@ -46,6 +46,7 @@
     WHLC: ['Wan Hai', 'https://www.wanhai.com/views/cargoTrack/CargoTrack.xhtml'],
     SMLM: ['SM상선', 'https://esvc.smlines.com/smline/CUP_HOM_3301.do'],
     SITC: ['SITC', 'https://ebusiness.sitcline.com/#/topMenu/cargoTrack?blNo='],
+    ZIMU: ['ZIM', 'https://www.zim.com/tools/track-a-shipment'],
     KMTC: ['고려해운(KMTC)', 'https://www.ekmtc.com/index.html#/cargo-tracking']
   };
   function oceanInfo(no) {
