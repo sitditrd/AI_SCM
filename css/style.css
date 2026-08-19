@@ -1819,16 +1819,17 @@ table.trk-tbl td .na { color: var(--muted); }
 .hero-ops { position: relative; min-height: max(660px, 94vh); padding: 0; display: block; overflow: hidden; }
 .hero-ops .hero-hud { position: static; max-width: var(--maxw); margin: 0 auto; padding: 108px 22px 0; }
 .hud-brief { position: relative; z-index: 5; }
-.hud-brief {
-  max-width: 620px; padding: 30px 34px 26px; border-radius: 20px;
-  background: color-mix(in srgb, var(--bg) 58%, transparent);
-  border: 1px solid rgba(255, 255, 255, .09);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  backdrop-filter: blur(18px) saturate(140%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 30px 70px rgba(0, 0, 0, .45);
+/* 박스 제거(2026-08-19 사용자: 카드가 어색) — 좌측 어둠이 지도로 녹아드는
+   셀이드 위에 타이포가 직접 앉는다(Windward 방식) — 경계선 없음 */
+.hud-brief { max-width: 640px; padding: 0; }
+.hero-shade {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(6, 10, 22, .94) 0%, rgba(6, 10, 22, .82) 26%, rgba(6, 10, 22, .45) 46%, transparent 64%),
+    linear-gradient(180deg, rgba(6, 10, 22, .5) 0%, transparent 18%);
 }
-.hero-ops h1 { font-size: clamp(34px, 2.7vw, 50px); margin: 10px 0 14px; }
-.hero-ops .hero-sub { font-size: 14.5px; margin-bottom: 18px; }
+.hero-ops h1 { font-size: clamp(38px, 3vw, 58px); margin: 12px 0 16px; }
+.hero-ops .hero-sub { font-size: 15.5px; margin-bottom: 20px; max-width: 560px; }
 .hero-ops .hero-note { margin-top: 14px; font-size: 12px; }
 .hud-dock {
   position: absolute; z-index: 6; left: 0; right: 0; bottom: 0;
@@ -1875,7 +1876,7 @@ table.trk-tbl td .na { color: var(--muted); }
 .hero-ops .hero-sub { color: rgba(235, 242, 252, .72); }
 .hero-ops .hero-sub b { color: #fff; }
 .hero-ops .hero-note { color: rgba(235, 242, 252, .5); }
-.hero-ops .hud-brief { background: rgba(10, 16, 32, .55); border-color: rgba(255, 255, 255, .09); }
+.hero-ops .hud-brief { background: none; border: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
 .hero-ops .live-chip { background: rgba(255, 255, 255, .04); border: 1px solid rgba(255, 255, 255, .09); }
 .hero-ops .live-chip .k { color: rgba(235, 242, 252, .55); }
 .hero-ops .live-chip .v { color: #F2F5FA; }
@@ -1885,9 +1886,7 @@ table.trk-tbl td .na { color: var(--muted); }
 .hero-ops .hud-clocks .hc:first-child b { color: #7ee0ff; }
 .hero-ops .hud-dock { background: linear-gradient(180deg, rgba(10, 15, 30, 0) 0%, rgba(10, 15, 30, .85) 55%); }
 .hero-ops .btn-ghost { color: rgba(235, 242, 252, .85); border-color: rgba(255, 255, 255, .2); }
-/* 라이트 테마: 헤더가 다크 히어로 위에 뜨므로 자체 배경을 갖는다 */
-[data-theme="light"] .hero-page .site-header {
-  background: color-mix(in srgb, var(--bg) 96%, transparent);
-  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--border);
-}
+
+
+.hero-ops .hero-eyebrow { color: #cfe0f5; }
+.hero-ops .hero-eyebrow, .hero-ops .hero-eyebrow * { border-color: rgba(255, 255, 255, .16); }
