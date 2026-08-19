@@ -38,7 +38,11 @@
 아래 경로는 2026-08-14 포털 SPA 라우트·내부 API 를 실측해 확인한 것이다.
 
 - 포털: <https://api-portal.hlag.com> (구 `developer.hapag-lloyd.com` 은 **응답 없음**)
-- 화면 경로(SPA 라우트): `/getting-started` · `/login` · `/products` · `/applications` · `/settings`
+- **라우트 변경 주의(2026-08-19 재실측)**: `/getting-started` · `/products` 는 이제 **404**.
+  현재 살아있는 경로는 `/`(랜딩, 200) · `/login`(200) · `/applications`(200).
+  가입은 **랜딩 페이지의 Register 버튼**으로 진입한다(딥링크 금지).
+  상품 설명·약관은 공식 안내 페이지 <https://www.hapag-lloyd.com/en/online-business/track/track-by-api.html> 참조
+  (포털 메타데이터에 price 0.00 EUR 명시 — 무료 유지 확인)
 
 **절차**
 
