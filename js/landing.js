@@ -296,38 +296,6 @@
       col.night = 'rgba(3, 7, 20, 0.34)'; col.term = 'rgba(120, 200, 255, 0.14)';
     }
     setPalette();
-    /* 실시간 AIS — 우리가 수신 중인 진짜 선박을 지도에 점으로 준다(60s 갱신) */
-    var aisPts = [];
-    function fetchAis() {
-      var KEY = 'sb_publishable_jo6oBar-JbfKY3IfhPyBbQ_gH1Lvwsv';
-      fetch('https://kvmyiualdodcvreoqfin.supabase.co/rest/v1/vessel_positions' +
-            '?select=mmsi,lat,lng,received_at&order=received_at.desc&limit=400',
-        { headers: { apikey: KEY, Authorization: 'Bearer ' + KEY } })
-        .then(function (r) { return r.json(); })
-        .then(function (rows) {
-          if (!Array.isArray(rows)) return;
-          var cut = Date.now() - 45 * 60000, seen = {}, out = [];
-          rows.forEach(function (v) {
-            if (seen[v.mmsi]) return;
-            if (new Date(v.received_at).getTime() < cut) return;
-            seen[v.mmsi] = 1;
-            out.push([Number(v.lat), Number(v.lng)]);
-          });
-          aisPts = out;
-          /* 신선한 수신이 없으면 칩 자체를 숨긴다 — "실시간"을 거짓말로 만들지 않는다.
-             (AIS 수집기가 재가동되면 자동으로 다시 켜진다) */
-          var el = document.getElementById('lsAis');
-          if (el) {
-            var chip = el.closest ? el.closest('.live-chip') : null;
-            if (out.length) {
-              el.textContent = out.length + '척';
-              if (chip) chip.style.display = '';
-            } else if (chip) chip.style.display = 'none';
-          }
-        }).catch(function () { /* 수신 실패 시 점 생략 */ });
-    }
-    fetchAis();
-    setInterval(fetchAis, 60000);
 
     /* 낮·밤 터미네이터 — 태양 위치 실시간 계산(근사식).
        지금 이 순간 지구의 밤 영역이 지도 위에 실제로 드리운다 — 장식이 아니라 사실. */
@@ -570,18 +538,6 @@
       ctx.fillStyle = col.night; ctx.globalAlpha = 1; ctx.fill();
       ctx.strokeStyle = col.term; ctx.globalAlpha = 1; ctx.lineWidth = 1; ctx.stroke();
 
-      /* 실시간 AIS 선박 점 — 진짜 배들 */
-      for (var ai = 0; ai < aisPts.length; ai++) {
-        var ap = project(aisPts[ai][0], aisPts[ai][1], w);
-        var axp = ap.x + ox, ayp = ap.y + oy;
-        if (axp < 0 || axp > w || ayp < 0 || ayp > h) continue;
-        ctx.beginPath();
-        ctx.arc(axp, ayp, 1.7, 0, Math.PI * 2);
-        ctx.fillStyle = col.head;
-        ctx.globalAlpha = 0.9;
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
 
       var hx = hub.x + ox, hy = hub.y + oy;
       routes.forEach(function (r) {
