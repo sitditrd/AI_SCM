@@ -26,6 +26,12 @@ const LABEL: Record<string, string> = {
   "항차": "Voyage",
   "진행 상태": "Status",
 };
+/* 접두 매핑 — 터미널 변경(P6)의 필드는 "터미널 접안(ETB) - BCT" 처럼 터미널 코드가
+   붙는 동적 문자열이라 완전일치 LABEL 로는 못 잡는다. 접두만 영문으로 바꾼다. */
+const PREFIX: Array<[string, string]> = [
+  ["터미널 접안(ETB)", "Terminal ETB (berthing)"],
+  ["터미널 출항(ETD)", "Terminal ETD (departure)"],
+];
 const STATUS_EN: Record<string, string> = {
   "공컨 반출": "Empty container released",
   "적컨 반입": "Gate-in at outbound terminal",
@@ -62,7 +68,9 @@ Deno.serve(async (req) => {
     if (!host) return j({ error: "SMTP not configured" }, 503);
 
     const rows = changes.map((c) => {
-      const f = LABEL[String(c.field)] ?? esc(c.field);
+      let fld = String(c.field ?? "");
+      for (const [k, v] of PREFIX) if (fld.startsWith(k)) { fld = v + fld.slice(k.length); break; }
+      const f = LABEL[fld] ?? esc(fld);
       const ov = STATUS_EN[String(c.old)] ?? esc(c.old);
       const nv = STATUS_EN[String(c.new)] ?? esc(c.new);
       return `<tr>
@@ -116,11 +124,12 @@ Deno.serve(async (req) => {
           <tbody>${rows}</tbody>
         </table>
         <p style="margin:18px 0 0">
-          <a href="https://sitditrd.github.io/AI_SCM/cargo.html" style="background:#1e6fe0;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:700;font-size:13px">Open Cargo Tracking</a>
+          <a href="https://sitditrd.github.io/AI_SCM/cargo.html?no=${encodeURIComponent(mbl)}" style="background:#1e6fe0;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:700;font-size:13px">Open Cargo Tracking</a>
         </p>
         <p style="color:#999;font-size:11.5px;margin:16px 0 0;line-height:1.5">
-          Times are port-local as published by the carrier. This notice is generated from carrier tracking data
-          and may differ from the carrier's own notification.<br>TWL Control Tower - Taewoong Logistics
+          Times are as published by the source (carrier feed or Korean terminal berth schedule).
+          This notice is generated automatically and may differ from the carrier's own notification.<br>
+          TWL Control Tower - Taewoong Logistics
         </p>
       </div>`,
     });

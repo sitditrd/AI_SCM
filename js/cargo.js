@@ -212,6 +212,21 @@
   }
   function vcDate(v) { var t = Date.parse(String(v || '').replace(' ', 'T')); return isFinite(t) ? t : NaN; }
 
+  /* 시각대 라벨 — 선사가 본사 시간대로 시각을 주는 경우(실측: ZIM 전량 +03:00)
+     변환하지 않고 "무슨 시간대인지"를 보이게 한다(2026-08-19 사용자 결정).
+     이벤트 전체가 단일 오프셋일 때만 라벨을 만든다 — 혼재 시 오해를 만들 수 있다. */
+  function tzTag(res) {
+    var offs = {};
+    (res.containers || []).forEach(function (c) {
+      (c.events || []).forEach(function (e) {
+        var m = /([+-])(\d{2}):?(\d{2})\s*$/.exec(String(e.timeLocal || ''));
+        if (m) offs[m[1] + parseInt(m[2], 10) + (m[3] !== '00' ? ':' + m[3] : '')] = 1;
+      });
+    });
+    var ks = Object.keys(offs);
+    return ks.length === 1 ? 'UTC' + ks[0] : '';
+  }
+
   function voyageCanvas(res, idx) {
     var pts = vcPts(res, idx / (SLOTS.length - 1));
     if (pts.length < 2) return '';
@@ -389,8 +404,12 @@
       h += '<div class="trk-sec"><p class="sc-sub">컨테이너 정보가 없습니다.</p></div>';
     }
 
+    var tz = tzTag(res);
     h += '<div class="trk-head" style="border-bottom:0; border-top:1px solid var(--border);">' +
-      '<span class="trk-asof">데이터 시점 ' + esc(fmtIso(res.fetchedAt)) + ' UTC · 출처 ' + esc(res.source || '') + ' · 시각은 항만 현지 기준</span></div>';
+      '<span class="trk-asof">데이터 시점 ' + esc(fmtIso(res.fetchedAt)) + ' UTC · 출처 ' + esc(res.source || '') + ' · ' +
+      (tz && tz !== 'UTC+9'
+        ? '<b style="color:var(--lv-busy);">시각 표기 ' + esc(tz) + ' — 선사 제공 시간대(한국시각 아님)</b>'
+        : '시각은 항만 현지 기준') + '</span></div>';
     h += '</div>';
     out.innerHTML = h;
     bindWatchBtn();
@@ -433,6 +452,11 @@
         var vv = vnorm(s.voyage);
         var legs = res.voyages || [];
         var polT = legs.length && legs[0].pol ? vcDate(legs[0].pol.date) : NaN;
+        /* P5 교차검증용 — 선사 쪽 예정값(실적 확정 전만 비교 대상) */
+        var lastLeg = legs.length ? legs[legs.length - 1] : null;
+        var podT = lastLeg && lastLeg.pod ? vcDate(lastLeg.pod.date) : NaN;
+        var cPol = legs.length ? legs[0].pol : null;
+        var cPod = lastLeg ? lastLeg.pod : null;
         var byK = {};
         rows.forEach(function (r) {
           var k = r.terminal_cd + '|' + vnorm(r.voyage);
@@ -446,9 +470,10 @@
           if (ref < Date.now() - 7 * 864e5 || ref > Date.now() + 30 * 864e5) return;  /* 무관한 기항 */
           var rv = vnorm(cur.voyage);
           var voyHit = !!(vv && rv && (rv.indexOf(vv) >= 0 || vv.indexOf(rv) >= 0));
-          var timeHit = isFinite(polT) && Math.abs(ref - polT) < 4 * 864e5;
-          /* BL 출항시각을 알면 그 창 밖 기항은 버린다(다른 항차 오탐 방지) */
-          if (isFinite(polT) && !voyHit && !timeHit) return;
+          var timeHit = (isFinite(polT) && Math.abs(ref - polT) < 4 * 864e5) ||
+                        (isFinite(podT) && Math.abs(ref - podT) < 4 * 864e5);
+          /* BL 출항·도착 시각을 알면 그 창 밖 기항은 버린다(다른 항차 오탐 방지) */
+          if ((isFinite(polT) || isFinite(podT)) && !voyHit && !timeHit) return;
           var chg = 0, hist = [];
           for (var i = 1; i < arr.length; i++) {
             var a = arr[i], b = arr[i - 1];
@@ -476,9 +501,26 @@
               if (ms < 24 * 36e5) cls = ' warn';
             } else left = '마감';
           }
+          /* P5 교차검증 — 이 기항이 수출(출항)·수입(접안) 어느 쪽인지는 시간 근접으로 판정.
+             선사 값이 아직 예정(EST)인 경우에만 비교한다 — 실적 확정 후 불일치는 과거사다. */
+          var refT2 = vcDate(r.etd || r.eta);
+          var dPol = isFinite(polT) ? Math.abs(refT2 - polT) : Infinity;
+          var dPod = isFinite(podT) ? Math.abs(refT2 - podT) : Infinity;
+          var cmp = dPol <= dPod
+            ? { cv: cPol, tv: vcDate(r.etd), lb: '출항', ts: fmtShort(r.etd) }
+            : { cv: cPod, tv: vcDate(r.eta), lb: '접안', ts: fmtShort(r.eta) };
+          var xbadge = '';
+          if (cmp.cv && !cmp.cv.actual) {
+            var cvT = vcDate(cmp.cv.date);
+            if (isFinite(cvT) && isFinite(cmp.tv) && Math.abs(cvT - cmp.tv) > 12 * 36e5) {
+              xbadge = '<i class="t-x" title="선사 ' + cmp.lb + ' ' + esc(fmtShort(cmp.cv.date)) +
+                ' ↔ 터미널 ' + cmp.lb + ' ' + esc(cmp.ts) +
+                ' — 12시간 이상 차이. 국내 구간은 터미널 값이 통상 더 최신입니다.">소스 불일치</i>';
+            }
+          }
           h += '<div class="tml-card' + cls + '">' +
             '<div class="t-hd"><b>' + esc(r.terminal_cd) + '</b><span>' + esc(TML_PORT[r.terminal_cd] || '') + '</span>' +
-            (r.berth ? '<em>선석 ' + esc(r.berth) + '</em>' : '') +
+            (r.berth ? '<em>선석 ' + esc(r.berth) + '</em>' : '') + xbadge +
             (c.chg ? '<i class="t-chg" title="' + esc(c.hist.join('\n')) + '">변경 ' + c.chg + '회</i>' : '') +
             '</div>' +
             '<div class="t-bd">접안 <b>' + esc(fmtShort(r.eta) || '-') + '</b> · 출항 <b>' + esc(fmtShort(r.etd) || '-') + '</b></div>' +
@@ -681,7 +723,7 @@
      KLNET HISTORY 그리드 대응: 내 감시 화물 전체의 최근 변경을 한 피드로.
      행 클릭 상세: 폴링 스냅샷으로 ETA 가 어떻게 밀려왔는지 SVG 계단 차트로 그린다.
      ============================================================ */
-  var KIND_LB = { etd: '출항 변경', eta: '도착 변경', vessel: '모선·항차 변경', stage: '진행 상태', gate: '게이트' };
+  var KIND_LB = { etd: '출항 변경', eta: '도착 변경', vessel: '모선·항차 변경', stage: '진행 상태', gate: '게이트', tml: '터미널 변경' };
 
   /* 값이 일시로 파싱되면 짧게, 아니면 원문 그대로 (상태 변경 old/new 는 문자열) */
   function chVal(v) { var d = vcDate(v); return isFinite(d) ? fmtShort(v) : String(v || ''); }
@@ -756,7 +798,12 @@
   function histHtml(d) {
     var sn = (d.snapshots || []).slice().reverse();     /* 서버는 최신순 — 차트는 시간순 */
     var ch = d.changes || [];
-    var h = driftSvg(sn);
+    var h = '';
+    if (ch.length || sn.length) {
+      /* KLNET "PDF 다운로드" 대응 — 브라우저 인쇄(PDF 저장)용 공문을 새 창에 그린다 */
+      h += '<div class="sc-tools"><button class="btn btn-ghost trk-mini" type="button" data-notice="1">공문 인쇄 · PDF 저장</button></div>';
+    }
+    h += driftSvg(sn);
     if (ch.length) {
       h += '<ul class="sc-hlist">' + ch.map(function (c) {
         return '<li><span class="dt">' + esc(fmtShort(c.changed_at)) + '</span>' +
@@ -786,12 +833,81 @@
       .then(function (r) { return r.json(); })
       .then(function (d) {
         var bx = row.querySelector('.wf-dbox');
-        if (bx) bx.innerHTML = d.error ? '<p class="sc-sub" style="margin:0;">' + esc(d.error) + '</p>' : histHtml(d);
+        if (!bx) return;
+        bx.innerHTML = d.error ? '<p class="sc-sub" style="margin:0;">' + esc(d.error) + '</p>' : histHtml(d);
+        var nb = bx.querySelector('button[data-notice]');
+        if (nb) nb.addEventListener('click', function () { openNotice(mbl, d); });
       })
       .catch(function () {
         var bx = row.querySelector('.wf-dbox');
         if (bx) bx.textContent = '이력 조회 실패 — 잠시 후 다시.';
       });
+  }
+
+  /* ============================================================
+     스케줄 변경 공문 (P8) — KLNET "Vessel Schedule Change History" 대응.
+     새 창에 인쇄 전용 레이아웃을 그리고, 사용자는 브라우저 인쇄로 PDF 저장.
+     외부 라이브러리 없이 공문 품질을 내는 가장 가벼운 경로다.
+     ============================================================ */
+  function openNotice(mbl, d) {
+    var it = findWatch(mbl) || {};
+    var s0 = it.snapshot || {};
+    var sn = (d.snapshots || [])[0] || {};
+    var ch = d.changes || [];
+    var now = new Date();
+    var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+    var today = now.getFullYear() + '.' + pad(now.getMonth() + 1) + '.' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+    var vessel = (sn.vessel || s0.vessel || '') + (sn.voyage || s0.voyage ? ' ' + (sn.voyage || s0.voyage) : '');
+    var route = [s0.por, s0.pod].filter(Boolean).join(' → ');
+
+    var histRows = ch.length
+      ? ch.map(function (c) {
+          return '<tr><td>' + esc(fmtShort(c.changed_at)) + '</td><td>' + esc(KIND_LB[c.kind] || c.field) + '</td>' +
+            '<td>' + esc(c.field) + '</td><td class="old">' + esc(chVal(c.old_value)) + '</td>' +
+            '<td class="new">' + esc(chVal(c.new_value)) + '</td></tr>';
+        }).join('')
+      : (d.snapshots || []).map(function (s) {
+          return '<tr><td>' + esc(fmtShort(s.polled_at)) + '</td><td>조회</td><td>ETD / ETA</td>' +
+            '<td colspan="2">' + esc(chVal(s.etd)) + ' / ' + esc(chVal(s.eta)) + '</td></tr>';
+        }).join('');
+
+    var html = '<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8">' +
+      '<title>Schedule Change Notice — ' + esc(mbl) + '</title><style>' +
+      'body{font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;color:#111;margin:48px 54px;line-height:1.55;}' +
+      '.hd{display:flex;justify-content:space-between;align-items:baseline;border-bottom:3px solid #0f2f5c;padding-bottom:10px;}' +
+      '.hd b{font-size:19px;letter-spacing:.04em;color:#0f2f5c;} .hd small{color:#666;}' +
+      'h1{font-size:16.5px;margin:26px 0 4px;} h1 small{display:block;font-size:12px;color:#555;font-weight:400;margin-top:2px;}' +
+      'table{border-collapse:collapse;width:100%;margin-top:14px;font-size:12.5px;}' +
+      'th,td{border:1px solid #c9cfd8;padding:6px 9px;text-align:left;}' +
+      'th{background:#eef2f7;font-weight:700;white-space:nowrap;}' +
+      '.meta th{width:110px;} .old{color:#a33;text-decoration:line-through;} .new{color:#0a6b2d;font-weight:700;}' +
+      '.note{font-size:11.5px;color:#666;margin-top:20px;border-top:1px solid #ddd;padding-top:10px;}' +
+      '.btn{margin-top:22px;padding:9px 20px;font-size:13px;cursor:pointer;}' +
+      '@media print{.btn{display:none;} body{margin:14mm 16mm;}}' +
+      '</style></head><body>' +
+      '<div class="hd"><b>TAEWOONG LOGISTICS<br><span style="font-size:11.5px;letter-spacing:.14em;">TWL CONTROL TOWER</span></b>' +
+      '<small>DATE : ' + esc(today) + '</small></div>' +
+      '<h1>VESSEL SCHEDULE CHANGE NOTICE<small>본선 스케줄 변경 통지</small></h1>' +
+      '<p style="font-size:12.5px;">To : Valued Customer<br>Re : Schedule Change Notice — ' + esc(vessel || mbl) + '</p>' +
+      '<p style="font-size:12.5px;">We hereby notify you of the schedule change(s) below.<br>아래와 같이 본선 스케줄 변경 사항을 알려드립니다.</p>' +
+      '<table class="meta">' +
+      '<tr><th>MBL No.</th><td>' + esc(mbl) + '</td><th>선사</th><td>' + esc(carrierName(it.carrier) || it.carrier || '-') + '</td></tr>' +
+      '<tr><th>본선 / 항차</th><td>' + esc(vessel || '-') + '</td><th>구간</th><td>' + esc(route || '-') + '</td></tr>' +
+      '<tr><th>현재 ETD</th><td>' + esc(chVal(sn.etd || s0.etd) || '-') + '</td><th>현재 ETA</th><td>' + esc(chVal(sn.eta || s0.eta) || '-') + '</td></tr>' +
+      '</table>' +
+      '<table><thead><tr><th>기준일시</th><th>구분</th><th>항목</th><th>변경 전</th><th>변경 후</th></tr></thead>' +
+      '<tbody>' + (histRows || '<tr><td colspan="5">기록 없음</td></tr>') + '</tbody></table>' +
+      '<p class="note">This notice is generated by TWL Control Tower based on carrier tracking feeds and Korean terminal berth schedules. ' +
+      'It may differ from the carrier\'s official announcement.<br>' +
+      '본 통지는 선사 트래킹 데이터와 국내 터미널 선석 스케줄을 기반으로 자동 생성되었으며, 선사 공식 공지와 다를 수 있습니다. ' +
+      '문의: 태웅로직스 (itt@twsc.co.kr)</p>' +
+      '<button class="btn" onclick="window.print()">인쇄 / PDF 저장</button>' +
+      '</body></html>';
+
+    var w = window.open('', '_blank');
+    if (!w) { alert('팝업이 차단되었습니다 — 브라우저 팝업 허용 후 다시 시도하십시오.'); return; }
+    w.document.write(html);
+    w.document.close();
   }
 
   function renderWatch() {
@@ -931,6 +1047,7 @@
         watchState.needLogin = !!d.needLogin;
         renderWatch();
         syncWatchBtn();      // 조회 결과가 이미 떠 있으면 등록 상태를 버튼에 반영
+        renderReliability(); // 선사 목록 로드 후 재렌더 — live 표시점(●)이 이때 채워진다
       }).catch(function () { box.innerHTML = '<div class="card"><p class="sc-sub" style="margin:0;">추적 목록을 불러오지 못했습니다.</p></div>'; });
     });
   }
@@ -1092,9 +1209,69 @@
       '번호에서 선사를 식별하지 못했습니다. 실조회 지원: ONE·COSCO·SM상선·Evergreen·SITC·ZIM(키 등록 시 머스크·하파그로이드·HMM 자동 확장) / 그 외 선사는 딥링크. 번호를 확인하거나 아래 무료 조회 채널을 이용하십시오.');
   }
 
+  /* ============================================================
+     선사 출항 정시율 리그테이블 (P7) — 자사 선적 실적(ELVIS)에서 산출한
+     정적 데이터(js/data_reliability.js)를 SVG 로 그린다.
+     "어느 선사 스케줄을 믿고 육상운송을 잡아도 되는가"에 대한 자사 데이터 답변.
+     ============================================================ */
+  function renderReliability() {
+    var box = el('relOut');
+    var data = window.TWL_RELIABILITY;
+    if (!box || !data || !data.rows || !data.rows.length) return;
+    var rows = data.rows;
+    var RH = 34, top = 44, W = 900;
+    var H = top + rows.length * RH + 34;
+    var x0 = 150, x1 = 620;                 /* 막대 영역 */
+    var min = 75, max = 100;                /* 정시율 스케일 — 75~100% 창으로 대비 확대 */
+    var xr = function (v) { return x0 + (Math.max(min, v) - min) / (max - min) * (x1 - x0); };
+
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="rel-svg" role="img" aria-label="선사별 출항 정시율">';
+    /* 눈금 75/80/85/90/95/100 */
+    for (var g = min; g <= max; g += 5) {
+      var gx = xr(g);
+      svg += '<line class="r-grid" x1="' + gx + '" y1="' + (top - 8) + '" x2="' + gx + '" y2="' + (H - 30) + '"/>' +
+        '<text class="r-ax" x="' + gx + '" y="' + (top - 14) + '" text-anchor="middle">' + g + '%</text>';
+    }
+    svg += '<text class="r-hd" x="' + (x1 + 34) + '" y="' + (top - 14) + '">지연율</text>' +
+      '<text class="r-hd" x="' + (x1 + 118) + '" y="' + (top - 14) + '">지연평균</text>' +
+      '<text class="r-hd" x="' + (x1 + 210) + '" y="' + (top - 14) + '">표본</text>';
+
+    rows.forEach(function (r, i) {
+      var y = top + i * RH + RH / 2;
+      var live = isLive(r.scac);
+      svg += '<text class="r-nm" x="' + (x0 - 12) + '" y="' + (y + 4) + '" text-anchor="end">' + esc(r.name) +
+        ' <tspan class="r-sc">' + esc(r.scac) + '</tspan></text>';
+      if (live) svg += '<circle class="r-live" cx="' + (x0 - 141) + '" cy="' + y + '" r="3"><title>실조회 지원 선사</title></circle>';
+      /* 정시율 막대 — 값이 낮을수록 붉은 기미 */
+      var bw = xr(r.ontime) - x0;
+      svg += '<rect class="r-bar' + (r.ontime < 86 ? ' low' : (r.ontime < 91 ? ' mid' : '')) +
+        '" x="' + x0 + '" y="' + (y - 8) + '" width="' + Math.max(2, bw) + '" height="16" rx="8"/>' +
+        '<text class="r-val" x="' + (xr(r.ontime) + 8) + '" y="' + (y + 4) + '">' + r.ontime + '%</text>';
+      /* 지연율 — MSC 처럼 두 자릿수는 강조 */
+      svg += '<text class="r-late' + (r.late >= 5 ? ' bad' : '') + '" x="' + (x1 + 34) + '" y="' + (y + 4) + '">' + r.late + '%</text>' +
+        '<text class="r-sub" x="' + (x1 + 118) + '" y="' + (y + 4) + '">' + (r.lateAvg || '-') + '일</text>' +
+        '<text class="r-sub" x="' + (x1 + 210) + '" y="' + (y + 4) + '">' + Number(r.n).toLocaleString() + '</text>';
+    });
+    svg += '<text class="r-foot" x="' + (x0 - 141) + '" y="' + (H - 10) + '">기준 ' + esc(data.basis) +
+      ' · ● 실조회 지원 · 산출 ' + esc(data.asOf) + '</text></svg>';
+    box.innerHTML = '<div class="card trk-card"><div class="trk-head">' +
+      '<span class="trk-bl">선사 출항 정시율</span>' +
+      '<span class="trk-carrier">자사 선적 실적 기준 · ±1일 정시 창</span>' +
+      '<span class="trk-spacer"></span>' +
+      '<span class="trk-asof">지연율 = 예정보다 하루 넘게 늦게 출항한 비율</span></div>' +
+      '<div class="trk-sec rel-wrap">' + svg + '</div></div>';
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
+    renderReliability();
     el('traceBtn').addEventListener('click', trace);
     el('blNo').addEventListener('keydown', function (e) { if (e.key === 'Enter') trace(); });
     loadWatchList();
+    /* ?no= 딥링크 — 알림 메일의 "포털에서 확인" 버튼이 이 경로로 들어온다(P8).
+       입력창에 채우고 즉시 조회까지 실행해, 링크 하나로 결과 화면에 도달한다. */
+    try {
+      var qno = new URLSearchParams(location.search).get('no');
+      if (qno && qno.length >= 6) { el('blNo').value = qno; trace(); }
+    } catch (e) { /* 구형 브라우저 — 무시 */ }
   });
 })();

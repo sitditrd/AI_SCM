@@ -39,6 +39,7 @@ NOTIFY = {
     'vessel': False,  # 본선(모선)·항차 변경
     'stage': False,   # 단계 진입(출항·입항·양하 등)
     'gate': False,    # 적컨 반출 / 공컨 반납 완료
+    'tml': True,      # 국내 터미널 선석 변경(접안 ETB/출항 ETD) — 2026-08-19 고도화 P6
 }
 
 TIMEOUT = 60
@@ -172,6 +173,12 @@ def parse_dt(v):
     if not v:
         return None
     s = str(v).strip().replace('T', ' ').replace('Z', '')
+    # 뒤쪽 UTC 오프셋(+00:00 / +03:00 / -05:00) 절단 — REST timestamptz 대응.
+    # 창(±일 단위) 판정에만 쓰므로 수 시간 오프셋 오차는 무시해도 된다.
+    for i in range(11, len(s)):
+        if s[i] in '+-':
+            s = s[:i]
+            break
     for fmt in ('%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%d'):
         try:
             return datetime.datetime.strptime(s[:len(fmt) + 6], fmt).replace(tzinfo=datetime.timezone.utc)
@@ -195,6 +202,91 @@ def poll_tier(status, etd, eta):
     if status in ('운송 중', '환적 중', '입항', '양하 완료'):
         return 'transit'
     return 'pre'
+
+
+# ── 국내 터미널 선석 변경 감지 (2026-08-19 고도화 P6) ──────────────────
+# bs_vessel_calls 는 수집일(collected_date)별 이력이라, 같은 기항의 최신 수집분과
+# 직전 수집분을 비교하면 터미널이 접안(ETB)/출항(ETD)을 옮긴 것이 잡힌다.
+# 선사 API 보다 터미널이 빠른 국내 구간(수출)의 변경을 메일로 보낸다.
+# 매칭 규칙은 프론트(cargo.js terminalPanel)와 동일 사상:
+#   선사 항차 ≠ 터미널 항차(실측 ZIM 12E ↔ BCT ZZIW001)이므로 항차는 쓰지 않고
+#   ① 같은 선명 ② 기항 시각이 BL 출항시각 ±4일(모르면 -7일~+30일 창)로 잡는다.
+
+def _vn(s):
+    """선명 정규화 — 대문자·영숫자만"""
+    out = []
+    for ch in str(s or '').upper():
+        if ch.isalnum():
+            out.append(ch)
+    return ''.join(out)
+
+
+def _wall(iso):
+    """timestamptz 문자열의 벽시계 표기(KST 로 적재됨) — 프론트 fmtShort 와 동일 사상"""
+    s = str(iso or '')
+    return s[:16].replace('T', ' ') if len(s) >= 16 else s
+
+
+def load_berth_recent():
+    """최근 5일치 선석 수집분 — (터미널|항차|선명) 기항별로 수집일 내림차순 그룹"""
+    since = (datetime.date.today() - datetime.timedelta(days=5)).isoformat()
+    try:
+        rows = sb('GET', '/rest/v1/bs_vessel_calls'
+                         '?select=terminal_cd,vessel_name,voyage,eta,etd,collected_date'
+                         '&collected_date=gte.%s&order=collected_date.desc&limit=4000' % since)
+    except Exception as e:
+        print('[WARN] 선석 데이터 조회 실패 — 터미널 변경 감지 생략: %s' % str(e)[:100])
+        return {}
+    groups = {}
+    for r in (rows or []):
+        k = (r.get('terminal_cd'), _vn(r.get('voyage')), _vn(r.get('vessel_name')))
+        groups.setdefault(k, []).append(r)
+    return groups
+
+
+def tml_diff(berth_groups, mbl, cur):
+    """이 BL 의 본선과 매칭되는 기항에서, 최신 수집분 vs 직전 수집분의 ETB/ETD 차이"""
+    vn = _vn(cur.get('vessel'))
+    if not vn or not berth_groups:
+        return []
+    ref = parse_dt(cur.get('etd'))
+    now = datetime.datetime.now(datetime.timezone.utc)
+    out = []
+    for (tml, _vy, gvn), arr in berth_groups.items():
+        if not (gvn and (vn in gvn or gvn in vn)):
+            continue
+        latest = arr[0]
+        call_t = parse_dt(latest.get('etd') or latest.get('eta'))
+        if not call_t:
+            continue
+        if ref:
+            if abs((call_t - ref).total_seconds()) > 4 * 86400:
+                continue
+        elif not (now - datetime.timedelta(days=7) <= call_t <= now + datetime.timedelta(days=30)):
+            continue
+        prev = next((r for r in arr[1:] if r['collected_date'] != latest['collected_date']), None)
+        if not prev:
+            continue
+        for f, label in (('eta', '터미널 접안(ETB)'), ('etd', '터미널 출항(ETD)')):
+            a, b = _wall(prev.get(f)), _wall(latest.get(f))
+            if a and b and a != b:
+                out.append({'kind': 'tml', 'field': '%s - %s' % (label, tml), 'old': a, 'new': b})
+    return out
+
+
+def tml_dedupe(mbl, cands):
+    """이미 기록한 (field,new) 조합은 다시 만들지 않는다 — 새 수집분이 올 때까지
+    매 회차 같은 차이가 재검출되는 것을 막는 재실행 안전장치."""
+    if not cands:
+        return []
+    try:
+        seen = sb('GET', '/rest/v1/bl_change_log?mbl_no=eq.%s&kind=eq.tml'
+                         '&select=field,new_value&order=changed_at.desc&limit=60'
+                  % urllib.parse.quote(mbl)) or []
+    except Exception:
+        return cands
+    done = set((r.get('field'), r.get('new_value')) for r in seen)
+    return [c for c in cands if (c['field'], c['new']) not in done]
 
 
 def main():
@@ -244,6 +336,10 @@ def main():
                 interleaved.append(buckets[c].pop(0))
     rows = interleaved
 
+    berth_groups = load_berth_recent()   # 터미널 변경 감지용 — 회차당 1회 로드
+    if berth_groups:
+        print('[INFO] 선석 대조 준비 — 기항 그룹 %d개' % len(berth_groups))
+
     changed_total = mailed = failed = 0
     for w in rows:
         mbl = w['mbl_no']
@@ -267,6 +363,8 @@ def main():
         prev = prev_rows[0] if prev_rows else None
 
         changes = diff(prev, cur)
+        # 터미널발 변경 — 선사 diff 와 같은 파이프라인(기록·메일·카운트)을 그대로 탄다
+        changes += tml_dedupe(mbl, tml_diff(berth_groups, mbl, cur))
         stage_i = last_stage(res)
         done = stage_i >= 0 and STAGES[stage_i][0] == 'eIn'   # 공컨 반납 = 추적 종료(레거시 조건)
 

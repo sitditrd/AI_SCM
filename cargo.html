@@ -19,7 +19,7 @@
   <meta name="twitter:description" content="MBL 번호로 선사 운송 이벤트를 직접 조회합니다 (ONE·COSCO·SM상선·Evergreen·SITC·ZIM 실조회, 그 외는 공식 추적 딥링크).">
   <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="css/style.css?v=2026-08-19a">
+  <link rel="stylesheet" href="css/style.css?v=2026-08-19b">
   <link rel="icon" href="assets/twl_logo.ico">
 </head>
 <body class="hero-page">
@@ -86,6 +86,18 @@
         <span class="hint" data-i18n="cargo.watch.hint">등록해두면 매일 08:20 · 20:20 에 자동 조회하고, 출항·도착 예정일시가 바뀌면 이메일로 알려드립니다</span>
       </div>
       <div id="watchOut" class="reveal"></div>
+    </div>
+  </section>
+
+  <!-- ============ 선사 출항 정시율 (자사 실적 기반 — P7) ============ -->
+  <section class="dash-section" id="reliability" style="padding-top:0;">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no" data-i18n="cargo.rel.no">데이터 인사이트</span>
+        <h2 data-i18n="cargo.rel.h">어느 선사 스케줄을 믿어도 되는가</h2>
+        <span class="hint" data-i18n="cargo.rel.hint">자사 선적 실적으로 산출한 선사별 출항 정시율 — 확정 스케줄(ETD) 대비 실제 선적일 기준</span>
+      </div>
+      <div id="relOut" class="reveal"></div>
     </div>
   </section>
 
@@ -239,9 +251,10 @@
   </footer>
 
   <script src="js/common.js?v=2026-4"></script>
-  <script src="js/i18n.js?v=2026-08-18c"></script>
+  <script src="js/i18n.js?v=2026-08-19a"></script>
   <script src="js/auth.js?v=2026-07-29f"></script>
   <script src="js/auth-gate.js?v=2026-07-30a"></script>
-  <script src="js/cargo.js?v=2026-08-19a"></script>
+  <script src="js/data_reliability.js?v=2026-08-19a"></script>
+  <script src="js/cargo.js?v=2026-08-19b"></script>
 </body>
 </html>
