@@ -8,6 +8,7 @@
   var map = null, routeLayer = null, ports = [], routeCache = Object.create(null);
 
   function el(id) { return document.getElementById(id); }
+  function t(k, ko) { return (window.TWI18N && window.TWI18N.t) ? window.TWI18N.t(k, ko) : ko; }
   function slugOf(en) { return en.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
   function currentLang() {
     var i18n = window.TWI18N;
@@ -32,17 +33,17 @@
     var slug = slugOf(o.en);
     if (routeCache[slug]) return Promise.resolve(routeCache[slug]);
     if (typeof fetch !== 'function') {
-      return Promise.reject(new Error('브라우저가 항로 데이터 로딩을 지원하지 않습니다'));
+      return Promise.reject(new Error(t('rt.err.nofetch', '브라우저가 항로 데이터 로딩을 지원하지 않습니다')));
     }
     return fetch('routes/' + slug + '.json', { cache: 'no-store' })
       .then(function (r) {
-        if (!r.ok) throw new Error('항로 데이터를 찾을 수 없습니다 (HTTP ' + r.status + ')');
+        if (!r.ok) throw new Error(t('rt.err.notfound', '항로 데이터를 찾을 수 없습니다') + ' (HTTP ' + r.status + ')');
         return r.json();
       })
       .then(function (json) { routeCache[slug] = json; return json; })
       .catch(function (e) {
         if (window.location && window.location.protocol === 'file:') {
-          throw new Error('로컬 파일로 열면 항로 JSON을 불러올 수 없습니다. python server.py 또는 GitHub Pages 주소로 접속해 주세요.');
+          throw new Error(t('rt.err.local', '로컬 파일로 열면 항로 JSON을 불러올 수 없습니다. python server.py 또는 GitHub Pages 주소로 접속해 주세요.'));
         }
         throw e;
       });

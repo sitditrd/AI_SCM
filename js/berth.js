@@ -141,12 +141,14 @@
   /* ================= 헬퍼 ================= */
   function el(id) { return document.getElementById(id); }
   function fmt(n) { return UI.fmt(n, 0); }
+  function t(k, ko) { return (window.TWI18N && window.TWI18N.t) ? window.TWI18N.t(k, ko) : ko; }
+  function stKo(st) { return t('br.status.' + String(st).toLowerCase(), (B && B.STATUS_KO && B.STATUS_KO[st]) || st); }
   function esc(s) {
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
   function stBadge(st) {
     return '<span class="st-badge st-' + st.toLowerCase() + '"><i class="lv-dot"></i>' +
-      st + ' · ' + (B.STATUS_KO[st] || st) + '</span>';
+      st + ' · ' + stKo(st) + '</span>';
   }
 
   function updateSourceBadge() {

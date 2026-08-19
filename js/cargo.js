@@ -8,6 +8,8 @@
 (function () {
   'use strict';
 
+  function t(k, ko) { return (window.TWI18N && window.TWI18N.t) ? window.TWI18N.t(k, ko) : ko; }
+
   var CARRIER_API = 'https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/carrier-track';
   /* carrier-track 이 실조회를 지원하는 선사 (그 외는 딥링크 폴백)
      — 2026-08-11 태웅 실 MBL 검증 완료: ONE·COSCO·SM상선·Evergreen·SITC
@@ -89,15 +91,15 @@
      부분 일치로 판정한다. 순서는 캐논 순서이며 표 컬럼 순서와 같다.
      어휘 근거: 2026-08-11 태웅 실 MBL 로 5개 선사 이벤트 전수 수집 */
   var SLOTS = [
-    { k: 'eOut', label: '공컨 반출', grp: 'dep', re: /empty\s*(container)?\s*(release|pick)/i },
-    { k: 'fIn', label: '적컨 반입', grp: 'dep', re: /gate\s*in to outbound|received \(fcl\)|outbound in cy/i },
-    { k: 'load', label: '선적', grp: 'dep', re: /loaded (on|onto|\(fcl\))/i },
-    { k: 'atd', label: '출항', grp: 'dep', re: /departure/i },
-    { k: 'ts', label: '환적', grp: 'arr', re: /transship|transshipment|feeder/i },
-    { k: 'ata', label: '입항', grp: 'arr', re: /arrival|berthing/i },
-    { k: 'unld', label: '양하', grp: 'arr', re: /unloaded|discharged \(fcl\)|inbound in cy/i },
-    { k: 'fOut', label: '적컨 반출', grp: 'arr', re: /gate\s*out from inbound|pick-up by merchant|transfer to designated/i },
-    { k: 'eIn', label: '공컨 반납', grp: 'arr', re: /empty (container )?return/i }
+    { k: 'eOut', label: t('cg.slot.eout', '공컨 반출'), grp: 'dep', re: /empty\s*(container)?\s*(release|pick)/i },
+    { k: 'fIn', label: t('cg.slot.fin', '적컨 반입'), grp: 'dep', re: /gate\s*in to outbound|received \(fcl\)|outbound in cy/i },
+    { k: 'load', label: t('cg.slot.load', '선적'), grp: 'dep', re: /loaded (on|onto|\(fcl\))/i },
+    { k: 'atd', label: t('cg.lb.dep', '출항'), grp: 'dep', re: /departure/i },
+    { k: 'ts', label: t('cg.slot.ts', '환적'), grp: 'arr', re: /transship|transshipment|feeder/i },
+    { k: 'ata', label: t('cg.lb.arr', '입항'), grp: 'arr', re: /arrival|berthing/i },
+    { k: 'unld', label: t('cg.slot.unld', '양하'), grp: 'arr', re: /unloaded|discharged \(fcl\)|inbound in cy/i },
+    { k: 'fOut', label: t('cg.slot.fout', '적컨 반출'), grp: 'arr', re: /gate\s*out from inbound|pick-up by merchant|transfer to designated/i },
+    { k: 'eIn', label: t('cg.slot.ein', '공컨 반납'), grp: 'arr', re: /empty (container )?return/i }
   ];
 
   function fmtIso(v) {
@@ -139,16 +141,16 @@
     return maxIdx;
   }
   function statusOf(idx) {
-    if (idx < 0) return { t: '조회됨', c: 'is-wait' };
+    if (idx < 0) return { t: t('cg.st.found', '조회됨'), c: 'is-wait' };
     var k = SLOTS[idx].k;
-    if (k === 'eIn') return { t: '반납 완료', c: 'is-done' };
-    if (k === 'fOut') return { t: '반출 완료', c: 'is-done' };
-    if (k === 'unld') return { t: '양하 완료', c: 'is-move' };
-    if (k === 'ata') return { t: '입항', c: 'is-move' };
-    if (k === 'ts') return { t: '환적 중', c: 'is-move' };
-    if (k === 'atd') return { t: '운송 중', c: 'is-move' };
-    if (k === 'load') return { t: '선적 완료', c: 'is-wait' };
-    return { t: '선적 대기', c: 'is-wait' };
+    if (k === 'eIn') return { t: t('cg.st.returned', '반납 완료'), c: 'is-done' };
+    if (k === 'fOut') return { t: t('cg.st.gateout', '반출 완료'), c: 'is-done' };
+    if (k === 'unld') return { t: t('cg.st.discharged', '양하 완료'), c: 'is-move' };
+    if (k === 'ata') return { t: t('cg.lb.arr', '입항'), c: 'is-move' };
+    if (k === 'ts') return { t: t('cg.st.ts', '환적 중'), c: 'is-move' };
+    if (k === 'atd') return { t: t('cg.st.sailing', '운송 중'), c: 'is-move' };
+    if (k === 'load') return { t: t('cg.st.loaded', '선적 완료'), c: 'is-wait' };
+    return { t: t('cg.st.beforeload', '선적 대기'), c: 'is-wait' };
   }
 
   /* ---- 인라인 SVG 아이콘 (이모지 미사용 — 렌더 일관성·크기 제어) ----
@@ -314,7 +316,7 @@
         (q.dt ? '<small class="' + (q.act ? 'act' : '') + '">' + (q.act ? 'A' : 'E') + ' ' + esc(fmtShort(q.dt)) + '</small>' : '') +
         '</li>';
       if (i === lastAct && sailing) {
-        v += '<li class="ship">' + SVG.ship + ' <span>' + esc(s.vessel || '운송 중') + (s.voyage ? ' ' + esc(s.voyage) : '') + '</span></li>';
+        v += '<li class="ship">' + SVG.ship + ' <span>' + esc(s.vessel || t('cg.st.sailing', '운송 중')) + (s.voyage ? ' ' + esc(s.voyage) : '') + '</span></li>';
       }
     }
     v += '</ol>';
@@ -343,9 +345,9 @@
     }
     return '<div class="tk-sum">' +
       '<div class="tk-route">' + esc(vcCode(org.nm)) + ' <i>→</i> ' + esc(vcCode(dest.nm)) + '</div>' +
-      '<div class="tk-eta-k">' + (dest.act ? '도착' : 'ETA') + (dd ? ' <span class="tk-dd">' + dd + '</span>' : '') + '</div>' +
-      '<div class="tk-eta">' + esc(etaTxt || '미정') + '</div>' +
-      (next ? '<div class="tk-next">다음 이벤트<br><b>' + esc(vcCode(next.nm)) + '</b>' +
+      '<div class="tk-eta-k">' + (dest.act ? t('cg.sum.arrived', '도착') : 'ETA') + (dd ? ' <span class="tk-dd">' + dd + '</span>' : '') + '</div>' +
+      '<div class="tk-eta">' + esc(etaTxt || t('cg.sum.tbd', '미정')) + '</div>' +
+      (next ? '<div class="tk-next">' + t('cg.sum.next', '다음 이벤트') + '<br><b>' + esc(vcCode(next.nm)) + '</b>' +
         (next.dt ? ' ' + esc(fmtShort(next.dt)) : '') + '</div>' : '') +
       '</div>';
   }
@@ -355,9 +357,9 @@
       var sh0 = el('statusHero'); if (sh0) sh0.innerHTML = '';
       var oc0 = oceanInfo(no);
       out.innerHTML = '<div class="card reveal in" style="margin-bottom:14px;">' +
-        '<h3 style="margin-top:0;">선사 운송 추적</h3>' +
-        '<p class="sc-sub">' + esc(res && res.error || '조회 실패') + '</p>' +
-        (oc0 && oc0.url ? '<a class="btn btn-ghost" target="_blank" rel="noopener" href="' + oc0.url + '">' + esc(oc0.name) + ' 트래킹 ↗</a>' : '') +
+        '<h3 style="margin-top:0;">' + t('cg.trk.title', '선사 운송 추적') + '</h3>' +
+        '<p class="sc-sub">' + esc(res && res.error || t('cg.trk.fail', '조회 실패')) + '</p>' +
+        (oc0 && oc0.url ? '<a class="btn btn-ghost" target="_blank" rel="noopener" href="' + oc0.url + '">' + esc(oc0.name) + ' ' + t('cg.trk.tracking', '트래킹') + ' ↗</a>' : '') +
         '</div>';
       return;
     }
@@ -377,11 +379,11 @@
       '<span class="trk-spacer"></span>' +
       (s.vessel ? '<span class="trk-carrier">' + esc(s.vessel) + (s.voyage ? ' ' + esc(s.voyage) : '') + '</span>' : '') +
       '<button class="btn btn-ghost trk-watch-btn" type="button" id="watchBtn" data-mbl="' + esc((res.query || {}).no || no) +
-      '" data-carrier="' + esc(res.carrier || '') + '">' + SVG.bell + ' 추적 등록</button>' +
+      '" data-carrier="' + esc(res.carrier || '') + '">' + SVG.bell + ' ' + t('cg.watch.register', '추적 등록') + '</button>' +
       '</div>';
 
     /* ② 경로 — Voyage Canvas(SVG) + ③ 국내 터미널 패널(비동기 채움) */
-    h += tkSecH('운송 요약', 'SUMMARY');
+    h += tkSecH(t('cg.sec.summary', '운송 요약'), 'SUMMARY');
     h += '<div class="tk-grid">' +
       tkSummaryHtml(res, st, vcPts(res, idx / (SLOTS.length - 1))) +
       '<div class="tk-voy">' + voyageCanvas(res, idx) + '</div></div>';
@@ -390,11 +392,11 @@
     /* ③ 게이트 스텝 그리드 — KLNET 9단계 도트바 상위호환.
        등폭 9열 그리드라 컨테이너가 몇 건이든 오와열이 자동 정렬된다(표·가로스크롤 폐기) */
     if (cs.length) {
-      h += '<div class="trk-sec">' + tkSecH('게이트 이벤트', 'GATE EVENTS · 컨테이너 ' + cs.length + '건') +
+      h += '<div class="trk-sec">' + tkSecH(t('cg.sec.gate', '게이트 이벤트'), 'GATE EVENTS · ' + t('cg.lb.container', '컨테이너') + ' ' + cs.length + t('cg.unit.count', '건')) +
         '<div class="gs-scroll"><div class="gs-wrap">' +
         '<div class="gs-r gs-heads"><span class="gs-c0"></span>' +
-        '<span class="gs-gh dep">' + SVG.out + ' 출발지 DEPARTURE</span>' +
-        '<span class="gs-gh arr">' + SVG.into + ' 도착지 DESTINATION</span></div>' +
+        '<span class="gs-gh dep">' + SVG.out + ' ' + t('cg.gate.dep', '출발지 DEPARTURE') + '</span>' +
+        '<span class="gs-gh arr">' + SVG.into + ' ' + t('cg.gate.arr', '도착지 DESTINATION') + '</span></div>' +
         '<div class="gs-r gs-labels"><span class="gs-c0"></span>' +
         SLOTS.map(function (x) { return '<span class="gs-lb">' + x.label + '</span>'; }).join('') + '</div>' +
         cs.map(function (c) {
