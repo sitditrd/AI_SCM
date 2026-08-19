@@ -2115,6 +2115,8 @@ h1.sr-done .accent::after { content: none; }
 .cc-side .card { padding: 18px; }
 .cc-side h3 { font-size: 13.5px; }
 .cc-qlbtn { padding: 16px 18px; }
+/* 좌측 레일의 전폭 버튼은 텍스트 가운데 정렬(2026-08-19 사용자 지적 — inline-flex 기본이 좌측) */
+.cc-side .btn { justify-content: center; text-align: center; }
 
 /* ===== 메인 하단 카드 퍼블리싱 개선 — 평시 상태의 입체감 ("단조롭다" 2026-08-19) ===== */
 #modules { position: relative; }
