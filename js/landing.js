@@ -241,11 +241,14 @@
     els.forEach(function (el) { io.observe(el); });
   }
 
-  /* ---------- 히어로 항로 애니메이션 — 부산 허브 관제 씬 (2026-08-19 전면 개편) ----------
-     세계 항로가 부산에서 방사형으로 뻗는 구도(태웅 거점 서사).
-     해상 루트: 그라데이션 궤적(꼬리 감쇠) + 진행방향 회전 선수 글리프 + 도착 펄스 링.
-     항공 루트: 높은 아치·빠른 속도·점선으로 구분. 배경에 옅은 경위선(관제 그리드).
-     색은 CSS 토큰을 읽어 테마 전환에 즉시 대응. reduced-motion 은 정적 1프레임만. */
+  /* ---------- 히어로 — 글로벌 관제 씬 v2 (2026-08-19 전면 재작성) ----------
+     ① 도트 매트릭스 세계지도: 러프 대륙 폴리곤을 격자 레이캐스팅으로 점묘.
+        아시아 중심 투영(경도 +30° 회전, 대서양이 이음새)이라 부산이 화면 중심부.
+     ② 부산 허브: 레이더 스윕(createConicGradient) + 동심원 + 맥동 + BUSAN 라벨.
+     ③ 항로: 해상 12·항공 2 — 글로우 혜성 궤적, 진행방향 회전 글리프, 도착 펄스.
+     ④ 마우스 패럴랙스(지도 0.4×, 항로 1×)로 깊이감. 배경 성점(별) 트윙클.
+     성능: 지도는 리사이즈 때 1회 오프스크린 렌더 → 매 프레임 drawImage 1회.
+     reduced-motion: 정적 1프레임(스윕·트윙클·패럴랙스 없음). 화면 밖이면 rAF 정지. */
   function initHeroCanvas() {
     var canvas = document.getElementById('heroCanvas');
     if (!canvas || !window.TWDATA) return;
@@ -253,44 +256,124 @@
     var ctx = canvas.getContext('2d');
     var routes = [];
     var ports = window.TWDATA.getState(0).ports;
-    var HUB = { lat: 35.08, lng: 129.05 };            /* 부산 */
+    var HUB = { lat: 35.08, lng: 129.05 };
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var running = true;
     var col = { sea: '#5aa7f0', air: '#8ec5f4', ink: '#9fb4d8' };
+    var mapLayer = null, stars = [], hub = null;
+    var mouse = { tx: 0, ty: 0, x: 0, y: 0 };
 
-    /* CSS 토큰 → 캔버스 색. color-mix 등 캔버스가 못 읽는 값이면 폴백 유지 */
+    /* CSS 토큰 → 캔버스 색 (color-mix 등 못 읽는 값이면 폴백 유지) */
     function readTokens() {
       var cs = getComputedStyle(document.documentElement);
       var probe = document.createElement('canvas').getContext('2d');
-      function ok(v) { if (!v) return null; try { probe.fillStyle = '#000'; probe.fillStyle = v; return probe.fillStyle !== '#000000' || /^#0{3,8}$/.test(v.replace(/\s/g, '')) ? probe.fillStyle : null; } catch (e) { return null; } }
+      function ok(v) { if (!v) return null; try { probe.fillStyle = '#123456'; probe.fillStyle = v; return probe.fillStyle !== '#123456' || v.indexOf('#') === 0 ? probe.fillStyle : null; } catch (e) { return null; } }
       col.sea = ok(cs.getPropertyValue('--brand-accent').trim()) || col.sea;
       col.air = ok(cs.getPropertyValue('--brand-accent-2').trim()) || col.air;
       col.ink = ok(cs.getPropertyValue('--muted').trim()) || col.ink;
     }
-    new MutationObserver(readTokens).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    new MutationObserver(function () { readTokens(); resize(); })
+      .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     readTokens();
 
-    function project(lat, lng, w, h) {
-      /* 부산 중심 회전 투영 — 허브가 화면 62% 지점에 오도록 경도를 돌린다.
-         유럽·중동은 왼쪽, 미주는 오른쪽으로 갈라져 방사형 구도가 화면을 고루 쓴다. */
-      var fx = ((((lng - HUB.lng) / 360) + 0.62) % 1 + 1) % 1;
-      return { x: fx * w, y: ((90 - lat) / 180) * h * 1.35 - h * 0.1 };
+    /* 색 문자열(hex/rgb) → rgba(...,a) — 글로우·그라데이션용 */
+    function rgba(c, a) {
+      var m = /^#([0-9a-f]{6})/i.exec(c);
+      if (m) {
+        var n = parseInt(m[1], 16);
+        return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')';
+      }
+      m = /rgba?\(([\d.]+)[, ]+([\d.]+)[, ]+([\d.]+)/.exec(c);
+      if (m) return 'rgba(' + m[1] + ',' + m[2] + ',' + m[3] + ',' + a + ')';
+      return c;
     }
+
+    /* ── 러프 대륙 폴리곤 [lat,lng,...] — 도트 해상도(2.6°)에서 실루엣이 읽히는 수준 ── */
+    var LAND = [
+      [71,-160, 72,-140, 69,-122, 73,-95, 68,-82, 62,-64, 47,-53, 45,-65, 40,-74, 32,-80, 25,-80, 29,-90, 21,-97, 16,-95, 15,-92, 20,-105, 26,-112, 32,-117, 38,-123, 46,-124, 55,-131, 59,-140, 60,-150, 64,-166],
+      [11,-72, 8,-60, 4,-51, -3,-40, -8,-35, -15,-39, -23,-41, -30,-50, -38,-58, -47,-66, -54,-69, -52,-74, -38,-73, -20,-70, -5,-81, 2,-80, 9,-77],
+      [36,-9, 43,-9, 48,-5, 51,1, 57,7, 61,5, 64,11, 70,20, 71,30, 73,55, 76,80, 77,104, 73,113, 72,130, 69,160, 66,178, 62,164, 59,150, 54,137, 47,135, 43,132, 39,126, 35,120, 30,121, 27,118, 22,110, 16,108, 9,105, 2,104, 6,100, 12,100, 15,97, 20,93, 22,89, 17,83, 9,79, 7,77, 16,73, 21,69, 24,66, 25,60, 21,58, 13,43, 16,41, 21,37, 28,34, 31,33, 34,28, 36,23, 38,16, 37,11, 36,-3],
+      [35,-7, 37,3, 33,11, 30,19, 31,32, 27,34, 15,40, 11,44, 3,46, -2,41, -11,40, -18,36, -26,33, -34,26, -35,19, -28,16, -17,11, -12,13, -6,12, 0,9, 5,8, 4,-2, 6,-8, 11,-16, 15,-17, 21,-17, 26,-15, 31,-10],
+      [-11,131, -12,137, -11,143, -16,146, -21,149, -28,154, -33,152, -38,147, -39,140, -35,137, -32,133, -34,124, -33,118, -30,114, -25,113, -20,114, -17,122, -14,126],
+      [82,-46, 81,-25, 76,-19, 70,-23, 65,-37, 60,-44, 65,-52, 71,-56, 77,-60, 80,-55],
+      [45,141, 43,146, 41,142, 37,141, 34,137, 33,132, 31,130, 33,129, 36,133, 39,139, 42,140],
+      [39,125, 40,127, 39,128.5, 37.5,129.3, 35.2,129.4, 34.5,127, 35,126.3, 37,126.5, 38.5,125],
+      [2,109, 4,114, 6,117, 1,119, -2,116, -4,113, -3,110],
+      [5,95, 3,99, -1,102, -5,105, -6,105, -3,100, 1,97],
+      [-1,131, -2,137, -4,141, -7,146, -9,148, -10,143, -8,138, -5,134, -3,131],
+      [58,-4, 55,-1, 52,1, 50,-4, 52,-5, 54,-4, 56,-6],
+      [18,121, 16,122, 13,123, 8,126, 6,125, 9,122, 13,120, 16,120],
+      [-13,49, -18,49, -24,47, -25,45, -20,44, -14,48]
+    ];
+    function pip(lat, lng, poly) {
+      var inside = false;
+      for (var i = 0, j = poly.length - 2; i < poly.length; j = i, i += 2) {
+        var y1 = poly[i], x1 = poly[i + 1], y2 = poly[j], x2 = poly[j + 1];
+        if ((y1 > lat) !== (y2 > lat) && lng < (x2 - x1) * (lat - y1) / (y2 - y1) + x1) inside = !inside;
+      }
+      return inside;
+    }
+
+    /* 아시아 중심 투영 — 경도 +30° 회전(이음새=대서양), 부산이 화면 44% 지점 */
+    function project(lat, lng, w, h) {
+      var fx = ((((lng + 30) % 360) + 360) % 360) / 360;
+      return { x: fx * w, y: ((90 - lat) / 180) * h * 1.42 - h * 0.12 };
+    }
+
     function resize() {
       var r = canvas.parentElement.getBoundingClientRect();
-      canvas.width = r.width * (window.devicePixelRatio || 1);
-      canvas.height = r.height * (window.devicePixelRatio || 1);
-      ctx.setTransform(window.devicePixelRatio || 1, 0, 0, window.devicePixelRatio || 1, 0, 0);
+      var dpr = window.devicePixelRatio || 1;
+      canvas.width = r.width * dpr;
+      canvas.height = r.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      buildMap(r.width, r.height, dpr);
       buildRoutes(r.width, r.height);
-      if (reduced) drawFrame(performance.now());   /* 정적 1프레임 */
+      drawFrame(performance.now());
     }
+
+    /* 지도 레이어 — 리사이즈 때 1회만 점묘 */
+    function buildMap(w, h, dpr) {
+      mapLayer = document.createElement('canvas');
+      mapLayer.width = w * dpr; mapLayer.height = h * dpr;
+      var m = mapLayer.getContext('2d');
+      m.setTransform(dpr, 0, 0, dpr, 0, 0);
+      hub = project(HUB.lat, HUB.lng, w, h);
+
+      /* 경위선 — 관제 그리드 */
+      m.strokeStyle = col.ink; m.lineWidth = 1; m.globalAlpha = 0.05;
+      for (var gy = 1; gy <= 3; gy++) { m.beginPath(); m.moveTo(0, h * gy / 4); m.lineTo(w, h * gy / 4); m.stroke(); }
+      for (var gx = 1; gx <= 5; gx++) { m.beginPath(); m.moveTo(w * gx / 6, 0); m.lineTo(w * gx / 6, h); m.stroke(); }
+
+      /* 대륙 도트 — 러프 폴리곤 레이캐스팅 */
+      var dotR = Math.max(1.3, w / 780);
+      for (var lat = 74; lat >= -56; lat -= 2.6) {
+        for (var lng = -180; lng < 180; lng += 2.6) {
+          var land = false;
+          for (var p = 0; p < LAND.length && !land; p++) land = pip(lat, lng, LAND[p]);
+          if (!land) continue;
+          var pt = project(lat, lng, w, h);
+          var dHub = Math.sqrt((pt.x - hub.x) * (pt.x - hub.x) + (pt.y - hub.y) * (pt.y - hub.y));
+          m.beginPath();
+          m.arc(pt.x, pt.y, dotR, 0, Math.PI * 2);
+          m.fillStyle = col.sea;
+          m.globalAlpha = dHub < 70 ? 0.5 : 0.28;      /* 한반도 주변은 살짝 밝게 */
+          m.fill();
+        }
+      }
+      m.globalAlpha = 1;
+
+      /* 배경 성점 — 얕은 깊이감 */
+      stars = [];
+      for (var s = 0; s < 70; s++) {
+        stars.push({ x: Math.random() * w, y: Math.random() * h, r: Math.random() * 1.1 + 0.4, ph: Math.random() * 6.28 });
+      }
+    }
+
     function buildRoutes(w, h) {
       routes = [];
-      var hub = project(HUB.lat, HUB.lng, w, h);
-      /* 부산에서 먼 순으로 주요 항만을 뽑아 방사형 배치 — 화면을 고루 쓰게 한다 */
       var majors = ports.filter(function (p) { return p.berthed > 22 && Math.abs(p.lng - HUB.lng) > 6; })
         .sort(function (a, b) { return Math.abs(b.lng - HUB.lng) - Math.abs(a.lng - HUB.lng); });
-      var seaN = Math.min(11, majors.length);
+      var seaN = Math.min(14, majors.length);
       for (var i = 0; i < seaN; i++) {
         var p = majors[(i * 5 + 2) % majors.length];
         var pb = project(p.lat, p.lng, w, h);
@@ -301,7 +384,6 @@
           t: (i * 0.17) % 1, speed: 0.0011 + (i % 5) * 0.00035, pulse: 0
         });
       }
-      /* 항공 2편 — 가장 먼 두 곳으로, 높은 아치 */
       for (var k = 0; k < 2 && k < majors.length; k++) {
         var q = majors[k], qb = project(q.lat, q.lng, w, h);
         routes.push({
@@ -310,7 +392,6 @@
           t: 0.5 * k, speed: 0.0042, pulse: 0
         });
       }
-      routes.hub = hub;
     }
     function bez(p0, p1, p2, t) {
       var mt = 1 - t;
@@ -321,55 +402,89 @@
     function drawFrame(now) {
       var w = canvas.parentElement.clientWidth, h = canvas.parentElement.clientHeight;
       ctx.clearRect(0, 0, w, h);
+      if (!mapLayer || !hub) return;
 
-      /* 옅은 경위선 — 관제 화면 질감 */
-      ctx.strokeStyle = col.ink; ctx.lineWidth = 1;
-      ctx.globalAlpha = 0.05;
-      [0.28, 0.55, 0.82].forEach(function (fy) {
-        ctx.beginPath(); ctx.moveTo(0, h * fy); ctx.lineTo(w, h * fy); ctx.stroke();
-      });
-      [0.16, 0.38, 0.62, 0.84].forEach(function (fx) {
-        ctx.beginPath(); ctx.moveTo(w * fx, 0); ctx.lineTo(w * fx, h); ctx.stroke();
+      /* 패럴랙스 감쇠 추적 */
+      if (!reduced) { mouse.x += (mouse.tx - mouse.x) * 0.06; mouse.y += (mouse.ty - mouse.y) * 0.06; }
+      var ox = mouse.x, oy = mouse.y;
+
+      /* 성점 트윙클 */
+      for (var s = 0; s < stars.length; s++) {
+        var st = stars[s];
+        ctx.beginPath();
+        ctx.arc(st.x + ox * 0.2, st.y + oy * 0.2, st.r, 0, Math.PI * 2);
+        ctx.fillStyle = col.ink;
+        ctx.globalAlpha = reduced ? 0.18 : 0.10 + 0.14 * (Math.sin(now / 900 + st.ph) + 1) / 2;
+        ctx.fill();
+      }
+
+      /* 지도 레이어 (0.4× 패럴랙스) */
+      ctx.globalAlpha = 1;
+      ctx.drawImage(mapLayer, ox * 0.4, oy * 0.4, w, h);
+
+      var hx = hub.x + ox, hy = hub.y + oy;
+
+      /* 레이더 스윕 — 지원 브라우저만 */
+      var R = Math.min(w, h) * 0.30;
+      if (!reduced && ctx.createConicGradient) {
+        var sw = (now / 2600) % (Math.PI * 2);
+        var grad = ctx.createConicGradient(sw, hx, hy);
+        grad.addColorStop(0, rgba(col.air, 0.20));
+        grad.addColorStop(0.10, rgba(col.air, 0.0));
+        grad.addColorStop(1, rgba(col.air, 0.0));
+        ctx.beginPath(); ctx.moveTo(hx, hy); ctx.arc(hx, hy, R, 0, Math.PI * 2);
+        ctx.fillStyle = grad; ctx.fill();
+        /* 스윕 라인 */
+        ctx.beginPath(); ctx.moveTo(hx, hy);
+        ctx.lineTo(hx + Math.cos(sw) * R, hy + Math.sin(sw) * R);
+        ctx.strokeStyle = col.air; ctx.globalAlpha = 0.35; ctx.lineWidth = 1.2; ctx.stroke();
+      }
+      /* 동심원 2겹 */
+      ctx.strokeStyle = col.air; ctx.lineWidth = 1;
+      [0.5, 1].forEach(function (f) {
+        ctx.beginPath(); ctx.arc(hx, hy, R * f, 0, Math.PI * 2);
+        ctx.globalAlpha = 0.10; ctx.stroke();
       });
 
       routes.forEach(function (r) {
+        var ax = r.a.x + ox, ay = r.a.y + oy, bx = r.b.x + ox, by = r.b.y + oy;
+        var mx = r.mid.x + ox, my = r.mid.y + oy;
         /* 항로 베이스 */
-        ctx.beginPath();
-        ctx.moveTo(r.a.x, r.a.y);
-        ctx.quadraticCurveTo(r.mid.x, r.mid.y, r.b.x, r.b.y);
+        ctx.beginPath(); ctx.moveTo(ax, ay); ctx.quadraticCurveTo(mx, my, bx, by);
         ctx.strokeStyle = r.type === 'air' ? col.air : col.sea;
-        ctx.globalAlpha = r.type === 'air' ? 0.10 : 0.13;
+        ctx.globalAlpha = r.type === 'air' ? 0.14 : 0.22;
         ctx.setLineDash(r.type === 'air' ? [3, 8] : []);
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.lineWidth = 1.3; ctx.stroke(); ctx.setLineDash([]);
 
         if (!reduced) { r.t += r.speed; if (r.t > 1) { r.t = 0; r.pulse = 1; } }
 
-        /* 궤적 꼬리 — 뒤로 갈수록 잦아드는 점열 */
-        var TR = r.type === 'air' ? 8 : 14;
+        /* 혜성 궤적 */
+        var A = { x: ax, y: ay }, M = { x: mx, y: my }, B = { x: bx, y: by };
+        var TR = r.type === 'air' ? 10 : 18;
         for (var i = 1; i <= TR; i++) {
-          var tt = r.t - i * (r.type === 'air' ? 0.011 : 0.0075);
+          var tt = r.t - i * (r.type === 'air' ? 0.011 : 0.0068);
           if (tt < 0) break;
-          var tp = bez(r.a, r.mid, r.b, tt);
+          var tp = bez(A, M, B, tt);
           ctx.beginPath();
-          ctx.arc(tp.x, tp.y, Math.max(0.6, 2.1 - i * 0.11), 0, Math.PI * 2);
+          ctx.arc(tp.x, tp.y, Math.max(0.7, 2.6 - i * 0.13), 0, Math.PI * 2);
           ctx.fillStyle = r.type === 'air' ? col.air : col.sea;
-          ctx.globalAlpha = 0.5 * (1 - i / TR);
+          ctx.globalAlpha = 0.6 * (1 - i / TR);
           ctx.fill();
         }
 
-        /* 선수/기수 글리프 — 진행 방향 회전 */
-        var p = bez(r.a, r.mid, r.b, r.t);
-        var p2 = bez(r.a, r.mid, r.b, Math.min(1, r.t + 0.012));
+        /* 선수/기수 글리프 — 글로우 */
+        var p = bez(A, M, B, r.t);
+        var p2 = bez(A, M, B, Math.min(1, r.t + 0.012));
         var ang = Math.atan2(p2.y - p.y, p2.x - p.x);
         ctx.save();
         ctx.translate(p.x, p.y); ctx.rotate(ang);
+        ctx.shadowColor = rgba(r.type === 'air' ? col.air : col.sea, 0.9);
+        ctx.shadowBlur = 9;
         ctx.fillStyle = r.type === 'air' ? col.air : col.sea;
-        ctx.globalAlpha = 0.95;
+        ctx.globalAlpha = 1;
         ctx.beginPath();
-        if (r.type === 'air') { ctx.moveTo(5.5, 0); ctx.lineTo(-3.5, 3); ctx.lineTo(-1.5, 0); ctx.lineTo(-3.5, -3); }
-        else { ctx.moveTo(5, 0); ctx.lineTo(-4, 2.8); ctx.lineTo(-4, -2.8); }
+        if (r.type === 'air') { ctx.moveTo(6.5, 0); ctx.lineTo(-4, 3.4); ctx.lineTo(-1.8, 0); ctx.lineTo(-4, -3.4); }
+        else { ctx.moveTo(6, 0); ctx.lineTo(-4.5, 3.2); ctx.lineTo(-4.5, -3.2); }
         ctx.closePath(); ctx.fill();
         ctx.restore();
 
@@ -377,32 +492,27 @@
         if (r.pulse > 0.04) {
           if (!reduced) r.pulse *= 0.955;
           ctx.beginPath();
-          ctx.arc(r.b.x, r.b.y, 3 + (1 - r.pulse) * 15, 0, Math.PI * 2);
+          ctx.arc(bx, by, 3 + (1 - r.pulse) * 17, 0, Math.PI * 2);
           ctx.strokeStyle = r.type === 'air' ? col.air : col.sea;
-          ctx.globalAlpha = r.pulse * 0.5;
-          ctx.lineWidth = 1.4;
-          ctx.stroke();
+          ctx.globalAlpha = r.pulse * 0.55; ctx.lineWidth = 1.5; ctx.stroke();
         }
         /* 목적항 노드 */
-        ctx.beginPath();
-        ctx.arc(r.b.x, r.b.y, 1.8, 0, Math.PI * 2);
-        ctx.fillStyle = col.sea;
-        ctx.globalAlpha = 0.55;
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(bx, by, 2, 0, Math.PI * 2);
+        ctx.fillStyle = col.sea; ctx.globalAlpha = 0.6; ctx.fill();
       });
 
-      /* 부산 허브 — 이중 링 + 상시 맥동 + 라벨 */
-      var hub = routes.hub;
-      if (hub) {
-        var beat = reduced ? 0.5 : (Math.sin(now / 650) + 1) / 2;
-        ctx.beginPath(); ctx.arc(hub.x, hub.y, 6 + beat * 8, 0, Math.PI * 2);
-        ctx.strokeStyle = col.air; ctx.globalAlpha = 0.28 * (1 - beat * 0.6); ctx.lineWidth = 1.4; ctx.stroke();
-        ctx.beginPath(); ctx.arc(hub.x, hub.y, 3.4, 0, Math.PI * 2);
-        ctx.fillStyle = col.air; ctx.globalAlpha = 0.95; ctx.fill();
-        ctx.font = '700 9px Pretendard Variable, sans-serif';
-        ctx.fillStyle = col.ink; ctx.globalAlpha = 0.85;
-        ctx.fillText('BUSAN', hub.x + 9, hub.y + 3);
-      }
+      /* 부산 허브 — 맥동 + 코어 + 라벨 */
+      var beat = reduced ? 0.5 : (Math.sin(now / 650) + 1) / 2;
+      ctx.beginPath(); ctx.arc(hx, hy, 7 + beat * 9, 0, Math.PI * 2);
+      ctx.strokeStyle = col.air; ctx.globalAlpha = 0.30 * (1 - beat * 0.6); ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.save();
+      ctx.shadowColor = rgba(col.air, 0.9); ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.arc(hx, hy, 3.8, 0, Math.PI * 2);
+      ctx.fillStyle = col.air; ctx.globalAlpha = 1; ctx.fill();
+      ctx.restore();
+      ctx.font = '700 10px Pretendard Variable, sans-serif';
+      ctx.fillStyle = col.ink; ctx.globalAlpha = 0.9;
+      ctx.fillText('BUSAN', hx + 11, hy + 3.5);
       ctx.globalAlpha = 1;
     }
 
@@ -410,10 +520,17 @@
       if (running) drawFrame(now);
       if (!reduced) requestAnimationFrame(loop);
     }
-    /* 히어로가 화면 밖이면 그리지 않는다 — 스크롤 후 CPU 절약 */
     if ('IntersectionObserver' in window) {
       new IntersectionObserver(function (ents) { running = ents[0].isIntersecting; }, { threshold: 0 })
         .observe(canvas.parentElement);
+    }
+    if (!reduced) {
+      canvas.parentElement.addEventListener('mousemove', function (e) {
+        var r = canvas.parentElement.getBoundingClientRect();
+        mouse.tx = ((e.clientX - r.left) / r.width - 0.5) * 16;
+        mouse.ty = ((e.clientY - r.top) / r.height - 0.5) * 10;
+      });
+      canvas.parentElement.addEventListener('mouseleave', function () { mouse.tx = 0; mouse.ty = 0; });
     }
     window.addEventListener('resize', resize);
     resize();
