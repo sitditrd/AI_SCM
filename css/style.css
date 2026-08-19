@@ -1690,21 +1690,8 @@ table.trk-tbl td .na { color: var(--muted); }
   ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
 }
 
-/* ③ 회전 광택 링 (@property + conic-gradient) — 스탯 밴드 테두리가 천천히 돈다 */
-@property --twl-ring { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
-@supports (background: conic-gradient(from 0deg, #000, #fff)) {
-  .stat-band { position: relative; }
-  .stat-band::before {
-    content: ''; position: absolute; inset: -1px; border-radius: 19px; z-index: -1;
-    background: conic-gradient(from var(--twl-ring),
-      transparent 0deg, transparent 300deg,
-      color-mix(in srgb, var(--brand-accent-2) 55%, transparent) 330deg,
-      transparent 360deg);
-    animation: twlRing 9s linear infinite;
-  }
-  @keyframes twlRing { to { --twl-ring: 360deg; } }
-  @media (prefers-reduced-motion: reduce) { .stat-band::before { animation: none; opacity: .35; } }
-}
+/* ③ (삭제) 회전 광택 링 — 라이트에서 숫자 위를 훑는 파란 줄빛으로 보여 반려(2026-08-19).
+   스탯 밴드는 정적 유지 — 수치 자체가 주인공, 장식 모션 금지 */
 
 /* ④ 제목 줄바꿈 균형 — 지원 브라우저에서 헤드라인이 두 줄로 고르게 갈린다 */
 .hero h1, .sec-title, .dash-head h2 { text-wrap: balance; }
@@ -1822,20 +1809,27 @@ table.trk-tbl td .na { color: var(--muted); }
    폭 분기 없음: 1440이든 3440이든 같은 그림 */
 .hero-ops .hero-hud {
   position: absolute; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 40px 22px 218px;   /* 하단 독(KPI+기상특보) 높이만큼 위로 띄워 광학 중앙 */
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  /* 문구는 상단 중앙 — 지도의 제일 화려한 중간·하단 밴드(혜성 항로)를 온전히 개방(2026-08-19 지도 주인공) */
+  padding: clamp(96px, 12vh, 156px) 22px 218px;
 }
 .hud-brief { position: relative; z-index: 5; }
-/* 박스 제거(2026-08-19 사용자: 카드가 어색) — 스크림 위에 타이포가 직접 앉는다 — 경계선 없음 */
+/* 박스 제거(2026-08-19 사용자: 카드가 어색) — 비네트 위에 타이포가 직접 앉는다 — 경계선 없음 */
 .hud-brief { max-width: 820px; padding: 0; text-align: center; }
 .hero-ops .hero-ctas { justify-content: center; }
 .hero-shade {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;
-  /* 중앙 1380px 레일 스크림 — 텍스트와 같은 앵커라 폭 무관하게 같은 자리 */
+  /* 기둥형 스크림 폐기(지도를 두 동강 낸다는 지적) → 문구 뒤 타원 비네트만.
+     지도는 끊기지 않고 글자 주변으로 흐른다 */
   background:
-    linear-gradient(90deg, transparent 0%, rgba(6, 10, 22, .5) 12%, rgba(6, 10, 22, .92) 24%, rgba(6, 10, 22, .92) 76%, rgba(6, 10, 22, .5) 88%, transparent 100%) center top / 1440px 100% no-repeat,
-    linear-gradient(180deg, rgba(6, 10, 22, .5) 0%, transparent 18%) left top / 100% 100% no-repeat;
+    radial-gradient(ellipse 880px 470px at 50% 31%, rgba(6, 10, 22, .88) 0%, rgba(6, 10, 22, .58) 52%, rgba(6, 10, 22, 0) 76%),
+    linear-gradient(180deg, rgba(6, 10, 22, .55) 0%, transparent 20%);
 }
+/* 비네트 밖 글자 가독 보강 — 지도 위에 뜨는 타이포는 그림자가 받쳐준다 */
+.hero-ops h1 { text-shadow: 0 2px 22px rgba(4, 8, 20, .9), 0 0 52px rgba(4, 8, 20, .55); }
+.hero-ops .hero-sub, .hero-ops .hero-note { text-shadow: 0 1px 14px rgba(4, 8, 20, .85); }
+[data-theme="light"] .hero-ops h1 { text-shadow: 0 2px 22px rgba(243, 246, 251, .95), 0 0 52px rgba(243, 246, 251, .7); }
+[data-theme="light"] .hero-ops .hero-sub, [data-theme="light"] .hero-ops .hero-note { text-shadow: 0 1px 14px rgba(243, 246, 251, .9); }
 /* 중앙 무대용 타이포 — 센터 구도는 좌측 칼럼보다 한 급 크게, 줄은 고르게(balance) */
 .hero-ops h1 { font-size: clamp(40px, 3.4vw, 66px); margin: 14px 0 18px; line-height: 1.22; text-wrap: balance; }
 .hero-ops .hero-sub { font-size: 15.5px; margin: 0 auto 24px; max-width: 680px; line-height: 1.75; text-wrap: balance; }
@@ -1933,8 +1927,8 @@ table.trk-tbl td .na { color: var(--muted); }
 [data-theme="light"] .hero-ops .hero-eyebrow { color: #1d6fe0; }
 [data-theme="light"] .hero-shade {
   background:
-    linear-gradient(90deg, transparent 0%, rgba(243, 246, 251, .55) 12%, rgba(243, 246, 251, .94) 24%, rgba(243, 246, 251, .94) 76%, rgba(243, 246, 251, .55) 88%, transparent 100%) center top / 1440px 100% no-repeat,
-    linear-gradient(180deg, rgba(243, 246, 251, .5) 0%, transparent 18%) left top / 100% 100% no-repeat;
+    radial-gradient(ellipse 880px 470px at 50% 31%, rgba(243, 246, 251, .92) 0%, rgba(243, 246, 251, .62) 52%, rgba(243, 246, 251, 0) 76%),
+    linear-gradient(180deg, rgba(243, 246, 251, .55) 0%, transparent 20%);
 }
 [data-theme="light"] .hero-ops .live-chip { background: rgba(255, 255, 255, .66); border-color: rgba(18, 45, 90, .12); box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 14px 34px rgba(30, 60, 120, .10); }
 [data-theme="light"] .hero-ops .live-chip .k { color: var(--muted); }

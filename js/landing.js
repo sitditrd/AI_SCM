@@ -424,16 +424,16 @@
          감광 존은 텍스트 블록 실제 위치 기준(뷰포트 %가 아님):
          ≥1980px 는 중앙 정렬 문구(css @media 와 동기), 미만은 좌측 칼럼 (W-1200)/2 */
       var dotR = Math.max(1.2, W / 1050);
-      var dzL = W / 2 - 480, dzR = W / 2 + 480, dzT = H * 0.16, dzB = H * 0.68;
+      var dzL = W / 2 - 470, dzR = W / 2 + 470, dzT = H * 0.08, dzB = H * 0.56;
       for (var i = 0; i < landCells.length; i++) {
         var pt = project(landCells[i][0], landCells[i][1]);
         if (pt.y < -6 || pt.y > H + 6) continue;
         var dB = Math.sqrt((pt.x - hub.x) * (pt.x - hub.x) + (pt.y - hub.y) * (pt.y - hub.y));
-        var tz = (pt.x > dzL && pt.x < dzR && pt.y > dzT && pt.y < dzB) ? 0.3 : 1;
+        var tz = (pt.x > dzL && pt.x < dzR && pt.y > dzT && pt.y < dzB) ? 0.45 : 1;
         m.beginPath();
         m.arc(pt.x, pt.y, dotR, 0, Math.PI * 2);
         m.fillStyle = dB < 60 ? col.dotHi : col.dot;
-        m.globalAlpha = (dB < 60 ? 0.9 : 0.55) * tz;
+        m.globalAlpha = (dB < 60 ? 0.95 : 0.68) * tz;
         m.fill();
       }
       m.globalAlpha = 1;
@@ -562,8 +562,8 @@
         var laneCol = rt.type === 'air' ? col.laneAir : col.lane;
         /* 언더글로우 + 베이스 */
         ctx.strokeStyle = laneCol;
-        ctx.globalAlpha = 0.06; ctx.lineWidth = 4; ctx.setLineDash([]); ctx.stroke(rt.path);
-        ctx.globalAlpha = rt.type === 'air' ? 0.14 : 0.20;
+        ctx.globalAlpha = 0.09; ctx.lineWidth = 4.5; ctx.setLineDash([]); ctx.stroke(rt.path);
+        ctx.globalAlpha = rt.type === 'air' ? 0.20 : 0.30;
         ctx.lineWidth = 1.3;
         ctx.setLineDash(rt.type === 'air' ? [3, 8] : []);
         ctx.stroke(rt.path);
@@ -572,7 +572,7 @@
         if (rt.type === 'sea' && !reduced) {
           ctx.setLineDash([2.5, 10]);
           ctx.lineDashOffset = -(now / 42);
-          ctx.globalAlpha = 0.32; ctx.lineWidth = 1.3;
+          ctx.globalAlpha = 0.44; ctx.lineWidth = 1.4;
           ctx.stroke(rt.path);
           ctx.setLineDash([]); ctx.lineDashOffset = 0;
         }
@@ -586,16 +586,16 @@
           if (tt < 0) break;
           var tp = pointAt(rt, tt);
           ctx.beginPath();
-          ctx.arc(tp.x, tp.y, Math.max(0.7, 2.4 - i * 0.12), 0, Math.PI * 2);
+          ctx.arc(tp.x, tp.y, Math.max(0.8, 2.8 - i * 0.13), 0, Math.PI * 2);
           ctx.fillStyle = laneCol;
-          ctx.globalAlpha = 0.55 * (1 - i / TR);
+          ctx.globalAlpha = 0.7 * (1 - i / TR);
           ctx.fill();
         }
         var hp = pointAt(rt, rt.t);
         ctx.save();
-        ctx.shadowColor = rgba(laneCol, 0.95); ctx.shadowBlur = 12;
+        ctx.shadowColor = rgba(laneCol, 0.95); ctx.shadowBlur = 18;
         ctx.beginPath();
-        ctx.arc(hp.x, hp.y, rt.type === 'air' ? 2.2 : 2.8, 0, Math.PI * 2);
+        ctx.arc(hp.x, hp.y, rt.type === 'air' ? 2.4 : 3.2, 0, Math.PI * 2);
         ctx.fillStyle = col.head; ctx.globalAlpha = 1; ctx.fill();
         ctx.restore();
 
@@ -621,7 +621,7 @@
         var pp = project(pd[0], pd[1]);
         var px = pp.x + ox, py = pp.y + oy;
         if (px < -20 || px > W + 20) continue;
-        var inText = px > W / 2 - 560 && px < W / 2 + 560 && py > H * 0.13 && py < H * 0.70;
+        var inText = px > W / 2 - 560 && px < W / 2 + 560 && py > H * 0.08 && py < H * 0.58;
         var inStrip = py > H * 0.585 && px > W * 0.18 && px < W * 0.82;
         var quiet = inText || inStrip;
         if (pd[3]) {
