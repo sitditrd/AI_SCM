@@ -15,7 +15,9 @@
      DCSA 3사(머스크·CMA·하파그)는 Supabase Secrets 에 키가 등록되는 순간 서버 목록에
      올라오므로 화면 재배포 없이 실조회로 전환된다(2026-08-12). */
   var LIVE_SCACS = { ONEY: 1, COSU: 1, SMLM: 1, EGLV: 1, SITC: 1 };
-  fetch(CARRIER_API + '?api=list').then(function (r) { return r.json(); }).then(function (d) {
+  /* 레이스 방지(2026-08-19): 서버 live 목록(ZIM 등 확장분) merge 가 끝나기 전에
+     ?no= 자동조회가 달리면 라이브 선사가 딥링크로 오판된다 — 조회는 이 프로미스 뒤에만 */
+  var LIVE_LIST_READY = fetch(CARRIER_API + '?api=list').then(function (r) { return r.json(); }).then(function (d) {
     (d.live || []).forEach(function (c) { if (c && c.scac) LIVE_SCACS[c.scac] = 1; });
   }).catch(function () { /* 목록 실패 시 기본 5사로 동작 */ });
 
@@ -771,29 +773,83 @@
   /* 값이 일시로 파싱되면 짧게, 아니면 원문 그대로 (상태 변경 old/new 는 문자열) */
   function chVal(v) { var d = vcDate(v); return isFinite(d) ? fmtShort(v) : String(v || ''); }
 
-  function feedHtml() {
+  /* 변경 피드 필터 상태 — 그리드와 같은 조회 문법(2026-08-19 사용자 제안) */
+  var feedState = { q: '', kind: '', carrier: '' };
+
+  function feedRows() {
     var rows = [];
     (watchState.items || []).forEach(function (it) {
       (it.changes || []).forEach(function (c) {
         rows.push({ mbl: it.mbl_no, carrier: it.carrier, at: c.changed_at, kind: c.kind, field: c.field, o: c.old_value, n: c.new_value });
       });
     });
-    if (!rows.length) return '';
     rows.sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
-    rows = rows.slice(0, 12);
+    return rows;
+  }
+
+  function feedHtml() {
+    var all = feedRows();
+    if (!all.length) return '';
+    var q = feedState.q.toUpperCase();
+    var rows = all.filter(function (r) {
+      if (q && String(r.mbl).toUpperCase().indexOf(q) < 0) return false;
+      if (feedState.kind && r.kind !== feedState.kind) return false;
+      if (feedState.carrier && r.carrier !== feedState.carrier) return false;
+      return true;
+    });
+    var shown = rows.slice(0, 30);
+    var hasFilter = feedState.q || feedState.kind || feedState.carrier;
+
+    var kindOpts = ['<option value="">이슈 전체</option>'].concat(
+      Array.from(new Set(all.map(function (r) { return r.kind; }).filter(Boolean))).sort()
+        .map(function (k) { return '<option value="' + esc(k) + '"' + (feedState.kind === k ? ' selected' : '') + '>' + esc(KIND_LB[k] || k) + '</option>'; })).join('');
+    var carOpts = ['<option value="">전체 선사</option>'].concat(
+      Array.from(new Set(all.map(function (r) { return r.carrier; }).filter(Boolean))).sort()
+        .map(function (c) { return '<option value="' + esc(c) + '"' + (feedState.carrier === c ? ' selected' : '') + '>' + esc(c) + '</option>'; })).join('');
+
     return '<div class="card trk-card" style="margin-bottom:14px;">' +
       '<div class="trk-head"><span class="trk-bl">최근 변경</span>' +
-      '<span class="trk-carrier">' + rows.length + '건 · 최신순</span>' +
+      '<span class="trk-carrier">' + rows.length + '건 / 전체 ' + all.length + '건 · 최신순' +
+      (shown.length < rows.length ? ' · 최근 ' + shown.length + '건 표시' : '') + '</span>' +
       '<span class="trk-spacer"></span><span class="trk-asof">변경 시 등록 이메일로 자동 발송</span></div>' +
+      '<div class="berth-toolbar" style="margin:0; padding:12px 18px; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:8px;">' +
+      '<input type="search" id="fd_q" class="focus-search" placeholder="B/L 검색" value="' + esc(feedState.q) + '" style="max-width:180px;">' +
+      '<select id="fd_kind" class="focus-search" style="max-width:150px;">' + kindOpts + '</select>' +
+      '<select id="fd_carrier" class="focus-search" style="max-width:130px;">' + carOpts + '</select>' +
+      (hasFilter ? '<button class="btn btn-ghost trk-mini" id="fd_reset" type="button">필터 초기화</button>' : '') +
+      '</div>' +
       '<div class="trk-sec" style="padding-top:12px;"><div class="trk-tbl-wrap"><table class="trk-tbl sc-feed">' +
       '<thead><tr><th>기준일시</th><th>이슈</th><th>B/L</th><th>변경 내용</th></tr></thead><tbody>' +
-      rows.map(function (r) {
+      (shown.length ? shown.map(function (r) {
         return '<tr><td class="dt">' + esc(fmtShort(r.at)) + '</td>' +
           '<td><span class="sc-kind k-' + esc(r.kind || 'etc') + '">' + esc(KIND_LB[r.kind] || r.field || '변경') + '</span></td>' +
           '<td class="cn">' + esc(r.mbl) + ' <small style="color:var(--muted);">' + esc(r.carrier || '') + '</small></td>' +
           '<td>' + esc(r.field) + ' · <s class="sc-old">' + esc(chVal(r.o)) + '</s> → <b class="sc-new">' + esc(chVal(r.n)) + '</b></td></tr>';
-      }).join('') +
+      }).join('') : '<tr><td colspan="4" class="na" style="text-align:center;padding:16px;">조건에 맞는 변경이 없습니다.</td></tr>') +
       '</tbody></table></div></div></div>';
+  }
+
+  /* 피드 렌더 + 필터 바인딩 — 섹션 표시는 원본 데이터 기준(필터 0건이어도 섹션 유지) */
+  function renderFeed() {
+    var fo = el('feedOut'), fs = document.getElementById('feed');
+    if (!fo) return;
+    var has = !watchState.needLogin && feedRows().length > 0;
+    fo.innerHTML = has ? feedHtml() : '';
+    if (fs) fs.style.display = has ? '' : 'none';
+    if (!has) return;
+    var qi = el('fd_q');
+    if (qi) qi.addEventListener('input', function () {
+      feedState.q = qi.value.trim();
+      var pos = qi.selectionStart;
+      renderFeed();
+      var q2 = el('fd_q'); if (q2) { q2.focus(); try { q2.setSelectionRange(pos, pos); } catch (e) { /* */ } }
+    });
+    var ki = el('fd_kind');
+    if (ki) ki.addEventListener('change', function () { feedState.kind = ki.value; renderFeed(); });
+    var ci = el('fd_carrier');
+    if (ci) ci.addEventListener('change', function () { feedState.carrier = ci.value; renderFeed(); });
+    var ri = el('fd_reset');
+    if (ri) ri.addEventListener('click', function () { feedState = { q: '', kind: '', carrier: '' }; renderFeed(); });
   }
 
   /* ETA 드리프트 — 폴링 회차별 ETA 계단 차트. 값이 클수록(도착이 늦을수록) 위쪽. */
@@ -959,11 +1015,8 @@
   function renderWatch() {
     var box = el('watchOut'); if (!box) return;
     var all = watchState.items;
-    /* SECTION 02 — 변경 피드는 자기 섹션으로 분리(2026-08-19 섹션 구분 지적). 내용 없으면 섹션부터 숨김 */
-    var fo = el('feedOut'), fs = document.getElementById('feed');
-    var fh = watchState.needLogin ? '' : feedHtml();
-    if (fo) fo.innerHTML = fh;
-    if (fs) fs.style.display = fh ? '' : 'none';
+    /* SECTION 02 — 변경 피드는 자기 섹션(필터 포함) */
+    renderFeed();
     if (watchState.needLogin) {
       watchSummarySet('<span class="cs-muted">로그인 후 이용 가능</span>');
       box.innerHTML = '<div class="card"><p class="sc-sub" style="margin:0;">추적 감시는 <b>로그인 후</b> 이용할 수 있습니다. ' +
@@ -1228,7 +1281,8 @@
       '</div>';
   }
 
-  function trace() {
+  function trace() { LIVE_LIST_READY.then(traceNow); }
+  function traceNow() {
     var no = el('blNo').value.trim();
     if (no.length < 6) return;
     var em = el('ccEmpty'); if (em) em.style.display = 'none';

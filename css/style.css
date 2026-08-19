@@ -2052,7 +2052,11 @@ h1.sr-done .accent::after { content: none; }
 
 /* ===== 화물추적 관제 콘솔 (2026-08-19 UX 개편 — 시안 1+4) ===== */
 .cargo-console { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 18px; align-items: stretch; }
-.cc-side { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 76px; align-self: start; }
+/* 좌측 레일도 행 높이에 스트레치 — 결과 티켓이 길어지면 자동 감시 카드가 늘어나
+   좌우 하단 라인이 항상 일치(2026-08-19 사용자 지적). 늘어난 몫은 감시 카드가 흡수 */
+.cc-side { display: flex; flex-direction: column; gap: 14px; }
+.cc-watchcard { flex: 1 1 auto; display: flex; flex-direction: column; }
+.cc-watchcard .btn { margin-top: auto; }
 .cc-side h3 { margin: 0 0 10px; font-size: 14.5px; }
 .cc-search input.focus-search { width: 100%; margin-bottom: 10px; }
 .cc-wsum { font-size: 20px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
