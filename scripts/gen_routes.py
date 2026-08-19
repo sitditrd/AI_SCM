@@ -13,12 +13,13 @@ if hasattr(sys.stdout, 'reconfigure'):
 
 import searoute as sr
 
-BASE = r'C:\Temp\AI_SCM'
+# 저장소 루트 기준 상대경로 — 유령 경로 C:\Temp\AI_SCM 하드코딩으로 실행 불가였던 것 교정(2026-08-20)
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, 'routes')
 os.makedirs(OUT, exist_ok=True)
 
 # data.js의 P('en','ko','cc','rg', lat, lng, ...) 시드에서 항만 좌표 추출
-src = io.open(os.path.join(BASE, 'data.js'), encoding='utf-8').read()
+src = io.open(os.path.join(BASE, 'js', 'data.js'), encoding='utf-8').read()
 ports = []
 for m in re.finditer(r"P\('([^']+)',\s*'[^']*',\s*'[^']*',\s*'[^']*',\s*(-?[\d.]+),\s*(-?[\d.]+)", src):
     ports.append({'en': m.group(1), 'lat': float(m.group(2)), 'lng': float(m.group(3))})
