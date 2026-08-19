@@ -540,23 +540,30 @@
         var pp = project(pd[0], pd[1], w);
         var px = pp.x + ox, py = pp.y + oy;
         if (px < -20 || px > w + 20) continue;
-        /* 좌측 텍스트 존과 겹치는 라벨은 글자를 숨기고 점만 남긴다(가독성) */
-        var labelOK = px > w * 0.37;
-        if (pd[3]) {
+        /* 라벨 금지 구역 — 헤드라인·서브카피 블록과 KPI 스트립 위에는
+           글자를 안 얕는다(2026-08-19 사용자 지적: 동아시아 라벨이 제목과 충돌).
+           금지 구역 안에서는 점만 연하게 남는다. */
+        var inText = px < w * 0.545 && py > h * 0.06 && py < h * 0.70;
+        var inStrip = py > h * 0.585 && px > w * 0.18 && px < w * 0.82;
+        var quiet = inText || inStrip;
+        if (pd[3]) {                                   /* BUSAN */
           var beat = reduced ? 0.5 : (Math.sin(now / 650) + 1) / 2;
+          var bA = quiet ? 0.35 : 1;
           ctx.beginPath(); ctx.arc(px, py, 7 + beat * 9, 0, Math.PI * 2);
-          ctx.strokeStyle = col.dotHi; ctx.globalAlpha = 0.35 * (1 - beat * 0.6); ctx.lineWidth = 1.5; ctx.stroke();
+          ctx.strokeStyle = col.dotHi; ctx.globalAlpha = 0.35 * (1 - beat * 0.6) * bA; ctx.lineWidth = 1.5; ctx.stroke();
           ctx.save();
-          ctx.shadowColor = rgba(col.dotHi, 0.9); ctx.shadowBlur = 12;
-          ctx.beginPath(); ctx.arc(px, py, 3.8, 0, Math.PI * 2);
-          ctx.fillStyle = col.dotHi; ctx.globalAlpha = 1; ctx.fill();
+          if (!quiet) { ctx.shadowColor = rgba(col.dotHi, 0.9); ctx.shadowBlur = 12; }
+          ctx.beginPath(); ctx.arc(px, py, quiet ? 2.8 : 3.8, 0, Math.PI * 2);
+          ctx.fillStyle = col.dotHi; ctx.globalAlpha = quiet ? 0.55 : 1; ctx.fill();
           ctx.restore();
-          ctx.fillStyle = col.dotHi; ctx.globalAlpha = 1;
-          ctx.fillText(pd[2], px + 12, py + 4);
+          if (!quiet) {
+            ctx.fillStyle = col.dotHi; ctx.globalAlpha = 1;
+            ctx.fillText(pd[2], px + 12, py + 4);
+          }
         } else {
-          ctx.beginPath(); ctx.arc(px, py, 2.4, 0, Math.PI * 2);
-          ctx.fillStyle = col.lane; ctx.globalAlpha = 0.95; ctx.fill();
-          if (labelOK) {
+          ctx.beginPath(); ctx.arc(px, py, quiet ? 1.8 : 2.4, 0, Math.PI * 2);
+          ctx.fillStyle = col.lane; ctx.globalAlpha = quiet ? 0.35 : 0.95; ctx.fill();
+          if (!quiet) {
             ctx.fillStyle = col.label; ctx.globalAlpha = 0.95;
             var lx = px + (pd[4] != null ? pd[4] : 8);
             var ly = py + (pd[5] != null ? pd[5] : 4);
