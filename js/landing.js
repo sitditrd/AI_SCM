@@ -84,7 +84,7 @@
         '</div><div class="v">' + Number(i.d.value).toLocaleString('ko-KR') + arrow + '</div></div>';
     }).join('') +
     '<div class="live-chip"><div class="k">' + t('fx.pubdate', '발표일') + '</div><div class="v" style="font-size:14px;">' +
-      fxLatest + '<br><small style="color:#9db8dd;">' + t('fx.weekly', '주 1회 갱신') + '</small></div></div>';
+      fxLatest + '<br><small class="meta-live">' + t('fx.weekly', '주 1회 갱신') + '</small></div></div>';
     host.style.display = '';
   }
 

@@ -1917,6 +1917,8 @@ table.trk-tbl td .na { color: var(--muted); }
 /* 지수 등락 색 — 위 muted 보다 뒤에 선언해 승리. 상승 빨강·하락 파랑(2026-08-19 사용자 지적) */
 #stats .live-strip .live-chip .v small.pc-up { color: var(--idx-up) !important; font-weight: 700; }
 #stats .live-strip .live-chip .v small.pc-dn { color: var(--idx-dn) !important; font-weight: 700; }
+/* '주 1회 갱신' — 라이브 점(pulse-dot)과 같은 초록(2026-08-19 사용자 지정) */
+#stats .live-strip .live-chip .v small.meta-live { color: #35d07f !important; }
 #stats .live-strip { background: transparent; border: 0; box-shadow: none; padding: 0; }
 /* 다크 전용 그라데이션 텍스트 해제 — 라이트에서 숫자가 씻겨 보이던 진범 */
 #stats .live-strip .live-chip .v {
