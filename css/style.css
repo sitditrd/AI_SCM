@@ -1402,6 +1402,88 @@ tr.tree-child td:first-child { padding-left: 30px; }
 .trk-badge.is-wait { background: color-mix(in srgb, var(--lv-stable) 18%, transparent); color: var(--lv-stable); border: 1px solid color-mix(in srgb, var(--lv-stable) 36%, transparent); }
 
 /* 경로 시각화 — 항구 노드 + 진행 구간 + 선박 마커 (SVG) */
+/* ===== Voyage Canvas — 항로 SVG (2026-08-19 고도화) ===== */
+.vc-wrap { padding: 20px 16px 4px; }
+.vc-wrap svg { width: 100%; height: auto; display: block; }
+.vc-wrap text { font-family: inherit; }
+.vc-l-done { stroke: var(--brand-accent); stroke-width: 3; fill: none; stroke-linecap: round; }
+.vc-l-todo { stroke: var(--grid); stroke-width: 2.4; fill: none; stroke-linecap: round; stroke-dasharray: 2 8; }
+.vc-l-flow { stroke: var(--brand-accent-2); stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-dasharray: 2.2 5.5; opacity: .7; animation: vcflow 1.5s linear infinite; }
+@keyframes vcflow { to { stroke-dashoffset: -15.4; } }
+@media (prefers-reduced-motion: reduce) { .vc-l-flow { animation: none; opacity: .3; } }
+.vc-node { fill: var(--surface); stroke: var(--muted); stroke-width: 2; }
+.vc-node.done { fill: var(--brand-accent); stroke: var(--brand-accent); }
+.vc-glow { fill: var(--brand-accent); opacity: .16; }
+.vc-code { font-size: 14.5px; font-weight: 800; fill: var(--ink); letter-spacing: .01em; }
+.vc-name { font-size: 10.5px; fill: var(--muted); }
+.vc-date { font-size: 11px; fill: var(--ink-2); font-variant-numeric: tabular-nums; }
+.vc-date.act { fill: var(--brand-accent-2); font-weight: 700; }
+.vc-ae rect { fill: var(--grid); }
+.vc-ae text { font-size: 9.5px; font-weight: 800; fill: var(--muted); }
+.vc-ae.a rect { fill: color-mix(in srgb, var(--lv-low) 26%, transparent); }
+.vc-ae.a text { fill: var(--lv-low); }
+.vc-ts { font-size: 9.5px; font-weight: 700; fill: var(--muted); letter-spacing: .1em; }
+.vc-ship-g { color: var(--brand-accent-2); }
+.vc-ship-lb { font-size: 11px; font-weight: 700; fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; }
+/* 모바일: 캔버스 대신 세로 타임라인 */
+.vc-vert { display: none; list-style: none; margin: 0; padding: 14px 18px 2px; }
+.vc-vert li { position: relative; padding: 6px 0 6px 26px; display: flex; align-items: baseline; gap: 8px; }
+.vc-vert li::before { content: ''; position: absolute; left: 6px; top: 14px; width: 9px; height: 9px; border-radius: 50%; background: var(--surface); border: 2px solid var(--muted); }
+.vc-vert li.done::before { background: var(--brand-accent); border-color: var(--brand-accent); }
+.vc-vert li::after { content: ''; position: absolute; left: 10px; top: 26px; bottom: -8px; width: 2px; background: var(--grid); }
+.vc-vert li.done::after { background: var(--brand-accent); }
+.vc-vert li.last::after { display: none; }
+.vc-vert li b { font-size: 13.5px; }
+.vc-vert li small { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.vc-vert li small.act { color: var(--brand-accent-2); font-weight: 700; }
+.vc-vert li.ship { color: var(--brand-accent-2); font-weight: 700; padding-left: 24px; }
+.vc-vert li.ship::before, .vc-vert li.ship::after { display: none; }
+@media (max-width: 640px) { .vc-wrap { display: none; } .vc-vert { display: block; } }
+
+/* ===== 국내 터미널 일정 패널 ===== */
+.tml-sec h4 small { font-weight: 400; color: var(--muted); margin-left: 8px; }
+.tml-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.tml-card { flex: 1 1 240px; min-width: 230px; max-width: 340px; border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px 11px; background: color-mix(in srgb, var(--surface) 72%, transparent); }
+.tml-card.warn { border-color: color-mix(in srgb, var(--lv-busy) 55%, var(--border)); }
+.tml-card .t-hd { display: flex; align-items: baseline; gap: 7px; margin-bottom: 5px; }
+.tml-card .t-hd b { font-size: 14px; letter-spacing: .02em; }
+.tml-card .t-hd span { font-size: 11px; color: var(--muted); }
+.tml-card .t-hd em { font-style: normal; font-size: 11px; color: var(--ink-2); }
+.tml-card .t-chg { font-style: normal; font-size: 10.5px; font-weight: 700; color: var(--up); margin-left: auto; cursor: help; }
+.tml-card .t-bd { font-size: 12.5px; color: var(--ink-2); }
+.tml-card .t-bd b { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+.tml-card .t-cct { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.tml-card .t-cct .left { color: var(--lv-busy); font-variant-numeric: tabular-nums; }
+.tml-card.warn .t-cct .left { color: var(--up); }
+
+/* ===== 스케줄 변경 피드 · 변경 이력 ===== */
+.sc-kind { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--grid); color: var(--ink-2); white-space: nowrap; }
+.sc-kind.k-eta { background: color-mix(in srgb, var(--up) 16%, transparent); color: var(--up); }
+.sc-kind.k-etd { background: color-mix(in srgb, var(--lv-busy) 18%, transparent); color: var(--lv-busy); }
+.sc-kind.k-vessel { background: color-mix(in srgb, var(--brand-accent-2) 16%, transparent); color: var(--brand-accent-2); }
+.sc-old { color: var(--muted); text-decoration-color: color-mix(in srgb, var(--up) 60%, transparent); }
+.sc-new { color: var(--lv-low); }
+.wf-hist { font: inherit; font-size: 12px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; }
+.wf-hist.has { color: var(--up); border-color: color-mix(in srgb, var(--up) 45%, var(--border)); font-weight: 700; }
+.wf-hist.open, .wf-hist:hover { background: color-mix(in srgb, var(--brand-accent) 10%, transparent); color: var(--ink); }
+.wf-drow td { background: color-mix(in srgb, var(--brand-accent) 4%, transparent); padding: 0 !important; }
+.wf-dbox { padding: 14px 16px 16px; border-top: 1px dashed var(--border); }
+.sc-drift { width: 100%; max-width: 780px; height: auto; display: block; }
+.sc-drift text { font-family: inherit; }
+.sc-drift .d-grid { stroke: var(--grid); stroke-width: 1; stroke-dasharray: 3 5; }
+.sc-drift .d-ax { font-size: 10.5px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.sc-drift .d-line { fill: none; stroke: var(--brand-accent); stroke-width: 2.4; stroke-linejoin: round; }
+.sc-drift .d-dot { fill: var(--brand-accent); }
+.sc-drift .d-dot.chg { fill: var(--up); }
+.sc-drift .d-delta { font-size: 10.5px; font-weight: 800; }
+.sc-drift .d-delta.late { fill: var(--up); }
+.sc-drift .d-delta.early { fill: var(--lv-low); }
+.sc-drift .d-title { font-size: 11.5px; font-weight: 700; fill: var(--ink-2); }
+.sc-hlist { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.sc-hlist li { display: flex; align-items: baseline; gap: 10px; font-size: 12.5px; flex-wrap: wrap; }
+.sc-hlist li .dt { color: var(--muted); font-variant-numeric: tabular-nums; }
+.sc-hlist li .sc-sent { font-style: normal; font-size: 11px; color: var(--lv-low); }
+
 .trk-route { display: flex; align-items: flex-start; gap: 0; padding: 26px 20px 20px; overflow-x: auto; }
 .trk-port { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 116px; text-align: center; }
 .trk-port .p-dot {
