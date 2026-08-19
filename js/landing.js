@@ -45,80 +45,22 @@
   function t(k, ko) { return (window.TWI18N && window.TWI18N.t) ? window.TWI18N.t(k, ko) : ko; }
 
   /* ---------- 세계 시계 HUD — 관제탑의 심장박동(1초 갱신) ---------- */
-  /* ── 콘솔 타이핑 (시안 15 고도화) ──
-     고스트 레이어가 최종 크기를 선점(요동 0) → 라이브 레이어에 한 글자씩.
-     완료 시 twl:herotyped 발생 → 지도가 부산 파문으로 응답.
-     접근성: h1 aria-label 에 전체 문장, 라이브는 aria-hidden.
-     다국어: 전환 시 i18n 이 innerHTML 교체 → 정적 완성형(타이핑은 최초 1회만) */
+  /* ── 스캔 리빌 무장 (시안 16 방식 — 2026-08-19 사용자: 바가 우측으로 쓸고 가며 글씨가 드러나는 연출) ──
+     h1 내용을 .srw 로 감싸고 광선 바(.srb)를 붙인 뒤 .sr-armed 로 점화.
+     클립·바 애니는 전부 CSS 동기. reduced-motion·JS 미동작·언어 전환 = 정적 완성형 */
   function initHeroTyping() {
     var h1 = document.querySelector('.hero-ops .hud-brief h1');
     if (!h1) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     var cancelled = false;
-    window.addEventListener('twl:langchange', function () { cancelled = true; });
-
-    /* i18n 의 DOMContentLoaded 치환이 끝난 뒤 현재 언어 문자열로 시작 */
-    setTimeout(function () {
-      if (cancelled) return;
-      var lines = [[]];
-      h1.childNodes.forEach(function (nd) {
-        if (nd.nodeName === 'BR') { lines.push([]); return; }
-        var acc = nd.nodeType === 1 && nd.classList && nd.classList.contains('accent');
-        var t = nd.textContent;
-        if (t) lines[lines.length - 1].push({ t: t, a: acc });
-      });
-      lines = lines.filter(function (l) { return l.length; });
-      if (!lines.length) return;
-
-      h1.setAttribute('aria-label', h1.textContent.replace(/\s+/g, ' ').trim());
-      h1.innerHTML = lines.map(function (segs) {
-        var ghost = segs.map(function (sg) {
-          return sg.a ? '<span class="accent">' + esc(sg.t) + '</span>' : esc(sg.t);
-        }).join('');
-        return '<span class="tl"><span class="tl-in"><span class="tl-ghost">' + ghost +
-               '</span><span class="tl-live" aria-hidden="true"></span></span></span>';
-      }).join('');
-
-      var lives = h1.querySelectorAll('.tl-live');
-      var caret = document.createElement('span');
-      caret.className = 'type-caret';
-      lives[0].appendChild(caret);
-
-      /* [줄index, 세그먼트, 문자] 평탄화 */
-      var q = [];
-      lines.forEach(function (segs, li) {
-        segs.forEach(function (sg) {
-          Array.from(sg.t).forEach(function (chr) { q.push({ li: li, a: sg.a, c: chr }); });
-        });
-      });
-
-      var i = 0, curLine = 0;
-      function tick() {
-        if (cancelled || !h1.isConnected) return;
-        if (i >= q.length) {
-          /* 완료: 잔깜빡 후 커서 페이드 + 지도 파문 */
-          try { window.dispatchEvent(new CustomEvent('twl:herotyped')); } catch (e) { /* */ }
-          setTimeout(function () { caret.classList.add('done'); }, 1200);
-          setTimeout(function () { if (caret.parentNode) caret.parentNode.removeChild(caret); }, 1900);
-          return;
-        }
-        var it = q[i++];
-        if (it.li !== curLine) {
-          curLine = it.li;
-          lives[curLine].appendChild(caret);      /* 커서 줄바꿈 */
-          setTimeout(tick, 300);                  /* 줄 넘김 숨고르기 */
-          i--; return;
-        }
-        var ch = document.createElement('span');
-        ch.className = it.a ? 'ch accent' : 'ch';
-        ch.textContent = it.c;
-        lives[it.li].insertBefore(ch, caret);
-        var d = 34 + Math.random() * 40;
-        if (',·、，'.indexOf(it.c) >= 0) d += 140;  /* 구두점 뒤 멈칧 */
-        setTimeout(tick, d);
-      }
-      /* 부팅 대기 — 커서 단독 깜빡 */
-      setTimeout(tick, 760);
+    window.addEventListener('twl:langchange', function () {
+      cancelled = true;
+      h1.classList.remove('sr-armed');   /* i18n 이 innerHTML 교체 → 정적 완성형 */
+    });
+    setTimeout(function () {             /* i18n 초기 치환 뒤에 무장 */
+      if (cancelled || !h1.isConnected) return;
+      h1.innerHTML = '<span class="srw">' + h1.innerHTML + '</span><span class="srb" aria-hidden="true"></span>';
+      h1.classList.add('sr-armed');
     }, 160);
   }
 
@@ -358,7 +300,10 @@
     if (!canvas) return;
 
     var ctx = canvas.getContext('2d');
-    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    /* 지도는 완전 정적 — "지도 움직이게 하지마 어지러워"(2026-08-19 사용자 지시).
+       reduced=true 로 고정: rAF 루프·혜성 주행·흐름 대시·별 반짝임·패럴랙스·파문 전부 오프,
+       resize()가 정적 프레임 1장만 그린다 (타이핑 연출은 별도 matchMedia — 영향 없음) */
+    var reduced = true;
     var running = true;
     var col = {};
     function setPalette() {
@@ -558,7 +503,7 @@
       return {
         type: type, path: path, flat: flat, cums: cums, len: total,
         end: flat[flat.length - 1],
-        t: type === 'air' ? 0.5 * idx : (idx * 0.13) % 1,
+        t: type === 'air' ? (0.18 + 0.37 * idx) % 1 : (0.07 + idx * 0.13) % 1,
         speed: type === 'air' ? 0.0042 : 0.0011 + (idx % 5) * 0.00035,
         pulse: 0
       };
