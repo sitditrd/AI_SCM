@@ -359,9 +359,9 @@
       for (var gx = 1; gx <= 5; gx++) { m.beginPath(); m.moveTo(w * gx / 6, 0); m.lineTo(w * gx / 6, h); m.stroke(); }
 
       /* 대륙 도트 — 러프 폴리곤 레이캐스팅 */
-      var dotR = Math.max(1.3, w / 780);
-      for (var lat = 74; lat >= -56; lat -= 2.6) {
-        for (var lng = -180; lng < 180; lng += 2.6) {
+      var dotR = Math.max(1.4, w / 950);
+      for (var lat = 74; lat >= -56; lat -= 1.5) {
+        for (var lng = -180; lng < 180; lng += 1.5) {
           var land = false;
           for (var p = 0; p < LAND.length && !land; p++) land = pip(lat, lng, LAND[p]);
           if (!land) continue;
@@ -370,7 +370,7 @@
           m.beginPath();
           m.arc(pt.x, pt.y, dotR, 0, Math.PI * 2);
           m.fillStyle = col.sea;
-          m.globalAlpha = dHub < 70 ? 0.5 : 0.28;      /* 한반도 주변은 살짝 밝게 */
+          m.globalAlpha = dHub < 70 ? 0.72 : 0.48;      /* 한반도 주변은 살짝 밝게 */
           m.fill();
         }
       }
@@ -421,6 +421,21 @@
         });
       });
     }
+    /* 기항지 라벨 — "BUSAN 만 표기" 반려(2026-08-19) → 레인 기항지 12곳 전부 표기 */
+    var PORTS = [
+      [35.08, 129.05, 'BUSAN', 1],
+      [35.62, 139.78, 'TOKYO', 0],
+      [31.23, 121.49, 'SHANGHAI', 0],
+      [22.31, 113.92, 'HONG KONG', 0],
+      [1.26, 103.84, 'SINGAPORE', 0],
+      [18.94, 72.84, 'MUMBAI', 0],
+      [-33.85, 151.2, 'SYDNEY', 0],
+      [51.95, 4.14, 'ROTTERDAM', 0],
+      [53.54, 9.98, 'HAMBURG', 0],
+      [40.67, -74.02, 'NEW YORK', 0],
+      [-23.96, -46.31, 'SANTOS', 0],
+      [33.73, -118.26, 'LOS ANGELES', 0]
+    ];
     function bez(p0, p1, p2, t) {
       var mt = 1 - t;
       return { x: mt * mt * p0.x + 2 * mt * t * p1.x + t * t * p2.x,
@@ -457,9 +472,16 @@
         /* 항로 베이스 */
         ctx.beginPath(); ctx.moveTo(ax, ay); ctx.quadraticCurveTo(mx, my, bx, by);
         ctx.strokeStyle = r.type === 'air' ? col.air : col.sea;
-        ctx.globalAlpha = r.type === 'air' ? 0.14 : 0.22;
+        ctx.globalAlpha = r.type === 'air' ? 0.14 : 0.20;
         ctx.setLineDash(r.type === 'air' ? [3, 8] : []);
         ctx.lineWidth = 1.3; ctx.stroke(); ctx.setLineDash([]);
+        if (r.type === 'sea' && !reduced) {
+          ctx.beginPath(); ctx.moveTo(ax, ay); ctx.quadraticCurveTo(mx, my, bx, by);
+          ctx.setLineDash([2.5, 10]);
+          ctx.lineDashOffset = -(now / 42);
+          ctx.globalAlpha = 0.32; ctx.lineWidth = 1.3; ctx.stroke();
+          ctx.setLineDash([]); ctx.lineDashOffset = 0;
+        }
 
         if (!reduced) { r.t += r.speed; if (r.t > 1) { r.t = 0; r.pulse = 1; } }
 
@@ -506,18 +528,37 @@
         ctx.fillStyle = col.sea; ctx.globalAlpha = 0.6; ctx.fill();
       });
 
-      /* 부산 허브 — 맥동 + 코어 + 라벨 */
-      var beat = reduced ? 0.5 : (Math.sin(now / 650) + 1) / 2;
-      ctx.beginPath(); ctx.arc(hx, hy, 7 + beat * 9, 0, Math.PI * 2);
-      ctx.strokeStyle = col.air; ctx.globalAlpha = 0.30 * (1 - beat * 0.6); ctx.lineWidth = 1.5; ctx.stroke();
-      ctx.save();
-      ctx.shadowColor = rgba(col.air, 0.9); ctx.shadowBlur = 12;
-      ctx.beginPath(); ctx.arc(hx, hy, 3.8, 0, Math.PI * 2);
-      ctx.fillStyle = col.air; ctx.globalAlpha = 1; ctx.fill();
-      ctx.restore();
-      ctx.font = '700 10px Pretendard Variable, sans-serif';
-      ctx.fillStyle = col.ink; ctx.globalAlpha = 0.9;
-      ctx.fillText('BUSAN', hx + 11, hy + 3.5);
+      /* 기항지 마커 + 라벨 12곳 — 관제 지도의 정체성. BUSAN 은 맥동·강조 */
+      ctx.font = '700 10.5px Pretendard Variable, sans-serif';
+      for (var pi = 0; pi < PORTS.length; pi++) {
+        var pd = PORTS[pi];
+        var pp = project(pd[0], pd[1], w);
+        var px = pp.x + ox, py = pp.y + oy;
+        if (px < -20 || px > w + 20) continue;
+        /* 좌측 텍스트 존과 겹치는 라벨은 글자를 숨기고 점만 남긴다(가독성) */
+        var labelOK = px > w * 0.37;
+        if (pd[3]) {
+          var beat = reduced ? 0.5 : (Math.sin(now / 650) + 1) / 2;
+          ctx.beginPath(); ctx.arc(px, py, 7 + beat * 9, 0, Math.PI * 2);
+          ctx.strokeStyle = col.air; ctx.globalAlpha = 0.30 * (1 - beat * 0.6); ctx.lineWidth = 1.5; ctx.stroke();
+          ctx.save();
+          ctx.shadowColor = rgba(col.air, 0.9); ctx.shadowBlur = 12;
+          ctx.beginPath(); ctx.arc(px, py, 3.8, 0, Math.PI * 2);
+          ctx.fillStyle = col.air; ctx.globalAlpha = 1; ctx.fill();
+          ctx.restore();
+          ctx.fillStyle = col.air; ctx.globalAlpha = 1;
+          ctx.fillText(pd[2], px + 12, py + 4);
+        } else {
+          ctx.beginPath(); ctx.arc(px, py, 2.4, 0, Math.PI * 2);
+          ctx.fillStyle = col.sea; ctx.globalAlpha = 0.9; ctx.fill();
+          if (labelOK) {
+            ctx.fillStyle = col.ink; ctx.globalAlpha = 0.85;
+            var lx = px + 8;
+            if (lx + pd[2].length * 6.5 > w - 6) lx = px - 8 - pd[2].length * 6.5;
+            ctx.fillText(pd[2], lx, py + 4);
+          }
+        }
+      }
       ctx.globalAlpha = 1;
     }
 
