@@ -54,6 +54,7 @@
       'hero.note': 'IMF PortWatch <b id="heroPortCount">2,065</b>개 항만 네트워크 · 중점 모니터링 항만(Focus Port) 93개 매일 산출',
       'ls.pci': '종합 PCI (항만 혼잡도 지수)', 'ls.congested': '혼잡(CONGESTED) 항만',
       'ls.risk': '글로벌 리스크', 'ls.delay': '평균 접안 지연',
+      'ls.ais': '실시간 AIS 수신 선박',
       /* --- 홈 운임 스트립(JS 렌더) --- */
       'fx.scfi': 'SCFI 종합', 'fx.ccfi': 'CCFI 종합', 'fx.ccfiKr': 'CCFI 한국항로', 'fx.ccfiEu': 'CCFI 유럽항로',
       'fx.pubdate': '발표일', 'fx.weekly': '주 1회 갱신', 'unit.ports': '개',
@@ -225,6 +226,7 @@
       'hero.note': 'IMF PortWatch network of <b id="heroPortCount">2,065</b> ports · 93 Focus Ports computed daily',
       'ls.pci': 'Overall PCI (Port Congestion Index)', 'ls.congested': 'Congested Ports',
       'ls.risk': 'Global Risk', 'ls.delay': 'Avg Berthing Delay',
+      'ls.ais': 'Live AIS vessels',
       'fx.scfi': 'SCFI Composite', 'fx.ccfi': 'CCFI Composite', 'fx.ccfiKr': 'CCFI Korea', 'fx.ccfiEu': 'CCFI Europe',
       'fx.pubdate': 'Published', 'fx.weekly': 'Weekly update', 'unit.ports': '',
       'teu.total': 'Monthly container volume', 'teu.imp': 'Import', 'teu.exp': 'Export',
@@ -394,6 +396,7 @@
       'hero.note': 'IMF PortWatch <b id="heroPortCount">2,065</b> 个港口网络 · 每日测算 93 个重点监测港口',
       'ls.pci': '综合 PCI（港口拥堵指数）', 'ls.congested': '拥堵港口',
       'ls.risk': '全球风险', 'ls.delay': '平均靠泊延误',
+      'ls.ais': '实时 AIS 接收船舶',
       'fx.scfi': 'SCFI 综合', 'fx.ccfi': 'CCFI 综合', 'fx.ccfiKr': 'CCFI 韩国航线', 'fx.ccfiEu': 'CCFI 欧洲航线',
       'fx.pubdate': '发布日', 'fx.weekly': '每周更新', 'unit.ports': ' 个',
       'teu.total': '月度集装箱吞吐量', 'teu.imp': '进口', 'teu.exp': '出口',

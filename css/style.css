@@ -1750,7 +1750,7 @@ table.trk-tbl td .na { color: var(--muted); }
 /* 아이브로우 — 마케팅 문구가 아니라 시스템 메타데이터(신뢰 장치) */
 .hero-eyebrow { letter-spacing: .08em; font-size: 12px; font-weight: 600; }
 /* 타이포 절제 — 토스 사다리·글로비스 트래킹 실측 반영 */
-.hero h1 { font-size: clamp(40px, 3.4vw, 64px); line-height: 1.22; letter-spacing: -0.02em; color: #F2F4F6; font-weight: 700; }
+.hero h1 { font-size: clamp(40px, 3.4vw, 64px); line-height: 1.22; letter-spacing: -0.02em; color: var(--ink); font-weight: 700; }
 .hero-sub { letter-spacing: -0.01em; }
 /* KPI 유리 컨트롤 서피스 — Clerk 레시피 */
 .hero .live-strip { border-radius: 16px; }
@@ -1858,4 +1858,36 @@ table.trk-tbl td .na { color: var(--muted); }
   .hud-brief { max-width: 100%; padding: 22px 20px; }
   .hero-ops h1 { font-size: 30px; }
   .hud-dock { position: static; padding: 14px 0 8px; background: none; }
+}
+
+/* 세계 시계 HUD — 우상단 관제 시계열 */
+.hud-clocks { position: absolute; z-index: 6; top: 92px; right: clamp(16px, 2.5vw, 34px); display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.hud-clocks .hc { display: inline-flex; align-items: baseline; gap: 10px; padding: 5px 12px; border-radius: 9px; font-size: 12.5px; font-variant-numeric: tabular-nums; letter-spacing: .04em; color: var(--ink-2); background: color-mix(in srgb, var(--bg) 55%, transparent); border: 1px solid rgba(255, 255, 255, .08); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.hud-clocks .hc b { font-size: 10px; font-weight: 700; letter-spacing: .1em; color: var(--muted); }
+.hud-clocks .hc:first-child { border-color: color-mix(in srgb, var(--brand-accent-2) 45%, transparent); color: var(--ink); }
+.hud-clocks .hc:first-child b { color: var(--brand-accent-2); }
+@media (max-width: 1100px) { .hud-clocks { display: none; } }
+
+/* ===== 관제 히어로 = 항상 다크 (테마 무관 — 2026-08-19 light 반쪽 현상 해결) =====
+   지도·카드·독·시계 전부 고정 색. 헤더는 라이트에서 불투명 바로 대비 확보. */
+.hero-ops { background: #0a0f1e; color-scheme: dark; }
+.hero-ops h1 { color: #F2F5FA; }
+.hero-ops .hero-sub { color: rgba(235, 242, 252, .72); }
+.hero-ops .hero-sub b { color: #fff; }
+.hero-ops .hero-note { color: rgba(235, 242, 252, .5); }
+.hero-ops .hud-brief { background: rgba(10, 16, 32, .55); border-color: rgba(255, 255, 255, .09); }
+.hero-ops .live-chip { background: rgba(255, 255, 255, .04); border: 1px solid rgba(255, 255, 255, .09); }
+.hero-ops .live-chip .k { color: rgba(235, 242, 252, .55); }
+.hero-ops .live-chip .v { color: #F2F5FA; }
+.hero-ops .hud-clocks .hc { background: rgba(10, 16, 32, .55); border-color: rgba(255, 255, 255, .08); color: rgba(235, 242, 252, .8); }
+.hero-ops .hud-clocks .hc b { color: rgba(235, 242, 252, .5); }
+.hero-ops .hud-clocks .hc:first-child { border-color: rgba(126, 224, 255, .45); color: #fff; }
+.hero-ops .hud-clocks .hc:first-child b { color: #7ee0ff; }
+.hero-ops .hud-dock { background: linear-gradient(180deg, rgba(10, 15, 30, 0) 0%, rgba(10, 15, 30, .85) 55%); }
+.hero-ops .btn-ghost { color: rgba(235, 242, 252, .85); border-color: rgba(255, 255, 255, .2); }
+/* 라이트 테마: 헤더가 다크 히어로 위에 뜨므로 자체 배경을 갖는다 */
+[data-theme="light"] .hero-page .site-header {
+  background: color-mix(in srgb, var(--bg) 96%, transparent);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
 }

@@ -11,6 +11,7 @@
     initTeuStrip();
     initWxAlert();
     initHeroCanvas();
+    initClocks();
     initCounters();
   });
 
@@ -41,6 +42,30 @@
   }
 
   function t(k, ko) { return (window.TWI18N && window.TWI18N.t) ? window.TWI18N.t(k, ko) : ko; }
+
+  /* ---------- 세계 시계 HUD — 관제탑의 심장박동(1초 갱신) ---------- */
+  function initClocks() {
+    var host = document.getElementById('hudClocks');
+    if (!host) return;
+    var ZONES = [
+      ['BUSAN', 'Asia/Seoul'],
+      ['SHANGHAI', 'Asia/Shanghai'],
+      ['ROTTERDAM', 'Europe/Amsterdam'],
+      ['NEW YORK', 'America/New_York'],
+      ['LOS ANGELES', 'America/Los_Angeles']
+    ];
+    var fmts = ZONES.map(function (z) {
+      return [z[0], new Intl.DateTimeFormat('en-GB', { timeZone: z[1], hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })];
+    });
+    function tick() {
+      var d = new Date();
+      host.innerHTML = fmts.map(function (f) {
+        return '<span class="hc"><b>' + f[0] + '</b>' + f[1].format(d) + '</span>';
+      }).join('');
+    }
+    tick();
+    setInterval(tick, 1000);
+  }
 
   /* ---------- 주간 해상운임지수 스트립 (freight_index 테이블) ---------- */
   var fxItems = null, fxLatest = null;   /* 언어 전환 재렌더용 캐시 */
@@ -259,7 +284,62 @@
     var HUB = { lat: 35.08, lng: 129.05 };
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var running = true;
-    var col = { sea: '#5aa7f0', air: '#8ec5f4', ink: '#9fb4d8', dot: '#dce6f5', dotHi: '#7ee0ff', lane: '#38c6ff', laneAir: '#9be8ff', label: '#e6edf8' };
+    var col = {};
+    /* 테마별 씨 팔레트 — 다크: 지면 네이비 위 은백 육지 + 시안 레인 /
+       라이트: 밝은 지면 위 진한 슬레이트 육지 + 딥블루 레인 (2026-08-19 light 검증) */
+    function setPalette() {
+      /* 관제 히어로는 테마와 무관하게 항상 다크 — 라이트 모드 반쪽 현상 해결(2026-08-19) */
+      col.sea = '#5aa7f0'; col.air = '#8ec5f4'; col.ink = '#9fb4d8';
+      col.dot = '#dce6f5'; col.dotHi = '#7ee0ff'; col.lane = '#38c6ff'; col.laneAir = '#9be8ff';
+      col.label = '#e6edf8'; col.head = '#eaf6ff';
+      col.ocean1 = 'rgba(30, 70, 140, 0.22)'; col.ocean2 = 'rgba(18, 42, 88, 0.10)';
+      col.night = 'rgba(3, 7, 20, 0.34)'; col.term = 'rgba(120, 200, 255, 0.14)';
+    }
+    setPalette();
+    /* 실시간 AIS — 우리가 수신 중인 진짜 선박을 지도에 점으로 준다(60s 갱신) */
+    var aisPts = [];
+    function fetchAis() {
+      var KEY = 'sb_publishable_jo6oBar-JbfKY3IfhPyBbQ_gH1Lvwsv';
+      fetch('https://kvmyiualdodcvreoqfin.supabase.co/rest/v1/vessel_positions' +
+            '?select=mmsi,lat,lng,received_at&order=received_at.desc&limit=400',
+        { headers: { apikey: KEY, Authorization: 'Bearer ' + KEY } })
+        .then(function (r) { return r.json(); })
+        .then(function (rows) {
+          if (!Array.isArray(rows)) return;
+          var cut = Date.now() - 45 * 60000, seen = {}, out = [];
+          rows.forEach(function (v) {
+            if (seen[v.mmsi]) return;
+            if (new Date(v.received_at).getTime() < cut) return;
+            seen[v.mmsi] = 1;
+            out.push([Number(v.lat), Number(v.lng)]);
+          });
+          aisPts = out;
+          /* 신선한 수신이 없으면 칩 자체를 숨긴다 — "실시간"을 거짓말로 만들지 않는다.
+             (AIS 수집기가 재가동되면 자동으로 다시 켜진다) */
+          var el = document.getElementById('lsAis');
+          if (el) {
+            var chip = el.closest ? el.closest('.live-chip') : null;
+            if (out.length) {
+              el.textContent = out.length + '척';
+              if (chip) chip.style.display = '';
+            } else if (chip) chip.style.display = 'none';
+          }
+        }).catch(function () { /* 수신 실패 시 점 생략 */ });
+    }
+    fetchAis();
+    setInterval(fetchAis, 60000);
+
+    /* 낮·밤 터미네이터 — 태양 위치 실시간 계산(근사식).
+       지금 이 순간 지구의 밤 영역이 지도 위에 실제로 드리운다 — 장식이 아니라 사실. */
+    function sunState() {
+      var d = new Date();
+      var start = Date.UTC(d.getUTCFullYear(), 0, 0);
+      var doy = (d.getTime() - start) / 86400000;
+      var decl = -23.44 * Math.cos(2 * Math.PI * (doy + 10) / 365) * Math.PI / 180;
+      var utcH = d.getUTCHours() + d.getUTCMinutes() / 60 + d.getUTCSeconds() / 3600;
+      var subLng = (12 - utcH) * 15;                     /* 태양 직하 경도 */
+      return { decl: decl, subLng: subLng };
+    }
     var mapLayer = null, stars = [], hub = null;
     var mH = 0;   /* 지도 밴드 높이 — 히어로가 아무리 길어도 세계지도는 이 안에만 그린다 */
     var mouse = { tx: 0, ty: 0, x: 0, y: 0 };
@@ -269,11 +349,9 @@
       var cs = getComputedStyle(document.documentElement);
       var probe = document.createElement('canvas').getContext('2d');
       function ok(v) { if (!v) return null; try { probe.fillStyle = '#123456'; probe.fillStyle = v; return probe.fillStyle !== '#123456' || v.indexOf('#') === 0 ? probe.fillStyle : null; } catch (e) { return null; } }
-      col.sea = ok(cs.getPropertyValue('--brand-accent').trim()) || col.sea;
-      col.air = ok(cs.getPropertyValue('--brand-accent-2').trim()) || col.air;
-      col.ink = ok(cs.getPropertyValue('--muted').trim()) || col.ink;
+      /* 씨 팔레트 고정 — 브랜드 토큰 덮어쓰기 안 함(항상 다크 관제 화면) */
     }
-    new MutationObserver(function () { readTokens(); resize(); })
+    new MutationObserver(function () { setPalette(); readTokens(); resize(); })
       .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     readTokens();
 
@@ -359,8 +437,8 @@
       for (var gx = 1; gx <= 5; gx++) { m.beginPath(); m.moveTo(w * gx / 6, 0); m.lineTo(w * gx / 6, h); m.stroke(); }
 
       var og = m.createRadialGradient(w * 0.62, 92 + mH * 0.5, mH * 0.1, w * 0.62, 92 + mH * 0.5, Math.max(w, mH) * 0.75);
-      og.addColorStop(0, 'rgba(30, 70, 140, 0.22)');
-      og.addColorStop(0.55, 'rgba(18, 42, 88, 0.10)');
+      og.addColorStop(0, col.ocean1);
+      og.addColorStop(0.55, col.ocean2);
       og.addColorStop(1, 'rgba(0,0,0,0)');
       m.fillStyle = og; m.globalAlpha = 1; m.fillRect(0, 0, w, h);
 
@@ -472,6 +550,39 @@
       ctx.globalAlpha = 1;
       ctx.drawImage(mapLayer, ox * 0.4, oy * 0.4, w, h);
 
+      /* 밤 영역 — 화면 x 열마다 터미네이터 위도를 구해 어둠 쪽 극으로 닫는다 */
+      var sun = sunState();
+      var yOf = function (lat) { return 92 + ((90 - lat) / 180) * mH * 1.42 - mH * 0.12 + oy * 0.4; };
+      ctx.beginPath();
+      var darkPoleY = yOf(sun.decl > 0 ? -90 : 90);
+      var firstY = null;
+      for (var sx = 0; sx <= w; sx += 10) {
+        var lngX = ((sx / w) * 360 - 30 + 540) % 360 - 180;
+        var H = (lngX - sun.subLng) * Math.PI / 180;
+        var phi = Math.atan(-Math.cos(H) / Math.tan(sun.decl));
+        var ty = yOf(phi * 180 / Math.PI);
+        if (firstY === null) { firstY = ty; ctx.moveTo(sx + ox * 0.4, ty); }
+        else ctx.lineTo(sx + ox * 0.4, ty);
+      }
+      ctx.lineTo(w + ox * 0.4, darkPoleY);
+      ctx.lineTo(ox * 0.4, darkPoleY);
+      ctx.closePath();
+      ctx.fillStyle = col.night; ctx.globalAlpha = 1; ctx.fill();
+      ctx.strokeStyle = col.term; ctx.globalAlpha = 1; ctx.lineWidth = 1; ctx.stroke();
+
+      /* 실시간 AIS 선박 점 — 진짜 배들 */
+      for (var ai = 0; ai < aisPts.length; ai++) {
+        var ap = project(aisPts[ai][0], aisPts[ai][1], w);
+        var axp = ap.x + ox, ayp = ap.y + oy;
+        if (axp < 0 || axp > w || ayp < 0 || ayp > h) continue;
+        ctx.beginPath();
+        ctx.arc(axp, ayp, 1.7, 0, Math.PI * 2);
+        ctx.fillStyle = col.head;
+        ctx.globalAlpha = 0.9;
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
       var hx = hub.x + ox, hy = hub.y + oy;
       routes.forEach(function (r) {
         var ax = r.a.x + ox, ay = r.a.y + oy, bx = r.b.x + ox, by = r.b.y + oy;
@@ -514,7 +625,7 @@
         ctx.shadowBlur = 12;
         ctx.beginPath();
         ctx.arc(hp.x, hp.y, r.type === 'air' ? 2.2 : 2.8, 0, Math.PI * 2);
-        ctx.fillStyle = '#eaf6ff';
+        ctx.fillStyle = col.head;
         ctx.globalAlpha = 1;
         ctx.fill();
         ctx.restore();
