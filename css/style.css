@@ -1827,14 +1827,14 @@ table.trk-tbl td .na { color: var(--muted); }
 .hero-ops .hero-ctas { justify-content: flex-start; }
 .hero-shade {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;
-  /* 좌측 커튼도 중앙 기둥도 아님 — 글자 뒤 국소 타원 비네트만. 지도는 사방으로 연속 */
-  background:
-    radial-gradient(ellipse 720px 520px at calc(50% - 268px) 46%, rgba(6, 10, 22, .88) 0%, rgba(6, 10, 22, .56) 54%, rgba(6, 10, 22, 0) 78%),
-    linear-gradient(180deg, rgba(6, 10, 22, .55) 0%, transparent 20%);
+  /* 면(面) 스크림 전면 금지 — 타원 비네트도 사각 티가 나서 반려(2026-08-19).
+     상단 헤더 페이드만 남기고 글자 가독은 텍스트 섀도가 담당 */
+  background: linear-gradient(180deg, rgba(6, 10, 22, .55) 0%, transparent 20%);
 }
-/* 비네트 밖 글자 가독 보강 — 지도 위에 뜨는 타이포는 그림자가 받쳐준다 */
-.hero-ops h1 { text-shadow: 0 2px 22px rgba(4, 8, 20, .9), 0 0 52px rgba(4, 8, 20, .55); }
-.hero-ops .hero-sub, .hero-ops .hero-note { text-shadow: 0 1px 14px rgba(4, 8, 20, .85); }
+/* 면 스크림 없이 글자 가독은 전적으로 그림자 몫 — 겹겹이 깊게 */
+.hero-ops h1 { text-shadow: 0 1px 3px rgba(4, 8, 20, .95), 0 2px 22px rgba(4, 8, 20, .9), 0 0 60px rgba(4, 8, 20, .7); }
+.hero-ops .hero-sub, .hero-ops .hero-note { text-shadow: 0 1px 2px rgba(4, 8, 20, .95), 0 1px 16px rgba(4, 8, 20, .85); }
+.hero-ops .hero-eyebrow { text-shadow: 0 1px 10px rgba(4, 8, 20, .9); }
 [data-theme="light"] .hero-ops h1 { text-shadow: 0 2px 22px rgba(243, 246, 251, .95), 0 0 52px rgba(243, 246, 251, .7); }
 [data-theme="light"] .hero-ops .hero-sub, [data-theme="light"] .hero-ops .hero-note { text-shadow: 0 1px 14px rgba(243, 246, 251, .9); }
 /* 좌측 칼럼 타이포 — 줄은 고르게(balance) */
@@ -1936,9 +1936,7 @@ table.trk-tbl td .na { color: var(--muted); }
 [data-theme="light"] .hero-ops .hero-note { color: var(--muted); }
 [data-theme="light"] .hero-ops .hero-eyebrow { color: #1d6fe0; }
 [data-theme="light"] .hero-shade {
-  background:
-    radial-gradient(ellipse 720px 520px at calc(50% - 268px) 46%, rgba(243, 246, 251, .93) 0%, rgba(243, 246, 251, .6) 54%, rgba(243, 246, 251, 0) 78%),
-    linear-gradient(180deg, rgba(243, 246, 251, .55) 0%, transparent 20%);
+  background: linear-gradient(180deg, rgba(243, 246, 251, .55) 0%, transparent 20%);
 }
 [data-theme="light"] .hero-ops .live-chip { background: rgba(255, 255, 255, .66); border-color: rgba(18, 45, 90, .12); box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 14px 34px rgba(30, 60, 120, .10); }
 [data-theme="light"] .hero-ops .live-chip .k { color: var(--muted); }
