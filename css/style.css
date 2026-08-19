@@ -1825,11 +1825,11 @@ table.trk-tbl td .na { color: var(--muted); }
 .hero-shade {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;
   background:
-    linear-gradient(90deg, rgba(6, 10, 22, .94) 0%, rgba(6, 10, 22, .82) 26%, rgba(6, 10, 22, .45) 46%, transparent 64%),
+    linear-gradient(90deg, rgba(6, 10, 22, .96) 0%, rgba(6, 10, 22, .90) 30%, rgba(6, 10, 22, .62) 48%, rgba(6, 10, 22, .22) 62%, transparent 74%),
     linear-gradient(180deg, rgba(6, 10, 22, .5) 0%, transparent 18%);
 }
 .hero-ops h1 { font-size: clamp(38px, 3vw, 58px); margin: 12px 0 16px; }
-.hero-ops .hero-sub { font-size: 15.5px; margin-bottom: 20px; max-width: 560px; }
+.hero-ops .hero-sub { font-size: 15px; margin-bottom: 20px; max-width: 500px; line-height: 1.7; }
 .hero-ops .hero-note { margin-top: 14px; font-size: 12px; }
 .hud-dock {
   position: absolute; z-index: 6; left: 0; right: 0; bottom: 0;
@@ -1890,3 +1890,22 @@ table.trk-tbl td .na { color: var(--muted); }
 
 .hero-ops .hero-eyebrow { color: #cfe0f5; }
 .hero-ops .hero-eyebrow, .hero-ops .hero-eyebrow * { border-color: rgba(255, 255, 255, .16); }
+
+/* 히어로 밖 지표 스트립 — 테마 토큰으로(다크 전용 글래스 금지).
+   라이트 index 에서 검은 박스로 떠서 어색하던 문제(2026-08-19 사용자 지적) 해결 */
+#stats .live-strip .live-chip {
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+#stats .live-strip .live-chip .k { color: var(--muted); }
+#stats .live-strip .live-chip .v { color: var(--ink); }
+#stats .live-strip .live-chip .v small { color: var(--muted) !important; }
+#stats .live-strip { background: transparent; border: 0; box-shadow: none; padding: 0; }
+/* 다크 전용 그라데이션 텍스트 해제 — 라이트에서 숫자가 씻겨 보이던 진범 */
+#stats .live-strip .live-chip .v {
+  background: none;
+  -webkit-background-clip: initial; background-clip: initial;
+  -webkit-text-fill-color: var(--ink);
+  color: var(--ink);
+}
