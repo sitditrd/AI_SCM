@@ -241,40 +241,55 @@
     els.forEach(function (el) { io.observe(el); });
   }
 
-  /* ---------- 히어로 v3 — "부산 야간 관제 정지화면" (2026-08-19, 6각도 실측 리서치 기반) ----------
-     설계 근거: Windward(런타임 애니메이션 0, 정적 합성) · 씨벤티지(단일 네이비 톤·1회 등장) ·
-     Portcast(대형 아크 2개, 점선) · 토스/삼성SDS(타이포 절제·1회성 블러 등장) 실측.
-     원칙: 지도는 완전 정지 비트맵. 항로는 로드 시 4개가 딱 한 번 그려진 뒤 rAF 를 영구 중단.
-     스포크(한 점에서 3개 이상 방사) 금지 — 기점·종점 분산. 레이더·별·패럴랙스·트윙클 없음.
-     상시 루프는 CSS 소나 핑 2개뿐(js 는 좌표만 계산). 모바일(≤768px)은 캔버스 자체를 안 만든다. */
+  /* ---------- 히어로 — 글로벌 관제 씬 v2 (2026-08-19 전면 재작성) ----------
+     ① 도트 매트릭스 세계지도: 러프 대륙 폴리곤을 격자 레이캐스팅으로 점묘.
+        아시아 중심 투영(경도 +30° 회전, 대서양이 이음새)이라 부산이 화면 중심부.
+     ② 부산 허브: 레이더 스윕(createConicGradient) + 동심원 + 맥동 + BUSAN 라벨.
+     ③ 항로: 해상 12·항공 2 — 글로우 혜성 궤적, 진행방향 회전 글리프, 도착 펄스.
+     ④ 마우스 패럴랙스(지도 0.4×, 항로 1×)로 깊이감. 배경 성점(별) 트윙클.
+     성능: 지도는 리사이즈 때 1회 오프스크린 렌더 → 매 프레임 drawImage 1회.
+     reduced-motion: 정적 1프레임(스윕·트윙클·패럴랙스 없음). 화면 밖이면 rAF 정지. */
   function initHeroCanvas() {
     var canvas = document.getElementById('heroCanvas');
-    if (!canvas) return;
-    if (window.matchMedia('(max-width: 768px)').matches) { canvas.remove(); return; }
+    if (!canvas || !window.TWDATA) return;
 
     var ctx = canvas.getContext('2d');
+    var routes = [];
+    var ports = window.TWDATA.getState(0).ports;
+    var HUB = { lat: 35.08, lng: 129.05 };
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var col = { dot: '#ffffff', arc: '#5aa7f0' };
+    var running = true;
+    var col = { sea: '#5aa7f0', air: '#8ec5f4', ink: '#9fb4d8' };
+    var mapLayer = null, stars = [], hub = null;
+    var mH = 0;   /* 지도 밴드 높이 — 히어로가 아무리 길어도 세계지도는 이 안에만 그린다 */
+    var mouse = { tx: 0, ty: 0, x: 0, y: 0 };
 
+    /* CSS 토큰 → 캔버스 색 (color-mix 등 못 읽는 값이면 폴백 유지) */
     function readTokens() {
       var cs = getComputedStyle(document.documentElement);
       var probe = document.createElement('canvas').getContext('2d');
       function ok(v) { if (!v) return null; try { probe.fillStyle = '#123456'; probe.fillStyle = v; return probe.fillStyle !== '#123456' || v.indexOf('#') === 0 ? probe.fillStyle : null; } catch (e) { return null; } }
-      col.arc = ok(cs.getPropertyValue('--brand-accent-2').trim()) || col.arc;
+      col.sea = ok(cs.getPropertyValue('--brand-accent').trim()) || col.sea;
+      col.air = ok(cs.getPropertyValue('--brand-accent-2').trim()) || col.air;
+      col.ink = ok(cs.getPropertyValue('--muted').trim()) || col.ink;
     }
-    readTokens();
-    new MutationObserver(function () { readTokens(); rebuild(true); })
+    new MutationObserver(function () { readTokens(); resize(); })
       .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    readTokens();
 
+    /* 색 문자열(hex/rgb) → rgba(...,a) — 글로우·그라데이션용 */
     function rgba(c, a) {
       var m = /^#([0-9a-f]{6})/i.exec(c);
-      if (m) { var n = parseInt(m[1], 16); return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')'; }
+      if (m) {
+        var n = parseInt(m[1], 16);
+        return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')';
+      }
       m = /rgba?\(([\d.]+)[, ]+([\d.]+)[, ]+([\d.]+)/.exec(c);
       if (m) return 'rgba(' + m[1] + ',' + m[2] + ',' + m[3] + ',' + a + ')';
       return c;
     }
 
-    /* 러프 대륙 폴리곤 [lat,lng,...] — ASCII 렌더로 실루엣 검증 완료 */
+    /* ── 러프 대륙 폴리곤 [lat,lng,...] — 도트 해상도(2.6°)에서 실루엣이 읽히는 수준 ── */
     var LAND = [
       [71,-160, 72,-140, 69,-122, 73,-95, 68,-82, 62,-64, 47,-53, 45,-65, 40,-74, 32,-80, 25,-80, 29,-90, 21,-97, 16,-95, 15,-92, 20,-105, 26,-112, 32,-117, 38,-123, 46,-124, 55,-131, 59,-140, 60,-150, 64,-166],
       [11,-72, 8,-60, 4,-51, -3,-40, -8,-35, -15,-39, -23,-41, -30,-50, -38,-58, -47,-66, -54,-69, -52,-74, -38,-73, -20,-70, -5,-81, 2,-80, 9,-77],
@@ -300,163 +315,231 @@
       return inside;
     }
 
-    /* 항로 4개 — 기점·종점 분산(같은 기점 최대 2개). 좌표는 실제 항만. */
-    var BUSAN = { lat: 35.08, lng: 129.05 };
-    var ARCS_DEF = [
-      { a: BUSAN, b: { lat: 33.73, lng: -118.26 }, lift: 0.10 },  /* 부산 → LA */
-      { a: { lat: 31.23, lng: 121.49 }, b: { lat: 51.95, lng: 4.14 }, lift: 0.15 },  /* 상하이 → 로테르담 */
-      { a: { lat: 1.26, lng: 103.84 }, b: { lat: 53.54, lng: 9.98 }, lift: 0.13 },   /* 싱가포르 → 함부르크 */
-      { a: BUSAN, b: { lat: 35.62, lng: 139.78 }, lift: 0.07 }    /* 부산 → 도쿄 */
-    ];
-
-    /* 아시아 중심 투영(경도 +30° 회전, 이음새=대서양) — 지도 밴드 내부 좌표 */
-    var W = 0, H = 0, mW = 0, mH = 0, offX = 0, offY = 0;
-    function P(lat, lng) {
+    /* 아시아 중심 투영 — 경도 +30° 회전(이음새=대서양), 부산이 화면 44% 지점 */
+    function project(lat, lng, w) {
       var fx = ((((lng + 30) % 360) + 360) % 360) / 360;
-      return { x: offX + fx * mW, y: offY + ((90 - lat) / 180) * mH * 1.42 - mH * 0.12 };
+      return { x: fx * w, y: ((90 - lat) / 180) * mH * 1.42 - mH * 0.12 };
     }
 
-    var staticLayer = null, arcs = [], t0 = null, done = false, rafId = null;
-
-    function layout() {
+    function resize() {
       var r = canvas.parentElement.getBoundingClientRect();
-      if (r.width < 10 || r.height < 10) return false;
-      W = r.width; H = r.height;
+      if (r.width < 10 || r.height < 10) return;
       var dpr = Math.min(2, window.devicePixelRatio || 1);
-      canvas.width = W * dpr; canvas.height = H * dpr;
+      canvas.width = r.width * dpr;
+      canvas.height = r.height * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      /* 지도는 우측으로 잠기게 — 좌측 30%부터 시작해 우측 뷰포트 밖까지 블리드 */
-      mW = W * 0.88; offX = W * 0.30;
-      mH = Math.min(H * 0.92, mW * 0.40); offY = H * 0.04;
-      return true;
+      /* 세계지도는 상단 밴드에만 — 히어로가 KPI 스트립으로 길어져도 지도가 늘어나지 않는다 */
+      mH = Math.min(r.height, Math.max(420, r.width * 0.5));
+      buildMap(r.width, r.height, dpr);
+      buildRoutes(r.width);
+      drawFrame(performance.now());
     }
-
-    function buildStatic() {
-      var dpr = Math.min(2, window.devicePixelRatio || 1);
-      staticLayer = document.createElement('canvas');
-      staticLayer.width = W * dpr; staticLayer.height = H * dpr;
-      var m = staticLayer.getContext('2d');
-      m.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-      /* 점묘 세계지도 — 2.0° 그리드, 흰 도트, 좌측 텍스트 존은 알파 페이드로 보호 */
-      var dotR = Math.max(1.0, mW / 1250);
-      var fadeA = W * 0.30, fadeB = W * 0.42;        /* 이 구간에서 0→1 페이드 인 */
-      var busan = P(BUSAN.lat, BUSAN.lng);
-      for (var lat = 74; lat >= -56; lat -= 2.0) {
-        for (var lng = -180; lng < 180; lng += 2.0) {
-          var land = false;
-          for (var p = 0; p < LAND.length && !land; p++) land = pip(lat, lng, LAND[p]);
-          if (!land) continue;
-          var pt = P(lat, lng);
-          if (pt.x < fadeA - 6 || pt.x > W + 8 || pt.y < -6 || pt.y > H) continue;
-          var edge = Math.max(0, Math.min(1, (pt.x - fadeA) / (fadeB - fadeA)));
-          if (edge <= 0.02) continue;
-          var dB = Math.sqrt((pt.x - busan.x) * (pt.x - busan.x) + (pt.y - busan.y) * (pt.y - busan.y));
-          var a = (dB < 60 ? 0.38 : 0.20) * edge;
-          m.beginPath();
-          m.arc(pt.x, pt.y, dotR, 0, Math.PI * 2);
-          m.fillStyle = col.dot;
-          m.globalAlpha = a;
-          m.fill();
-        }
-      }
-      m.globalAlpha = 1;
-    }
-
-    function buildArcs() {
-      arcs = ARCS_DEF.map(function (d, i) {
-        var a = P(d.a.lat, d.a.lng), b = P(d.b.lat, d.b.lng);
-        var span = Math.abs(a.x - b.x);
-        var mid = { x: (a.x + b.x) / 2, y: Math.min(a.y, b.y) - span * d.lift - 18 };
-        /* 대략적 길이(세그먼트 20개 합) — 드로우 진행 dash 계산용 */
-        var len = 0, prev = a;
-        for (var s = 1; s <= 20; s++) {
-          var t = s / 20, mt = 1 - t;
-          var q = { x: mt * mt * a.x + 2 * mt * t * mid.x + t * t * b.x,
-                    y: mt * mt * a.y + 2 * mt * t * mid.y + t * t * b.y };
-          len += Math.sqrt((q.x - prev.x) * (q.x - prev.x) + (q.y - prev.y) * (q.y - prev.y));
-          prev = q;
-        }
-        return { a: a, b: b, mid: mid, len: len, delay: (i % 2) * 0.35 + Math.floor(i / 2) * 0.7 };
-      });
-    }
-
-    function drawArc(r, prog) {
-      var g = ctx.createLinearGradient(r.a.x, r.a.y, r.b.x, r.b.y);
-      g.addColorStop(0, rgba(col.arc, 0));
-      g.addColorStop(0.06, rgba(col.arc, 0.5));
-      g.addColorStop(0.94, rgba(col.arc, 0.5));
-      g.addColorStop(1, rgba(col.arc, 0));
-      ctx.beginPath();
-      ctx.moveTo(r.a.x, r.a.y);
-      ctx.quadraticCurveTo(r.mid.x, r.mid.y, r.b.x, r.b.y);
-      ctx.strokeStyle = g;
-      ctx.lineWidth = 1.2;
-      ctx.setLineDash([r.len * prog, 99999]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      if (prog >= 1) {          /* 종점 소형 도트 — 정적 마감 */
-        ctx.beginPath(); ctx.arc(r.b.x, r.b.y, 1.8, 0, Math.PI * 2);
-        ctx.fillStyle = rgba(col.arc, 0.55); ctx.fill();
-      }
-    }
-
-    function ease(t) { return 1 - Math.pow(1 - t, 3); }
-
-    function render(now) {
-      ctx.clearRect(0, 0, W, H);
-      ctx.drawImage(staticLayer, 0, 0, W, H);
-      var all = true;
-      for (var i = 0; i < arcs.length; i++) {
-        var r = arcs[i];
-        var p = done ? 1 : Math.max(0, Math.min(1, ((now - t0) / 1000 - r.delay) / 1.6));
-        if (p < 1) all = false;
-        if (p > 0) drawArc(r, done ? 1 : ease(p));
-      }
-      if (all) { done = true; return; }         /* 드로우 완료 → rAF 영구 중단(정지화면) */
-      rafId = requestAnimationFrame(render);
-    }
-
-    /* 소나 핑 — CSS 애니메이션 스팬의 좌표만 계산해 배치(부산 + LA) */
-    function placePings() {
-      var box = document.getElementById('heroPings');
-      if (!box) return;
-      box.innerHTML = '';
-      [BUSAN, { lat: 33.73, lng: -118.26 }].forEach(function (c, i) {
-        var pt = P(c.lat, c.lng);
-        if (pt.x < W * 0.34 || pt.x > W - 8) return;
-        var s = document.createElement('span');
-        s.style.left = pt.x + 'px';
-        s.style.top = pt.y + 'px';
-        if (i) s.style.animationDelay = '3.5s';
-        box.appendChild(s);
-      });
-    }
-
-    function rebuild(replayArcs) {
-      if (!layout()) return;
-      buildStatic();
-      buildArcs();
-      placePings();
-      if (rafId) cancelAnimationFrame(rafId);
-      if (reduced || (done && !replayArcs)) { done = true; render(0); return; }
-      done = false; t0 = performance.now();
-      render(t0);
-    }
-
-    /* KPI 스트립 비동기 로드로 히어로 높이가 변한다 — 비트맵 재구성(재드로우 애니메이션은 안 함) */
+    /* KPI/운임/물동량 스트립이 비동기 로드되며 히어로 높이가 변한다 —
+       비트맵을 안 맞추면 CSS 가 세로로 잡아늘려 지도가 노이즈처럼 깨진다(실측 버그). */
     var lastW = 0, lastH = 0, roT = null;
     function sizeChanged() {
       var r = canvas.parentElement.getBoundingClientRect();
       if (Math.abs(r.width - lastW) < 4 && Math.abs(r.height - lastH) < 4) return;
-      var first = lastW === 0;
       lastW = r.width; lastH = r.height;
-      clearTimeout(roT);
-      roT = setTimeout(function () { rebuild(first); }, 120);
+      clearTimeout(roT); roT = setTimeout(resize, 120);
     }
     if (window.ResizeObserver) new ResizeObserver(sizeChanged).observe(canvas.parentElement);
-    window.addEventListener('resize', function () { clearTimeout(roT); roT = setTimeout(function () { rebuild(false); }, 120); });
-    sizeChanged();
+
+    /* 지도 레이어 — 리사이즈 때 1회만 점묘 */
+    function buildMap(w, h, dpr) {
+      mapLayer = document.createElement('canvas');
+      mapLayer.width = w * dpr; mapLayer.height = h * dpr;
+      var m = mapLayer.getContext('2d');
+      m.setTransform(dpr, 0, 0, dpr, 0, 0);
+      hub = project(HUB.lat, HUB.lng, w);
+
+      /* 경위선 — 관제 그리드 */
+      m.strokeStyle = col.ink; m.lineWidth = 1; m.globalAlpha = 0.05;
+      for (var gy = 1; gy <= 3; gy++) { m.beginPath(); m.moveTo(0, h * gy / 4); m.lineTo(w, h * gy / 4); m.stroke(); }
+      for (var gx = 1; gx <= 5; gx++) { m.beginPath(); m.moveTo(w * gx / 6, 0); m.lineTo(w * gx / 6, h); m.stroke(); }
+
+      /* 대륙 도트 — 러프 폴리곤 레이캐스팅 */
+      var dotR = Math.max(1.3, w / 780);
+      for (var lat = 74; lat >= -56; lat -= 2.6) {
+        for (var lng = -180; lng < 180; lng += 2.6) {
+          var land = false;
+          for (var p = 0; p < LAND.length && !land; p++) land = pip(lat, lng, LAND[p]);
+          if (!land) continue;
+          var pt = project(lat, lng, w);
+          var dHub = Math.sqrt((pt.x - hub.x) * (pt.x - hub.x) + (pt.y - hub.y) * (pt.y - hub.y));
+          m.beginPath();
+          m.arc(pt.x, pt.y, dotR, 0, Math.PI * 2);
+          m.fillStyle = col.sea;
+          m.globalAlpha = dHub < 70 ? 0.5 : 0.28;      /* 한반도 주변은 살짝 밝게 */
+          m.fill();
+        }
+      }
+      m.globalAlpha = 1;
+
+      /* 배경 성점 — 얕은 깊이감 */
+      stars = [];
+      for (var s = 0; s < 70; s++) {
+        stars.push({ x: Math.random() * w, y: Math.random() * h, r: Math.random() * 1.1 + 0.4, ph: Math.random() * 6.28 });
+      }
+    }
+
+    /* 항로 — 전 세계 주요 무역 레인 쌍(기점·종점 분산, 같은 기점 최대 2개).
+       "부산에서 방사형으로 퍼지는" 구도는 2026-08-19 사용자 반려 — 스포크 금지. */
+    var LANES_SEA = [
+      [35.08, 129.05, 33.73, -118.26],
+      [35.08, 129.05, 35.62, 139.78],
+      [31.23, 121.49, 51.95, 4.14],
+      [1.26, 103.84, 53.54, 9.98],
+      [22.31, 113.92, -33.85, 151.2],
+      [40.67, -74.02, 49.49, 0.11],
+      [-23.96, -46.31, 40.67, -74.02],
+      [34.05, -118.2, 35.45, 139.66],
+      [18.94, 72.84, 1.26, 103.84],
+      [51.95, 4.14, 36.14, -5.44]
+    ];
+    var LANES_AIR = [
+      [37.46, 126.44, 50.03, 8.56],
+      [37.46, 126.44, 33.94, -118.4]
+    ];
+    function buildRoutes(w) {
+      routes = [];
+      LANES_SEA.forEach(function (L, i) {
+        var a = project(L[0], L[1], w), b = project(L[2], L[3], w);
+        var rise = Math.abs(a.x - b.x) * 0.14 + 22;
+        routes.push({
+          type: 'sea', a: a, b: b,
+          mid: { x: (a.x + b.x) / 2, y: Math.min(a.y, b.y) - rise },
+          t: (i * 0.13) % 1, speed: 0.0011 + (i % 5) * 0.00035, pulse: 0
+        });
+      });
+      LANES_AIR.forEach(function (L, k) {
+        var a = project(L[0], L[1], w), b = project(L[2], L[3], w);
+        routes.push({
+          type: 'air', a: a, b: b,
+          mid: { x: (a.x + b.x) / 2, y: Math.min(a.y, b.y) - Math.abs(a.x - b.x) * 0.30 - 42 },
+          t: 0.5 * k, speed: 0.0042, pulse: 0
+        });
+      });
+    }
+    function bez(p0, p1, p2, t) {
+      var mt = 1 - t;
+      return { x: mt * mt * p0.x + 2 * mt * t * p1.x + t * t * p2.x,
+               y: mt * mt * p0.y + 2 * mt * t * p1.y + t * t * p2.y };
+    }
+
+    function drawFrame(now) {
+      var w = canvas.parentElement.clientWidth, h = canvas.parentElement.clientHeight;
+      ctx.clearRect(0, 0, w, h);
+      if (!mapLayer || !hub) return;
+
+      /* 패럴랙스 감쇠 추적 */
+      if (!reduced) { mouse.x += (mouse.tx - mouse.x) * 0.06; mouse.y += (mouse.ty - mouse.y) * 0.06; }
+      var ox = mouse.x, oy = mouse.y;
+
+      /* 성점 트윙클 */
+      for (var s = 0; s < stars.length; s++) {
+        var st = stars[s];
+        ctx.beginPath();
+        ctx.arc(st.x + ox * 0.2, st.y + oy * 0.2, st.r, 0, Math.PI * 2);
+        ctx.fillStyle = col.ink;
+        ctx.globalAlpha = reduced ? 0.18 : 0.10 + 0.14 * (Math.sin(now / 900 + st.ph) + 1) / 2;
+        ctx.fill();
+      }
+
+      /* 지도 레이어 (0.4× 패럴랙스) */
+      ctx.globalAlpha = 1;
+      ctx.drawImage(mapLayer, ox * 0.4, oy * 0.4, w, h);
+
+      var hx = hub.x + ox, hy = hub.y + oy;
+      routes.forEach(function (r) {
+        var ax = r.a.x + ox, ay = r.a.y + oy, bx = r.b.x + ox, by = r.b.y + oy;
+        var mx = r.mid.x + ox, my = r.mid.y + oy;
+        /* 항로 베이스 */
+        ctx.beginPath(); ctx.moveTo(ax, ay); ctx.quadraticCurveTo(mx, my, bx, by);
+        ctx.strokeStyle = r.type === 'air' ? col.air : col.sea;
+        ctx.globalAlpha = r.type === 'air' ? 0.14 : 0.22;
+        ctx.setLineDash(r.type === 'air' ? [3, 8] : []);
+        ctx.lineWidth = 1.3; ctx.stroke(); ctx.setLineDash([]);
+
+        if (!reduced) { r.t += r.speed; if (r.t > 1) { r.t = 0; r.pulse = 1; } }
+
+        /* 혜성 궤적 */
+        var A = { x: ax, y: ay }, M = { x: mx, y: my }, B = { x: bx, y: by };
+        var TR = r.type === 'air' ? 10 : 18;
+        for (var i = 1; i <= TR; i++) {
+          var tt = r.t - i * (r.type === 'air' ? 0.011 : 0.0068);
+          if (tt < 0) break;
+          var tp = bez(A, M, B, tt);
+          ctx.beginPath();
+          ctx.arc(tp.x, tp.y, Math.max(0.7, 2.6 - i * 0.13), 0, Math.PI * 2);
+          ctx.fillStyle = r.type === 'air' ? col.air : col.sea;
+          ctx.globalAlpha = 0.6 * (1 - i / TR);
+          ctx.fill();
+        }
+
+        /* 선수/기수 글리프 — 글로우 */
+        var p = bez(A, M, B, r.t);
+        var p2 = bez(A, M, B, Math.min(1, r.t + 0.012));
+        var ang = Math.atan2(p2.y - p.y, p2.x - p.x);
+        ctx.save();
+        ctx.translate(p.x, p.y); ctx.rotate(ang);
+        ctx.shadowColor = rgba(r.type === 'air' ? col.air : col.sea, 0.9);
+        ctx.shadowBlur = 9;
+        ctx.fillStyle = r.type === 'air' ? col.air : col.sea;
+        ctx.globalAlpha = 1;
+        ctx.beginPath();
+        if (r.type === 'air') { ctx.moveTo(6.5, 0); ctx.lineTo(-4, 3.4); ctx.lineTo(-1.8, 0); ctx.lineTo(-4, -3.4); }
+        else { ctx.moveTo(6, 0); ctx.lineTo(-4.5, 3.2); ctx.lineTo(-4.5, -3.2); }
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+
+        /* 도착 펄스 링 */
+        if (r.pulse > 0.04) {
+          if (!reduced) r.pulse *= 0.955;
+          ctx.beginPath();
+          ctx.arc(bx, by, 3 + (1 - r.pulse) * 17, 0, Math.PI * 2);
+          ctx.strokeStyle = r.type === 'air' ? col.air : col.sea;
+          ctx.globalAlpha = r.pulse * 0.55; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+        /* 목적항 노드 */
+        ctx.beginPath(); ctx.arc(bx, by, 2, 0, Math.PI * 2);
+        ctx.fillStyle = col.sea; ctx.globalAlpha = 0.6; ctx.fill();
+      });
+
+      /* 부산 허브 — 맥동 + 코어 + 라벨 */
+      var beat = reduced ? 0.5 : (Math.sin(now / 650) + 1) / 2;
+      ctx.beginPath(); ctx.arc(hx, hy, 7 + beat * 9, 0, Math.PI * 2);
+      ctx.strokeStyle = col.air; ctx.globalAlpha = 0.30 * (1 - beat * 0.6); ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.save();
+      ctx.shadowColor = rgba(col.air, 0.9); ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.arc(hx, hy, 3.8, 0, Math.PI * 2);
+      ctx.fillStyle = col.air; ctx.globalAlpha = 1; ctx.fill();
+      ctx.restore();
+      ctx.font = '700 10px Pretendard Variable, sans-serif';
+      ctx.fillStyle = col.ink; ctx.globalAlpha = 0.9;
+      ctx.fillText('BUSAN', hx + 11, hy + 3.5);
+      ctx.globalAlpha = 1;
+    }
+
+    function loop(now) {
+      if (running) drawFrame(now);
+      if (!reduced) requestAnimationFrame(loop);
+    }
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (ents) { running = ents[0].isIntersecting; }, { threshold: 0 })
+        .observe(canvas.parentElement);
+    }
+    if (!reduced) {
+      canvas.parentElement.addEventListener('mousemove', function (e) {
+        var r = canvas.parentElement.getBoundingClientRect();
+        mouse.tx = ((e.clientX - r.left) / r.width - 0.5) * 16;
+        mouse.ty = ((e.clientY - r.top) / r.height - 0.5) * 10;
+      });
+      canvas.parentElement.addEventListener('mouseleave', function () { mouse.tx = 0; mouse.ty = 0; });
+    }
+    window.addEventListener('resize', resize);
+    resize();
+    if (!reduced) requestAnimationFrame(loop);
   }
 
 })();
