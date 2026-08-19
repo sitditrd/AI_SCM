@@ -261,6 +261,7 @@
     var running = true;
     var col = { sea: '#5aa7f0', air: '#8ec5f4', ink: '#9fb4d8' };
     var mapLayer = null, stars = [], hub = null;
+    var mH = 0;   /* 지도 밴드 높이 — 히어로가 아무리 길어도 세계지도는 이 안에만 그린다 */
     var mouse = { tx: 0, ty: 0, x: 0, y: 0 };
 
     /* CSS 토큰 → 캔버스 색 (color-mix 등 못 읽는 값이면 폴백 유지) */
@@ -315,21 +316,34 @@
     }
 
     /* 아시아 중심 투영 — 경도 +30° 회전(이음새=대서양), 부산이 화면 44% 지점 */
-    function project(lat, lng, w, h) {
+    function project(lat, lng, w) {
       var fx = ((((lng + 30) % 360) + 360) % 360) / 360;
-      return { x: fx * w, y: ((90 - lat) / 180) * h * 1.42 - h * 0.12 };
+      return { x: fx * w, y: ((90 - lat) / 180) * mH * 1.42 - mH * 0.12 };
     }
 
     function resize() {
       var r = canvas.parentElement.getBoundingClientRect();
-      var dpr = window.devicePixelRatio || 1;
+      if (r.width < 10 || r.height < 10) return;
+      var dpr = Math.min(2, window.devicePixelRatio || 1);
       canvas.width = r.width * dpr;
       canvas.height = r.height * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      /* 세계지도는 상단 밴드에만 — 히어로가 KPI 스트립으로 길어져도 지도가 늘어나지 않는다 */
+      mH = Math.min(r.height, Math.max(420, r.width * 0.5));
       buildMap(r.width, r.height, dpr);
-      buildRoutes(r.width, r.height);
+      buildRoutes(r.width);
       drawFrame(performance.now());
     }
+    /* KPI/운임/물동량 스트립이 비동기 로드되며 히어로 높이가 변한다 —
+       비트맵을 안 맞추면 CSS 가 세로로 잡아늘려 지도가 노이즈처럼 깨진다(실측 버그). */
+    var lastW = 0, lastH = 0, roT = null;
+    function sizeChanged() {
+      var r = canvas.parentElement.getBoundingClientRect();
+      if (Math.abs(r.width - lastW) < 4 && Math.abs(r.height - lastH) < 4) return;
+      lastW = r.width; lastH = r.height;
+      clearTimeout(roT); roT = setTimeout(resize, 120);
+    }
+    if (window.ResizeObserver) new ResizeObserver(sizeChanged).observe(canvas.parentElement);
 
     /* 지도 레이어 — 리사이즈 때 1회만 점묘 */
     function buildMap(w, h, dpr) {
@@ -337,7 +351,7 @@
       mapLayer.width = w * dpr; mapLayer.height = h * dpr;
       var m = mapLayer.getContext('2d');
       m.setTransform(dpr, 0, 0, dpr, 0, 0);
-      hub = project(HUB.lat, HUB.lng, w, h);
+      hub = project(HUB.lat, HUB.lng, w);
 
       /* 경위선 — 관제 그리드 */
       m.strokeStyle = col.ink; m.lineWidth = 1; m.globalAlpha = 0.05;
@@ -351,7 +365,7 @@
           var land = false;
           for (var p = 0; p < LAND.length && !land; p++) land = pip(lat, lng, LAND[p]);
           if (!land) continue;
-          var pt = project(lat, lng, w, h);
+          var pt = project(lat, lng, w);
           var dHub = Math.sqrt((pt.x - hub.x) * (pt.x - hub.x) + (pt.y - hub.y) * (pt.y - hub.y));
           m.beginPath();
           m.arc(pt.x, pt.y, dotR, 0, Math.PI * 2);
@@ -369,14 +383,14 @@
       }
     }
 
-    function buildRoutes(w, h) {
+    function buildRoutes(w) {
       routes = [];
       var majors = ports.filter(function (p) { return p.berthed > 22 && Math.abs(p.lng - HUB.lng) > 6; })
         .sort(function (a, b) { return Math.abs(b.lng - HUB.lng) - Math.abs(a.lng - HUB.lng); });
       var seaN = Math.min(14, majors.length);
       for (var i = 0; i < seaN; i++) {
         var p = majors[(i * 5 + 2) % majors.length];
-        var pb = project(p.lat, p.lng, w, h);
+        var pb = project(p.lat, p.lng, w);
         var rise = Math.abs(hub.x - pb.x) * 0.16 + 26;
         routes.push({
           type: 'sea', a: hub, b: pb,
@@ -385,7 +399,7 @@
         });
       }
       for (var k = 0; k < 2 && k < majors.length; k++) {
-        var q = majors[k], qb = project(q.lat, q.lng, w, h);
+        var q = majors[k], qb = project(q.lat, q.lng, w);
         routes.push({
           type: 'air', a: hub, b: qb,
           mid: { x: (hub.x + qb.x) / 2, y: Math.min(hub.y, qb.y) - Math.abs(hub.x - qb.x) * 0.30 - 42 },
@@ -425,7 +439,7 @@
       var hx = hub.x + ox, hy = hub.y + oy;
 
       /* 레이더 스윕 — 지원 브라우저만 */
-      var R = Math.min(w, h) * 0.30;
+      var R = Math.min(w, mH) * 0.30;
       if (!reduced && ctx.createConicGradient) {
         var sw = (now / 2600) % (Math.PI * 2);
         var grad = ctx.createConicGradient(sw, hx, hy);
