@@ -420,16 +420,16 @@
       for (var gy = 1; gy <= 3; gy++) { m.beginPath(); m.moveTo(0, H * gy / 4); m.lineTo(W, H * gy / 4); m.stroke(); }
       for (var gx = 1; gx <= 5; gx++) { m.beginPath(); m.moveTo(W * gx / 6, 0); m.lineTo(W * gx / 6, H); m.stroke(); }
 
-      /* 실측 해안선 점묘 — 텍스트 존은 감광 */
+      /* 실측 해안선 점묘 — 텍스트 존은 감광.
+         감광 존은 텍스트 블록 실제 위치 기준(뷰포트 %가 아님):
+         ≥1980px 는 중앙 정렬 문구(css @media 와 동기), 미만은 좌측 칼럼 (W-1200)/2 */
       var dotR = Math.max(1.2, W / 1050);
+      var dzL = W / 2 - 480, dzR = W / 2 + 480, dzT = H * 0.16, dzB = H * 0.68;
       for (var i = 0; i < landCells.length; i++) {
         var pt = project(landCells[i][0], landCells[i][1]);
         if (pt.y < -6 || pt.y > H + 6) continue;
         var dB = Math.sqrt((pt.x - hub.x) * (pt.x - hub.x) + (pt.y - hub.y) * (pt.y - hub.y));
-        /* 감광 존은 텍스트 칼럼((W-1200)/2 중앙 정렬) 기준 — 뷰포트 % 기준이면
-           대형 모니터에서 텍스트 왼쪽의 맨 좌측 대륙까지 죽여 우측 쏠림이 생긴다 */
-        var colL = Math.max(0, (W - 1200) / 2);
-        var tz = (pt.x > colL - 60 && pt.x < colL + 720 && pt.y > H * 0.09 && pt.y < H * 0.62) ? 0.3 : 1;
+        var tz = (pt.x > dzL && pt.x < dzR && pt.y > dzT && pt.y < dzB) ? 0.3 : 1;
         m.beginPath();
         m.arc(pt.x, pt.y, dotR, 0, Math.PI * 2);
         m.fillStyle = dB < 60 ? col.dotHi : col.dot;
@@ -621,8 +621,7 @@
         var pp = project(pd[0], pd[1]);
         var px = pp.x + ox, py = pp.y + oy;
         if (px < -20 || px > W + 20) continue;
-        var kL = Math.max(0, (W - 1200) / 2);
-        var inText = px > kL - 60 && px < kL + 840 && py > H * 0.06 && py < H * 0.70;
+        var inText = px > W / 2 - 560 && px < W / 2 + 560 && py > H * 0.13 && py < H * 0.70;
         var inStrip = py > H * 0.585 && px > W * 0.18 && px < W * 0.82;
         var quiet = inText || inStrip;
         if (pd[3]) {
