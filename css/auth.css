@@ -28,6 +28,7 @@
 .auth-tab.active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
 
 .auth-form { display: flex; flex-direction: column; gap: 14px; }
+.auth-form[hidden] { display: none; }  /* UA hidden 규칙이 위 flex 에 덮이던 버그(2026-08-19 감사) */
 .auth-form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
 .auth-form input {
   font: inherit; font-size: 14.5px; color: var(--ink); background: var(--surface-2);

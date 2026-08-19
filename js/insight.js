@@ -151,7 +151,7 @@
     bar.innerHTML = s.distribution.map(function (d) {
       return '<div class="dist-seg seg-' + d.level.toLowerCase() + '" style="flex:' + d.ratio + ' 1 0;" ' +
         'data-tip="<b>' + d.level + ' · ' + UI.LEVEL_KO[d.level] + '</b><br>' + d.count + '개 항만 (' + d.ratio + '%)<br>전주 대비 ' + (d.delta > 0 ? '▲' : '▼') + Math.abs(d.delta) + '">' +
-        '<span>' + d.level + ' ' + d.ratio + '%</span></div>';
+        (d.ratio >= 9 ? '<span>' + d.level + ' ' + d.ratio + '%</span>' : '') + '</div>';
     }).join('');
 
     el('distLegend').innerHTML = s.distribution.map(function (d) {
