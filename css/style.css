@@ -1824,9 +1824,11 @@ table.trk-tbl td .na { color: var(--muted); }
 .hud-brief { max-width: 640px; padding: 0; }
 .hero-shade {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  /* 가로 셀이드는 픽셀 상한(1180px) — 퍼센트면 대형 모니터에서 화면 3/4을 덮어
+     좌측 대륙(유럽·아프리카)이 전멸하고 우측만 남는다(2026-08-19 사용자 지적) */
   background:
-    linear-gradient(90deg, rgba(6, 10, 22, .96) 0%, rgba(6, 10, 22, .90) 30%, rgba(6, 10, 22, .62) 48%, rgba(6, 10, 22, .22) 62%, transparent 74%),
-    linear-gradient(180deg, rgba(6, 10, 22, .5) 0%, transparent 18%);
+    linear-gradient(90deg, rgba(6, 10, 22, .96) 0%, rgba(6, 10, 22, .90) 44%, rgba(6, 10, 22, .58) 66%, rgba(6, 10, 22, .2) 84%, transparent 100%) left top / min(1180px, 82%) 100% no-repeat,
+    linear-gradient(180deg, rgba(6, 10, 22, .5) 0%, transparent 18%) left top / 100% 100% no-repeat;
 }
 .hero-ops h1 { font-size: clamp(38px, 3vw, 58px); margin: 12px 0 16px; }
 .hero-ops .hero-sub { font-size: 15px; margin-bottom: 20px; max-width: 500px; line-height: 1.7; }
@@ -1923,8 +1925,25 @@ table.trk-tbl td .na { color: var(--muted); }
 [data-theme="light"] .hero-ops .hero-eyebrow { color: #1d6fe0; }
 [data-theme="light"] .hero-shade {
   background:
-    linear-gradient(90deg, rgba(243, 246, 251, .97) 0%, rgba(243, 246, 251, .92) 30%, rgba(243, 246, 251, .66) 48%, rgba(243, 246, 251, .26) 62%, transparent 74%),
-    linear-gradient(180deg, rgba(243, 246, 251, .5) 0%, transparent 18%);
+    linear-gradient(90deg, rgba(243, 246, 251, .97) 0%, rgba(243, 246, 251, .92) 44%, rgba(243, 246, 251, .62) 66%, rgba(243, 246, 251, .22) 84%, transparent 100%) left top / min(1180px, 82%) 100% no-repeat,
+    linear-gradient(180deg, rgba(243, 246, 251, .5) 0%, transparent 18%) left top / 100% 100% no-repeat;
+}
+
+/* ── 대형 모니터(≥1980px): 좌측 고정 셰이드 → 텍스트 뒤 중앙 스크림 ──
+   텍스트 칼럼은 (W−1200)/2 중앙 정렬이므로, 1560px 레일을 같이 중앙에 앵커하면
+   텍스트는 폭과 무관하게 레일의 13%~54% 자리에 고정된다. 좌측 끝 유럽·아프리카가
+   온전히 드러나 구도가 좌우 균형("우측 쏠림" 2026-08-19 사용자 지적 해결) */
+@media (min-width: 1980px) {
+  .hero-shade {
+    background:
+      linear-gradient(90deg, transparent 0%, rgba(6, 10, 22, .5) 8%, rgba(6, 10, 22, .93) 13%, rgba(6, 10, 22, .93) 57%, rgba(6, 10, 22, .45) 75%, transparent 100%) center top / 1560px 100% no-repeat,
+      linear-gradient(180deg, rgba(6, 10, 22, .5) 0%, transparent 18%) left top / 100% 100% no-repeat;
+  }
+  [data-theme="light"] .hero-shade {
+    background:
+      linear-gradient(90deg, transparent 0%, rgba(243, 246, 251, .55) 8%, rgba(243, 246, 251, .95) 13%, rgba(243, 246, 251, .95) 57%, rgba(243, 246, 251, .5) 75%, transparent 100%) center top / 1560px 100% no-repeat,
+      linear-gradient(180deg, rgba(243, 246, 251, .5) 0%, transparent 18%) left top / 100% 100% no-repeat;
+  }
 }
 [data-theme="light"] .hero-ops .live-chip { background: rgba(255, 255, 255, .66); border-color: rgba(18, 45, 90, .12); box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 14px 34px rgba(30, 60, 120, .10); }
 [data-theme="light"] .hero-ops .live-chip .k { color: var(--muted); }
