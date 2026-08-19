@@ -1822,21 +1822,20 @@ table.trk-tbl td .na { color: var(--muted); }
    단, 내부 텍스트는 좌측 정렬(가운데 정렬 = 촌스러움 판정) */
 .hud-brief {
   max-width: 780px; padding: 36px 44px 34px; text-align: left;
-  /* 어중간한 반투명은 촌스러움 판정(2026-08-19) — 거의 불투명한 딥네이비 패널.
-     지도는 뒤에서 은은하게만 비치고, 상단 하이라이트 한 줄로 마감 */
-  background: linear-gradient(180deg, rgba(15, 23, 43, .94) 0%, rgba(10, 15, 30, .92) 100%);
-  border: 1px solid rgba(126, 224, 255, .13);
-  border-radius: 20px;
-  box-shadow: 0 42px 110px rgba(1, 4, 14, .6), 0 2px 8px rgba(1, 4, 14, .4), inset 0 1px 0 rgba(255, 255, 255, .07);
-  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  /* 소프트 플레이트(2026-08-19 확정) — 테두리·모서리 선이 보이는 "상자"는 전부 반려됨.
+     중심은 진한 네이비, 가장자리는 블러로 지도에 안개처럼 녹아든다(경계선 0) */
+  background: rgba(10, 15, 30, .42);
+  border: 0; border-radius: 28px; box-shadow: none;
   animation: cardIn .6s ease-out both;
 }
-@keyframes cardIn { from { opacity: 0; } to { opacity: 1; } }
-[data-theme="light"] .hud-brief {
-  background: linear-gradient(180deg, rgba(255, 255, 255, .96) 0%, rgba(247, 250, 255, .93) 100%);
-  border-color: rgba(18, 45, 90, .12);
-  box-shadow: 0 42px 100px rgba(24, 48, 96, .18), 0 2px 8px rgba(24, 48, 96, .08), inset 0 1px 0 rgba(255, 255, 255, .9);
+.hud-brief::before {
+  content: ''; position: absolute; inset: -18px; z-index: -1;
+  border-radius: 44px; background: rgba(8, 13, 26, .88);
+  filter: blur(26px);
 }
+@keyframes cardIn { from { opacity: 0; } to { opacity: 1; } }
+[data-theme="light"] .hud-brief { background: rgba(255, 255, 255, .5); }
+[data-theme="light"] .hud-brief::before { background: rgba(247, 250, 255, .92); }
 .hero-ops .hero-ctas { justify-content: flex-start; }
 .hero-shade {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;
