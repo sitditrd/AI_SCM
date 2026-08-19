@@ -2002,13 +2002,7 @@ h1.sr-done .accent::after { content: none; }
     linear-gradient(rgba(30, 60, 110, .05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(30, 60, 110, .05) 1px, transparent 1px);
 }
-/* 라이트 + index: 다른 페이지(선석배정 등 dash-hero)와 같은 문법 —
-   상단은 네이비 밴드 + 흰 메뉴(2026-08-19 사용자: "선석배정 눌렀을 때처럼 구색 맞춰라").
-   링크 흰색은 .hero-page 전역 규칙이 그대로 담당하므로 별도 색 지정 불필요 */
-[data-theme="light"] body.ops-page .site-header:not(.scrolled) {
-  background: linear-gradient(180deg, #0a0f1e 0%, #0e1830 100%);  /* 히어로와 동일 계열(2026-08-19 색감 통일) */
-  box-shadow: 0 1px 0 rgba(233, 238, 248, .06);
-}
+/* (2026-08-19 최종) index 상단 헤더는 라이트에서도 다크와 완전 동일 — 투명 + 흰 메뉴(.hero-page 전역 규칙), 별도 밴드 없음 */
 /* (2026-08-19) 히어로 항상 다크 전환 — wxAlert 라이트 변형 제거(다크 글래스 유지) */
 
 /* ===== 화물추적 관제 콘솔 (2026-08-19 UX 개편 — 시안 1+4) ===== */

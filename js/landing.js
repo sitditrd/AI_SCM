@@ -456,14 +456,12 @@
          감광 존은 텍스트 블록 실제 위치 기준(뷰포트 %가 아님):
          ≥1980px 는 중앙 정렬 문구(css @media 와 동기), 미만은 좌측 칼럼 (W-1200)/2 */
       var dotR = Math.max(1.2, W / 1050);
-      /* 문구 우측 배치(2026-08-19) — 좌측~중앙은 지도 주인공(부산 허브 포함), 감광은 우측 칼럼만 */
-      var colR = Math.max(0, (W - 1200) / 2);
-      var dzL = W - colR - 720, dzR = W - colR + 60, dzT = H * 0.18, dzB = H * 0.64;
+      /* 글자 뒤 감광도 레이어로 인식되어 완전 제거(2026-08-19 최종) — 지도 원본 그대로, 가독은 섭도우 전담 */
       for (var i = 0; i < landCells.length; i++) {
         var pt = project(landCells[i][0], landCells[i][1]);
         if (pt.y < -6 || pt.y > H + 6) continue;
         var dB = Math.sqrt((pt.x - hub.x) * (pt.x - hub.x) + (pt.y - hub.y) * (pt.y - hub.y));
-        var tz = (pt.x > dzL && pt.x < dzR && pt.y > dzT && pt.y < dzB) ? 0.32 : 1;
+        var tz = 1;
         m.beginPath();
         m.arc(pt.x, pt.y, dotR, 0, Math.PI * 2);
         m.fillStyle = dB < 60 ? col.dotHi : col.dot;
