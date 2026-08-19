@@ -19,7 +19,7 @@
   <meta name="twitter:description" content="태웅로직스 물류 포털 — 해상·항공·복합운송 등 실서비스 안내와 항만 혼잡도(Port Insight)·선석배정·선박 위치·운임지수 대시보드 제공.">
   <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="css/style.css?v=2026-08-20a">
+  <link rel="stylesheet" href="css/style.css?v=2026-08-20d">
   <link rel="icon" href="assets/twl_logo.ico">
 </head>
 <body class="hero-page ops-page">
@@ -105,8 +105,11 @@
   <section class="section tight" id="stats" aria-label="운영 규모">
     <div class="container">
       <!-- 운임·물동량 스트립 — 히어로 독을 가볍게 하려고 이곳으로 이동(2026-08-19 개편) -->
+      <div class="stats-rail reveal"><i class="tk-tick"></i><b data-i18n="stats.fx">주간 해상운임지수</b><span>SCFI · CCFI — 상하이해운거래소</span><em class="ln"></em></div>
       <div class="live-strip reveal" id="freightStrip" style="display:none; cursor:default; margin-bottom:10px;" aria-label="주간 해상운임지수"></div>
+      <div class="stats-rail reveal"><i class="tk-tick"></i><b data-i18n="stats.teu">월간 컨테이너 물동량</b><span data-i18n="stats.teud">해양수산부 · 수출입 합계</span><em class="ln"></em></div>
       <div class="live-strip reveal" id="teuStrip" style="display:none; cursor:default; margin-bottom:14px;" aria-label="월간 컨테이너 물동량"></div>
+      <div class="stats-rail reveal"><i class="tk-tick"></i><b data-i18n="stats.scale">운영 규모</b><span>TWL DATA</span><em class="ln"></em></div>
       <div class="stat-band reveal" id="statBand">
         <div class="stat">
           <div class="s-v"><span data-count="295000" data-suffix="+">0</span></div>
@@ -195,10 +198,16 @@
   <!-- ================= CTA ================= -->
   <section class="section tight" id="contact">
     <div class="container">
-      <div class="cta-band reveal">
-        <h2 data-i18n="cta.title">문의</h2>
-        <p data-i18n="cta.text">모듈 구성·데이터 연동 관련 문의는 아래 메일로 부탁드립니다.</p>
-        <a class="btn btn-primary btn-lg" href="mailto:itt@twsc.co.kr?subject=%5BTWL%20SmartBPO%5D%20%EB%8F%84%EC%9E%85%20%EB%AC%B8%EC%9D%98" data-i18n="cta.btn">이메일로 도입 문의</a>
+      <div class="cta-band cta-split reveal">
+        <div class="cta-left">
+          <div class="cta-eyebrow">CONTACT</div>
+          <h2 data-i18n="cta.title">문의</h2>
+          <p data-i18n="cta.text">모듈 구성·데이터 연동 관련 문의는 아래 메일로 부탁드립니다.</p>
+        </div>
+        <div class="cta-right">
+          <a class="btn btn-primary btn-lg" href="mailto:itt@twsc.co.kr?subject=%5BTWL%20SmartBPO%5D%20%EB%8F%84%EC%9E%85%20%EB%AC%B8%EC%9D%98" data-i18n="cta.btn">이메일로 도입 문의</a>
+          <span class="cta-mail">itt@twsc.co.kr</span>
+        </div>
       </div>
     </div>
   </section>
@@ -227,10 +236,10 @@
 
   <script src="js/data.js"></script>
   <script src="js/common.js?v=2026-4"></script>
-  <script src="js/i18n.js?v=2026-08-19e"></script>
+  <script src="js/i18n.js?v=2026-08-20a"></script>
   <script src="js/auth.js?v=2026-07-29f"></script>
   <script src="js/auth-gate.js?v=2026-07-30a"></script>
   <script src="js/data_world.js?v=2026-08-19a"></script>
-  <script src="js/landing.js?v=2026-08-20b"></script>
+  <script src="js/landing.js?v=2026-08-20c"></script>
 </body>
 </html>

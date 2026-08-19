@@ -313,7 +313,7 @@
     function setPalette() {
       /* 테마별 씨 팔레트 — 라이트는 밝은 지면 위 진청 카르토그래피
          ("index 만 새까맣다" 허접함 해결 — 2026-08-19 사용자 재지적) */
-      var light = document.documentElement.getAttribute('data-theme') === 'light';
+      var light = false;  /* 상단 히어로는 테마 무관 항상 다크 — dash 페이지와 동일 문법(2026-08-19 사용자 확정: #stats 부터만 테마 전환) */
       if (light) {
         col.ink = '#8ba0c0';
         col.dot = '#44608a'; col.dotHi = '#0b6bc8'; col.lane = '#1d6fe0'; col.laneAir = '#4a90e0';
@@ -670,7 +670,7 @@
         var kR = Math.max(0, (W - 1200) / 2);
         var inText = px > W - kR - 790 && px < W - kR + 60 && py > H * 0.14 && py < H * 0.68;
         /* 좌상단 시계 HUD 구역 — 라벨(ROTTERDAM 등)과 겹침 방지 */
-        inText = inText || (px < 250 && py < H * 0.34);
+        inText = inText || (px > W - 250 && py < H * 0.34);
         var inStrip = py > H * 0.585 && px > W * 0.18 && px < W * 0.82;
         var quiet = inText || inStrip;
         if (pd[3]) {
