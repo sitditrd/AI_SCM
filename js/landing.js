@@ -60,6 +60,9 @@
     setTimeout(function () {             /* i18n 초기 치환 뒤에 무장 */
       if (cancelled || !h1.isConnected) return;
       h1.innerHTML = '<span class="srw">' + h1.innerHTML + '</span><span class="srb" aria-hidden="true"></span>';
+      /* 악센트 '채움' 2박자용 — ::after 클론이 attr(data-text)로 같은 글자를 그린다 */
+      var acc = h1.querySelector('.srw .accent');
+      if (acc) acc.setAttribute('data-text', acc.textContent);
       h1.classList.add('sr-armed');
     }, 160);
   }

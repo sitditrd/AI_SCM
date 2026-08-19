@@ -1882,6 +1882,25 @@ table.trk-tbl td .na { color: var(--muted); }
   background: linear-gradient(180deg, transparent 0%, #1d6fe0 16%, #6db4ff 50%, #1d6fe0 84%, transparent 100%);
   box-shadow: 0 0 14px rgba(29, 111, 224, .75), 0 0 40px rgba(29, 111, 224, .4);
 }
+
+/* ── 악센트 '채움' 2박자 — 스캔이 드러낸 직후 파랑이 왼쪽부터 잉크처럼 차오른다
+   ("이 문구에 채워지는 효과가 부족" 2026-08-19). 베이스는 흐릿한 은청,
+   ::after 클론(그라데이션 텍스트)이 clip-path 로 차오름. sr-armed 없으면 평소 파랑 그대로 */
+h1.sr-armed .accent { position: relative; color: rgba(150, 190, 245, .38); }
+h1.sr-armed .accent::after {
+  content: attr(data-text) / "";
+  position: absolute; inset: 0; text-shadow: none;
+  background: linear-gradient(92deg, #9fc9ff 0%, #38c6ff 78%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  clip-path: inset(-10% 100% -10% 0);
+  animation: accFill .95s cubic-bezier(.52, .04, .28, 1) 1.8s forwards;
+}
+@keyframes accFill { to { clip-path: inset(-10% -3% -10% 0); } }
+[data-theme="light"] h1.sr-armed .accent { color: rgba(29, 111, 224, .3); }
+[data-theme="light"] h1.sr-armed .accent::after {
+  background: linear-gradient(92deg, #4a90e0 0%, #1d6fe0 78%);
+  -webkit-background-clip: text; background-clip: text;
+}
 .hud-dock {
   position: absolute; z-index: 6; left: 0; right: 0; bottom: 0;
   align-items: center;
