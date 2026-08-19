@@ -1628,3 +1628,93 @@ table.trk-tbl td .na { color: var(--muted); }
 .rel-svg .r-late.bad { fill: var(--up); font-weight: 800; }
 .rel-svg .r-sub { font-size: 11.5px; fill: var(--muted); font-variant-numeric: tabular-nums; }
 .rel-svg .r-foot { font-size: 10.5px; fill: var(--muted); }
+
+/* ===== 첫 화면 모션 고도화 (2026-08-19) ===== */
+/* 히어로 등장 시퀀스 — 위계 순서대로 떠오른다 */
+.hero-inner > * { opacity: 0; transform: translateY(16px); animation: heroIn .75s cubic-bezier(.2, .7, .25, 1) forwards; }
+.hero-inner > :nth-child(1) { animation-delay: .05s; }
+.hero-inner > :nth-child(2) { animation-delay: .14s; }
+.hero-inner > :nth-child(3) { animation-delay: .24s; }
+.hero-inner > :nth-child(4) { animation-delay: .34s; }
+.hero-inner > :nth-child(5) { animation-delay: .44s; }
+.hero-inner > :nth-child(6) { animation-delay: .54s; }
+.hero-inner > :nth-child(7) { animation-delay: .62s; }
+.hero-inner > :nth-child(8) { animation-delay: .68s; }
+.hero-inner > :nth-child(9) { animation-delay: .74s; }
+@keyframes heroIn { to { opacity: 1; transform: none; } }
+.hero-canvas { opacity: .85; }
+
+/* 운영 규모 스탯 밴드 */
+.stat-band { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px 22px; border: 1px solid var(--border); border-radius: 18px; padding: 24px 30px; background: color-mix(in srgb, var(--surface) 74%, transparent); }
+.stat .s-v { font-size: 30px; font-weight: 800; letter-spacing: -.01em; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.stat .s-v .s-sub { font-size: 16px; color: var(--muted); font-weight: 700; margin-left: 2px; }
+.stat .s-k { font-size: 12px; color: var(--muted); margin-top: 4px; }
+@media (max-width: 640px) { .stat .s-v { font-size: 24px; } }
+
+/* 데이터 소스 마퀴 — 실제 연동 원천 나열 */
+.src-marquee { overflow: hidden; margin-top: 16px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.src-track { display: inline-flex; align-items: center; gap: 26px; white-space: nowrap; padding: 8px 0; animation: srcmove 42s linear infinite; }
+.src-track span { font-size: 12px; color: var(--muted); letter-spacing: .02em; }
+.src-track i { flex: 0 0 4px; width: 4px; height: 4px; border-radius: 50%; background: color-mix(in srgb, var(--brand-accent-2) 45%, var(--grid)); }
+@keyframes srcmove { to { transform: translateX(-50%); } }
+
+/* 서비스 카드 아이콘 + 호버 강화 */
+.svc-ic { display: inline-flex; width: 40px; height: 40px; border-radius: 12px; align-items: center; justify-content: center; margin-bottom: 12px; color: var(--brand-accent-2); border: 1px solid color-mix(in srgb, var(--brand-accent-2) 30%, var(--border)); background: color-mix(in srgb, var(--brand-accent) 7%, transparent); transition: transform .25s ease, background .25s ease, box-shadow .25s ease; }
+.card.hover { transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease; }
+.card.hover:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--brand-accent-2) 45%, var(--border)); box-shadow: 0 16px 38px color-mix(in srgb, var(--brand-accent) 15%, transparent); }
+.card.hover:hover .svc-ic { transform: translateY(-2px) scale(1.07); background: color-mix(in srgb, var(--brand-accent) 14%, transparent); box-shadow: 0 6px 16px color-mix(in srgb, var(--brand-accent) 22%, transparent); }
+
+/* 그리드 리빌 스태거 — 카드가 차례로 떠오른다 */
+.grid-3 > .reveal:nth-child(1) { transition-delay: .02s; }
+.grid-3 > .reveal:nth-child(2) { transition-delay: .09s; }
+.grid-3 > .reveal:nth-child(3) { transition-delay: .16s; }
+.grid-3 > .reveal:nth-child(4) { transition-delay: .23s; }
+.grid-3 > .reveal:nth-child(5) { transition-delay: .30s; }
+.grid-3 > .reveal:nth-child(6) { transition-delay: .37s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-inner > * { animation: none; opacity: 1; transform: none; }
+  .src-track { animation: none; }
+  .card.hover, .card.hover:hover, .svc-ic { transform: none; transition: none; }
+  .grid-3 > .reveal { transition-delay: 0s; }
+}
+
+/* ===== 신기술 CSS (2026-08-19) — 전부 미지원 브라우저에서 조용히 무시된다 ===== */
+/* ① 페이지 간 크로스페이드 (View Transitions, MPA) — 포털 전체가 앱처럼 전환 */
+@view-transition { navigation: auto; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .28s; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+}
+
+/* ② 스크롤 연동 — 스크롤로 밀려나는 히어로가 서서히 잦아든다 (JS 0줄) */
+@supports (animation-timeline: view()) {
+  .hero-inner {
+    animation: heroFade linear both;
+    animation-timeline: view();
+    animation-range: exit 0% exit 85%;
+  }
+  @keyframes heroFade { to { opacity: .25; transform: translateY(-26px) scale(.985); } }
+  @media (prefers-reduced-motion: reduce) { .hero-inner { animation: none; } }
+}
+
+/* ③ 회전 광택 링 (@property + conic-gradient) — 스탯 밴드 테두리가 천천히 돈다 */
+@property --twl-ring { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+@supports (background: conic-gradient(from 0deg, #000, #fff)) {
+  .stat-band { position: relative; }
+  .stat-band::before {
+    content: ''; position: absolute; inset: -1px; border-radius: 19px; z-index: -1;
+    background: conic-gradient(from var(--twl-ring),
+      transparent 0deg, transparent 300deg,
+      color-mix(in srgb, var(--brand-accent-2) 55%, transparent) 330deg,
+      transparent 360deg);
+    animation: twlRing 9s linear infinite;
+  }
+  @keyframes twlRing { to { --twl-ring: 360deg; } }
+  @media (prefers-reduced-motion: reduce) { .stat-band::before { animation: none; opacity: .35; } }
+}
+
+/* ④ 제목 줄바꿈 균형 — 지원 브라우저에서 헤드라인이 두 줄로 고르게 갈린다 */
+.hero h1, .sec-title, .dash-head h2 { text-wrap: balance; }

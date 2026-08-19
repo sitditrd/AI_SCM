@@ -19,7 +19,7 @@
   <meta name="twitter:description" content="태웅로직스 물류 포털 — 해상·항공·복합운송 등 실서비스 안내와 항만 혼잡도(Port Insight)·선석배정·선박 위치·운임지수 대시보드 제공.">
   <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="css/style.css?v=2026-08-19b">
+  <link rel="stylesheet" href="css/style.css?v=2026-08-19c">
   <link rel="icon" href="assets/twl_logo.ico">
 </head>
 <body class="hero-page">
@@ -102,6 +102,49 @@
     </div>
   </section>
 
+  <!-- ================= 운영 규모 스탯 밴드 (2026-08-19) ================= -->
+  <section class="section tight" id="stats" aria-label="운영 규모">
+    <div class="container">
+      <div class="stat-band reveal" id="statBand">
+        <div class="stat">
+          <div class="s-v"><span data-count="295000" data-suffix="+">0</span></div>
+          <div class="s-k" data-i18n="stat.shipments">누적 선적 데이터 (건)</div>
+        </div>
+        <div class="stat">
+          <div class="s-v"><span data-count="2065">0</span></div>
+          <div class="s-k" data-i18n="stat.ports">모니터링 글로벌 항만</div>
+        </div>
+        <div class="stat">
+          <div class="s-v"><span data-count="16">0</span></div>
+          <div class="s-k" data-i18n="stat.terminals">국내 선석 수집 터미널</div>
+        </div>
+        <div class="stat">
+          <div class="s-v"><span data-count="6">0</span><span class="s-sub">/17</span></div>
+          <div class="s-k" data-i18n="stat.carriers">실조회 연동 선사</div>
+        </div>
+        <div class="stat">
+          <div class="s-v"><span data-count="24">0</span><span class="s-sub">/7</span></div>
+          <div class="s-k" data-i18n="stat.watch">자동 감시·변경 알림</div>
+        </div>
+      </div>
+      <!-- 데이터 소스 마퀴 — 실제 연동 원천만 나열 (장식용 과장 금지) -->
+      <div class="src-marquee reveal" aria-hidden="true">
+        <div class="src-track">
+          <span>IMF PortWatch</span><i></i><span>상하이해운거래소 SCFI · CCFI</span><i></i>
+          <span>해양수산부 수출입 컨테이너 실적</span><i></i><span>기상청 항만기상</span><i></i>
+          <span>부산신항 · 북항 · 인천 · 광양 · 평택당진 · 대산 16개 터미널</span><i></i>
+          <span>ONE · COSCO · SM상선 · Evergreen · SITC · ZIM 선사 API</span><i></i>
+          <span>AISStream 실시간 선박위치</span><i></i>
+          <span>IMF PortWatch</span><i></i><span>상하이해운거래소 SCFI · CCFI</span><i></i>
+          <span>해양수산부 수출입 컨테이너 실적</span><i></i><span>기상청 항만기상</span><i></i>
+          <span>부산신항 · 북항 · 인천 · 광양 · 평택당진 · 대산 16개 터미널</span><i></i>
+          <span>ONE · COSCO · SM상선 · Evergreen · SITC · ZIM 선사 API</span><i></i>
+          <span>AISStream 실시간 선박위치</span><i></i>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ================= 서비스 ================= -->
   <section class="section" id="modules">
     <div class="container">
@@ -111,12 +154,24 @@
         <p class="sec-desc" data-i18n="svc.desc">공식 홈페이지(www.e-tgl.com) 기준 실제 제공 서비스입니다.</p>
       </div>
       <div class="grid-3">
-        <div class="card hover reveal"><h3 data-i18n="svc1.t">해상 운송</h3><p data-i18n="svc1.d">수출입 컨테이너 해상운송 포워딩. 전 세계 주요 항로 선복 확보와 스케줄 관리.</p><span class="tagline">FCL · LCL</span></div>
-        <div class="card hover reveal"><h3 data-i18n="svc2.t">항공 운송</h3><p data-i18n="svc2.d">긴급 화물·고부가 화물의 항공 수출입 운송 서비스.</p><span class="tagline">Air Freight</span></div>
-        <div class="card hover reveal"><h3 data-i18n="svc3.t">복합 운송 · CIS/철도</h3><p data-i18n="svc3.d">해상+철도 복합운송. CIS·러시아·중앙아시아 철도 운송 전문.</p><span class="tagline">TSR · TCR</span></div>
-        <div class="card hover reveal"><h3 data-i18n="svc4.t">ISO TANK · 프로젝트</h3><p data-i18n="svc4.d">액체화물 ISO 탱크 운송과 중량물·플랜트 프로젝트 물류.</p><span class="tagline" data-i18n="svc4.tag">특수 화물</span></div>
-        <div class="card hover reveal"><h3 data-i18n="svc5.t">창고 · 내륙운송</h3><p data-i18n="svc5.d">보관·재고관리와 내륙운송, 물류 컨설팅.</p><span class="tagline">Warehouse · Trucking</span></div>
-        <div class="card hover reveal"><h3 data-i18n="svc6.t">이커머스 물류</h3><p data-i18n="svc6.d">이커머스 국제 물류 및 풀필먼트 지원.</p><span class="tagline">E-Commerce</span></div>
+        <div class="card hover reveal">
+          <span class="svc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16l1.2-4.6a1.5 1.5 0 011.5-1.1h12.6a1.5 1.5 0 011.5 1.1L21 16"/><path d="M7.5 10.3V6.8a.8.8 0 01.8-.8h4.4a.8.8 0 01.8.8v3.5M11 3.5v2.5"/><path d="M2 16c1.7 0 1.7 1.8 3.3 1.8S7 16 8.7 16s1.7 1.8 3.3 1.8S13.7 16 15.3 16s1.7 1.8 3.3 1.8S20.3 16 22 16"/></svg></span>
+          <h3 data-i18n="svc1.t">해상 운송</h3><p data-i18n="svc1.d">수출입 컨테이너 해상운송 포워딩. 전 세계 주요 항로 선복 확보와 스케줄 관리.</p><span class="tagline">FCL · LCL</span></div>
+        <div class="card hover reveal">
+          <span class="svc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 13.5L3 10l1.5-1.5 7 1.5 5-5.5c.6-.6 1.6-.6 2.1 0 .6.6.6 1.5 0 2.1l-5.5 5 1.5 7L13 20l-3.5-7.5z"/><path d="M4.5 19.5l3-3"/></svg></span>
+          <h3 data-i18n="svc2.t">항공 운송</h3><p data-i18n="svc2.d">긴급 화물·고부가 화물의 항공 수출입 운송 서비스.</p><span class="tagline">Air Freight</span></div>
+        <div class="card hover reveal">
+          <span class="svc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="11" rx="2"/><path d="M4 9.5h16M8 15l-2 4M16 15l2 4M7 19h10"/><circle cx="8.5" cy="12.2" r=".9"/><circle cx="15.5" cy="12.2" r=".9"/></svg></span>
+          <h3 data-i18n="svc3.t">복합 운송 · CIS/철도</h3><p data-i18n="svc3.d">해상+철도 복합운송. CIS·러시아·중앙아시아 철도 운송 전문.</p><span class="tagline">TSR · TCR</span></div>
+        <div class="card hover reveal">
+          <span class="svc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="8" rx="4"/><path d="M7 8V6.5M17 8V6.5M7 17.5V16M17 17.5V16M9.5 12h5"/></svg></span>
+          <h3 data-i18n="svc4.t">ISO TANK · 프로젝트</h3><p data-i18n="svc4.d">액체화물 ISO 탱크 운송과 중량물·플랜트 프로젝트 물류.</p><span class="tagline" data-i18n="svc4.tag">특수 화물</span></div>
+        <div class="card hover reveal">
+          <span class="svc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20V9.5L12 4l9 5.5V20"/><path d="M3 20h18M9 20v-6h6v6M12 4v3"/></svg></span>
+          <h3 data-i18n="svc5.t">창고 · 내륙운송</h3><p data-i18n="svc5.d">보관·재고관리와 내륙운송, 물류 컨설팅.</p><span class="tagline">Warehouse · Trucking</span></div>
+        <div class="card hover reveal">
+          <span class="svc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h2l2.2 10.2a1.5 1.5 0 001.5 1.2h7.6a1.5 1.5 0 001.5-1.2L20.5 8H7"/><circle cx="10.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/></svg></span>
+          <h3 data-i18n="svc6.t">이커머스 물류</h3><p data-i18n="svc6.d">이커머스 국제 물류 및 풀필먼트 지원.</p><span class="tagline">E-Commerce</span></div>
       </div>
 
       <div class="reveal" style="margin-top:44px;">
@@ -170,9 +225,9 @@
 
   <script src="js/data.js"></script>
   <script src="js/common.js?v=2026-4"></script>
-  <script src="js/i18n.js?v=2026-08-19a"></script>
+  <script src="js/i18n.js?v=2026-08-19b"></script>
   <script src="js/auth.js?v=2026-07-29f"></script>
   <script src="js/auth-gate.js?v=2026-07-30a"></script>
-  <script src="js/landing.js?v=2026-08-03a"></script>
+  <script src="js/landing.js?v=2026-08-19a"></script>
 </body>
 </html>
