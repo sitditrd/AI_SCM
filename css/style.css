@@ -1822,19 +1822,27 @@ table.trk-tbl td .na { color: var(--muted); }
    단, 내부 텍스트는 좌측 정렬(가운데 정렬 = 촌스러움 판정) */
 .hud-brief {
   max-width: 780px; padding: 36px 44px 34px; text-align: left;
-  /* 소프트 플레이트 단일층(2026-08-19 최종) — 본체 배경 0. 켜가 두 겹이면 안쪽 박스
-     테두리가 비쳐 "이중 포장"으로 보인다(반려). 흐린 판 한 장: 중심 진함, 가장자리만 융해 */
+  /* 면(面) 계열 전면 폐기(2026-08-19 최종) — 판·박스·레이어 전부 촌스러움 판정.
+     글자 뒤 지도 자체를 아웃포커스: 마스크 페더링된 백드롭 블러라 어떤 명도에서도
+     사각 실루엣이 생기지 않는다. 색은 얇은 틴트만(마스크와 함께 소멸) */
   background: transparent;
   border: 0; box-shadow: none;
   animation: cardIn .6s ease-out both;
 }
 .hud-brief::before {
-  content: ''; position: absolute; inset: -8px; z-index: -1;
-  border-radius: 36px; background: rgba(8, 13, 26, .94);
-  filter: blur(22px);
+  content: ''; position: absolute; inset: -34px -54px; z-index: -1; pointer-events: none;
+  background: rgba(8, 13, 26, .36);
+  -webkit-backdrop-filter: blur(15px) saturate(1.05);
+  backdrop-filter: blur(15px) saturate(1.05);
+  -webkit-mask: radial-gradient(58% 57% at 50% 50%, #000 42%, transparent 88%);
+  mask: radial-gradient(58% 57% at 50% 50%, #000 42%, transparent 88%);
 }
 @keyframes cardIn { from { opacity: 0; } to { opacity: 1; } }
-[data-theme="light"] .hud-brief::before { background: rgba(247, 250, 255, .95); }
+[data-theme="light"] .hud-brief::before {
+  background: rgba(246, 249, 253, .4);
+  -webkit-backdrop-filter: blur(15px) saturate(1.02) brightness(1.03);
+  backdrop-filter: blur(15px) saturate(1.02) brightness(1.03);
+}
 .hero-ops .hero-ctas { justify-content: flex-start; }
 .hero-shade {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;
@@ -2038,15 +2046,13 @@ h1.sr-done .accent::after { content: none; }
     linear-gradient(rgba(30, 60, 110, .05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(30, 60, 110, .05) 1px, transparent 1px);
 }
-/* 라이트 + index: 헤더 링크를 진한 색으로(밝은 히어로 위) */
-[data-theme="light"] body.ops-page .site-header:not(.scrolled) .logo-slot,
-[data-theme="light"] body.ops-page .site-header:not(.scrolled) .site-nav a,
-[data-theme="light"] body.ops-page .site-header:not(.scrolled) .icon-btn,
-[data-theme="light"] body.ops-page .site-header:not(.scrolled) .lang-switch,
-[data-theme="light"] body.ops-page .site-header:not(.scrolled) .acct-btn,
-[data-theme="light"] body.ops-page .site-header:not(.scrolled) .nav-burger { color: var(--ink); }
-[data-theme="light"] body.ops-page .site-header:not(.scrolled) .logo-text .l1 { color: var(--ink); }
-[data-theme="light"] body.ops-page .site-header:not(.scrolled) .logo-text .l2 { color: var(--muted); }
+/* 라이트 + index: 다른 페이지(선석배정 등 dash-hero)와 같은 문법 —
+   상단은 네이비 밴드 + 흰 메뉴(2026-08-19 사용자: "선석배정 눌렀을 때처럼 구색 맞춰라").
+   링크 흰색은 .hero-page 전역 규칙이 그대로 담당하므로 별도 색 지정 불필요 */
+[data-theme="light"] body.ops-page .site-header:not(.scrolled) {
+  background: linear-gradient(180deg, #0a1e3f 0%, #0b2d5b 100%);
+  box-shadow: 0 1px 0 rgba(10, 30, 63, .35);
+}
 [data-theme="light"] .hero-ops .live-strip { background: transparent; border-color: rgba(18, 45, 90, .10); }
 [data-theme="light"] #wxAlert .live-chip { background: rgba(255, 255, 255, .8); }
 
