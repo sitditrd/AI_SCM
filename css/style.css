@@ -1833,6 +1833,7 @@ table.trk-tbl td .na { color: var(--muted); }
 .hero-ops .hero-note { margin-top: 14px; font-size: 12px; }
 .hud-dock {
   position: absolute; z-index: 6; left: 0; right: 0; bottom: 0;
+  align-items: center;
   padding: 10px clamp(16px, 3vw, 34px) 18px;
   display: flex; flex-direction: column; gap: 8px;
   background: linear-gradient(180deg, rgba(10, 15, 30, 0) 0%, color-mix(in srgb, var(--bg) 82%, transparent) 55%);
@@ -1872,6 +1873,7 @@ table.trk-tbl td .na { color: var(--muted); }
 /* ===== 관제 히어로 = 항상 다크 (테마 무관 — 2026-08-19 light 반쪽 현상 해결) =====
    지도·카드·독·시계 전부 고정 색. 헤더는 라이트에서 불투명 바로 대비 확보. */
 .hero-ops { background: #0a0f1e; color-scheme: dark; }
+[data-theme="light"] .hero-ops { background: linear-gradient(180deg, #f3f6fb 0%, #e7edf7 100%); color-scheme: light; }
 .hero-ops h1 { color: #F2F5FA; }
 .hero-ops .hero-sub { color: rgba(235, 242, 252, .72); }
 .hero-ops .hero-sub b { color: #fff; }
@@ -1909,3 +1911,46 @@ table.trk-tbl td .na { color: var(--muted); }
   -webkit-text-fill-color: var(--ink);
   color: var(--ink);
 }
+
+/* 대형 모니터 — 독·티커가 무한정 늘어나지 않게 중앙 캐핑(2026-08-19 사용자 지적) */
+.hud-dock > * { width: 100%; max-width: 1560px; }
+
+/* ===== 라이트 테마 히어로 — 밝은 카르토그래피 ===== */
+[data-theme="light"] .hero-ops h1 { color: var(--ink); }
+[data-theme="light"] .hero-ops .hero-sub { color: color-mix(in srgb, var(--ink) 78%, transparent); }
+[data-theme="light"] .hero-ops .hero-sub b { color: var(--ink); }
+[data-theme="light"] .hero-ops .hero-note { color: var(--muted); }
+[data-theme="light"] .hero-ops .hero-eyebrow { color: #1d6fe0; }
+[data-theme="light"] .hero-shade {
+  background:
+    linear-gradient(90deg, rgba(243, 246, 251, .97) 0%, rgba(243, 246, 251, .92) 30%, rgba(243, 246, 251, .66) 48%, rgba(243, 246, 251, .26) 62%, transparent 74%),
+    linear-gradient(180deg, rgba(243, 246, 251, .5) 0%, transparent 18%);
+}
+[data-theme="light"] .hero-ops .live-chip { background: rgba(255, 255, 255, .66); border-color: rgba(18, 45, 90, .12); box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 14px 34px rgba(30, 60, 120, .10); }
+[data-theme="light"] .hero-ops .live-chip .k { color: var(--muted); }
+[data-theme="light"] .hero-ops .live-chip .v { background: none; -webkit-background-clip: initial; background-clip: initial; -webkit-text-fill-color: var(--ink); color: var(--ink); }
+[data-theme="light"] .hero-ops .hud-dock { background: linear-gradient(180deg, rgba(243, 246, 251, 0) 0%, rgba(243, 246, 251, .92) 55%); }
+[data-theme="light"] .hero-ops .hud-clocks .hc { background: rgba(255, 255, 255, .66); border-color: rgba(18, 45, 90, .13); color: var(--ink-2); }
+[data-theme="light"] .hero-ops .hud-clocks .hc b { color: var(--muted); }
+[data-theme="light"] .hero-ops .hud-clocks .hc:first-child { border-color: rgba(29, 111, 224, .5); color: var(--ink); }
+[data-theme="light"] .hero-ops .hud-clocks .hc:first-child b { color: #1d6fe0; }
+[data-theme="light"] .hero-ops .btn-ghost { color: var(--ink-2); border-color: rgba(18, 45, 90, .25); }
+[data-theme="light"] .hero-ops::after { opacity: .025; }
+[data-theme="light"] .hero::before {
+  background-image:
+    radial-gradient(ellipse 60% 45% at 38% -12%, rgba(37, 99, 235, .08), transparent 70%),
+    radial-gradient(45% 55% at 70% 22%, rgba(14, 116, 233, .05), transparent 70%),
+    linear-gradient(rgba(30, 60, 110, .05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 60, 110, .05) 1px, transparent 1px);
+}
+/* 라이트 + index: 헤더 링크를 진한 색으로(밝은 히어로 위) */
+[data-theme="light"] body.ops-page .site-header:not(.scrolled) .logo-slot,
+[data-theme="light"] body.ops-page .site-header:not(.scrolled) .site-nav a,
+[data-theme="light"] body.ops-page .site-header:not(.scrolled) .icon-btn,
+[data-theme="light"] body.ops-page .site-header:not(.scrolled) .lang-switch,
+[data-theme="light"] body.ops-page .site-header:not(.scrolled) .acct-btn,
+[data-theme="light"] body.ops-page .site-header:not(.scrolled) .nav-burger { color: var(--ink); }
+[data-theme="light"] body.ops-page .site-header:not(.scrolled) .logo-text .l1 { color: var(--ink); }
+[data-theme="light"] body.ops-page .site-header:not(.scrolled) .logo-text .l2 { color: var(--muted); }
+[data-theme="light"] .hero-ops .live-strip { background: transparent; border-color: rgba(18, 45, 90, .10); }
+[data-theme="light"] #wxAlert .live-chip { background: rgba(255, 255, 255, .8); }

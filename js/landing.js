@@ -282,14 +282,26 @@
     var running = true;
     var col = {};
     function setPalette() {
-      /* 관제 히어로는 테마와 무관하게 항상 다크 (2026-08-19 확정) */
-      col.ink = '#9fb4d8';
-      col.dot = '#dce6f5'; col.dotHi = '#7ee0ff'; col.lane = '#38c6ff'; col.laneAir = '#9be8ff';
-      col.label = '#e6edf8'; col.head = '#eaf6ff';
-      col.ocean1 = 'rgba(30, 70, 140, 0.22)'; col.ocean2 = 'rgba(18, 42, 88, 0.10)';
-      col.night = 'rgba(3, 7, 20, 0.13)'; col.term = 'rgba(120, 200, 255, 0.10)';
+      /* 테마별 씨 팔레트 — 라이트는 밝은 지면 위 진청 카르토그래피
+         ("index 만 새까맣다" 허접함 해결 — 2026-08-19 사용자 재지적) */
+      var light = document.documentElement.getAttribute('data-theme') === 'light';
+      if (light) {
+        col.ink = '#8ba0c0';
+        col.dot = '#44608a'; col.dotHi = '#0b6bc8'; col.lane = '#1d6fe0'; col.laneAir = '#4a90e0';
+        col.label = '#2c4468'; col.head = '#0b4fa8';
+        col.ocean1 = 'rgba(120, 160, 220, 0.25)'; col.ocean2 = 'rgba(150, 180, 230, 0.12)';
+        col.night = 'rgba(40, 60, 100, 0.09)'; col.term = 'rgba(20, 90, 190, 0.18)';
+      } else {
+        col.ink = '#9fb4d8';
+        col.dot = '#dce6f5'; col.dotHi = '#7ee0ff'; col.lane = '#38c6ff'; col.laneAir = '#9be8ff';
+        col.label = '#e6edf8'; col.head = '#eaf6ff';
+        col.ocean1 = 'rgba(30, 70, 140, 0.22)'; col.ocean2 = 'rgba(18, 42, 88, 0.10)';
+        col.night = 'rgba(3, 7, 20, 0.13)'; col.term = 'rgba(120, 200, 255, 0.10)';
+      }
     }
     setPalette();
+    new MutationObserver(function () { setPalette(); resize(); })
+      .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
     function rgba(c, a) {
       var m = /^#([0-9a-f]{6})/i.exec(c);
