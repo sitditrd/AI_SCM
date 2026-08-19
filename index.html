@@ -19,7 +19,7 @@
   <meta name="twitter:description" content="태웅로직스 물류 포털 — 해상·항공·복합운송 등 실서비스 안내와 항만 혼잡도(Port Insight)·선석배정·선박 위치·운임지수 대시보드 제공.">
   <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="css/style.css?v=2026-08-19e">
+  <link rel="stylesheet" href="css/style.css?v=2026-08-19j">
   <link rel="icon" href="assets/twl_logo.ico">
 </head>
 <body class="hero-page">
@@ -55,56 +55,56 @@
   </header>
 
   <!-- ================= 히어로 ================= -->
-  <section id="main-content" tabindex="-1" class="hero">
+  <section id="main-content" tabindex="-1" class="hero hero-ops">
     <canvas class="hero-canvas" id="heroCanvas" aria-hidden="true"></canvas>
-    <div class="hero-inner">
-      <span class="hero-eyebrow"><span class="pulse-dot" aria-hidden="true"></span> TWL SmartBPO</span>
-      <h1 data-i18n-html="hero.h1">항만·선석·운임 데이터,<br><span class="accent">한 화면에서 관리</span>합니다</h1>
-      <p class="hero-sub" data-i18n-html="hero.sub">
-        태웅로직스는 해상·항공·복합운송과 CIS/철도, 프로젝트 물류까지 수행하는 종합물류기업입니다.
-        이 포털에서는 항만 혼잡도 <b>Port Insight</b>, 국내 터미널 <b>선석배정</b>,
-        <b>선박 위치</b>·<b>운임지수</b>를 실데이터로 제공합니다.
-      </p>
-      <div class="hero-ctas">
-        <a class="btn btn-primary btn-lg" href="insight.html" data-i18n="hero.cta1">Port Insight 살펴보기</a>
-        <a class="btn btn-ghost btn-lg" href="berth.html" data-i18n="hero.cta2">선석배정 보기</a>
+    <div class="hero-hud">
+      <!-- 브리핑 카드 — 유리 패널 위 텍스트(지도와 충돌 원천 차단) -->
+      <div class="hud-brief">
+        <span class="hero-eyebrow"><span class="pulse-dot" aria-hidden="true"></span> TWL SmartBPO</span>
+        <h1 data-i18n-html="hero.h1">항만·선석·운임 데이터,<br><span class="accent">한 화면에서 관리</span>합니다</h1>
+        <p class="hero-sub" data-i18n-html="hero.sub">
+          태웅로직스는 해상·항공·복합운송과 CIS/철도, 프로젝트 물류까지 수행하는 종합물류기업입니다.
+          이 포털에서는 항만 혼잡도 <b>Port Insight</b>, 국내 터미널 <b>선석배정</b>,
+          <b>선박 위치</b>·<b>운임지수</b>를 실데이터로 제공합니다.
+        </p>
+        <div class="hero-ctas">
+          <a class="btn btn-primary btn-lg" href="insight.html" data-i18n="hero.cta1">Port Insight 살펴보기</a>
+          <a class="btn btn-ghost btn-lg" href="berth.html" data-i18n="hero.cta2">선석배정 보기</a>
+        </div>
+        <p class="hero-note" data-i18n-html="hero.note">IMF PortWatch <b id="heroPortCount">2,065</b>개 항만 네트워크 · 중점 모니터링 항만(Focus Port) 93개 매일 산출</p>
       </div>
-      <p class="hero-note" data-i18n-html="hero.note">IMF PortWatch <b id="heroPortCount">2,065</b>개 항만 네트워크 · 중점 모니터링 항만(Focus Port) 93개 매일 산출</p>
 
-      <!-- 실시간 KPI 스트립 -->
-      <a class="live-strip" href="insight.html" aria-label="실시간 지표 — Port Insight 대시보드로 이동">
-        <div class="live-chip">
-          <div class="k"><span class="pulse-dot" aria-hidden="true"></span><span data-i18n="ls.pci">종합 PCI (항만 혼잡도 지수)</span></div>
-          <div class="v" id="lsTpfs">—</div>
-        </div>
-        <div class="live-chip">
-          <div class="k" data-i18n="ls.congested">혼잡(CONGESTED) 항만</div>
-          <div class="v" id="lsCritical">—</div>
-        </div>
-        <div class="live-chip">
-          <div class="k" data-i18n="ls.risk">글로벌 리스크</div>
-          <div class="v" id="lsRisk">—</div>
-        </div>
-        <div class="live-chip">
-          <div class="k" data-i18n="ls.delay">평균 접안 지연</div>
-          <div class="v" id="lsDelay">—</div>
-        </div>
-      </a>
-
-      <!-- 주간 해상운임지수 (SCFI·CCFI — 상하이해운거래소 공표) -->
-      <div class="live-strip" id="freightStrip" style="margin-top:10px; display:none; cursor:default;" aria-label="주간 해상운임지수"></div>
-
-      <!-- 월간 컨테이너 물동량 (해수부 수출입컨테이너처리실적 15059131) -->
-      <div class="live-strip" id="teuStrip" style="margin-top:10px; display:none; cursor:default;" aria-label="월간 컨테이너 물동량"></div>
-
-      <!-- 기상특보 티커 (기상청 기상특보 15000415) -->
-      <div id="wxAlert" style="margin-top:10px; display:none;" role="status" aria-label="기상특보"></div>
+      <!-- 하단 HUD 독 — 실시간 지표가 관제 화면의 상태바처럼 떠 있는다 -->
+      <div class="hud-dock">
+        <a class="live-strip" href="insight.html" aria-label="실시간 지표 — Port Insight 대시보드로 이동">
+          <div class="live-chip">
+            <div class="k"><span class="pulse-dot" aria-hidden="true"></span><span data-i18n="ls.pci">종합 PCI (항만 혼잡도 지수)</span></div>
+            <div class="v" id="lsTpfs">—</div>
+          </div>
+          <div class="live-chip">
+            <div class="k" data-i18n="ls.congested">혼잡(CONGESTED) 항만</div>
+            <div class="v" id="lsCritical">—</div>
+          </div>
+          <div class="live-chip">
+            <div class="k" data-i18n="ls.risk">글로벌 리스크</div>
+            <div class="v" id="lsRisk">—</div>
+          </div>
+          <div class="live-chip">
+            <div class="k" data-i18n="ls.delay">평균 접안 지연</div>
+            <div class="v" id="lsDelay">—</div>
+          </div>
+        </a>
+        <div id="wxAlert" style="display:none;" role="status" aria-label="기상특보"></div>
+      </div>
     </div>
   </section>
 
   <!-- ================= 운영 규모 스탯 밴드 (2026-08-19) ================= -->
   <section class="section tight" id="stats" aria-label="운영 규모">
     <div class="container">
+      <!-- 운임·물동량 스트립 — 히어로 독을 가볍게 하려고 이곳으로 이동(2026-08-19 개편) -->
+      <div class="live-strip reveal" id="freightStrip" style="display:none; cursor:default; margin-bottom:10px;" aria-label="주간 해상운임지수"></div>
+      <div class="live-strip reveal" id="teuStrip" style="display:none; cursor:default; margin-bottom:14px;" aria-label="월간 컨테이너 물동량"></div>
       <div class="stat-band reveal" id="statBand">
         <div class="stat">
           <div class="s-v"><span data-count="295000" data-suffix="+">0</span></div>
