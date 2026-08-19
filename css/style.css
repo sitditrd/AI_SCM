@@ -1630,19 +1630,20 @@ table.trk-tbl td .na { color: var(--muted); }
 .rel-svg .r-foot { font-size: 10.5px; fill: var(--muted); }
 
 /* ===== 첫 화면 모션 고도화 (2026-08-19) ===== */
-/* 히어로 등장 시퀀스 — 위계 순서대로 떠오른다 */
-.hero-inner > * { opacity: 0; transform: translateY(16px); animation: heroIn .75s cubic-bezier(.2, .7, .25, 1) forwards; }
-.hero-inner > :nth-child(1) { animation-delay: .05s; }
-.hero-inner > :nth-child(2) { animation-delay: .14s; }
-.hero-inner > :nth-child(3) { animation-delay: .24s; }
-.hero-inner > :nth-child(4) { animation-delay: .34s; }
-.hero-inner > :nth-child(5) { animation-delay: .44s; }
-.hero-inner > :nth-child(6) { animation-delay: .54s; }
-.hero-inner > :nth-child(7) { animation-delay: .62s; }
-.hero-inner > :nth-child(8) { animation-delay: .68s; }
-.hero-inner > :nth-child(9) { animation-delay: .74s; }
-@keyframes heroIn { to { opacity: 1; transform: none; } }
-.hero-canvas { opacity: .85; }
+/* 히어로 등장 — 삼성SDS 실측 스펙(blur 12→0, y 40→0, 0.8s cubic-bezier(.22,1,.36,1)) 1회성.
+   등장 후 히어로는 정지 — 읽는 동안 움직이는 것은 소나 핑 2개뿐(리서치 결론). */
+.hero-inner > * { opacity: 0; transform: translateY(40px); filter: blur(12px); animation: heroIn .8s cubic-bezier(.22, 1, .36, 1) forwards; }
+.hero-inner > :nth-child(1) { animation-delay: .08s; }
+.hero-inner > :nth-child(2) { animation-delay: .22s; }
+.hero-inner > :nth-child(3) { animation-delay: .38s; }
+.hero-inner > :nth-child(4) { animation-delay: .52s; }
+.hero-inner > :nth-child(5) { animation-delay: .62s; }
+.hero-inner > :nth-child(6) { animation-delay: .72s; }
+.hero-inner > :nth-child(7) { animation-delay: .80s; }
+.hero-inner > :nth-child(8) { animation-delay: .88s; }
+.hero-inner > :nth-child(9) { animation-delay: .96s; }
+@keyframes heroIn { to { opacity: 1; transform: none; filter: none; } }
+.hero-canvas { opacity: 1; z-index: 0; }
 
 /* 운영 규모 스탯 밴드 */
 .stat-band { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px 22px; border: 1px solid var(--border); border-radius: 18px; padding: 24px 30px; background: color-mix(in srgb, var(--surface) 74%, transparent); }
@@ -1689,17 +1690,6 @@ table.trk-tbl td .na { color: var(--muted); }
   ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
 }
 
-/* ② 스크롤 연동 — 스크롤로 밀려나는 히어로가 서서히 잦아든다 (JS 0줄) */
-@supports (animation-timeline: view()) {
-  .hero-inner {
-    animation: heroFade linear both;
-    animation-timeline: view();
-    animation-range: exit 0% exit 85%;
-  }
-  @keyframes heroFade { to { opacity: .25; transform: translateY(-26px) scale(.985); } }
-  @media (prefers-reduced-motion: reduce) { .hero-inner { animation: none; } }
-}
-
 /* ③ 회전 광택 링 (@property + conic-gradient) — 스탯 밴드 테두리가 천천히 돈다 */
 @property --twl-ring { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
 @supports (background: conic-gradient(from 0deg, #000, #fff)) {
@@ -1718,3 +1708,66 @@ table.trk-tbl td .na { color: var(--muted); }
 
 /* ④ 제목 줄바꿈 균형 — 지원 브라우저에서 헤드라인이 두 줄로 고르게 갈린다 */
 .hero h1, .sec-title, .dash-head h2 { text-wrap: balance; }
+
+/* ===== 히어로 v3 — 관제 정지화면 레이어 (2026-08-19 리서치 스펙) ===== */
+/* 스포트라이트 + 오로라(2색 고정·무모션) + 헤어라인 격자(라디얼 마스크) */
+.hero::before {
+  content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background-image:
+    radial-gradient(ellipse 60% 45% at 38% -12%, rgba(59, 130, 246, .15), transparent 70%),
+    radial-gradient(45% 55% at 70% 22%, rgba(37, 99, 235, .10), transparent 70%),
+    linear-gradient(rgba(148, 163, 184, .05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, .05) 1px, transparent 1px);
+  background-size: auto, auto, 72px 72px, 72px 72px;
+  -webkit-mask-image: radial-gradient(ellipse 78% 70% at 55% 30%, #000, transparent 80%);
+  mask-image: radial-gradient(ellipse 78% 70% at 55% 30%, #000, transparent 80%);
+}
+/* 필름 그레인 — 밴딩 제거 + 질감 (feTurbulence 인라인, 자산 0) */
+.hero::after {
+  content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: .05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+}
+/* 하단 스크림 — 지도·항로가 상단 55%에서만 살고, 텍스트·KPI 는 순수 지면 위에 앉는다 */
+.hero-scrim {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background: linear-gradient(180deg, rgba(10, 15, 30, 0) 0%, rgba(10, 15, 30, .55) 62%, var(--bg, #0a0f1e) 100%);
+}
+/* 소나 핑 — 허용된 유일한 상시 루프(부산 + 1곳), 7초 주기 */
+.hero-pings { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.hero-pings span { position: absolute; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--brand-accent-2); opacity: .9; }
+.hero-pings span::after {
+  content: ''; position: absolute; inset: -2px; border-radius: 50%;
+  border: 1px solid var(--brand-accent-2); opacity: 0;
+  animation: hping 7s ease-out infinite;
+}
+@keyframes hping {
+  0% { transform: scale(1); opacity: .55; }
+  22% { transform: scale(4.2); opacity: 0; }
+  100% { transform: scale(4.2); opacity: 0; }
+}
+.hero-inner { z-index: 5; }
+/* 아이브로우 — 마케팅 문구가 아니라 시스템 메타데이터(신뢰 장치) */
+.hero-eyebrow { letter-spacing: .08em; font-size: 12px; font-weight: 600; }
+/* 타이포 절제 — 토스 사다리·글로비스 트래킹 실측 반영 */
+.hero h1 { font-size: clamp(40px, 3.4vw, 64px); line-height: 1.22; letter-spacing: -0.02em; color: #F2F4F6; font-weight: 700; }
+.hero-sub { letter-spacing: -0.01em; }
+/* KPI 유리 컨트롤 서피스 — Clerk 레시피 */
+.hero .live-strip { border-radius: 16px; }
+.hero .live-chip {
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid rgba(255, 255, 255, .09);
+  border-radius: 14px;
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 24px 48px rgba(0, 0, 0, .35);
+}
+.hero .live-chip .v { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+@media (prefers-reduced-motion: reduce) {
+  .hero-pings span::after { animation: none; }
+}
+@media (max-width: 768px) {
+  /* 모바일 = 정지 사진: 캔버스·핑 미로드, 오로라·그레인만 */
+  .hero-pings { display: none; }
+  .hero::before { background-image: radial-gradient(70% 40% at 80% 8%, rgba(37, 99, 235, .14), transparent 70%); background-size: auto; }
+}
