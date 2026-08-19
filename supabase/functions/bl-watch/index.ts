@@ -79,7 +79,7 @@ async function addOne(no: string, owner: string, opts: Record<string, unknown>) 
     expires_at: expiresAt(m),
     active: true,
   };
-  const r = await rest("bl_watch?on_conflict=mbl_no", {
+  const r = await rest("bl_watch?on_conflict=mbl_no,created_by", {
     method: "POST",
     headers: { Prefer: "resolution=merge-duplicates,return=representation" },
     body: JSON.stringify(row),
@@ -118,8 +118,8 @@ Deno.serve(async (req) => {
         const no = (u.searchParams.get("no") ?? "").replace(/[^A-Za-z0-9]/g, "").toUpperCase();
         if (!MBL_RE.test(no)) return j({ error: "invalid mbl_no" }, 400);
         const own = await rest(`bl_watch?mbl_no=eq.${no}&select=created_by`).then((r) => r.json());
-        const owner = Array.isArray(own) && own[0] ? String(own[0].created_by ?? "").toLowerCase() : "";
-        if (!admin && owner !== me.login) return j({ error: "권한이 없습니다." }, 403);
+        const owners = (Array.isArray(own) ? own : []).map((r) => String((r as Record<string, unknown>).created_by ?? "").toLowerCase());
+        if (!admin && !owners.includes(me.login)) return j({ error: "권한이 없습니다." }, 403);
         const [ch, sn] = await Promise.all([
           rest(`bl_change_log?mbl_no=eq.${no}&select=*&order=changed_at.desc&limit=50`).then((r) => r.json()),
           rest(`bl_snapshot?mbl_no=eq.${no}&select=polled_at,status,etd,eta,vessel,voyage&order=polled_at.desc&limit=20`).then((r) => r.json()),

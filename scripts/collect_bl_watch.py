@@ -340,9 +340,21 @@ def main():
     if berth_groups:
         print('[INFO] 선석 대조 준비 — 기항 그룹 %d개' % len(berth_groups))
 
-    changed_total = mailed = failed = 0
+    # (2026-08-19) 계정별 독립 감시 — unique(mbl_no, created_by) 전환.
+    # 같은 B/L 을 여러 계정이 등록해도 선사 조회·스냅샷·변경로그는 1회,
+    # 알림 메일만 행별(계정별) 이메일로 각각 발송한다(중복 이메일 제거).
+    by_mbl, order = {}, []
     for w in rows:
-        mbl = w['mbl_no']
+        if w['mbl_no'] not in by_mbl:
+            by_mbl[w['mbl_no']] = []
+            order.append(w['mbl_no'])
+        by_mbl[w['mbl_no']].append(w)
+
+    changed_total = mailed = failed = 0
+    for mbl in order:
+        grp = by_mbl[mbl]
+        ids = ','.join(str(g['id']) for g in grp)
+        w = grp[0]
         t0 = datetime.datetime.now(datetime.timezone.utc).isoformat()   # 이번 건 처리 시작 — notified 마감 범위
         res = track(mbl)
         if res.get('error'):
@@ -351,7 +363,7 @@ def main():
             if not dry:
                 # 실패 시엔 30분 뒤 재시도(레이트리밋·일시장애 회복 시간)
                 retry = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=30)).isoformat()
-                sb('PATCH', '/rest/v1/bl_watch?id=eq.%s' % w['id'],
+                sb('PATCH', '/rest/v1/bl_watch?id=in.(%s)' % ids,
                    {'last_polled_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
                     'poll_error': res['error'][:200], 'next_poll_at': retry})
             time.sleep(2)
@@ -368,10 +380,11 @@ def main():
         stage_i = last_stage(res)
         done = stage_i >= 0 and STAGES[stage_i][0] == 'eIn'   # 공컨 반납 = 추적 종료(레거시 조건)
 
-        print('[OK] %s %s | ETD %s / ETA %s%s%s' % (
+        print('[OK] %s %s | ETD %s / ETA %s%s%s%s' % (
             mbl, cur['status'], cur['etd'] or '-', cur['eta'] or '-',
             ' | 변경 %d건' % len(changes) if changes else '',
-            ' | 추적종료' if done else ''))
+            ' | 추적종료' if done else '',
+            ' | 등록 %d계정' % len(grp) if len(grp) > 1 else ''))
         for c in changes:
             print('     · %s: %s → %s%s' % (c['field'], c['old'], c['new'],
                                             '' if NOTIFY.get(c['kind']) else ' (알림 off)'))
@@ -383,10 +396,10 @@ def main():
         snap = dict(cur); snap['mbl_no'] = mbl; snap['payload'] = res
         sb('POST', '/rest/v1/bl_snapshot', snap)
 
-        # 다음 조회 시각을 등급에 따라 계산 — 종료 건은 더 안 본다
+        # 다음 조회 시각을 등급에 따라 계산 — 종료 건은 더 안 본다 (같은 B/L 전 행 일괄)
         tier = poll_tier(cur['status'], cur['etd'], cur['eta'])
         nxt = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=TIERS[tier])).isoformat()
-        sb('PATCH', '/rest/v1/bl_watch?id=eq.%s' % w['id'], {
+        sb('PATCH', '/rest/v1/bl_watch?id=in.(%s)' % ids, {
             'last_polled_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
             'last_status': cur['status'], 'poll_error': None,
             'carrier': cur['carrier'] or w.get('carrier'),
@@ -401,28 +414,36 @@ def main():
         for c in changes:
             rec = {'mbl_no': mbl, 'kind': c['kind'], 'field': c['field'],
                    'old_value': c['old'], 'new_value': c['new'], 'notified': False}
-            if NOTIFY.get(c['kind']) and w.get('notify_email') and not no_mail:
+            if NOTIFY.get(c['kind']) and not no_mail:
                 notify_list.append(c)
             sb('POST', '/rest/v1/bl_change_log', rec)
         changed_total += len(changes)
 
         if notify_list:
-            kinds = sorted(set(c['kind'] for c in notify_list))
-            try:
-                http_json(MAIL_API, {
-                    'email': w['notify_email'], 'mbl_no': mbl,
-                    'carrier': cur['carrier'], 'vessel': cur['vessel'], 'voyage': cur['voyage'],
-                    'por': cur['por'], 'pod': cur['pod'], 'status': cur['status'],
-                    'changes': notify_list,
-                })
-                mailed += 1
-                print('     → 알림 발송 %s (%d건)' % (w['notify_email'], len(notify_list)))
-                # 발송 성공한 종류만 notified 로 마감 — 재실행 시 중복 발송 방지·미발송 추적용
-                mark_notified(mbl, kinds, None, t0)
-            except Exception as e:
-                msg = str(e)[:200]
-                print('     → 알림 실패: %s' % msg[:100])
-                mark_notified(mbl, kinds, msg, t0)
+            # 행별 수신 이메일 팬아웃 — 같은 이메일은 1통만
+            emails = []
+            for g in grp:
+                e = (g.get('notify_email') or '').strip().lower()
+                if e and e not in emails:
+                    emails.append(e)
+            if emails:
+                kinds = sorted(set(c['kind'] for c in notify_list))
+                errs = []
+                for e in emails:
+                    try:
+                        http_json(MAIL_API, {
+                            'email': e, 'mbl_no': mbl,
+                            'carrier': cur['carrier'], 'vessel': cur['vessel'], 'voyage': cur['voyage'],
+                            'por': cur['por'], 'pod': cur['pod'], 'status': cur['status'],
+                            'changes': notify_list,
+                        })
+                        mailed += 1
+                        print('     → 알림 발송 %s (%d건)' % (e, len(notify_list)))
+                    except Exception as ex:
+                        errs.append('%s: %s' % (e, str(ex)[:80]))
+                        print('     → 알림 실패 %s: %s' % (e, str(ex)[:80]))
+                # 발송 시도한 종류는 마감 — 재실행 시 중복 발송 방지, 실패는 메시지 기록
+                mark_notified(mbl, kinds, ('; '.join(errs)[:200] if errs else None), t0)
 
         time.sleep(2)   # 선사 서버 부하·레이트리밋(SITC) 보호
 
