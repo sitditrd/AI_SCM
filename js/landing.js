@@ -463,7 +463,7 @@
         var pt = project(landCells[i][0], landCells[i][1]);
         if (pt.y < -6 || pt.y > H + 6) continue;
         var dB = Math.sqrt((pt.x - hub.x) * (pt.x - hub.x) + (pt.y - hub.y) * (pt.y - hub.y));
-        var tz = (pt.x > dzL && pt.x < dzR && pt.y > dzT && pt.y < dzB) ? 0.45 : 1;
+        var tz = (pt.x > dzL && pt.x < dzR && pt.y > dzT && pt.y < dzB) ? 0.32 : 1;
         m.beginPath();
         m.arc(pt.x, pt.y, dotR, 0, Math.PI * 2);
         m.fillStyle = dB < 60 ? col.dotHi : col.dot;

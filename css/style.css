@@ -1821,6 +1821,8 @@ table.trk-tbl td .na { color: var(--muted); }
 .hud-brief { position: relative; z-index: 5; }
 /* 중앙 유리 카드 — "뒤가 transparent 라 어색" 지적으로 표면 복원(2026-08-19).
    단, 내부 텍스트는 좌측 정렬(가운데 정렬 = 촌스러움 판정) */
+/* 텍스트 레이어 = 0장(2026-08-19 최종) — 블롭도 결국 실루엣이 생긴다.
+   가독은 캔버스 도트 감광(경계 없음) + 깊은 텍스트 섭도우가 전담 */
 .hud-brief {
   max-width: 780px; padding: 36px 44px 34px; text-align: right;
   margin-right: max(0px, calc(50% - 600px));
@@ -1830,26 +1832,6 @@ table.trk-tbl td .na { color: var(--muted); }
   background: transparent;
   border: 0; box-shadow: none;
   animation: cardIn .6s ease-out both;
-}
-.hud-brief::before {
-  content: ''; position: absolute; inset: -64px -84px; z-index: -1; pointer-events: none;
-  /* 비정형 유기 레이어(2026-08-19 최종) — 타원도 도형이라 반려. 크기·중심이 다른
-     소프트 블롭 3개의 합성이라 어떤 명도에서도 도형으로 읽히지 않는다.
-     음영은 네이비 본색 + 보색(웜 골드) 숨결 + 시안 여운의 3겹 — 투명 유지, 깊이만 */
-  background:
-    radial-gradient(52% 46% at 60% 40%, rgba(6, 10, 22, .40) 0%, rgba(6, 10, 22, .20) 55%, transparent 80%),
-    radial-gradient(42% 46% at 40% 66%, rgba(62, 44, 24, .14) 0%, transparent 70%),
-    radial-gradient(34% 30% at 76% 74%, rgba(56, 198, 255, .05) 0%, transparent 70%);
-  -webkit-backdrop-filter: blur(14px) saturate(1.06);
-  backdrop-filter: blur(14px) saturate(1.06);
-  -webkit-mask:
-    radial-gradient(46% 42% at 62% 38%, #000 26%, transparent 76%),
-    radial-gradient(40% 48% at 38% 60%, #000 22%, transparent 74%),
-    radial-gradient(30% 32% at 72% 74%, #000 18%, transparent 70%);
-  mask:
-    radial-gradient(46% 42% at 62% 38%, #000 26%, transparent 76%),
-    radial-gradient(40% 48% at 38% 60%, #000 22%, transparent 74%),
-    radial-gradient(30% 32% at 72% 74%, #000 18%, transparent 70%);
 }
 @keyframes cardIn { from { opacity: 0; } to { opacity: 1; } }
 .hero-ops .hero-ctas { justify-content: flex-end; }
@@ -2024,8 +2006,8 @@ h1.sr-done .accent::after { content: none; }
    상단은 네이비 밴드 + 흰 메뉴(2026-08-19 사용자: "선석배정 눌렀을 때처럼 구색 맞춰라").
    링크 흰색은 .hero-page 전역 규칙이 그대로 담당하므로 별도 색 지정 불필요 */
 [data-theme="light"] body.ops-page .site-header:not(.scrolled) {
-  background: linear-gradient(180deg, #0a1e3f 0%, #0b2d5b 100%);
-  box-shadow: 0 1px 0 rgba(10, 30, 63, .35);
+  background: linear-gradient(180deg, #0a0f1e 0%, #0e1830 100%);  /* 히어로와 동일 계열(2026-08-19 색감 통일) */
+  box-shadow: 0 1px 0 rgba(233, 238, 248, .06);
 }
 /* (2026-08-19) 히어로 항상 다크 전환 — wxAlert 라이트 변형 제거(다크 글래스 유지) */
 
