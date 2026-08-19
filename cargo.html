@@ -19,7 +19,7 @@
   <meta name="twitter:description" content="MBL 번호로 선사 운송 이벤트를 직접 조회합니다 (ONE·COSCO·SM상선·Evergreen·SITC·ZIM 실조회, 그 외는 공식 추적 딥링크).">
   <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="css/style.css?v=2026-08-19z9">
+  <link rel="stylesheet" href="css/style.css?v=2026-08-19z11">
   <link rel="icon" href="assets/twl_logo.ico">
 </head>
 <body class="hero-page">
@@ -61,19 +61,39 @@
     </div>
   </section>
 
-  <!-- ============ 조회 ============ -->
+  <!-- ============ 관제 콘솔 — 좌: 조회·감시 요약·채널 / 우: 상태 히어로 + 상세 (2026-08-19 UX 개편) ============ -->
   <section class="dash-section" id="trace">
     <div class="container">
-      <div class="card reveal" style="margin-bottom:14px;">
-        <div class="berth-toolbar" style="margin:0;">
-          <input type="search" class="focus-search" id="blNo" placeholder="MBL / AWB 번호 (예: ONEYRICG34548800 / 180-12345675)" style="max-width:380px;">
-          <button class="btn btn-primary" id="traceBtn" type="button" data-i18n="cargo.trace.btn">조회</button>
-        </div>
-        <p class="sc-sub" id="awbHint" style="margin:10px 0 0; color:var(--muted); font-size:12px;"></p>
+      <div class="cargo-console">
+        <aside class="cc-side reveal">
+          <div class="card cc-search">
+            <h3 data-i18n="cargo.cc.search">화물 조회</h3>
+            <input type="search" class="focus-search" id="blNo" placeholder="MBL / AWB 번호 (예: ONEYRICG34548800)">
+            <button class="btn btn-primary" id="traceBtn" type="button" data-i18n="cargo.trace.btn" style="width:100%;">조회</button>
+            <p class="sc-sub" id="awbHint" style="margin:8px 0 0; color:var(--muted); font-size:12px;"></p>
+          </div>
+          <div class="card cc-watchcard">
+            <h3 data-i18n="cargo.cc.watch">자동 감시</h3>
+            <div class="cc-wsum" id="watchSummary">—</div>
+            <p class="sc-sub" style="margin:6px 0 10px; font-size:12px;" data-i18n="cargo.cc.watchd">매일 08:20 · 20:20 자동 조회 — 출항·도착·터미널 일정 변경 시 이메일</p>
+            <a class="btn btn-ghost" href="#watch" style="width:100%;" data-i18n="cargo.cc.watchgo">감시 그리드 보기 ↓</a>
+          </div>
+          <button class="card cc-qlbtn" id="qlOpen" type="button">
+            <b data-i18n="cargo.cc.ql">터미널·선사·항공 직접 조회 채널</b>
+            <small data-i18n="cargo.cc.qld">터미널 16곳 · 해상 17사 · 항공 10사 — 새 탭</small>
+          </button>
+        </aside>
+        <main class="cc-main">
+          <div id="statusHero"></div>
+          <div id="carrierOut"></div>
+          <div id="traceOut"></div>
+          <div id="ccEmpty" class="card cc-empty reveal">
+            <div class="cc-empty-ic" aria-hidden="true">⌖</div>
+            <p data-i18n-html="cargo.cc.empty"><b>MBL / AWB 번호</b>를 입력하면 이 자리에<br>현재 상태 · 항로 진행 · 국내 터미널 교차검증 · 변경 이력이 표시됩니다.</p>
+            <p class="sc-sub" style="font-size:12px;" data-i18n="cargo.cc.empty2">실조회 지원: ONE · COSCO · SM상선 · Evergreen · SITC · ZIM — 그 외 선사·항공사는 공식 추적 페이지로 자동 안내</p>
+          </div>
+        </main>
       </div>
-
-      <div id="carrierOut"></div>
-      <div id="traceOut"></div>
     </div>
   </section>
 
@@ -89,27 +109,18 @@
     </div>
   </section>
 
-  <!-- ============ 선사 출항 정시율 (자사 실적 기반 — P7) ============ -->
-  <section class="dash-section" id="reliability" style="padding-top:0;">
-    <div class="container">
-      <div class="dash-head reveal">
-        <span class="no" data-i18n="cargo.rel.no">데이터 인사이트</span>
-        <h2 data-i18n="cargo.rel.h">어느 선사 스케줄을 믿어도 되는가</h2>
-        <span class="hint" data-i18n="cargo.rel.hint">자사 선적 실적으로 산출한 선사별 출항 정시율 — 확정 스케줄(ETD) 대비 실제 선적일 기준</span>
-      </div>
-      <div id="relOut" class="reveal"></div>
-    </div>
-  </section>
-
-  <!-- ============ 무료 조회 채널 바로가기 (키 불필요) ============ -->
-  <section class="dash-section" id="quicklinks" style="padding-top:0;">
-    <div class="container">
-      <div class="dash-head reveal">
-        <span class="no" data-i18n="cargo.quicklinks.no">바로가기</span>
+  <!-- ============ 무료 조회 채널 — 서랍(Drawer)으로 강등 (2026-08-19 UX 개편: 링크벽 상시 노출 제거) ============ -->
+  <div class="ql-backdrop" id="qlBack" hidden></div>
+  <aside class="ql-drawer" id="qlDrawer" hidden aria-label="무료 조회 채널">
+    <div class="ql-drawer-head">
+      <div>
         <h2 data-i18n="cargo.quicklinks.h">터미널·선사·항공 무료 조회 채널</h2>
         <span class="hint" data-i18n="cargo.quicklinks.hint">API 키 없이 즉시 조회 가능한 공식 채널 모음 · 새 탭으로 열림</span>
       </div>
-      <div class="grid-3 reveal" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
+      <button class="icon-btn" id="qlClose" aria-label="닫기">✕</button>
+    </div>
+    <div class="ql-drawer-body">
+      <div class="grid-3" style="grid-template-columns: 1fr;">
         <div class="card">
           <h3 style="font-size:14.5px;" data-i18n="cargo.ql.terminal.t">터미널 반출입·본선작업 (전국 16곳)</h3>
           <p style="font-size:12.5px; color:var(--muted);" data-i18n="cargo.ql.terminal.d">선석배정 수집 대상 16개 터미널과 동일 — 컨테이너 번호·모선항차로 직접 조회</p>
@@ -228,7 +239,7 @@
         발급 절차는 docs/05-development 문서를 참조하십시오.
       </p>
     </div>
-  </section>
+  </aside>
 
   <!-- ================= 푸터 ================= -->
   <footer class="site-footer">
@@ -251,10 +262,9 @@
   </footer>
 
   <script src="js/common.js?v=2026-4"></script>
-  <script src="js/i18n.js?v=2026-08-19c"></script>
+  <script src="js/i18n.js?v=2026-08-19d"></script>
   <script src="js/auth.js?v=2026-07-29f"></script>
   <script src="js/auth-gate.js?v=2026-07-30a"></script>
-  <script src="js/data_reliability.js?v=2026-08-19a"></script>
-  <script src="js/cargo.js?v=2026-08-19b"></script>
+  <script src="js/cargo.js?v=2026-08-19c"></script>
 </body>
 </html>

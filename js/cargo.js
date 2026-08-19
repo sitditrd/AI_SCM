@@ -320,9 +320,36 @@
     return '<div class="vc-wrap">' + svg + '</div>' + v;
   }
 
+  /* 상태 히어로 (UX 개편 안 4) — 지금 상태·ETA D-day·다음 이벤트만 크게 */
+  function renderStatusHero(res, st, pts) {
+    var host = el('statusHero'); if (!host) return;
+    var n = (pts || []).length;
+    if (n < 2) { host.innerHTML = ''; return; }
+    var s = res.summary || {};
+    var org = pts[0], dest = pts[n - 1], next = null;
+    for (var i = 0; i < n; i++) { if (!pts[i].act) { next = pts[i]; break; } }
+    var etaTxt = dest.dt ? fmtShort(dest.dt) : '';
+    var dd = '';
+    if (dest.dt && !dest.act) {
+      var ms = vcDate(dest.dt) - Date.now();
+      if (isFinite(ms)) { var d = Math.ceil(ms / 864e5); dd = d >= 0 ? 'D-' + d : 'D+' + (-d); }
+    }
+    host.innerHTML = '<div class="cs-hero reveal in">' +
+      '<span class="trk-badge ' + st.c + ' cs-badge">' + esc(st.t) + '</span>' +
+      '<div class="cs-body">' +
+      '<div class="cs-route">' + esc(vcCode(org.nm)) + ' → ' + esc(vcCode(dest.nm)) +
+      (s.vessel ? ' · ' + esc(s.vessel) + (s.voyage ? ' ' + esc(s.voyage) : '') : '') + '</div>' +
+      '<div class="cs-eta">' + (dest.act
+        ? '도착 ' + esc(etaTxt)
+        : 'ETA <b>' + esc(etaTxt || '미정') + '</b>' + (dd ? ' <span class="cs-dd">' + dd + '</span>' : '')) + '</div>' +
+      (next ? '<div class="cs-next">다음 이벤트 · ' + esc(vcCode(next.nm)) +
+        (next.dt ? ' ' + esc(fmtShort(next.dt)) : '') + '</div>' : '') +
+      '</div></div>';
+  }
   function renderCarrier(res, no) {
     var out = el('carrierOut');
     if (!res || res.error) {
+      var sh0 = el('statusHero'); if (sh0) sh0.innerHTML = '';
       var oc0 = oceanInfo(no);
       out.innerHTML = '<div class="card reveal in" style="margin-bottom:14px;">' +
         '<h3 style="margin-top:0;">선사 운송 추적</h3>' +
@@ -335,6 +362,7 @@
     var cs = res.containers || [];
     var idx = progressOf(cs);
     var st = statusOf(idx);
+    renderStatusHero(res, st, vcPts(res, idx / (SLOTS.length - 1)));
 
     var h = '<div class="card trk-card reveal in" style="margin-bottom:14px;">';
 
@@ -910,15 +938,20 @@
     w.document.close();
   }
 
+  function watchSummarySet(html) {
+    var ws = el('watchSummary'); if (ws) ws.innerHTML = html;
+  }
   function renderWatch() {
     var box = el('watchOut'); if (!box) return;
     var all = watchState.items;
     if (watchState.needLogin) {
+      watchSummarySet('<span class="cs-muted">로그인 후 이용 가능</span>');
       box.innerHTML = '<div class="card"><p class="sc-sub" style="margin:0;">추적 감시는 <b>로그인 후</b> 이용할 수 있습니다. ' +
         '등록한 화물은 <b>본인에게만</b> 보이며, 관리자는 전체를 조회할 수 있습니다.</p></div>';
       return;
     }
     if (!all.length) {
+      watchSummarySet('등록 <b>0</b>건');
       /* 비어 있어도 일괄 등록 버튼은 반드시 보여야 한다 — 첫 등록의 진입점이기 때문 */
       box.innerHTML = '<div class="card trk-card">' +
         '<div class="trk-head"><span class="trk-bl">추적 등록 화물</span>' +
@@ -937,6 +970,7 @@
     var start = (watchState.page - 1) * WATCH_PAGE;
     var pageRows = rows.slice(start, start + WATCH_PAGE);
     var actCnt = all.filter(function (x) { return x.active; }).length;
+    watchSummarySet('감시 중 <b>' + actCnt + '</b>건 · 전체 ' + all.length + '건');
     var carrierOpts = ['<option value="">전체 선사</option>'].concat(
       Array.from(new Set(all.map(function (x) { return x.carrier; }).filter(Boolean))).sort()
         .map(function (c) { return '<option value="' + esc(c) + '"' + (watchState.carrier === c ? ' selected' : '') + '>' + esc(c) + '</option>'; })).join('');
@@ -1047,7 +1081,6 @@
         watchState.needLogin = !!d.needLogin;
         renderWatch();
         syncWatchBtn();      // 조회 결과가 이미 떠 있으면 등록 상태를 버튼에 반영
-        renderReliability(); // 선사 목록 로드 후 재렌더 — live 표시점(●)이 이때 채워진다
       }).catch(function () { box.innerHTML = '<div class="card"><p class="sc-sub" style="margin:0;">추적 목록을 불러오지 못했습니다.</p></div>'; });
     });
   }
@@ -1168,6 +1201,7 @@
 
   /* 딥링크 카드 — live 미지원 선사·항공사 (외부 공식 추적 페이지로 안내) */
   function renderDeeplink(title, name, url, note) {
+    var sh = el('statusHero'); if (sh) sh.innerHTML = '';
     el('carrierOut').innerHTML = '<div class="card reveal in" style="margin-bottom:14px;">' +
       '<h3 style="margin-top:0;">' + esc(title) + (name ? ' <small style="color:var(--muted);">' + esc(name) + '</small>' : '') + '</h3>' +
       '<p class="sc-sub">' + esc(note) + '</p>' +
@@ -1178,6 +1212,7 @@
   function trace() {
     var no = el('blNo').value.trim();
     if (no.length < 6) return;
+    var em = el('ccEmpty'); if (em) em.style.display = 'none';
     var awb = awbInfo(no);
     var oc = oceanInfo(no);
     el('awbHint').innerHTML = awb
@@ -1209,62 +1244,19 @@
       '번호에서 선사를 식별하지 못했습니다. 실조회 지원: ONE·COSCO·SM상선·Evergreen·SITC·ZIM(키 등록 시 머스크·하파그로이드·HMM 자동 확장) / 그 외 선사는 딥링크. 번호를 확인하거나 아래 무료 조회 채널을 이용하십시오.');
   }
 
-  /* ============================================================
-     선사 출항 정시율 리그테이블 (P7) — 자사 선적 실적(ELVIS)에서 산출한
-     정적 데이터(js/data_reliability.js)를 SVG 로 그린다.
-     "어느 선사 스케줄을 믿고 육상운송을 잡아도 되는가"에 대한 자사 데이터 답변.
-     ============================================================ */
-  function renderReliability() {
-    var box = el('relOut');
-    var data = window.TWL_RELIABILITY;
-    if (!box || !data || !data.rows || !data.rows.length) return;
-    var rows = data.rows;
-    var RH = 34, top = 44, W = 900;
-    var H = top + rows.length * RH + 34;
-    var x0 = 150, x1 = 620;                 /* 막대 영역 */
-    var min = 75, max = 100;                /* 정시율 스케일 — 75~100% 창으로 대비 확대 */
-    var xr = function (v) { return x0 + (Math.max(min, v) - min) / (max - min) * (x1 - x0); };
-
-    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="rel-svg" role="img" aria-label="선사별 출항 정시율">';
-    /* 눈금 75/80/85/90/95/100 */
-    for (var g = min; g <= max; g += 5) {
-      var gx = xr(g);
-      svg += '<line class="r-grid" x1="' + gx + '" y1="' + (top - 8) + '" x2="' + gx + '" y2="' + (H - 30) + '"/>' +
-        '<text class="r-ax" x="' + gx + '" y="' + (top - 14) + '" text-anchor="middle">' + g + '%</text>';
-    }
-    svg += '<text class="r-hd" x="' + (x1 + 34) + '" y="' + (top - 14) + '">지연율</text>' +
-      '<text class="r-hd" x="' + (x1 + 118) + '" y="' + (top - 14) + '">지연평균</text>' +
-      '<text class="r-hd" x="' + (x1 + 210) + '" y="' + (top - 14) + '">표본</text>';
-
-    rows.forEach(function (r, i) {
-      var y = top + i * RH + RH / 2;
-      var live = isLive(r.scac);
-      svg += '<text class="r-nm" x="' + (x0 - 12) + '" y="' + (y + 4) + '" text-anchor="end">' + esc(r.name) +
-        ' <tspan class="r-sc">' + esc(r.scac) + '</tspan></text>';
-      if (live) svg += '<circle class="r-live" cx="' + (x0 - 141) + '" cy="' + y + '" r="3"><title>실조회 지원 선사</title></circle>';
-      /* 정시율 막대 — 값이 낮을수록 붉은 기미 */
-      var bw = xr(r.ontime) - x0;
-      svg += '<rect class="r-bar' + (r.ontime < 86 ? ' low' : (r.ontime < 91 ? ' mid' : '')) +
-        '" x="' + x0 + '" y="' + (y - 8) + '" width="' + Math.max(2, bw) + '" height="16" rx="8"/>' +
-        '<text class="r-val" x="' + (xr(r.ontime) + 8) + '" y="' + (y + 4) + '">' + r.ontime + '%</text>';
-      /* 지연율 — MSC 처럼 두 자릿수는 강조 */
-      svg += '<text class="r-late' + (r.late >= 5 ? ' bad' : '') + '" x="' + (x1 + 34) + '" y="' + (y + 4) + '">' + r.late + '%</text>' +
-        '<text class="r-sub" x="' + (x1 + 118) + '" y="' + (y + 4) + '">' + (r.lateAvg || '-') + '일</text>' +
-        '<text class="r-sub" x="' + (x1 + 210) + '" y="' + (y + 4) + '">' + Number(r.n).toLocaleString() + '</text>';
-    });
-    svg += '<text class="r-foot" x="' + (x0 - 141) + '" y="' + (H - 10) + '">기준 ' + esc(data.basis) +
-      ' · ● 실조회 지원 · 산출 ' + esc(data.asOf) + '</text></svg>';
-    box.innerHTML = '<div class="card trk-card"><div class="trk-head">' +
-      '<span class="trk-bl">선사 출항 정시율</span>' +
-      '<span class="trk-carrier">자사 선적 실적 기준 · ±1일 정시 창</span>' +
-      '<span class="trk-spacer"></span>' +
-      '<span class="trk-asof">지연율 = 예정보다 하루 넘게 늦게 출항한 비율</span></div>' +
-      '<div class="trk-sec rel-wrap">' + svg + '</div></div>';
-  }
-
   document.addEventListener('DOMContentLoaded', function () {
-    renderReliability();
     el('traceBtn').addEventListener('click', trace);
+    /* 바로가기 채널 서랍 — 43개 링크벽을 상시 노출에서 강등(UX 개편) */
+    var qlO = el('qlOpen'), qlD = el('qlDrawer'), qlC = el('qlClose'), qlB = el('qlBack');
+    function qlToggle(show) {
+      if (!qlD) return;
+      qlD.hidden = !show; if (qlB) qlB.hidden = !show;
+      document.body.style.overflow = show ? 'hidden' : '';
+    }
+    if (qlO) qlO.addEventListener('click', function () { qlToggle(true); });
+    if (qlC) qlC.addEventListener('click', function () { qlToggle(false); });
+    if (qlB) qlB.addEventListener('click', function () { qlToggle(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') qlToggle(false); });
     el('blNo').addEventListener('keydown', function (e) { if (e.key === 'Enter') trace(); });
     loadWatchList();
     /* ?no= 딥링크 — 알림 메일의 "포털에서 확인" 버튼이 이 경로로 들어온다(P8).

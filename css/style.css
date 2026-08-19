@@ -1888,7 +1888,7 @@ table.trk-tbl td .na { color: var(--muted); }
    ::after 클론(그라데이션 텍스트)이 clip-path 로 차오름. sr-armed 없으면 평소 파랑 그대로 */
 h1.sr-armed .accent { position: relative; color: rgba(150, 190, 245, .38); }
 h1.sr-armed .accent::after {
-  content: attr(data-text) / "";
+  content: attr(data-text);   /* '/ ""' 대체텍스트 문법은 미지원 브라우저에서 선언 통째 무효 — 평문으로 */
   position: absolute; inset: 0; text-shadow: none;
   background: linear-gradient(92deg, #9fc9ff 0%, #38c6ff 78%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
@@ -1900,6 +1900,21 @@ h1.sr-armed .accent::after {
 [data-theme="light"] h1.sr-armed .accent::after {
   background: linear-gradient(92deg, #4a90e0 0%, #1d6fe0 78%);
   -webkit-background-clip: text; background-clip: text;
+}
+/* 채움 완료 후 확정 상태 — JS 가 3.2s 에 sr-done 부여. 애니가 어떤 이유로든 못 돌아도
+   최종은 반드시 선명한 그라데이션(미지원 브라우저는 원래 파랑) */
+h1.sr-done .accent { color: #7cb5f5; }
+h1.sr-done .accent::after { content: none; }
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  h1.sr-done .accent {
+    color: transparent; text-shadow: none;
+    background: linear-gradient(92deg, #9fc9ff 0%, #38c6ff 78%);
+    -webkit-background-clip: text; background-clip: text;
+  }
+  [data-theme="light"] h1.sr-done .accent {
+    background: linear-gradient(92deg, #4a90e0 0%, #1d6fe0 78%);
+    -webkit-background-clip: text; background-clip: text;
+  }
 }
 .hud-dock {
   position: absolute; z-index: 6; left: 0; right: 0; bottom: 0;
@@ -2029,3 +2044,59 @@ h1.sr-armed .accent::after {
 [data-theme="light"] body.ops-page .site-header:not(.scrolled) .logo-text .l2 { color: var(--muted); }
 [data-theme="light"] .hero-ops .live-strip { background: transparent; border-color: rgba(18, 45, 90, .10); }
 [data-theme="light"] #wxAlert .live-chip { background: rgba(255, 255, 255, .8); }
+
+/* ===== 화물추적 관제 콘솔 (2026-08-19 UX 개편 — 시안 1+4) ===== */
+.cargo-console { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 18px; align-items: start; }
+.cc-side { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 76px; }
+.cc-side h3 { margin: 0 0 10px; font-size: 14.5px; }
+.cc-search input.focus-search { width: 100%; margin-bottom: 10px; }
+.cc-wsum { font-size: 20px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+.cc-wsum b { color: var(--brand-accent-2, #38c6ff); }
+.cc-wsum .cs-muted { font-size: 13px; font-weight: 600; color: var(--muted); }
+.cc-qlbtn {
+  text-align: left; cursor: pointer; font: inherit; color: var(--ink);
+  display: flex; flex-direction: column; gap: 4px; border: 1px solid var(--border);
+  transition: border-color .15s ease, transform .15s ease;
+}
+.cc-qlbtn:hover { border-color: color-mix(in srgb, var(--brand-accent-2, #38c6ff) 45%, transparent); transform: translateY(-1px); }
+.cc-qlbtn b { font-size: 13.5px; }
+.cc-qlbtn small { color: var(--muted); font-size: 11.5px; }
+.cc-empty { text-align: center; padding: 56px 24px; }
+.cc-empty-ic { font-size: 40px; color: var(--muted); opacity: .6; margin-bottom: 10px; }
+.cc-empty p { margin: 6px 0; line-height: 1.7; }
+/* 상태 히어로 — 결과 최상단 요약 (안 4) */
+.cs-hero {
+  display: flex; align-items: center; gap: 18px; margin-bottom: 14px;
+  padding: 18px 22px; border-radius: 14px; border: 1px solid var(--border);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--surface) 92%, transparent), color-mix(in srgb, var(--surface-2) 88%, transparent));
+  box-shadow: var(--shadow);
+}
+.cs-hero .cs-badge { font-size: 13px; padding: 7px 14px; }
+.cs-body { min-width: 0; }
+.cs-route { font-weight: 700; font-size: 14.5px; letter-spacing: .01em; }
+.cs-eta { font-size: 21px; font-weight: 800; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.cs-eta b { color: var(--ink); }
+.cs-dd { color: var(--brand-accent-2, #38c6ff); font-size: 15px; margin-left: 4px; }
+.cs-next { color: var(--muted); font-size: 12.5px; margin-top: 3px; }
+/* 채널 서랍 */
+.ql-backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(4, 8, 18, .55); backdrop-filter: blur(2px); }
+.ql-drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 61; width: min(560px, 94vw);
+  background: var(--surface); border-left: 1px solid var(--border);
+  box-shadow: -30px 0 80px rgba(0, 0, 0, .4); overflow-y: auto;
+  animation: qlIn .25s ease-out;
+}
+@keyframes qlIn { from { transform: translateX(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+.ql-drawer-head {
+  position: sticky; top: 0; z-index: 2; display: flex; align-items: flex-start; gap: 12px;
+  padding: 18px 20px 14px; background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.ql-drawer-head h2 { margin: 0 0 4px; font-size: 17px; }
+.ql-drawer-head .hint { color: var(--muted); font-size: 12px; }
+.ql-drawer-head .icon-btn { margin-left: auto; }
+.ql-drawer-body { padding: 16px 20px 24px; }
+@media (max-width: 1000px) {
+  .cargo-console { grid-template-columns: 1fr; }
+  .cc-side { position: static; }
+}
+@media (prefers-reduced-motion: reduce) { .ql-drawer { animation: none; } }

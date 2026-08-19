@@ -64,6 +64,8 @@
       var acc = h1.querySelector('.srw .accent');
       if (acc) acc.setAttribute('data-text', acc.textContent);
       h1.classList.add('sr-armed');
+      /* 안전망: 애니가 어떤 이유로든 멈췄더라도 최종은 반드시 선명한 그라데이션 */
+      setTimeout(function () { if (h1.isConnected) h1.classList.add('sr-done'); }, 3200);
     }, 160);
   }
 
