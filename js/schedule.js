@@ -11,6 +11,7 @@
   var mode = 'arr';   /* arr | dep | sched */
 
   function el(id) { return document.getElementById(id); }
+  function t(k, ko) { return (window.TWI18N && window.TWI18N.t) ? window.TWI18N.t(k, ko) : ko; }
   function esc(s) {
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
@@ -48,49 +49,53 @@
   }
 
   var DAYS = [
-    ['monday', '월'], ['tuesday', '화'], ['wednesday', '수'], ['thursday', '목'],
-    ['friday', '금'], ['saturday', '토'], ['sunday', '일']
+    ['monday', t('rt.day.mon', '월')], ['tuesday', t('rt.day.tue', '화')], ['wednesday', t('rt.day.wed', '수')], ['thursday', t('rt.day.thu', '목')],
+    ['friday', t('rt.day.fri', '금')], ['saturday', t('rt.day.sat', '토')], ['sunday', t('rt.day.sun', '일')]
   ];
   /* 정기 운항편의 요일 7개 Y/N 을 "월·수·금" 형태로 압축 */
   function dayChips(it) {
     var on = DAYS.filter(function (d) { return String(it[d[0]] || '').toUpperCase() === 'Y'; });
     if (!on.length) return '—';
-    if (on.length === 7) return '매일';
+    if (on.length === 7) return t('rt.air.daily', '매일');
     return on.map(function (d) { return d[1]; }).join('·');
   }
 
   var COLS = {
     arr: [
-      { h: '일자', v: function (x) { return mmdd(x.scheduleDateTime || x.scheduleDatetime); } },
-      { h: '편명', v: function (x) { return x.flightId || x.flightid || '—'; } },
-      { h: '항공사', v: function (x) { return x.airline || '—'; } },
-      { h: '출발지', v: function (x) { return (x.airport || '—') + (x.airportCode ? ' (' + x.airportCode + ')' : ''); } },
-      { h: '예정', v: function (x) { return hhmm(x.scheduleDateTime || x.scheduleDatetime); } },
-      { h: '변경', v: function (x) { return hhmm(x.estimatedDateTime || x.estimatedDatetime); } },
-      { h: '터미널', v: function (x) { return x.terminalId || '—'; } },
-      { h: '상태', v: function (x) { return x.remark || '—'; } }
+      { h: t('rt.air.col.date', '일자'), v: function (x) { return mmdd(x.scheduleDateTime || x.scheduleDatetime); } },
+      { h: t('rt.air.col.flight', '편명'), v: function (x) { return x.flightId || x.flightid || '—'; } },
+      { h: t('rt.air.col.airline', '항공사'), v: function (x) { return x.airline || '—'; } },
+      { h: t('rt.air.col.origin', '출발지'), v: function (x) { return (x.airport || '—') + (x.airportCode ? ' (' + x.airportCode + ')' : ''); } },
+      { h: t('rt.air.col.sched', '예정'), v: function (x) { return hhmm(x.scheduleDateTime || x.scheduleDatetime); } },
+      { h: t('rt.air.col.est', '변경'), v: function (x) { return hhmm(x.estimatedDateTime || x.estimatedDatetime); } },
+      { h: t('rt.air.col.term', '터미널'), v: function (x) { return x.terminalId || '—'; } },
+      { h: t('rt.air.col.status', '상태'), v: function (x) { return x.remark || '—'; } }
     ],
     sched: [
-      { h: '편명', v: function (x) { return x.flightid || x.flightId || '—'; } },
-      { h: '항공사', v: function (x) { return x.airline || '—'; } },
-      { h: '상대공항', v: function (x) { return (x.airport || '—') + (x.airportCode ? ' (' + x.airportCode + ')' : ''); } },
-      { h: '운항 요일', v: function (x) { return dayChips(x); } },
-      { h: '시각', v: function (x) { return hhmm(x.st); } },
-      { h: '운항 기간', v: function (x) { return ymd(x.firstdate) + ' ~ ' + ymd(x.lastdate); } },
-      { h: '시즌', v: function (x) { return x.season || '—'; } }
+      { h: t('rt.air.col.flight', '편명'), v: function (x) { return x.flightid || x.flightId || '—'; } },
+      { h: t('rt.air.col.airline', '항공사'), v: function (x) { return x.airline || '—'; } },
+      { h: t('rt.air.col.cpairport', '상대공항'), v: function (x) { return (x.airport || '—') + (x.airportCode ? ' (' + x.airportCode + ')' : ''); } },
+      { h: t('rt.air.col.days', '운항 요일'), v: function (x) { return dayChips(x); } },
+      { h: t('rt.air.col.time', '시각'), v: function (x) { return hhmm(x.st); } },
+      { h: t('rt.air.col.period', '운항 기간'), v: function (x) { return ymd(x.firstdate) + ' ~ ' + ymd(x.lastdate); } },
+      { h: t('rt.air.col.season', '시즌'), v: function (x) { return x.season || '—'; } }
     ]
   };
   COLS.dep = COLS.arr.map(function (c) {
-    return c.h === '출발지' ? { h: '목적지', v: c.v } : c;
+    return c.h === t('rt.air.col.origin', '출발지') ? { h: t('rt.air.col.dest', '목적지'), v: c.v } : c;
   });
 
   var ALIAS = { arr: 'aircargoarr', dep: 'aircargodep', sched: 'airschedarr' };
-  var TITLE = { arr: '화물편 도착 현황', dep: '화물편 출발 현황', sched: '정기 화물 운항편' };
+  var TITLE = {
+    arr: t('rt.air.title.arr', '화물편 도착 현황'),
+    dep: t('rt.air.title.dep', '화물편 출발 현황'),
+    sched: t('rt.air.title.sched', '정기 화물 운항편')
+  };
 
   function search() {
     var out = el('airOut');
     if (!out) return;
-    out.innerHTML = card('<div class="sc-sub">항공 화물편 조회 중…</div>');
+    out.innerHTML = card('<div class="sc-sub">' + t('rt.air.loading', '항공 화물편 조회 중…') + '</div>');
 
     var p = new URLSearchParams({ api: ALIAS[mode], numOfRows: '50' });
     var f = el('airFlight').value.trim(), a = el('airPort').value.trim();
@@ -106,7 +111,7 @@
       .then(function (r) { return r.json(); })
       .then(function (res) {
         if (res.needKey) {
-          out.innerHTML = card('<h3 style="margin-top:0; font-size:15px;">data.go.kr 공공 API 키가 아직 등록되지 않았습니다</h3>' +
+          out.innerHTML = card('<h3 style="margin-top:0; font-size:15px;">' + t('rt.air.nokey', 'data.go.kr 공공 API 키가 아직 등록되지 않았습니다') + '</h3>' +
             '<p class="sc-sub">' + esc(res.guide) + '</p>');
           return;
         }
@@ -117,13 +122,13 @@
           items = items.filter(function (x) { return String(x.flightid || x.flightId || '').toUpperCase().indexOf(q) >= 0; });
         }
         if (!items || !items.length) {
-          out.innerHTML = card('<div class="sc-sub">조회 결과가 없습니다. 조건(편명·공항코드)을 바꿔 다시 시도하십시오.</div>');
+          out.innerHTML = card('<div class="sc-sub">' + t('rt.air.empty', '조회 결과가 없습니다. 조건(편명·공항코드)을 바꿔 다시 시도하십시오.') + '</div>');
           return;
         }
         var cols = COLS[mode];
         out.innerHTML = card(
           '<h3 style="margin-top:0; font-size:15px;">' + TITLE[mode] +
-            ' <small style="color:var(--muted);">' + items.length + '건 · 인천국제공항공사</small></h3>' +
+            ' <small style="color:var(--muted);">' + items.length + t('rt.air.countsrc', '건 · 인천국제공항공사') + '</small></h3>' +
           '<div class="tbl-scroll"><table class="tw"><thead><tr>' +
           cols.map(function (c) { return '<th>' + c.h + '</th>'; }).join('') +
           '</tr></thead><tbody>' +
@@ -132,7 +137,7 @@
           }).join('') + '</tbody></table></div>');
       })
       .catch(function () {
-        out.innerHTML = card('<div class="sc-sub">조회 실패 — 잠시 후 다시 시도하십시오.</div>');
+        out.innerHTML = card('<div class="sc-sub">' + t('rt.air.fail', '조회 실패 — 잠시 후 다시 시도하십시오.') + '</div>');
       });
   }
 

@@ -23,7 +23,7 @@
   <link rel="icon" href="assets/twl_logo.ico">
 </head>
 <body class="hero-page">
-  <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+  <a class="skip-link" href="#main-content" data-i18n="ld.a11y.skip">본문으로 건너뛰기</a>
 
   <!-- ================= 헤더 ================= -->
   <header class="site-header">
@@ -57,7 +57,7 @@
         </div>
         <div class="live-status">
           <span class="pulse-dot" aria-hidden="true"></span>
-          <span class="stamp" id="lastUpdated">확인 중…</span>
+          <span class="stamp" id="lastUpdated" data-i18n="ld.status.checking">확인 중…</span>
           <button class="refresh-btn" id="refreshBtn" aria-label="지금 새로고침">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 4v5h-5"/></svg>
             <span data-i18n="status.hero.refresh">새로고침</span>
@@ -66,7 +66,7 @@
       </div>
       <div class="health-banner" id="healthBanner">
         <span class="hb-dot" id="hbDot"></span>
-        <b id="hbTitle">파이프라인 점검 중…</b>
+        <b id="hbTitle" data-i18n="ld.status.hb.checking">파이프라인 점검 중…</b>
         <span id="hbSub" style="color:#9db8dd;"></span>
       </div>
     </div>
@@ -154,7 +154,7 @@
     <div class="container footer-grid">
       <div>
         <a href="index.html" class="logo-slot" aria-label="태웅로직스"></a>
-        <p class="footer-note">
+        <p class="footer-note" data-i18n-html="ld.status.foot.note">
           태웅로직스 | 문의: itt@twsc.co.kr<br>
           시각 표기 KST · 지표 산출 기준: 데이터 현황·상세기술서 참조 · 포털 v1.5 (2026-07-28 개정)<br>
           © <span class="footer-year">2026</span> TAEWOONG LOGISTICS. All rights reserved.
@@ -169,10 +169,10 @@
     </div>
   </footer>
 
-  <script src="js/common.js?v=2026-4"></script>
-  <script src="js/i18n.js?v=2026-08-20a"></script>
-  <script src="js/auth.js?v=2026-07-29f"></script>
-  <script src="js/auth-gate.js?v=2026-07-30a"></script>
-  <script src="js/status.js?v=2026-08-14b"></script>
+  <script src="js/common.js?v=2026-08-20b"></script>
+  <script src="js/i18n.js?v=2026-08-20b"></script>
+  <script src="js/auth.js?v=2026-08-20b"></script>
+  <script src="js/auth-gate.js?v=2026-08-20b"></script>
+  <script src="js/status.js?v=2026-08-20b"></script>
 </body>
 </html>

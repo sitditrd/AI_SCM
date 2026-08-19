@@ -24,6 +24,8 @@
   function el(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function dt(v) { return v ? String(v).slice(5, 16).replace('T', ' ') : '—'; }
+  function t(k, ko) { return (window.TWI18N && window.TWI18N.t) ? window.TWI18N.t(k, ko) : ko; }
+  function stKo(st) { return STATUS_KO[st] ? t('vessel.status.' + String(st).toLowerCase(), STATUS_KO[st]) : st; }
 
   /* ---------- 확대 이동 도착 처리: 지도 스크롤 + 터미널 위치 마커 ----------
      지도는 VesselFinder iframe이라 내부에 마커를 못 찍는다.
@@ -52,9 +54,9 @@
     pin.setAttribute('aria-hidden', 'true');
     pin.innerHTML =
       '<span class="mfp-dot"><i class="mfp-ring"></i></span>' +
-      '<span class="mfp-label"><b>' + esc(focusCd) + ' 터미널</b>' +
-      (vsl ? '<span>' + esc(vsl) + (berth ? ' · 선석 ' + esc(berth) : '') + '</span>' : '') +
-      '<small>지도 정중앙 = 터미널 위치 · 표시는 잠시 후 사라집니다</small></span>';
+      '<span class="mfp-label"><b>' + esc(focusCd) + ' ' + t('vessel.lbl.terminal', '터미널') + '</b>' +
+      (vsl ? '<span>' + esc(vsl) + (berth ? ' · ' + t('vessel.lbl.berth', '선석') + ' ' + esc(berth) : '') + '</span>' : '') +
+      '<small>' + t('vessel.pin.hint', '지도 정중앙 = 터미널 위치 · 표시는 잠시 후 사라집니다') + '</small></span>';
     wrap.appendChild(pin);
     setTimeout(function () { pin.classList.add('hide'); }, 9000);
     setTimeout(function () { if (pin.parentNode) pin.parentNode.removeChild(pin); }, 10000);
@@ -63,7 +65,7 @@
   function search(q) {
     var box = el('shipResults');
     if (!q || q.length < 2) { box.innerHTML = ''; return; }
-    box.innerHTML = '<div class="src-card"><div class="sc-sub">검색 중…</div></div>';
+    box.innerHTML = '<div class="src-card"><div class="sc-sub">' + t('vessel.msg.searching', '검색 중…') + '</div></div>';
     /* 쉼표·괄호·따옴표는 PostgREST or=() 필터 문법을 깨뜨리므로 제거 (예: "HMM (DIAMOND)" 검색 시 400 방지) */
     var enc = encodeURIComponent('*' + q.replace(/[,()"'\\]/g, ' ').trim() + '*');
     var url = SUPABASE_URL + '/rest/v1/bs_vessel_calls' +
@@ -81,8 +83,8 @@
         });
         list = list.slice(0, 6);
         if (!list.length) {
-          box.innerHTML = '<div class="src-card"><b>' + esc(q) + '</b><div class="sc-sub">선석배정 DB에서 찾지 못했습니다. 철자를 확인하거나, 아래 버튼으로 외부 실시간 검색을 이용하십시오.</div>' +
-            '<div><a class="btn btn-ghost" target="_blank" rel="noopener" href="https://www.vesselfinder.com/vessels?name=' + encodeURIComponent(q) + '">VesselFinder에서 실시간 검색 ↗</a></div></div>';
+          box.innerHTML = '<div class="src-card"><b>' + esc(q) + '</b><div class="sc-sub">' + t('vessel.find.none', '선석배정 DB에서 찾지 못했습니다. 철자를 확인하거나, 아래 버튼으로 외부 실시간 검색을 이용하십시오.') + '</div>' +
+            '<div><a class="btn btn-ghost" target="_blank" rel="noopener" href="https://www.vesselfinder.com/vessels?name=' + encodeURIComponent(q) + '">' + t('vessel.find.vf', 'VesselFinder에서 실시간 검색') + ' ↗</a></div></div>';
           return;
         }
         box.innerHTML = list.map(function (r) {
@@ -96,20 +98,20 @@
           var vfUrl = 'https://www.vesselfinder.com/vessels?name=' + encodeURIComponent(r.vessel_name);
           return '<div class="src-card">' +
             '<div class="sc-top"><b>' + esc(r.vessel_name) + '</b>' +
-            '<span class="st-badge st-' + (STATUS_KO[r.status] ? String(r.status).toLowerCase() : 'planned') + '"><i class="lv-dot"></i>' + esc(STATUS_KO[r.status] || r.status) + '</span></div>' +
-            '<div class="sc-sub">' + esc(r.terminal_cd) + ' · 선석 ' + esc(r.berth || '—') + ' · ' + esc(r.carrier || '—') +
+            '<span class="st-badge st-' + (STATUS_KO[r.status] ? String(r.status).toLowerCase() : 'planned') + '"><i class="lv-dot"></i>' + esc(stKo(r.status)) + '</span></div>' +
+            '<div class="sc-sub">' + esc(r.terminal_cd) + ' · ' + t('vessel.lbl.berth', '선석') + ' ' + esc(r.berth || '—') + ' · ' + esc(r.carrier || '—') +
             (r.voyage ? ' · ' + esc(r.voyage) : '') + '</div>' +
-            '<div class="sc-sub">접안 ' + dt(r.eta) + ' → 출항 ' + dt(r.etd) + ' <small>(' + esc(r.collected_date) + ' 수집)</small></div>' +
+            '<div class="sc-sub">' + t('vessel.lbl.eta', '접안') + ' ' + dt(r.eta) + ' → ' + t('vessel.lbl.etd', '출항') + ' ' + dt(r.etd) + ' <small>(' + esc(r.collected_date) + ' ' + t('vessel.lbl.collected', '수집') + ')</small></div>' +
             '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">' +
-            '<a class="btn btn-primary" style="padding:7px 12px; font-size:12.5px;" href="vessel.html?port=' + tv.port + focus + '&q=' + encodeURIComponent(q) + '#livemap">터미널 위치로 확대 이동</a>' +
-            '<a class="btn btn-ghost" style="padding:7px 12px; font-size:12.5px;" target="_blank" rel="noopener" href="' + vfUrl + '">실시간 위치(VesselFinder) ↗</a>' +
+            '<a class="btn btn-primary" style="padding:7px 12px; font-size:12.5px;" href="vessel.html?port=' + tv.port + focus + '&q=' + encodeURIComponent(q) + '#livemap">' + t('vessel.act.zoom', '터미널 위치로 확대 이동') + '</a>' +
+            '<a class="btn btn-ghost" style="padding:7px 12px; font-size:12.5px;" target="_blank" rel="noopener" href="' + vfUrl + '">' + t('vessel.act.live', '실시간 위치(VesselFinder)') + ' ↗</a>' +
             '</div></div>';
         }).join('');
         /* 검색 결과가 지도 위에 삽입되며 레이아웃이 밀리므로, 도착 직후 1회만 착지점 재보정 */
         if (focusFresh) { focusFresh = false; setTimeout(focusMap, 120); }
       })
       .catch(function () {
-        box.innerHTML = '<div class="src-card"><div class="sc-sub">검색 실패 — 네트워크 확인 후 다시 시도하십시오.</div></div>';
+        box.innerHTML = '<div class="src-card"><div class="sc-sub">' + t('vessel.msg.searchfail', '검색 실패 — 네트워크 확인 후 다시 시도하십시오.') + '</div></div>';
         if (focusFresh) { focusFresh = false; setTimeout(focusMap, 120); }
       });
   }
@@ -150,7 +152,7 @@
 
   function pmSearch() {
     var out = el('pmOut');
-    out.innerHTML = pmCard('<div class="sc-sub">PORT-MIS 조회 중…</div>');
+    out.innerHTML = pmCard('<div class="sc-sub">' + t('vessel.pm.loading', 'PORT-MIS 조회 중…') + '</div>');
     var p = new URLSearchParams({ api: 'portmis' });
     var clsgn = el('pmClsgn').value.trim(), port = el('pmPort').value.trim();
     var from = el('pmFrom').value.replace(/-/g, ''), to = el('pmTo').value.replace(/-/g, '');
@@ -163,20 +165,20 @@
       .then(function (r) { return r.json(); })
       .then(function (res) {
         if (res.needKey) {
-          out.innerHTML = pmCard('<h3 style="margin-top:0; font-size:15px;">data.go.kr 공공 API 키가 아직 등록되지 않았습니다</h3>' +
+          out.innerHTML = pmCard('<h3 style="margin-top:0; font-size:15px;">' + t('vessel.msg.needkey', 'data.go.kr 공공 API 키가 아직 등록되지 않았습니다') + '</h3>' +
             '<p class="sc-sub">' + esc(res.guide) + '</p>' +
-            '<a class="btn btn-primary" target="_blank" rel="noopener" href="https://www.data.go.kr/data/15006353/openapi.do">data.go.kr 활용신청 페이지 ↗</a>');
+            '<a class="btn btn-primary" target="_blank" rel="noopener" href="https://www.data.go.kr/data/15006353/openapi.do">' + t('vessel.msg.needkey.link', 'data.go.kr 활용신청 페이지') + ' ↗</a>');
           return;
         }
         var items = res.data ? pmFindItems(res.data, 0) : null;
         if (!items || !items.length) {
           var extra = res.error ? ' (' + esc(res.error) + ')' : '';
-          out.innerHTML = pmCard('<div class="sc-sub">조회 결과가 없습니다. 조건(호출부호·기간)을 바꿔 시도하십시오.' + extra + '</div>');
+          out.innerHTML = pmCard('<div class="sc-sub">' + t('vessel.pm.none', '조회 결과가 없습니다. 조건(호출부호·기간)을 바꿔 시도하십시오.') + extra + '</div>');
           return;
         }
         var keys = Object.keys(items[0]).slice(0, 8);
         out.innerHTML = pmCard(
-          '<h3 style="margin-top:0; font-size:15px;">입출항 실적 <small style="color:var(--muted);">' + items.length + '건 · PORT-MIS</small></h3>' +
+          '<h3 style="margin-top:0; font-size:15px;">' + t('vessel.pm.res.h', '입출항 실적') + ' <small style="color:var(--muted);">' + items.length + t('vessel.unit.count', '건') + ' · PORT-MIS</small></h3>' +
           '<div class="tbl-scroll"><table class="tw"><thead><tr>' +
           keys.map(function (k) { return '<th>' + esc(k) + '</th>'; }).join('') + '</tr></thead><tbody>' +
           items.slice(0, 30).map(function (it) {
@@ -184,7 +186,7 @@
           }).join('') + '</tbody></table></div>');
       })
       .catch(function () {
-        out.innerHTML = pmCard('<div class="sc-sub">조회 실패 — 잠시 후 다시 시도하십시오.</div>');
+        out.innerHTML = pmCard('<div class="sc-sub">' + t('vessel.msg.retry', '조회 실패 — 잠시 후 다시 시도하십시오.') + '</div>');
       });
   }
 
@@ -235,10 +237,10 @@
     var sel = el('vtsPort');
     var from = el('vtsFrom').value.replace(/-/g, ''), to = el('vtsTo').value.replace(/-/g, '');
     if (!from || !to) {
-      out.innerHTML = pmCard('<div class="sc-sub">조회 시작일과 종료일을 모두 지정하십시오.</div>');
+      out.innerHTML = pmCard('<div class="sc-sub">' + t('vessel.vts.needdate', '조회 시작일과 종료일을 모두 지정하십시오.') + '</div>');
       return;
     }
-    out.innerHTML = pmCard('<div class="sc-sub">VTS 관제 기록 조회 중…</div>');
+    out.innerHTML = pmCard('<div class="sc-sub">' + t('vessel.vts.loading', 'VTS 관제 기록 조회 중…') + '</div>');
     var agNm = sel.options[sel.selectedIndex].text;
     /* 관제정보(15006354) 규격 파라미터: prtAgCd(항만청)·sde/ede(조회 시작·종료일 YYYYMMDD) */
     var p = new URLSearchParams({ api: 'vtscontrol', numOfRows: '30', prtAgCd: sel.value, sde: from, ede: to });
@@ -246,23 +248,23 @@
       .then(function (r) { return r.json(); })
       .then(function (res) {
         if (res.needKey) {
-          out.innerHTML = pmCard('<h3 style="margin-top:0; font-size:15px;">data.go.kr 공공 API 키가 아직 등록되지 않았습니다</h3>' +
+          out.innerHTML = pmCard('<h3 style="margin-top:0; font-size:15px;">' + t('vessel.msg.needkey', 'data.go.kr 공공 API 키가 아직 등록되지 않았습니다') + '</h3>' +
             '<p class="sc-sub">' + esc(res.guide) + '</p>' +
-            '<a class="btn btn-primary" target="_blank" rel="noopener" href="https://www.data.go.kr/data/15006354/openapi.do">data.go.kr 활용신청 페이지 ↗</a>');
+            '<a class="btn btn-primary" target="_blank" rel="noopener" href="https://www.data.go.kr/data/15006354/openapi.do">' + t('vessel.msg.needkey.link', 'data.go.kr 활용신청 페이지') + ' ↗</a>');
           return;
         }
         var items = res.data ? vtsItems(res.data) : null;
         if (!items || !items.length) {
           var extra = res.error ? ' (' + esc(res.error) + ')' : '';
-          out.innerHTML = pmCard('<div class="sc-sub">관제 기록이 없습니다. 항만청 또는 조회 기간을 바꿔 다시 시도하십시오.' + extra + '</div>');
+          out.innerHTML = pmCard('<div class="sc-sub">' + t('vessel.vts.none', '관제 기록이 없습니다. 항만청 또는 조회 기간을 바꿔 다시 시도하십시오.') + extra + '</div>');
           return;
         }
         items = items.slice(0, 30);
         out.innerHTML = pmCard(
-          '<h3 style="margin-top:0; font-size:15px;">VTS 관제 기록 <small style="color:var(--muted);">' +
-            items.length + '건 · ' + esc(items[0].prtAgNm || agNm) + ' 항만청 · 해양수산부 관제정보</small></h3>' +
+          '<h3 style="margin-top:0; font-size:15px;">' + t('vessel.vts.res.h', 'VTS 관제 기록') + ' <small style="color:var(--muted);">' +
+            items.length + t('vessel.unit.count', '건') + ' · ' + esc(items[0].prtAgNm || agNm) + ' ' + t('vessel.lbl.portauth', '항만청') + ' · ' + t('vessel.vts.src', '해양수산부 관제정보') + '</small></h3>' +
           '<div class="tbl-scroll"><table class="tw"><thead><tr>' +
-          '<th>선박명</th><th>호출부호</th><th>선종</th><th class="num">총톤수</th><th>선적국</th><th>입항일시</th>' +
+          '<th>' + t('vessel.col.vsslnm', '선박명') + '</th><th>' + t('vessel.col.clsgn', '호출부호') + '</th><th>' + t('vessel.col.knd', '선종') + '</th><th class="num">' + t('vessel.col.grtg', '총톤수') + '</th><th>' + t('vessel.col.flag', '선적국') + '</th><th>' + t('vessel.col.arrdt', '입항일시') + '</th>' +
           '</tr></thead><tbody>' +
           items.map(function (it) {
             return '<tr>' +
@@ -275,7 +277,7 @@
           }).join('') + '</tbody></table></div>');
       })
       .catch(function () {
-        out.innerHTML = pmCard('<div class="sc-sub">조회 실패 — 잠시 후 다시 시도하십시오.</div>');
+        out.innerHTML = pmCard('<div class="sc-sub">' + t('vessel.msg.retry', '조회 실패 — 잠시 후 다시 시도하십시오.') + '</div>');
       });
   }
 
@@ -304,21 +306,21 @@
   /* 상세 패널에 펼칠 항목 — [라벨, 값] */
   function ssDetail(it) {
     var rows = [
-      ['영문 선박명', it.vsslEngNm || '—'],
-      ['호출부호', it.clsgn || '—'],
-      ['IMO 번호', it.imoNo || '—'],
-      ['선종', ssLabel(it.vsslKnd)],
-      ['국적', ssLabel(it.vsslNlty)],
-      ['항해 형태', it.nvgShapNm || '—'],
-      ['외/내항', ssLabel(it.ibobprt)],
-      ['총톤수(G/T)', ssNum(it.grtg, ' t')],
-      ['순톤수(N/T)', ssNum(it.ntng, ' t')],
-      ['전장(LOA)', ssNum(it.vsslTotLt, ' m')],
-      ['수선간장(LBP)', ssNum(it.vsslLt, ' m')],
-      ['폭(Beam)', ssNum(it.shdth, ' m')],
-      ['깊이(Depth)', ssNum(it.vsslDp, ' m')],
-      ['흘수(Draft)', ssNum(it.vsslDrft, ' m')],
-      ['건조일', it.vsslCnstrDt ? String(it.vsslCnstrDt).slice(0, 10) : '—']
+      [t('vessel.ss.f.engnm', '영문 선박명'), it.vsslEngNm || '—'],
+      [t('vessel.col.clsgn', '호출부호'), it.clsgn || '—'],
+      [t('vessel.ss.f.imo', 'IMO 번호'), it.imoNo || '—'],
+      [t('vessel.col.knd', '선종'), ssLabel(it.vsslKnd)],
+      [t('vessel.col.nlty', '국적'), ssLabel(it.vsslNlty)],
+      [t('vessel.ss.f.nvgshap', '항해 형태'), it.nvgShapNm || '—'],
+      [t('vessel.ss.f.ibobprt', '외/내항'), ssLabel(it.ibobprt)],
+      [t('vessel.ss.f.grtg', '총톤수(G/T)'), ssNum(it.grtg, ' t')],
+      [t('vessel.ss.f.ntng', '순톤수(N/T)'), ssNum(it.ntng, ' t')],
+      [t('vessel.ss.f.loa', '전장(LOA)'), ssNum(it.vsslTotLt, ' m')],
+      [t('vessel.ss.f.lbp', '수선간장(LBP)'), ssNum(it.vsslLt, ' m')],
+      [t('vessel.ss.f.beam', '폭(Beam)'), ssNum(it.shdth, ' m')],
+      [t('vessel.ss.f.depth', '깊이(Depth)'), ssNum(it.vsslDp, ' m')],
+      [t('vessel.ss.f.draft', '흘수(Draft)'), ssNum(it.vsslDrft, ' m')],
+      [t('vessel.ss.f.built', '건조일'), it.vsslCnstrDt ? String(it.vsslCnstrDt).slice(0, 10) : '—']
     ];
     return '<div class="ss-detail" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:8px 18px; padding:12px 4px 4px;">' +
       rows.map(function (r) {
@@ -331,10 +333,10 @@
     var out = el('ssOut');
     var nm = el('ssName').value.trim(), cs = el('ssClsgn').value.trim();
     if (!nm && !cs) {
-      out.innerHTML = pmCard('<div class="sc-sub">선박명 또는 호출부호를 입력하십시오.</div>');
+      out.innerHTML = pmCard('<div class="sc-sub">' + t('vessel.ss.needinput', '선박명 또는 호출부호를 입력하십시오.') + '</div>');
       return;
     }
-    out.innerHTML = pmCard('<div class="sc-sub">선박 제원 조회 중…</div>');
+    out.innerHTML = pmCard('<div class="sc-sub">' + t('vessel.ss.loading', '선박 제원 조회 중…') + '</div>');
     var p = new URLSearchParams({ api: 'shipspec', numOfRows: '30' });
     if (nm) p.set('vsslNm', nm);
     if (cs) p.set('clsgn', cs);
@@ -342,19 +344,19 @@
       .then(function (r) { return r.json(); })
       .then(function (res) {
         if (res.needKey) {
-          out.innerHTML = pmCard('<h3 style="margin-top:0; font-size:15px;">data.go.kr 공공 API 키가 아직 등록되지 않았습니다</h3>' +
+          out.innerHTML = pmCard('<h3 style="margin-top:0; font-size:15px;">' + t('vessel.msg.needkey', 'data.go.kr 공공 API 키가 아직 등록되지 않았습니다') + '</h3>' +
             '<p class="sc-sub">' + esc(res.guide) + '</p>');
           return;
         }
         var items = res.data ? pmFindItems(res.data, 0) : null;
         if (!items || !items.length) {
-          out.innerHTML = pmCard('<div class="sc-sub">조회 결과가 없습니다. 선박명 일부(예: HANJIN) 또는 호출부호로 다시 시도하십시오.</div>');
+          out.innerHTML = pmCard('<div class="sc-sub">' + t('vessel.ss.none', '조회 결과가 없습니다. 선박명 일부(예: HANJIN) 또는 호출부호로 다시 시도하십시오.') + '</div>');
           return;
         }
         out.innerHTML = pmCard(
-          '<h3 style="margin-top:0; font-size:15px;">선박 제원 <small style="color:var(--muted);">' + items.length + '건 · 해양수산부 선박제원정보</small></h3>' +
+          '<h3 style="margin-top:0; font-size:15px;">' + t('vessel.ss.res.h', '선박 제원') + ' <small style="color:var(--muted);">' + items.length + t('vessel.unit.count', '건') + ' · ' + t('vessel.ss.src', '해양수산부 선박제원정보') + '</small></h3>' +
           '<div class="tbl-scroll"><table class="tw"><thead><tr>' +
-          '<th>선박명</th><th>호출부호</th><th>선종</th><th>국적</th><th class="num">총톤수</th><th class="num">전장</th><th></th>' +
+          '<th>' + t('vessel.col.vsslnm', '선박명') + '</th><th>' + t('vessel.col.clsgn', '호출부호') + '</th><th>' + t('vessel.col.knd', '선종') + '</th><th>' + t('vessel.col.nlty', '국적') + '</th><th class="num">' + t('vessel.col.grtg', '총톤수') + '</th><th class="num">' + t('vessel.col.loa', '전장') + '</th><th></th>' +
           '</tr></thead><tbody>' +
           items.map(function (it, i) {
             return '<tr class="ss-row" data-i="' + i + '" style="cursor:pointer;">' +
@@ -364,7 +366,7 @@
               '<td>' + esc(ssLabel(it.vsslNlty)) + '</td>' +
               '<td class="num">' + esc(ssNum(it.grtg)) + '</td>' +
               '<td class="num">' + esc(ssNum(it.vsslTotLt, ' m')) + '</td>' +
-              '<td style="color:var(--muted); font-size:11px;">상세 ▾</td></tr>' +
+              '<td style="color:var(--muted); font-size:11px;">' + t('vessel.ss.more', '상세') + ' ▾</td></tr>' +
               '<tr class="ss-panel" data-p="' + i + '" hidden><td colspan="7" style="background:color-mix(in srgb, var(--muted) 7%, transparent);">' +
               ssDetail(it) + '</td></tr>';
           }).join('') + '</tbody></table></div>');
@@ -378,7 +380,7 @@
         });
       })
       .catch(function () {
-        out.innerHTML = pmCard('<div class="sc-sub">조회 실패 — 잠시 후 다시 시도하십시오.</div>');
+        out.innerHTML = pmCard('<div class="sc-sub">' + t('vessel.msg.retry', '조회 실패 — 잠시 후 다시 시도하십시오.') + '</div>');
       });
   }
 
@@ -397,7 +399,7 @@
   function aisRender(rows) {
     var stat = el('aisStat');
     if (!rows.length) {
-      stat.textContent = '아직 수신 데이터가 없습니다 — AIS 수집 스케줄러 첫 실행 후 표시됩니다.';
+      stat.textContent = t('vessel.ais.empty', '아직 수신 데이터가 없습니다 — AIS 수집 스케줄러 첫 실행 후 표시됩니다.');
       return;
     }
     if (aisLayer) aisLayer.clearLayers();
@@ -417,7 +419,7 @@
       aisLayer.addLayer(mk);
       if (!latest || r.received_at > latest) latest = r.received_at;
     });
-    stat.textContent = '수신 선박: ' + rows.length + ' · 최근 수신: ' + String(latest).slice(5, 16).replace('T', ' ') + ' KST';
+    stat.textContent = t('vessel.ais.recv', '수신 선박') + ': ' + rows.length + ' · ' + t('vessel.ais.last', '최근 수신') + ': ' + String(latest).slice(5, 16).replace('T', ' ') + ' KST';
   }
 
   function aisFetch() {

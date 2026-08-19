@@ -13,11 +13,13 @@
 
   function j(url) { return fetch(url).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); }
 
+  function t(k, ko) { return (window.TWI18N && window.TWI18N.t) ? window.TWI18N.t(k, ko) : ko; }
+
   function waveLevel(h) {
     if (h == null) return ['—', ''];
-    if (h >= 2.5) return ['높음', 'var(--lv-congested)'];
-    if (h >= 1.5) return ['주의', 'var(--lv-busy)'];
-    return ['양호', 'var(--lv-low)'];
+    if (h >= 2.5) return [t('wx.lv.high', '높음'), 'var(--lv-congested)'];
+    if (h >= 1.5) return [t('wx.lv.caution', '주의'), 'var(--lv-busy)'];
+    return [t('wx.lv.good', '양호'), 'var(--lv-low)'];
   }
 
   function load() {
@@ -25,7 +27,7 @@
     if (!grid) return;
     grid.innerHTML = PORTS.map(function (p, i) {
       return '<div class="kpi" id="wx' + i + '"><div class="k">' + p.ko + '</div>' +
-        '<div class="v" style="font-size:24px;">로딩…</div><div class="sub">—</div></div>';
+        '<div class="v" style="font-size:24px;">' + t('wx.loading', '로딩…') + '</div><div class="sub">—</div></div>';
     }).join('');
 
     PORTS.forEach(function (p, i) {
@@ -42,11 +44,11 @@
           var lv = waveLevel(wave);
           card.innerHTML = '<div class="k">' + p.ko +
             (lv[1] ? ' <span class="lv-badge" style="color:' + lv[1] + '; background: color-mix(in srgb, ' + lv[1] + ' 13%, transparent);"><i class="lv-dot"></i>' + lv[0] + '</span>' : '') + '</div>' +
-            '<div class="v" style="font-size:24px;">' + (wave != null ? '파고 ' + wave.toFixed(1) + 'm' : '—') + '</div>' +
+            '<div class="v" style="font-size:24px;">' + (wave != null ? t('wx.wave', '파고') + ' ' + wave.toFixed(1) + 'm' : '—') + '</div>' +
             '<div class="sub">' +
-            (mw && mw.wave_period != null ? '파주기 ' + mw.wave_period.toFixed(1) + 's · ' : '') +
-            (wd && wd.wind_speed_10m != null ? '풍속 ' + wd.wind_speed_10m.toFixed(1) + 'm/s' : '풍속 —') +
-            (wd && wd.wind_gusts_10m != null ? ' (돌풍 ' + wd.wind_gusts_10m.toFixed(1) + ')' : '') +
+            (mw && mw.wave_period != null ? t('wx.period', '파주기') + ' ' + mw.wave_period.toFixed(1) + 's · ' : '') +
+            (wd && wd.wind_speed_10m != null ? t('wx.wind', '풍속') + ' ' + wd.wind_speed_10m.toFixed(1) + 'm/s' : t('wx.wind', '풍속') + ' —') +
+            (wd && wd.wind_gusts_10m != null ? ' (' + t('wx.gust', '돌풍') + ' ' + wd.wind_gusts_10m.toFixed(1) + ')' : '') +
             '</div>';
         });
     });

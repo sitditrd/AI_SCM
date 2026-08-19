@@ -70,33 +70,34 @@
 
       <!-- 비밀번호 찾기 -->
       <form id="f-reset" class="auth-form" hidden>
-        <label>이메일 <span class="req">*</span>
+        <label><span data-i18n="auth.email">이메일</span> <span class="req">*</span>
           <span class="with-btn">
             <input type="email" name="login" autocomplete="username" placeholder="you@company.com" required>
-            <button type="button" class="btn btn-ghost btn-sm" data-send="reset">인증코드 받기</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-send="reset" data-i18n="auth.getcode">인증코드 받기</button>
           </span>
         </label>
-        <label>인증코드 <input type="text" name="code" inputmode="numeric" maxlength="6" placeholder="메일로 받은 6자리" required></label>
-        <label>새 비밀번호 <input type="password" name="password" autocomplete="new-password" required></label>
+        <label><span data-i18n="auth.code">인증코드</span> <input type="text" name="code" inputmode="numeric" maxlength="6" placeholder="메일로 받은 6자리" data-i18n-ph="auth.codeHint" required></label>
+        <label><span data-i18n="auth.password.new">새 비밀번호</span> <input type="password" name="password" autocomplete="new-password" required></label>
         <div class="pw-meter" id="pw-reset" hidden>
           <div class="pw-bar"><span></span></div>
           <div class="pw-label"></div>
           <ul class="pw-checks">
-            <li data-k="len">8자 이상</li><li data-k="upper">대문자</li><li data-k="lower">소문자</li><li data-k="digit">숫자</li><li data-k="special">특수문자</li>
+            <li data-k="len" data-i18n="auth.pw.len">8자 이상</li><li data-k="upper" data-i18n="auth.pw.upper">대문자</li><li data-k="lower" data-i18n="auth.pw.lower">소문자</li><li data-k="digit" data-i18n="auth.pw.digit">숫자</li><li data-k="special" data-i18n="auth.pw.special">특수문자</li>
           </ul>
         </div>
-        <button class="btn btn-primary btn-block" type="submit">비밀번호 재설정</button>
+        <button class="btn btn-primary btn-block" type="submit" data-i18n="auth.btn.reset">비밀번호 재설정</button>
       </form>
     </div>
-    <p class="auth-foot"><a href="index.html">← 홈으로</a></p>
+    <p class="auth-foot"><a href="index.html" data-i18n="auth.home">← 홈으로</a></p>
   </main>
 
-  <script src="js/common.js?v=2026-4"></script>
-  <script src="js/i18n.js?v=2026-08-20a"></script>
-  <script src="js/auth.js?v=2026-07-29f"></script>
+  <script src="js/common.js?v=2026-08-20b"></script>
+  <script src="js/i18n.js?v=2026-08-20b"></script>
+  <script src="js/auth.js?v=2026-08-20b"></script>
   <script>
     (function () {
       var A = window.TWAUTH;
+      function t(k, ko) { return (window.TWI18N && window.TWI18N.t) ? window.TWI18N.t(k, ko) : ko; }
       var msg = document.getElementById('msg');
       function show(text, kind) { msg.hidden = false; msg.textContent = text; msg.className = 'auth-msg ' + (kind || ''); }
       function clearMsg() { msg.hidden = true; }
@@ -119,7 +120,7 @@
           var s = A.pwStrength(v);
           box.querySelector('.pw-bar span').style.width = (s.score * 20) + '%';
           box.querySelector('.pw-bar span').style.background = s.color;
-          box.querySelector('.pw-label').textContent = '강도: ' + s.label + (s.checks.special ? '' : ' · 특수문자 필요');
+          box.querySelector('.pw-label').textContent = t('auth.pw.strengthLabel', '강도: ') + t(s.key, s.label) + (s.checks.special ? '' : t('auth.pw.needSpecial', ' · 특수문자 필요'));
           box.querySelector('.pw-label').style.color = s.color;
           box.querySelectorAll('.pw-checks li').forEach(function (li) { li.classList.toggle('on', !!s.checks[li.dataset.k]); });
         });
@@ -130,15 +131,15 @@
       document.querySelectorAll('[data-send]').forEach(function (btn) {
         btn.addEventListener('click', function () {
           var form = btn.closest('form'); var login = form.login.value.trim();
-          if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(login)) { show('이메일 형식을 확인하세요.', 'err'); return; }
-          btn.disabled = true; btn.textContent = '발송중…';
+          if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(login)) { show(t('auth.msg.emailFormat', '이메일 형식을 확인하세요.'), 'err'); return; }
+          btn.disabled = true; btn.textContent = t('auth.sending', '발송중…');
           var send = btn.dataset.send === 'reset' ? A.resetSendCode(login) : A.signupSendCode(login);
           send.then(function (r) {
-            if (r && r.ok) { show('인증코드를 메일로 보냈습니다. 10분 내 입력하세요.', 'ok'); }
-            else { show(r && r.error ? r.error : '발송 실패', 'err'); }
+            if (r && r.ok) { show(t('auth.msg.codeSent', '인증코드를 메일로 보냈습니다. 10분 내 입력하세요.'), 'ok'); }
+            else { show(r && r.error ? r.error : t('auth.msg.sendFail', '발송 실패'), 'err'); }
           }).finally(function () {
-            var n = 30; btn.textContent = '재발송(' + n + ')';
-            var iv = setInterval(function () { n--; btn.textContent = '재발송(' + n + ')'; if (n <= 0) { clearInterval(iv); btn.disabled = false; btn.textContent = '인증코드 받기'; } }, 1000);
+            var n = 30; btn.textContent = t('auth.resend', '재발송(%s)').replace('%s', n);
+            var iv = setInterval(function () { n--; btn.textContent = t('auth.resend', '재발송(%s)').replace('%s', n); if (n <= 0) { clearInterval(iv); btn.disabled = false; btn.textContent = t('auth.getcode', '인증코드 받기'); } }, 1000);
           });
         });
       });
@@ -148,8 +149,8 @@
         e.preventDefault(); clearMsg();
         var f = e.target;
         A.login(f.login.value.trim(), f.password.value).then(function (r) {
-          if (r && r.ok) { show('로그인 성공. 이동합니다…', 'ok'); setTimeout(function () { location.href = (r.role === 'admin') ? 'admin.html' : 'index.html'; }, 500); }
-          else { show(r && r.error ? r.error : '로그인 실패', 'err'); }
+          if (r && r.ok) { show(t('auth.msg.loginOk', '로그인 성공. 이동합니다…'), 'ok'); setTimeout(function () { location.href = (r.role === 'admin') ? 'admin.html' : 'index.html'; }, 500); }
+          else { show(r && r.error ? r.error : t('auth.msg.loginFail', '로그인 실패'), 'err'); }
         });
       });
 
@@ -158,11 +159,11 @@
         e.preventDefault(); clearMsg();
         var f = e.target;
         var s = A.pwStrength(f.password.value);
-        if (!s.ok) { show('비밀번호는 8자 이상 + 특수문자를 포함해야 합니다.', 'err'); return; }
-        if (f.password.value !== f.password2.value) { show('비밀번호 확인이 일치하지 않습니다.', 'err'); return; }
+        if (!s.ok) { show(t('auth.msg.pwRule', '비밀번호는 8자 이상 + 특수문자를 포함해야 합니다.'), 'err'); return; }
+        if (f.password.value !== f.password2.value) { show(t('auth.msg.pwMismatch', '비밀번호 확인이 일치하지 않습니다.'), 'err'); return; }
         A.signup(f.login.value.trim(), f.password.value, f.code.value.trim(), f.name.value.trim()).then(function (r) {
-          if (r && r.ok) { show('가입 신청 완료! 관리자 승인 후 로그인할 수 있습니다.', 'ok'); f.reset(); }
-          else { show(r && r.error ? r.error : '가입 실패', 'err'); }
+          if (r && r.ok) { show(t('auth.msg.signupOk', '가입 신청 완료! 관리자 승인 후 로그인할 수 있습니다.'), 'ok'); f.reset(); }
+          else { show(r && r.error ? r.error : t('auth.msg.signupFail', '가입 실패'), 'err'); }
         });
       });
 
@@ -171,10 +172,10 @@
         e.preventDefault(); clearMsg();
         var f = e.target;
         var s = A.pwStrength(f.password.value);
-        if (!s.ok) { show('비밀번호는 8자 이상 + 특수문자를 포함해야 합니다.', 'err'); return; }
+        if (!s.ok) { show(t('auth.msg.pwRule', '비밀번호는 8자 이상 + 특수문자를 포함해야 합니다.'), 'err'); return; }
         A.reset(f.login.value.trim(), f.code.value.trim(), f.password.value).then(function (r) {
-          if (r && r.ok) { show('비밀번호가 재설정되었습니다. 로그인해 주세요.', 'ok'); document.querySelector('.auth-tab[data-tab="login"]').click(); }
-          else { show(r && r.error ? r.error : '재설정 실패', 'err'); }
+          if (r && r.ok) { show(t('auth.msg.resetOk', '비밀번호가 재설정되었습니다. 로그인해 주세요.'), 'ok'); document.querySelector('.auth-tab[data-tab="login"]').click(); }
+          else { show(r && r.error ? r.error : t('auth.msg.resetFail', '재설정 실패'), 'err'); }
         });
       });
     })();

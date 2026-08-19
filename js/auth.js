@@ -9,19 +9,21 @@
   var SB_KEY = 'sb_publishable_jo6oBar-JbfKY3IfhPyBbQ_gH1Lvwsv'; /* publishable — RPC/Edge 호출용 */
   var LS = 'twl-auth';
 
+  function t(k, ko) { return (window.TWI18N && window.TWI18N.t) ? window.TWI18N.t(k, ko) : ko; }
+
   function rpc(fn, args) {
     return fetch(SB_URL + '/rest/v1/rpc/' + fn, {
       method: 'POST',
       headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify(args || {}),
-    }).then(function (r) { return r.json(); }).catch(function () { return { error: '네트워크 오류' }; });
+    }).then(function (r) { return r.json(); }).catch(function () { return { error: t('ld.auth.netErr', '네트워크 오류') }; });
   }
   function edge(fn, body) {
     return fetch(SB_URL + '/functions/v1/' + fn, {
       method: 'POST',
       headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify(body || {}),
-    }).then(function (r) { return r.json(); }).catch(function () { return { error: '네트워크 오류' }; });
+    }).then(function (r) { return r.json(); }).catch(function () { return { error: t('ld.auth.netErr', '네트워크 오류') }; });
   }
 
   function session() { try { return JSON.parse(localStorage.getItem(LS) || 'null'); } catch (e) { return null; } }

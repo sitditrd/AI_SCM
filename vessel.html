@@ -69,7 +69,7 @@
   <section class="dash-section" id="findship" style="padding-bottom:0;">
     <div class="container">
       <div class="berth-toolbar reveal" style="margin-bottom:6px;">
-        <input type="search" class="focus-search" id="shipSearch" placeholder="선명 / 모선항차 검색 (예: MSC, HMM DIAMOND)" style="max-width:340px;">
+        <input type="search" class="focus-search" id="shipSearch" placeholder="선명 / 모선항차 검색 (예: MSC, HMM DIAMOND)" data-i18n-ph="vessel.find.ph" style="max-width:340px;">
         <button class="btn btn-primary" id="shipSearchBtn" type="button" data-i18n="vessel.find.btn">선박 찾기</button>
         <span style="color:var(--muted); font-size:12.5px;" data-i18n-html="vessel.find.note">선석배정 DB 기준 · MBL/HBL/AWB는 <a href="cargo.html">화물 추적</a>에서 조회</span>
       </div>
@@ -126,18 +126,18 @@
     <div class="container">
       <div class="dash-head reveal">
         <span class="no">PORT-MIS</span>
-        <h2>선박 입출항 실적 조회</h2>
-        <span class="hint">해양수산부 PORT-MIS 공공 API · 입출항 시각(ATA/ATD)·출항지·차항지</span>
+        <h2 data-i18n="vessel.pm.h">선박 입출항 실적 조회</h2>
+        <span class="hint" data-i18n="vessel.pm.hint">해양수산부 PORT-MIS 공공 API · 입출항 시각(ATA/ATD)·출항지·차항지</span>
       </div>
       <div class="card reveal" style="margin-bottom:14px;">
         <div class="berth-toolbar" style="margin:0;">
-          <input type="search" class="focus-search" id="pmClsgn" placeholder="호출부호 (예: D7HW) — 선택" style="max-width:210px;">
-          <input type="search" class="focus-search" id="pmPort" placeholder="항구코드 (선택)" style="max-width:150px;">
+          <input type="search" class="focus-search" id="pmClsgn" placeholder="호출부호 (예: D7HW) — 선택" data-i18n-ph="vessel.pm.ph.clsgn" style="max-width:210px;">
+          <input type="search" class="focus-search" id="pmPort" placeholder="항구코드 (선택)" data-i18n-ph="vessel.pm.ph.port" style="max-width:150px;">
           <input type="date" class="focus-search" id="pmFrom" style="max-width:160px;" aria-label="조회 시작일">
           <input type="date" class="focus-search" id="pmTo" style="max-width:160px;" aria-label="조회 종료일">
-          <button class="btn btn-primary" id="pmBtn" type="button">실적 조회</button>
+          <button class="btn btn-primary" id="pmBtn" type="button" data-i18n="vessel.pm.btn">실적 조회</button>
         </div>
-        <p class="sc-sub" style="margin:10px 0 0; color:var(--muted); font-size:12px;">
+        <p class="sc-sub" style="margin:10px 0 0; color:var(--muted); font-size:12px;" data-i18n="vessel.pm.note">
           데이터: 해양수산부 선박운항정보(PORT-MIS) · 호출부호는 터미널 공표 자료에서 확인 · 조회 기간은 시작·종료일 모두 필수
         </p>
       </div>
@@ -178,16 +178,16 @@
     <div class="container">
       <div class="dash-head reveal">
         <span class="no">SHIP SPEC</span>
-        <h2>선박 제원 조회</h2>
-        <span class="hint">해양수산부 선박제원정보 · 선종·국적·총톤수·전장/폭/흘수</span>
+        <h2 data-i18n="vessel.ss.h">선박 제원 조회</h2>
+        <span class="hint" data-i18n="vessel.ss.hint">해양수산부 선박제원정보 · 선종·국적·총톤수·전장/폭/흘수</span>
       </div>
       <div class="card reveal" style="margin-bottom:14px;">
         <div class="berth-toolbar" style="margin:0;">
-          <input type="search" class="focus-search" id="ssName" placeholder="선박명 (예: HANJIN)" style="max-width:260px;">
-          <input type="search" class="focus-search" id="ssClsgn" placeholder="호출부호 (예: 3FPQ7)" style="max-width:200px;">
-          <button class="btn btn-primary" id="ssBtn" type="button">제원 조회</button>
+          <input type="search" class="focus-search" id="ssName" placeholder="선박명 (예: HANJIN)" data-i18n-ph="vessel.ss.ph.name" style="max-width:260px;">
+          <input type="search" class="focus-search" id="ssClsgn" placeholder="호출부호 (예: 3FPQ7)" data-i18n-ph="vessel.ss.ph.clsgn" style="max-width:200px;">
+          <button class="btn btn-primary" id="ssBtn" type="button" data-i18n="vessel.ss.btn">제원 조회</button>
         </div>
-        <p class="sc-sub" style="margin:10px 0 0; color:var(--muted); font-size:12px;">
+        <p class="sc-sub" style="margin:10px 0 0; color:var(--muted); font-size:12px;" data-i18n="vessel.ss.note">
           선박명 또는 호출부호 중 하나 이상 입력 · 선박명은 부분 일치 검색 · 결과 행을 누르면 상세 제원이 펼쳐집니다
         </p>
       </div>
@@ -236,10 +236,10 @@
   </footer>
 
   <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script> -->
-  <script src="js/common.js?v=2026-4"></script>
-  <script src="js/i18n.js?v=2026-08-20a"></script>
-  <script src="js/auth.js?v=2026-07-29f"></script>
-  <script src="js/auth-gate.js?v=2026-07-30a"></script>
-  <script src="js/vessel.js?v=2026-08-03b"></script>
+  <script src="js/common.js?v=2026-08-20b"></script>
+  <script src="js/i18n.js?v=2026-08-20b"></script>
+  <script src="js/auth.js?v=2026-08-20b"></script>
+  <script src="js/auth-gate.js?v=2026-08-20b"></script>
+  <script src="js/vessel.js?v=2026-08-20b"></script>
 </body>
 </html>

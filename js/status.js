@@ -9,6 +9,8 @@
   var KEY = 'sb_publishable_jo6oBar-JbfKY3IfhPyBbQ_gH1Lvwsv'; /* 읽기 전용(RLS) */
   var lastUpdateTs = null;
 
+  function t(k, ko) { return (window.TWI18N && window.TWI18N.t) ? window.TWI18N.t(k, ko) : ko; }
+
   function sb(path) {
     return fetch(SUPABASE_URL + path, { headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY } })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
@@ -25,9 +27,9 @@
   }
   function ageText(ms) {
     var h = ms / 3600000;
-    if (h < 1) return Math.round(h * 60) + '분 전';
-    if (h < 48) return Math.round(h) + '시간 전';
-    return Math.round(h / 24) + '일 전';
+    if (h < 1) return Math.round(h * 60) + t('ld.time.minAgo', '분 전');
+    if (h < 48) return Math.round(h) + t('ld.time.hourAgo', '시간 전');
+    return Math.round(h / 24) + t('ld.time.dayAgo', '일 전');
   }
   var ST = {
     ok:   { ko: '정상', color: 'var(--lv-low)' },
@@ -41,11 +43,11 @@
     var fill = Math.max(4, Math.min(100, o.freshPct));
     return '<div class="src-card">' +
       '<div class="sc-top"><b>' + o.name + '</b>' +
-      '<span class="lv-badge" style="color:' + st.color + '; background:color-mix(in srgb, ' + st.color + ' 13%, transparent);"><i class="lv-dot"></i>' + st.ko + '</span></div>' +
+      '<span class="lv-badge" style="color:' + st.color + '; background:color-mix(in srgb, ' + st.color + ' 13%, transparent);"><i class="lv-dot"></i>' + t('ld.status.st.' + o.state, st.ko) + '</span></div>' +
       '<div class="sc-big">' + o.big + '</div>' +
-      '<div class="fresh-bar" title="갱신 주기 대비 경과 시간"><div class="fb-fill" style="width:' + fill + '%; background:' + st.color + ';"></div></div>' +
+      '<div class="fresh-bar" title="' + t('ld.status.freshTitle', '갱신 주기 대비 경과 시간') + '"><div class="fb-fill" style="width:' + fill + '%; background:' + st.color + ';"></div></div>' +
       '<div class="sc-sub">' + o.sub + '</div>' +
-      '<div class="sc-next">다음 갱신 예정 · ' + o.next + '</div>' +
+      '<div class="sc-next">' + t('ld.status.nextUpdate', '다음 갱신 예정') + ' · ' + o.next + '</div>' +
       '</div>';
   }
 
@@ -77,23 +79,23 @@
     var fill = Math.max(4, Math.min(100, o.pct));
     return '<div class="src-card">' +
       '<div class="sc-top"><b>' + o.name + '</b>' +
-      '<span class="lv-badge" style="color:' + st.color + '; background:color-mix(in srgb, ' + st.color + ' 13%, transparent);"><i class="lv-dot"></i>' + st.ko + '</span></div>' +
+      '<span class="lv-badge" style="color:' + st.color + '; background:color-mix(in srgb, ' + st.color + ' 13%, transparent);"><i class="lv-dot"></i>' + t('ld.status.st.' + o.state, st.ko) + '</span></div>' +
       '<div class="sc-big">' + o.big + '</div>' +
-      '<div class="fresh-bar" title="응답 시간 (게이지 3초 기준)"><div class="fb-fill" style="width:' + fill + '%; background:' + st.color + ';"></div></div>' +
+      '<div class="fresh-bar" title="' + t('ld.status.rtTitle', '응답 시간 (게이지 3초 기준)') + '"><div class="fb-fill" style="width:' + fill + '%; background:' + st.color + ';"></div></div>' +
       '<div class="sc-sub">' + o.sub + '</div>' +
-      '<div class="sc-next">점검 주기 45초</div>' +
+      '<div class="sc-next">' + t('ld.status.hc.cycle', '점검 주기 45초') + '</div>' +
       '</div>';
   }
 
   function hcCard(name, desc, h, note) {
-    if (!h) return intCard({ name: name, state: 'off', big: '응답 없음', pct: 100, sub: desc + ' · 연결 실패' });
-    if (h.http) return intCard({ name: name, state: 'warn', big: 'HTTP ' + h.http + ' <small>/ ' + h.ms + 'ms</small>', pct: 100, sub: desc + ' · 응답 코드 확인' });
+    if (!h) return intCard({ name: name, state: 'off', big: t('ld.status.hc.noResp', '응답 없음'), pct: 100, sub: desc + ' · ' + t('ld.status.connFail', '연결 실패') });
+    if (h.http) return intCard({ name: name, state: 'warn', big: 'HTTP ' + h.http + ' <small>/ ' + h.ms + 'ms</small>', pct: 100, sub: desc + ' · ' + t('ld.status.hc.codeCheck', '응답 코드 확인') });
     return intCard({
       name: name,
       state: h.ms < HC_GAUGE_MS ? 'ok' : 'warn',
-      big: (h.needKey ? '정상(키 대기)' : '정상') + ' <small>/ ' + h.ms + 'ms</small>',
+      big: (h.needKey ? t('ld.status.hc.okKeyWait', '정상(키 대기)') : t('ld.status.st.ok', '정상')) + ' <small>/ ' + h.ms + 'ms</small>',
       pct: h.ms / HC_GAUGE_MS * 100,
-      sub: desc + ' · ' + (note || (h.needKey ? '키 등록 대기' : '실조회 가동'))
+      sub: desc + ' · ' + (note || (h.needKey ? t('ld.status.hc.keyWait', '키 등록 대기') : t('ld.status.hc.live', '실조회 가동')))
     });
   }
 
@@ -173,13 +175,13 @@
       var age = now - new Date(r.berth.date + 'T06:00:00+09:00').getTime();
       berthState = berthOnTime ? 'ok' : (age < 30 * 3600000 ? 'warn' : 'late');
       cards.push(srcCard({
-        name: '선석배정', state: berthState,
-        big: r.berth.count + '건 <small>/ ' + r.berth.date + '</small>',
+        name: t('nav.berth', '선석배정'), state: berthState,
+        big: r.berth.count + t('ld.unit.cases', '건') + ' <small>/ ' + r.berth.date + '</small>',
         freshPct: age / (26 * 3600000) * 100,
-        sub: '16개 터미널 · ' + ageText(age) + ' 수집 · 갱신 주기 24시간',
-        next: '내일 06:00 수집 → 06시대 적재'
+        sub: t('ld.status.src.berth.terminals', '16개 터미널') + ' · ' + ageText(age) + ' ' + t('ld.status.src.berth.cycle', '수집 · 갱신 주기 24시간'),
+        next: t('ld.status.src.berth.next', '내일 06:00 수집 → 06시대 적재')
       }));
-    } else cards.push(srcCard({ name: '선석배정', state: 'off', big: '—', freshPct: 100, sub: '연결 실패', next: '—' }));
+    } else cards.push(srcCard({ name: t('nav.berth', '선석배정'), state: 'off', big: '—', freshPct: 100, sub: t('ld.status.connFail', '연결 실패'), next: '—' }));
 
     var piState = 'off';
     if (r.pi) {
@@ -187,34 +189,34 @@
       piState = piAge < 26 * 3600000 ? 'ok' : (piAge < 50 * 3600000 ? 'warn' : 'late');
       cards.push(srcCard({
         name: 'Port Insight (PCI)', state: piState,
-        big: 'PCI ' + r.pi.tpfs + ' <small>/ 기준일 ' + r.pi.period_end + '</small>',
+        big: 'PCI ' + r.pi.tpfs + ' <small>/ ' + t('ld.status.basisDate', '기준일') + ' ' + r.pi.period_end + '</small>',
         freshPct: piAge / (26 * 3600000) * 100,
-        sub: '최종 산출 ' + ageText(piAge) + ' · 산출 주기 24시간 (원천 데이터는 주간 갱신)',
-        next: '내일 06시대 자동 산출'
+        sub: t('ld.status.src.pi.last', '최종 산출') + ' ' + ageText(piAge) + ' · ' + t('ld.status.src.pi.cycle', '산출 주기 24시간 (원천 데이터는 주간 갱신)'),
+        next: t('ld.status.src.pi.next', '내일 06시대 자동 산출')
       }));
-    } else cards.push(srcCard({ name: 'Port Insight', state: 'off', big: '—', freshPct: 100, sub: '연결 실패', next: '—' }));
+    } else cards.push(srcCard({ name: 'Port Insight', state: 'off', big: '—', freshPct: 100, sub: t('ld.status.connFail', '연결 실패'), next: '—' }));
 
     if (r.fx) {
       var fxAge = now - new Date(r.fx.date + 'T00:00:00+09:00').getTime();
       var fxState = fxAge < 9 * 86400000 ? 'ok' : 'warn';
       cards.push(srcCard({
-        name: '해상운임지수 (SCFI·CCFI)', state: fxState,
-        big: (r.fx.scfi != null ? 'SCFI ' + Number(r.fx.scfi).toLocaleString('ko-KR') : '—') + ' <small>/ ' + r.fx.date + ' 발표</small>',
+        name: t('ld.status.src.fx.name', '해상운임지수 (SCFI·CCFI)'), state: fxState,
+        big: (r.fx.scfi != null ? 'SCFI ' + Number(r.fx.scfi).toLocaleString('ko-KR') : '—') + ' <small>/ ' + r.fx.date + ' ' + t('ld.status.published', '발표') + '</small>',
         freshPct: fxAge / (9 * 86400000) * 100,
-        sub: ageText(fxAge) + ' 발표분 · 주간 공표 (매주 금요일)',
-        next: '월요일 07시 수집'
+        sub: ageText(fxAge) + ' ' + t('ld.status.src.fx.sub', '발표분 · 주간 공표 (매주 금요일)'),
+        next: t('ld.status.src.fx.next', '월요일 07시 수집')
       }));
-    } else cards.push(srcCard({ name: '해상운임지수', state: 'off', big: '—', freshPct: 100, sub: '데이터 없음', next: '월요일 07시' }));
+    } else cards.push(srcCard({ name: t('ld.status.src.fx.short', '해상운임지수'), state: 'off', big: '—', freshPct: 100, sub: t('ld.status.noData', '데이터 없음'), next: t('ld.status.src.fx.next2', '월요일 07시') }));
 
     if (r.wx) {
       cards.push(srcCard({
-        name: '항만 기상 (Open-Meteo)', state: 'ok',
-        big: '부산신항 파고 ' + r.wx.wave + 'm',
+        name: t('ld.status.src.wx.name', '항만 기상 (Open-Meteo)'), state: 'ok',
+        big: '부산신항 ' + t('ld.status.wave', '파고') + ' ' + r.wx.wave + 'm',
         freshPct: 8,
-        sub: '실시간 조회 정상 · 관측 주기 1시간',
-        next: '상시 (30분 간격 갱신)'
+        sub: t('ld.status.src.wx.sub', '실시간 조회 정상 · 관측 주기 1시간'),
+        next: t('ld.status.src.wx.next', '상시 (30분 간격 갱신)')
       }));
-    } else cards.push(srcCard({ name: '항만 기상', state: 'off', big: '—', freshPct: 100, sub: 'API 응답 없음', next: '상시' }));
+    } else cards.push(srcCard({ name: t('ld.status.src.wx.short', '항만 기상'), state: 'off', big: '—', freshPct: 100, sub: t('ld.status.src.wx.noResp', 'API 응답 없음'), next: t('ld.status.src.wx.always', '상시') }));
     el('srcGrid').innerHTML = cards.join('');
 
     /* ---- 종합 판정 배너 ---- */
@@ -223,22 +225,22 @@
       : (states.indexOf('warn') >= 0 ? 'warn' : 'ok');
     var hb = el('healthBanner');
     hb.className = 'health-banner hb-' + overall;
-    el('hbTitle').textContent = overall === 'ok' ? '모든 파이프라인 정상'
-      : overall === 'warn' ? '일부 파이프라인 확인 필요' : '파이프라인 점검 필요';
+    el('hbTitle').textContent = overall === 'ok' ? t('ld.status.hb.ok', '모든 파이프라인 정상')
+      : overall === 'warn' ? t('ld.status.hb.warn', '일부 파이프라인 확인 필요') : t('ld.status.hb.late', '파이프라인 점검 필요');
     el('hbSub').textContent = overall === 'ok'
-      ? '— 선석배정 금일분 적재 완료, Port Insight 24시간 내 산출'
-      : '— 아래 최신성 카드에서 주의/지연 항목을 확인하십시오';
+      ? t('ld.status.hb.okSub', '— 선석배정 금일분 적재 완료, Port Insight 24시간 내 산출')
+      : t('ld.status.hb.badSub', '— 아래 최신성 카드에서 주의/지연 항목을 확인하십시오');
 
     /* ---- 파이프라인 흐름도 ---- */
     var okAll = berthOnTime;
     el('pipeFlow').innerHTML =
-      pipeNode('① 터미널 수집', '9곳 · 06:00', okAll ? 'ok' : 'warn') +
+      pipeNode(t('ld.status.pipe.1', '① 터미널 수집'), t('ld.status.pipe.1sub', '9곳 · 06:00'), okAll ? 'ok' : 'warn') +
       '<span class="pipe-arrow">→</span>' +
-      pipeNode('② 정규화·적재', '06시대 자동', okAll ? 'ok' : 'warn') +
+      pipeNode(t('ld.status.pipe.2', '② 정규화·적재'), t('ld.status.pipe.2sub', '06시대 자동'), okAll ? 'ok' : 'warn') +
       '<span class="pipe-arrow">→</span>' +
-      pipeNode('③ DB 저장', r.berth ? r.berth.count + '건' : '—', r.berth ? 'ok' : 'off') +
+      pipeNode(t('ld.status.pipe.3', '③ DB 저장'), r.berth ? r.berth.count + t('ld.unit.cases', '건') : '—', r.berth ? 'ok' : 'off') +
       '<span class="pipe-arrow">→</span>' +
-      pipeNode('④ 대시보드', '45초 폴링', r.berth ? 'ok' : 'off');
+      pipeNode(t('ld.status.pipe.4', '④ 대시보드'), t('ld.status.pipe.4sub', '45초 폴링'), r.berth ? 'ok' : 'off');
 
     /* ---- 최근 7일 타임라인 ---- */
     /* 같은 날 로그가 여러 건이면 SUCCESS 를 대표로 고른다 */
@@ -259,13 +261,13 @@
       var cnt = byCnt[ds];
       var cls, mark;
       if (cnt) {                                   /* DB에 실제 데이터 있음 = 적재 완료 */
-        cls = 'dg-ok'; mark = '✓ ' + cnt + '건';
+        cls = 'dg-ok'; mark = '✓ ' + cnt + t('ld.unit.cases', '건');
       } else if (log && log.status !== 'SUCCESS') { /* 실적 없음 + 실패 로그 */
-        cls = 'dg-fail'; mark = '✗ 실패';
+        cls = 'dg-fail'; mark = '✗ ' + t('ld.status.day.fail', '실패');
       } else {
-        cls = 'dg-none'; mark = '· 없음';
+        cls = 'dg-none'; mark = '· ' + t('ld.status.day.none', '없음');
       }
-      chips.push('<div class="day-chip ' + cls + '"><small>' + ds.slice(5) + (i === 0 ? ' (오늘)' : '') + '</small><b>' + mark + '</b></div>');
+      chips.push('<div class="day-chip ' + cls + '"><small>' + ds.slice(5) + (i === 0 ? ' (' + t('ld.status.today', '오늘') + ')' : '') + '</small><b>' + mark + '</b></div>');
     }
     el('dayGrid').innerHTML = chips.join('');
 
@@ -287,20 +289,20 @@
         '<td><span class="lv-badge ' + st.c + '"><i class="lv-dot"></i>' + st.t + '</span></td>' +
         '<td style="color:var(--muted); font-size:12px;">' + note + '</td>' +
         '<td>' + fmtTs(l.created_at) + '</td></tr>';
-    }).join('') || '<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:22px;">적재 이력이 없습니다.</td></tr>';
+    }).join('') || '<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:22px;">' + t('ld.status.noHistory', '적재 이력이 없습니다.') + '</td></tr>';
 
     /* ---- 외부 연동 헬스체크 ---- */
     el('intGrid').innerHTML =
-      hcCard('Edge Function · track', 'UNIPASS 화물통관 프록시', r.hc.track) +
-      hcCard('Edge Function · datago', 'data.go.kr 공공 API 프록시', r.hc.datago) +
-      hcCard('Edge Function · send-code', '이메일 인증코드 발송', r.hc.sendcode, 'OPTIONS 응답 확인') +
-      hcCard('Open-Meteo Marine', '해양 기상 공개 API', r.hc.wx, '부산신항 파고 조회');
+      hcCard('Edge Function · track', t('ld.status.hc.trackDesc', 'UNIPASS 화물통관 프록시'), r.hc.track) +
+      hcCard('Edge Function · datago', t('ld.status.hc.datagoDesc', 'data.go.kr 공공 API 프록시'), r.hc.datago) +
+      hcCard('Edge Function · send-code', t('ld.status.hc.sendcodeDesc', '이메일 인증코드 발송'), r.hc.sendcode, t('ld.status.hc.optNote', 'OPTIONS 응답 확인')) +
+      hcCard('Open-Meteo Marine', t('ld.status.hc.wxDesc', '해양 기상 공개 API'), r.hc.wx, '부산신항 ' + t('ld.status.hc.wxNote', '파고 조회'));
   }
 
   function updateStamp() {
     if (!lastUpdateTs) return;
     var sec = Math.max(0, Math.round((Date.now() - lastUpdateTs) / 1000));
-    el('lastUpdated').textContent = sec < 5 ? '방금 업데이트' : sec + '초 전 업데이트';
+    el('lastUpdated').textContent = sec < 5 ? t('ld.status.justUpdated', '방금 업데이트') : sec + t('ld.status.secAgoUpdated', '초 전 업데이트');
   }
 
   document.addEventListener('DOMContentLoaded', function () {

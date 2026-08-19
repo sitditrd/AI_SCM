@@ -84,10 +84,10 @@
       <!-- Route -->
       <div class="card reveal view-panel" data-view="route">
         <div class="sched-form">
-          <label>출발항 (POL)<input type="text" placeholder="LOCODE 또는 항구명 (예: KRPUS)" disabled></label>
-          <label>도착항 (POD)<input type="text" placeholder="LOCODE 또는 항구명 (예: USSAV)" disabled></label>
-          <label>출발일<input type="date" disabled></label>
-          <label>조회 주(weeks)<select disabled><option>2주</option><option>4주</option></select></label>
+          <label><span data-i18n="rt.sched.pol">출발항 (POL)</span><input type="text" placeholder="LOCODE 또는 항구명 (예: KRPUS)" data-i18n-ph="rt.sched.pol.ph" disabled></label>
+          <label><span data-i18n="rt.sched.pod">도착항 (POD)</span><input type="text" placeholder="LOCODE 또는 항구명 (예: USSAV)" data-i18n-ph="rt.sched.pod.ph" disabled></label>
+          <label><span data-i18n="rt.sched.etd">출발일</span><input type="date" disabled></label>
+          <label><span data-i18n="rt.sched.weeks">조회 주(weeks)</span><select disabled><option data-i18n="rt.sched.w2">2주</option><option data-i18n="rt.sched.w4">4주</option></select></label>
           <button class="btn btn-primary" disabled data-i18n="schedule.form.search">조회</button>
         </div>
         <div class="prep-panel">
@@ -103,7 +103,7 @@
       <!-- Vessel -->
       <div class="card reveal view-panel" data-view="vessel" hidden>
         <div class="sched-form">
-          <label>모선명 / IMO<input type="text" placeholder="모선명 또는 IMO 번호" disabled></label>
+          <label><span data-i18n="rt.sched.vessel">모선명 / IMO</span><input type="text" placeholder="모선명 또는 IMO 번호" data-i18n-ph="rt.sched.vessel.ph" disabled></label>
           <button class="btn btn-primary" disabled data-i18n="schedule.form.search">조회</button>
         </div>
         <div class="prep-panel">
@@ -119,7 +119,7 @@
       <!-- Port -->
       <div class="card reveal view-panel" data-view="port" hidden>
         <div class="sched-form">
-          <label>항만 (LOCODE)<input type="text" placeholder="LOCODE (예: NLRTM)" disabled></label>
+          <label><span data-i18n="rt.sched.port">항만 (LOCODE)</span><input type="text" placeholder="LOCODE (예: NLRTM)" data-i18n-ph="rt.sched.port.ph" disabled></label>
           <button class="btn btn-primary" disabled data-i18n="schedule.form.search">조회</button>
         </div>
         <div class="prep-panel">
@@ -151,8 +151,8 @@
 
       <div class="card reveal" style="margin-bottom:14px;">
         <div class="berth-toolbar" style="margin:0;">
-          <input type="search" class="focus-search" id="airFlight" placeholder="편명 (예: KE251) — 선택" style="max-width:200px;">
-          <input type="search" class="focus-search" id="airPort" placeholder="공항코드 (예: LEJ) — 선택" style="max-width:190px;">
+          <input type="search" class="focus-search" id="airFlight" placeholder="편명 (예: KE251) — 선택" data-i18n-ph="rt.air.ph.flight" style="max-width:200px;">
+          <input type="search" class="focus-search" id="airPort" placeholder="공항코드 (예: LEJ) — 선택" data-i18n-ph="rt.air.ph.airport" style="max-width:190px;">
           <button class="btn btn-primary" id="airBtn" type="button" data-i18n="schedule.air.btn">화물편 조회</button>
         </div>
         <p class="sc-sub" style="margin:10px 0 0; color:var(--muted); font-size:12px;" data-i18n="schedule.air.note">
@@ -207,11 +207,11 @@
     </div>
   </footer>
 
-  <script src="js/common.js?v=2026-4"></script>
-  <script src="js/i18n.js?v=2026-08-20a"></script>
-  <script src="js/auth.js?v=2026-07-29f"></script>
-  <script src="js/auth-gate.js?v=2026-07-30a"></script>
-  <script src="js/schedule.js?v=2026-08-03a"></script>
+  <script src="js/common.js?v=2026-08-20b"></script>
+  <script src="js/i18n.js?v=2026-08-20b"></script>
+  <script src="js/auth.js?v=2026-08-20b"></script>
+  <script src="js/auth-gate.js?v=2026-08-20b"></script>
+  <script src="js/schedule.js?v=2026-08-20b"></script>
   <script>
     /* 선박 스케줄(준비중) 3-뷰 탭 — 항공 화물편 탭(#aircargo)과 섞이지 않도록 섹션 안으로 한정한다 */
     (function () {

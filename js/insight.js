@@ -14,6 +14,8 @@
   var LEVEL_COLOR = { LOW: '#0ca30c', STABLE: '#fab219', BUSY: '#ec835a', CONGESTED: '#d03b3b' };
   var LEVEL_ORDER = ['LOW', 'STABLE', 'BUSY', 'CONGESTED'];
 
+  function t(k, ko) { return (window.TWI18N && window.TWI18N.t) ? window.TWI18N.t(k, ko) : ko; }
+
   document.addEventListener('DOMContentLoaded', function () {
     UI = window.TWUI; DATA = window.TWDATA;
     if (!DATA) return;
@@ -73,10 +75,10 @@
       b.textContent = '';
     } else {
       b.style.display = '';
-      b.textContent = '내장 시뮬레이션';
+      b.textContent = t('insight.src.sim', '내장 시뮬레이션');
       b.classList.remove('live');
       var err = DATA.getLastError();
-      b.title = '데이터 소스: 내장 샘플 데이터' + (err ? ' — ' + err.message : '');
+      b.title = t('insight.src.simTitle', '데이터 소스: 내장 샘플 데이터') + (err ? ' — ' + err.message : '');
     }
   }
 
@@ -115,14 +117,14 @@
   }
   function updateStamp() {
     if (DATA && DATA.getMode() !== 'supabase') {
-      el('lastUpdated').textContent = '오프라인 — 캐시 데이터 표시 중';
+      el('lastUpdated').textContent = t('insight.stamp.offline', '오프라인 — 캐시 데이터 표시 중');
       el('staleBanner').classList.add('show');
       return;
     }
     if (!lastUpdateTs) return;
     var sec = Math.max(0, Math.round((Date.now() - lastUpdateTs) / 1000));
-    var label = sec < 5 ? '방금 업데이트' : sec + '초 전 업데이트';
-    if (sec >= 60) label = Math.floor(sec / 60) + '분 전 업데이트';
+    var label = sec < 5 ? t('insight.stamp.just', '방금 업데이트') : sec + t('insight.stamp.secAgo', '초 전 업데이트');
+    if (sec >= 60) label = Math.floor(sec / 60) + t('insight.stamp.minAgo', '분 전 업데이트');
     el('lastUpdated').textContent = label;
     el('staleBanner').classList.toggle('show', sec > 120);
   }
@@ -141,7 +143,7 @@
     }
     el('vRisk').textContent = s.globalRisk;
     el('vRisk').className = 'risk-badge risk-' + String(s.globalRisk || '').toLowerCase();
-    el('vTpfsGrade').innerHTML = '현재 구간: ' + UI.levelBadge(s.tpfsGrade);
+    el('vTpfsGrade').innerHTML = t('insight.gauge.cur', '현재 구간:') + ' ' + UI.levelBadge(s.tpfsGrade);
     el('periodLabel').textContent = s.periodStart + ' ~ ' + s.periodEnd;
     el('focusCountLabel').textContent = DATA.focusCount;
     drawGauge(s.tpfs);
@@ -150,7 +152,7 @@
     var bar = el('distBar');
     bar.innerHTML = s.distribution.map(function (d) {
       return '<div class="dist-seg seg-' + d.level.toLowerCase() + '" style="flex:' + d.ratio + ' 1 0;" ' +
-        'data-tip="<b>' + d.level + ' · ' + UI.LEVEL_KO[d.level] + '</b><br>' + d.count + '개 항만 (' + d.ratio + '%)<br>전주 대비 ' + (d.delta > 0 ? '▲' : '▼') + Math.abs(d.delta) + '">' +
+        'data-tip="<b>' + d.level + ' · ' + UI.LEVEL_KO[d.level] + '</b><br>' + d.count + t('insight.unit.portsN', '개 항만') + ' (' + d.ratio + '%)<br>' + t('insight.th.wow', '전주 대비') + ' ' + (d.delta > 0 ? '▲' : '▼') + Math.abs(d.delta) + '">' +
         (d.ratio >= 9 ? '<span>' + d.level + ' ' + d.ratio + '%</span>' : '') + '</div>';
     }).join('');
 
@@ -202,12 +204,12 @@
   function renderRegional() {
     var max = Math.max.apply(null, state.regional.map(function (r) { return r.busyConRatio; })) || 1;
     el('rgList').innerHTML = state.regional.map(function (r) {
-      var tr = r.trend === 'up' ? '<span class="trend-up" data-tip="전주 대비 악화">▲ 악화</span>'
-        : r.trend === 'down' ? '<span class="trend-down" data-tip="전주 대비 개선">▼ 개선</span>'
-        : '<span class="trend-flat">— 유지</span>';
-      return '<div class="rg-item" data-tip="<b>' + r.ko + '</b><br>Focus Port ' + r.portCount + '개<br>BUSY+CON 비율 ' + r.busyConRatio + '%<br>평균 접안 지연 ' + r.avgDelayH + 'h">' +
-        '<div class="rg-top"><b>' + r.ko + '</b><span class="cnt">' + r.portCount + '개항</span>' + tr +
-        '<span class="val">' + r.busyConRatio + '%</span><span class="delay">지연 ' + r.avgDelayH + 'h</span></div>' +
+      var tr = r.trend === 'up' ? '<span class="trend-up" data-tip="' + t('insight.rg.tip.worse', '전주 대비 악화') + '">▲ ' + t('insight.rg.worse', '악화') + '</span>'
+        : r.trend === 'down' ? '<span class="trend-down" data-tip="' + t('insight.rg.tip.better', '전주 대비 개선') + '">▼ ' + t('insight.rg.better', '개선') + '</span>'
+        : '<span class="trend-flat">— ' + t('insight.rg.flat', '유지') + '</span>';
+      return '<div class="rg-item" data-tip="<b>' + r.ko + '</b><br>Focus Port ' + r.portCount + t('insight.unit.ports', '개') + '<br>BUSY+CON ' + t('insight.th.ratio', '비율') + ' ' + r.busyConRatio + '%<br>' + t('insight.kpi.delay', '평균 접안 지연') + ' ' + r.avgDelayH + 'h">' +
+        '<div class="rg-top"><b>' + r.ko + '</b><span class="cnt">' + r.portCount + t('insight.unit.portsCall', '개항') + '</span>' + tr +
+        '<span class="val">' + r.busyConRatio + '%</span><span class="delay">' + t('insight.rg.delay', '지연') + ' ' + r.avgDelayH + 'h</span></div>' +
         '<div class="rg-bar"><div class="rg-fill" style="width:' + (r.busyConRatio / max * 100) + '%;"></div></div>' +
         '</div>';
     }).join('');
@@ -220,7 +222,7 @@
         '<td>' + portCell(p.ko, p.en, p.cc) + '</td>' +
         '<td>' + UI.levelBadgeShort(p.level) + '</td>' +
         '<td class="num"><b>' + fmt(p.delayH, 1) + 'h</b></td>' +
-        '<td class="num">' + p.waiting + ' / ' + p.berthed + '척</td></tr>';
+        '<td class="num">' + p.waiting + ' / ' + p.berthed + t('insight.unit.ships', '척') + '</td></tr>';
     }).join('');
 
     if (el('tbodyWorsening')) el('tbodyWorsening').innerHTML = state.worsening.map(function (m) {
@@ -293,10 +295,10 @@
       });
       m.bindPopup(
         '<div class="map-pop"><b>' + p.ko + '</b> <small style="opacity:.65">' + p.en + '</small><br>' +
-        '<div class="row"><span>레벨</span><span><b>' + p.level + ' · ' + UI.LEVEL_KO[p.level] + '</b></span></div>' +
+        '<div class="row"><span>' + t('insight.th.level', '레벨') + '</span><span><b>' + p.level + ' · ' + UI.LEVEL_KO[p.level] + '</b></span></div>' +
         '<div class="row"><span>PCI</span><span>' + p.tpfs + '</span></div>' +
-        '<div class="row"><span>접안 지연</span><span>' + p.delayH + 'h</span></div>' +
-        '<div class="row"><span>대기/접안</span><span>' + p.waiting + ' / ' + p.berthed + '척</span></div></div>',
+        '<div class="row"><span>' + t('insight.pd.delay', '접안 지연') + '</span><span>' + p.delayH + 'h</span></div>' +
+        '<div class="row"><span>' + t('insight.pd.wb', '대기/접안') + '</span><span>' + p.waiting + ' / ' + p.berthed + t('insight.unit.ships', '척') + '</span></div></div>',
         { closeButton: false }
       );
       m.on('mouseover', function () { this.openPopup(); });
@@ -378,7 +380,7 @@
     var ac = el('portAC'), input = el('portSearch');
     acItems = hits; acActive = -1;
     if (!hits.length) {
-      ac.innerHTML = '<div class="port-ac-empty">검색 결과 없음</div>';
+      ac.innerHTML = '<div class="port-ac-empty">' + t('insight.ac.empty', '검색 결과 없음') + '</div>';
     } else {
       ac.innerHTML = hits.map(function (x, i) {
         return '<button class="port-ac-item" role="option" data-i="' + i + '">' +
@@ -431,14 +433,14 @@
     box.innerHTML =
       '<div class="pd-head"><b>' + esc(p.ko) + '</b> <small>' + esc(p.en) + '</small>' +
       (x.locode ? '<span class="pd-loc">' + x.locode + '</span>' : '') +
-      '<button class="pd-x" id="pdClose" aria-label="닫기">×</button></div>' +
+      '<button class="pd-x" id="pdClose" aria-label="' + t('insight.pd.close', '닫기') + '">×</button></div>' +
       '<div class="pd-grade"><span class="st-badge st-' + p.level.toLowerCase() + '"><i class="lv-dot"></i>' +
       p.level + ' · ' + UI.LEVEL_KO[p.level] + '</span></div>' +
       '<div class="pd-rows">' +
-      '<div class="row"><span>PCI (혼잡도 지수)</span><b>' + p.tpfs + '</b></div>' +
-      '<div class="row"><span>접안 지연</span><b>' + p.delayH + 'h</b></div>' +
-      '<div class="row"><span>대기 / 접안</span><b>' + p.waiting + ' / ' + p.berthed + '척</b></div>' +
-      (x.cc ? '<div class="row"><span>국가</span><b>' + (CC_KO[x.cc] || x.cc) + '</b></div>' : '') +
+      '<div class="row"><span>' + t('insight.pd.pci', 'PCI (혼잡도 지수)') + '</span><b>' + p.tpfs + '</b></div>' +
+      '<div class="row"><span>' + t('insight.pd.delay', '접안 지연') + '</span><b>' + p.delayH + 'h</b></div>' +
+      '<div class="row"><span>' + t('insight.pd.wb2', '대기 / 접안') + '</span><b>' + p.waiting + ' / ' + p.berthed + t('insight.unit.ships', '척') + '</b></div>' +
+      (x.cc ? '<div class="row"><span>' + t('insight.pd.country', '국가') + '</span><b>' + (CC_KO[x.cc] || x.cc) + '</b></div>' : '') +
       '</div>';
     box.hidden = false;
     var xb = el('pdClose');
@@ -481,8 +483,8 @@
         '<td>' + portCell(w.ko, w.en, w.cc) + '</td>' +
         '<td>' + UI.levelBadgeShort(w.level) + '</td>' +
         '<td class="num"><b>' + fmt(w.waitH, 1) + 'h</b></td>' +
-        '<td class="num">' + w.waiting + ' / ' + w.berthed + '척</td>' +
-        '<td class="num"><span class="strong-days">' + fmt(w.waitDays, 1) + '일</span></td></tr>';
+        '<td class="num">' + w.waiting + ' / ' + w.berthed + t('insight.unit.ships', '척') + '</td>' +
+        '<td class="num"><span class="strong-days">' + fmt(w.waitDays, 1) + t('insight.unit.days', '일') + '</span></td></tr>';
     }).join('');
   }
 
@@ -490,7 +492,7 @@
   function renderBottleneck() {
     var max = Math.max.apply(null, state.bottleneck.map(function (b) { return Math.max(b.waitH, b.serviceH); })) || 1;
     el('bnChart').innerHTML = state.bottleneck.map(function (b) {
-      return '<div class="bn-row" data-tip="<b>' + b.ko + '</b><br>대기 Tw ' + b.waitH + 'h · 하역 Ts ' + b.serviceH + 'h<br>Tw/Ts = ' + b.twts + '배">' +
+      return '<div class="bn-row" data-tip="<b>' + b.ko + '</b><br>' + t('insight.bn.wait', '대기') + ' Tw ' + b.waitH + 'h · ' + t('insight.bn.service', '하역') + ' Ts ' + b.serviceH + 'h<br>Tw/Ts = ' + b.twts + t('insight.unit.times', '배') + '">' +
         '<div class="bn-name">' + b.ko + ' ' + UI.levelBadgeShort(b.level) + '<small>' + b.en + '</small></div>' +
         '<div class="bn-bars">' +
         '<div class="bn-bar bn-wait" style="width:' + (b.waitH / max * 100) + '%;"></div>' +
@@ -514,7 +516,7 @@
         return x.toFixed(1) + ',' + y.toFixed(1);
       }).join(' ');
     }
-    return '<svg class="spark" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="최근 3일 대비 1개월 추세">' +
+    return '<svg class="spark" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + t('insight.spark.aria', '최근 3일 대비 1개월 추세') + '">' +
       '<polyline class="s2" points="' + pts(m1arr, 0, W * 0.62) + '"/>' +
       '<polyline class="s1" points="' + pts(d3arr, W * 0.68, W) + '"/>' +
       '</svg>';
@@ -524,7 +526,7 @@
       return '<tr><td class="rank">' + d.rank + '</td>' +
         '<td>' + portCell(d.ko, d.en, '') + '</td>' +
         '<td><span style="font-size:12.5px; font-weight:700;">' + d.levelChange + '</span></td>' +
-        '<td data-tip="<b>' + d.ko + '</b><br>3일 평균 ' + d.trend3d.join(' → ') + 'h<br>1개월 평균 ' + fmt(d.trend1m.reduce(function (a, b) { return a + b; }, 0) / d.trend1m.length, 1) + 'h">' + spark(d.trend3d, d.trend1m) + '</td>' +
+        '<td data-tip="<b>' + d.ko + '</b><br>' + t('insight.dc.3d', '3일 평균') + ' ' + d.trend3d.join(' → ') + 'h<br>' + t('insight.dc.1m', '1개월 평균') + ' ' + fmt(d.trend1m.reduce(function (a, b) { return a + b; }, 0) / d.trend1m.length, 1) + 'h">' + spark(d.trend3d, d.trend1m) + '</td>' +
         '<td class="num chg-up">+' + fmt(d.incrH, 1) + 'h</td></tr>';
     }).join('');
   }
@@ -543,7 +545,7 @@
       grid.innerHTML = shown.map(function (p) {
         return '<span class="p-chip">' + p.ko + ' <small>' + p.en + '</small></span>';
       }).join('');
-      match.textContent = q ? shown.length + '개 일치' : '총 ' + list.length + '개';
+      match.textContent = q ? shown.length + t('insight.focus.match', '개 일치') : t('insight.focus.total', '총') + ' ' + list.length + t('insight.unit.ports', '개');
     }
     input.addEventListener('input', function () { render(input.value); });
     render('');
@@ -594,7 +596,7 @@
     var from = new Date(now.getFullYear(), now.getMonth() - (TEU_MONTHS - 1), 1);
     fetchTeuPages(String(ymNum(from)), String(ymNum(now)), 1, [], function (rows) {
       if (!rows || !rows.length) {
-        box.innerHTML = '<p class="sc-sub" style="color:var(--muted);">물동량 데이터를 불러오지 못했습니다. (해수부 원천은 약 2개월 지연 공표됩니다)</p>';
+        box.innerHTML = '<p class="sc-sub" style="color:var(--muted);">' + t('insight.s7.error', '물동량 데이터를 불러오지 못했습니다. (해수부 원천은 약 2개월 지연 공표됩니다)') + '</p>';
         return;
       }
       renderTeuTrend(box, rows);
@@ -620,7 +622,7 @@
     var bars = months.map(function (m) {
       var d = byMonth[m], tot = d.imp + d.exp;
       var h = tot / max * 100;
-      var tip = ymShort(m) + ' · 수입 ' + teuFmt(d.imp) + ' / 수출 ' + teuFmt(d.exp) + ' TEU';
+      var tip = ymShort(m) + ' · ' + t('insight.teu.imp', '수입') + ' ' + teuFmt(d.imp) + ' / ' + t('insight.teu.exp', '수출') + ' ' + teuFmt(d.exp) + ' TEU';
       return '<div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; min-width:0;" title="' + esc(tip) + '">' +
         '<div style="width:100%; height:150px; display:flex; flex-direction:column; justify-content:flex-end;">' +
           '<div style="height:' + (h * d.exp / (tot || 1)) + '%; background:var(--series-2); border-radius:3px 3px 0 0;"></div>' +
@@ -645,12 +647,12 @@
     box.innerHTML =
       '<div style="display:flex; align-items:flex-end; gap:6px; padding:4px 0 2px;">' + bars + '</div>' +
       '<p class="sc-sub" style="color:var(--muted); font-size:12px; margin:12px 0 20px;">' +
-        '최신 ' + ymShort(latest).replace('.', '년 ') + '월 · 수입 ' + teuFmt(lt.imp) + ' TEU · 수출 ' + teuFmt(lt.exp) +
-        ' TEU · 합계 <b style="color:var(--fg);">' + teuFmt(lt.imp + lt.exp) + ' TEU</b>' +
+        t('insight.teu.latest', '최신') + ' ' + ymShort(latest).replace('.', '년 ') + '월 · ' + t('insight.teu.imp', '수입') + ' ' + teuFmt(lt.imp) + ' TEU · ' + t('insight.teu.exp', '수출') + ' ' + teuFmt(lt.exp) +
+        ' TEU · ' + t('insight.teu.total', '합계') + ' <b style="color:var(--fg);">' + teuFmt(lt.imp + lt.exp) + ' TEU</b>' +
       '</p>' +
       '<div class="bn-chart">' + areas.map(function (a) {
         var tot = a.imp + a.exp;
-        return '<div class="bn-row" data-tip="<b>' + esc(a.nm) + '</b><br>수입 ' + teuFmt(a.imp) + ' TEU · 수출 ' + teuFmt(a.exp) + ' TEU">' +
+        return '<div class="bn-row" data-tip="<b>' + esc(a.nm) + '</b><br>' + t('insight.teu.imp', '수입') + ' ' + teuFmt(a.imp) + ' TEU · ' + t('insight.teu.exp', '수출') + ' ' + teuFmt(a.exp) + ' TEU">' +
           '<div class="bn-name">' + esc(a.nm) + '</div>' +
           '<div class="bn-bars">' +
             '<div class="bn-bar bn-wait" style="width:' + (a.imp / aMax * 100) + '%;"></div>' +
@@ -716,14 +718,14 @@
     var box = el('portStat');
     if (!box || typeof fetch === 'undefined') return;
     function fail() {
-      box.innerHTML = psCard('<p class="sc-sub" style="color:var(--muted); margin:0;">입출항 실적 데이터를 불러오지 못했습니다. (해수부 원천은 약 2개월 지연 공표됩니다)</p>');
+      box.innerHTML = psCard('<p class="sc-sub" style="color:var(--muted); margin:0;">' + t('insight.s8.error', '입출항 실적 데이터를 불러오지 못했습니다. (해수부 원천은 약 2개월 지연 공표됩니다)') + '</p>');
     }
     psFindLatest(1).then(function (r) {
       if (!r) { fail(); return; }
       if (r.needKey) {
-        box.innerHTML = psCard('<h3 style="margin-top:0; font-size:15px;">data.go.kr 공공 API 키가 아직 등록되지 않았습니다</h3>' +
+        box.innerHTML = psCard('<h3 style="margin-top:0; font-size:15px;">' + t('insight.s8.needkey.h', 'data.go.kr 공공 API 키가 아직 등록되지 않았습니다') + '</h3>' +
           '<p class="sc-sub">' + esc(r.guide) + '</p>' +
-          '<a class="btn btn-primary" target="_blank" rel="noopener" href="https://www.data.go.kr/data/15059059/openapi.do">data.go.kr 활용신청 페이지 ↗</a>');
+          '<a class="btn btn-primary" target="_blank" rel="noopener" href="https://www.data.go.kr/data/15059059/openapi.do">' + t('insight.s8.needkey.btn', 'data.go.kr 활용신청 페이지 ↗') + '</a>');
         return;
       }
       renderPortStat(box, r.ym, r.rows);
@@ -751,7 +753,7 @@
     }).sort(function (a, b) { return b.etr - a.etr; });
 
     if (!ports.length) {
-      box.innerHTML = psCard('<p class="sc-sub" style="color:var(--muted); margin:0;">입출항 실적 데이터를 불러오지 못했습니다. (해수부 원천은 약 2개월 지연 공표됩니다)</p>');
+      box.innerHTML = psCard('<p class="sc-sub" style="color:var(--muted); margin:0;">' + t('insight.s8.error', '입출항 실적 데이터를 불러오지 못했습니다. (해수부 원천은 약 2개월 지연 공표됩니다)') + '</p>');
       return;
     }
 
@@ -769,16 +771,16 @@
 
     var kpis =
       '<div class="grid-3" style="margin-bottom:14px;">' +
-        '<div class="kpi reveal in"><div class="k">총 입항 척수</div>' +
-          '<div class="v">' + psFmt(tot.etr) + '<small>척</small></div>' +
-          '<div class="sub">' + ymLabel + ' 기준 · 전국 ' + ports.length + '개 항만청 합계</div></div>' +
-        '<div class="kpi reveal in"><div class="k">입항 총톤수</div>' +
-          '<div class="v">' + psFmt(tot.grt / 10000) + '<small>만 GT</small></div>' +
-          '<div class="sub">총 출항 척수 ' + psFmt(tot.sat) + '척</div></div>' +
-        '<div class="kpi reveal in"><div class="k">외항선 비중</div>' +
+        '<div class="kpi reveal in"><div class="k">' + t('insight.ps.kpi.arr', '총 입항 척수') + '</div>' +
+          '<div class="v">' + psFmt(tot.etr) + '<small>' + t('insight.unit.ships', '척') + '</small></div>' +
+          '<div class="sub">' + ymLabel + ' ' + t('insight.ps.basis', '기준 · 전국') + ' ' + ports.length + t('insight.ps.agencies', '개 항만청 합계') + '</div></div>' +
+        '<div class="kpi reveal in"><div class="k">' + t('insight.ps.kpi.grt', '입항 총톤수') + '</div>' +
+          '<div class="v">' + psFmt(tot.grt / 10000) + '<small>' + t('insight.ps.unit.10kGT', '만 GT') + '</small></div>' +
+          '<div class="sub">' + t('insight.ps.kpi.dep', '총 출항 척수') + ' ' + psFmt(tot.sat) + t('insight.unit.ships', '척') + '</div></div>' +
+        '<div class="kpi reveal in"><div class="k">' + t('insight.ps.kpi.ocean', '외항선 비중') + '</div>' +
           '<div class="v">' + oceanPct + '<small>%</small></div>' +
-          '<div class="sub">국적선 ' + psPct(kindAll['국적선'], tot.etr) + '% · 외국선 ' + psPct(kindAll['외국선'], tot.etr) +
-            '% · 연안선 ' + psPct(kindAll['연안선'], tot.etr) + '% (입항 척수 기준)</div></div>' +
+          '<div class="sub">' + t('insight.ps.kind.dom', '국적선') + ' ' + psPct(kindAll['국적선'], tot.etr) + '% · ' + t('insight.ps.kind.for', '외국선') + ' ' + psPct(kindAll['외국선'], tot.etr) +
+            '% · ' + t('insight.ps.kind.coast', '연안선') + ' ' + psPct(kindAll['연안선'], tot.etr) + '% ' + t('insight.ps.basisArr', '(입항 척수 기준)') + '</div></div>' +
       '</div>';
 
     var body = ports.slice(0, PS_TOP).map(function (p, i) {
@@ -790,7 +792,7 @@
         '<td>' + kindBar(p.kind, p.etr) + '</td></tr>';
     }).join('') +
       '<tr style="border-top:2px solid var(--border);"><td></td>' +
-      '<td><b>전국 합계</b></td>' +
+      '<td><b>' + t('insight.ps.total', '전국 합계') + '</b></td>' +
       '<td class="num"><b>' + psFmt(tot.etr) + '</b></td>' +
       '<td class="num"><b>' + psFmt(tot.sat) + '</b></td>' +
       '<td class="num"><b>' + psFmt(tot.grt) + '</b></td>' +
@@ -799,8 +801,8 @@
     box.innerHTML = kpis +
       '<div class="tbl-card reveal in">' +
         '<div class="tbl-scroll"><table class="tw"><thead><tr>' +
-          '<th>#</th><th>항만</th><th class="num">입항 척수</th><th class="num">출항 척수</th>' +
-          '<th class="num">입항 총톤 (GT)</th><th>선적 구성</th>' +
+          '<th>#</th><th>' + t('insight.th.port', '항만') + '</th><th class="num">' + t('insight.ps.th.arr', '입항 척수') + '</th><th class="num">' + t('insight.ps.th.dep', '출항 척수') + '</th>' +
+          '<th class="num">' + t('insight.ps.th.grt', '입항 총톤 (GT)') + '</th><th>' + t('insight.ps.th.mix', '선적 구성') + '</th>' +
         '</tr></thead><tbody>' + body + '</tbody></table></div>' +
       '</div>' +
       '<div class="legend-row" style="margin-top:14px;">' +
@@ -809,7 +811,7 @@
         }).join('') +
       '</div>' +
       '<p class="sc-sub" style="color:var(--muted); font-size:12px; margin:10px 0 0;">' +
-        '입항 척수 상위 항만청만 표시하며, 합계 행은 전국 전체 항만청 기준입니다. 선적 구성은 입항 척수 기준입니다.</p>';
+        t('insight.ps.note', '입항 척수 상위 항만청만 표시하며, 합계 행은 전국 전체 항만청 기준입니다. 선적 구성은 입항 척수 기준입니다.') + '</p>';
   }
 
   /* ================= 스크롤 스파이 ================= */

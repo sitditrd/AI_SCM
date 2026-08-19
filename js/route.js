@@ -9,6 +9,7 @@
 
   function el(id) { return document.getElementById(id); }
   function t(k, ko) { return (window.TWI18N && window.TWI18N.t) ? window.TWI18N.t(k, ko) : ko; }
+  function i18nT(k, ko) { return t(k, ko); }   /* drawHisto 안에는 동명 지역변수 t·tx 가 있어 별칭으로 호출한다 */
   function slugOf(en) { return en.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
   function currentLang() {
     var i18n = window.TWI18N;
@@ -160,10 +161,10 @@
       var tot = v.imp + v.exp;
       var ym = String(c.month);
       host.insertAdjacentHTML('beforeend', kpi(
-        '한국 ↔ ' + esc(v.ko) + ' 물동량',
+        t('rt.vol.pre', '한국 ↔ ') + esc(v.ko) + t('rt.vol.suf', ' 물동량'),
         Math.round(tot).toLocaleString('ko-KR') + ' <small>TEU</small>',
-        ym.slice(0, 4) + '-' + ym.slice(4, 6) + ' 기준 · 수입 ' + Math.round(v.imp).toLocaleString('ko-KR') +
-          ' / 수출 ' + Math.round(v.exp).toLocaleString('ko-KR') + ' TEU · 해수부 국가별 실적'
+        ym.slice(0, 4) + '-' + ym.slice(4, 6) + t('rt.vol.basis', ' 기준 · 수입 ') + Math.round(v.imp).toLocaleString('ko-KR') +
+          t('rt.vol.exp', ' / 수출 ') + Math.round(v.exp).toLocaleString('ko-KR') + t('rt.vol.src', ' TEU · 해수부 국가별 실적')
       ));
     });
   }
@@ -200,7 +201,7 @@
     var yOf = function (c) { return y1 - c / mx * ph; };
     var f1 = function (n) { return n.toFixed(1); };
 
-    var s = '<svg class="histo-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="도착 소요일 분포 히스토그램">';
+    var s = '<svg class="histo-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + i18nT('rt.histo.aria', '도착 소요일 분포 히스토그램') + '">';
     s += '<defs><linearGradient id="histoGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="hg0"/><stop offset="1" class="hg1"/></linearGradient></defs>';
     /* P10~P90 신뢰구간 밴드 */
     s += '<rect class="histo-band" x="' + f1(xOf(r.p10)) + '" y="' + y0 + '" width="' + f1(xOf(r.p90) - xOf(r.p10)) + '" height="' + ph + '" rx="4"/>';
@@ -216,7 +217,7 @@
       var c = counts[i]; if (!c) continue;
       var bx = xOf(lo + bw * i), bx2 = xOf(lo + bw * (i + 1)), center = lo + bw * (i + 0.5);
       var inP = center >= r.p10 && center <= r.p90, by = yOf(c);
-      s += '<rect class="histo-bar' + (inP ? ' in' : '') + '" x="' + f1(bx + 0.9) + '" y="' + f1(by) + '" width="' + f1(Math.max(1, bx2 - bx - 1.8)) + '" height="' + f1(y1 - by) + '" rx="2"><title>' + center.toFixed(1) + '일 · ' + c + '회 (' + (c / N * 100).toFixed(1) + '%)</title></rect>';
+      s += '<rect class="histo-bar' + (inP ? ' in' : '') + '" x="' + f1(bx + 0.9) + '" y="' + f1(by) + '" width="' + f1(Math.max(1, bx2 - bx - 1.8)) + '" height="' + f1(y1 - by) + '" rx="2"><title>' + center.toFixed(1) + i18nT('rt.histo.tip.day', '일 · ') + c + i18nT('rt.histo.tip.runs', '회 (') + (c / N * 100).toFixed(1) + '%)</title></rect>';
     }
     /* 밀도 곡선(3점 평활) */
     var sm = counts.map(function (c, i) { return ((counts[i - 1] || 0) + 2 * c + (counts[i + 1] || 0)) / 4; });
@@ -232,21 +233,21 @@
     [['p10', r.p10, 'P10'], ['p50', r.p50, 'P50'], ['p90', r.p90, 'P90']].forEach(function (p) {
       var px = xOf(p[1]);
       s += '<line class="histo-pline ' + p[0] + '" x1="' + f1(px) + '" y1="' + (y0 - 4) + '" x2="' + f1(px) + '" y2="' + y1 + '"/>';
-      s += '<text class="histo-plabel ' + p[0] + '" x="' + f1(px) + '" y="' + (y0 - 12) + '" text-anchor="middle">' + p[2] + ' ' + p[1].toFixed(1) + '일</text>';
+      s += '<text class="histo-plabel ' + p[0] + '" x="' + f1(px) + '" y="' + (y0 - 12) + '" text-anchor="middle">' + p[2] + ' ' + p[1].toFixed(1) + i18nT('rt.unit.day', '일') + '</text>';
     });
     /* x 눈금 */
     for (var t = 0; t <= 5; t++) {
       var day = lo + (hi - lo) * t / 5, tx = xOf(day);
       s += '<line class="histo-grid" x1="' + f1(tx) + '" y1="' + y1 + '" x2="' + f1(tx) + '" y2="' + (y1 + 5) + '"/>';
-      s += '<text class="histo-tick" x="' + f1(tx) + '" y="' + (y1 + 21) + '" text-anchor="middle">' + day.toFixed(0) + '일</text>';
+      s += '<text class="histo-tick" x="' + f1(tx) + '" y="' + (y1 + 21) + '" text-anchor="middle">' + day.toFixed(0) + i18nT('rt.unit.day', '일') + '</text>';
     }
     s += '</svg>';
     el('histo').innerHTML = s;
     el('histoAxis').innerHTML =
-      '<span class="hl"><i class="hl-sw in"></i>P10~P90 (80% 구간)</span>' +
-      '<span class="hl"><i class="hl-sw out"></i>그 외</span>' +
-      '<span class="hl"><i class="hl-sw curve"></i>밀도 곡선</span>' +
-      '<span class="hl hl-r">중앙값 P50 ' + r.p50.toFixed(1) + '일 · 표본 ' + N.toLocaleString('ko-KR') + '회</span>';
+      '<span class="hl"><i class="hl-sw in"></i>' + i18nT('rt.histo.leg.in', 'P10~P90 (80% 구간)') + '</span>' +
+      '<span class="hl"><i class="hl-sw out"></i>' + i18nT('rt.histo.leg.out', '그 외') + '</span>' +
+      '<span class="hl"><i class="hl-sw curve"></i>' + i18nT('rt.histo.leg.curve', '밀도 곡선') + '</span>' +
+      '<span class="hl hl-r">' + i18nT('rt.histo.leg.median', '중앙값 P50 ') + r.p50.toFixed(1) + i18nT('rt.histo.leg.sample', '일 · 표본 ') + N.toLocaleString('ko-KR') + i18nT('rt.histo.leg.runs', '회') + '</span>';
   }
 
   function initMap() {
@@ -262,17 +263,17 @@
     var o = ports[+el('fromPort').value], d = ports[+el('toPort').value];
     var kn = parseFloat(el('speedKn').value) || 16.5;
     if (!o || !d || o === d) return;
-    setStatus('', '항로 계산 중… (searoute)');
+    setStatus('', t('rt.status.calc', '항로 계산 중… (searoute)'));
     loadRoute(o)
       .then(function (all) {
         var res = all[slugOf(d.en)];
-        if (!res) throw new Error('해당 구간의 사전계산 항로가 없습니다');
+        if (!res) throw new Error(t('rt.err.noleg', '해당 구간의 사전계산 항로가 없습니다'));
         var r = simulate(res.nm, kn);
         el('simKpis').innerHTML =
-          kpi('항로 거리', Number(res.nm).toLocaleString('ko-KR') + ' <small>해리(nm)</small>', o.ko + ' → ' + d.ko + ' · 항로망 최단경로') +
-          kpi('예상 소요일 P50', r.p50.toFixed(1) + ' <small>일</small>', '중앙값 · 평균 속력 ' + kn + 'kn 기준') +
-          kpi('신뢰 구간 P10~P90', r.p10.toFixed(1) + '~' + r.p90.toFixed(1) + ' <small>일</small>', '10회 중 8회는 이 구간 내 도착') +
-          kpi('지연 리스크', ((r.p90 - r.p50)).toFixed(1) + ' <small>일</small>', 'P50 대비 P90 추가 소요 (버퍼 권장치)');
+          kpi(t('rt.kpi.dist', '항로 거리'), Number(res.nm).toLocaleString('ko-KR') + ' <small>' + t('rt.unit.nm', '해리(nm)') + '</small>', o.ko + ' → ' + d.ko + t('rt.kpi.dist.sub', ' · 항로망 최단경로')) +
+          kpi(t('rt.kpi.p50', '예상 소요일 P50'), r.p50.toFixed(1) + ' <small>' + t('rt.unit.days', '일') + '</small>', t('rt.kpi.p50.sub', '중앙값 · 평균 속력 ') + kn + t('rt.kpi.p50.sub2', 'kn 기준')) +
+          kpi(t('rt.kpi.ci', '신뢰 구간 P10~P90'), r.p10.toFixed(1) + '~' + r.p90.toFixed(1) + ' <small>' + t('rt.unit.days', '일') + '</small>', t('rt.kpi.ci.sub', '10회 중 8회는 이 구간 내 도착')) +
+          kpi(t('rt.kpi.risk', '지연 리스크'), ((r.p90 - r.p50)).toFixed(1) + ' <small>' + t('rt.unit.days', '일') + '</small>', t('rt.kpi.risk.sub', 'P50 대비 P90 추가 소요 (버퍼 권장치)'));
         appendVolume(d);
         drawHisto(r);
         if (map) {
@@ -284,9 +285,9 @@
           L.polyline(latlngs, { color: '#ffffff', weight: 2, opacity: 0.95, lineCap: 'round', className: 'route-flow', interactive: false }).addTo(routeLayer);
           /* 출발·도착 마커 (펄스 글로우 + 항구명 라벨) */
           L.circleMarker([o.lat, o.lng], { radius: 7, color: '#00b8a9', weight: 3.5, fillColor: '#ffffff', fillOpacity: 1, className: 'route-pin start' })
-            .bindTooltip('출발 · ' + o.ko, { permanent: true, direction: 'top', offset: [0, -8], className: 'route-tip start' }).addTo(routeLayer);
+            .bindTooltip(t('rt.map.origin', '출발 · ') + o.ko, { permanent: true, direction: 'top', offset: [0, -8], className: 'route-tip start' }).addTo(routeLayer);
           L.circleMarker([d.lat, d.lng], { radius: 7, color: '#d03b3b', weight: 3.5, fillColor: '#ffffff', fillOpacity: 1, className: 'route-pin end' })
-            .bindTooltip('도착 · ' + d.ko, { permanent: true, direction: 'top', offset: [0, -8], className: 'route-tip end' }).addTo(routeLayer);
+            .bindTooltip(t('rt.map.dest', '도착 · ') + d.ko, { permanent: true, direction: 'top', offset: [0, -8], className: 'route-tip end' }).addTo(routeLayer);
           /* 항로 중간 거리 라벨 */
           var _mid = latlngs[Math.floor(latlngs.length / 2)];
           if (_mid) L.marker(_mid, { interactive: false, icon: L.divIcon({ className: 'route-distlabel', html: '<span>' + Number(res.nm).toLocaleString('ko-KR') + ' nm</span>' }) }).addTo(routeLayer);
@@ -294,18 +295,18 @@
         }
       })
       .catch(function (e) {
-        setStatus('계산 실패', e.message);
+        setStatus(t('rt.err.title', '계산 실패'), e.message);
       });
   }
 
   document.addEventListener('DOMContentLoaded', function () {
     if (!window.TWDATA || typeof window.TWDATA.getState !== 'function') {
-      setStatus('계산 실패', '항만 기준 데이터를 불러오지 못했습니다');
+      setStatus(t('rt.err.title', '계산 실패'), t('rt.err.noports', '항만 기준 데이터를 불러오지 못했습니다'));
       return;
     }
     var state = window.TWDATA.getState(1);
     if (!state || !state.ports || !state.ports.length) {
-      setStatus('계산 실패', '항만 기준 데이터를 불러오지 못했습니다');
+      setStatus(t('rt.err.title', '계산 실패'), t('rt.err.noports', '항만 기준 데이터를 불러오지 못했습니다'));
       return;
     }
     ports = state.ports.slice().sort(function (a, b) { return a.ko.localeCompare(b.ko, 'ko'); });

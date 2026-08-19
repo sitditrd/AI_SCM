@@ -246,13 +246,13 @@
     var sailing = lastAct >= 0 && lastAct < n - 1;
 
     /* 현재 구간 진행률 — ATD~ETA 시간 보간. 시각이 없거나 어긋나면 중간쯤. */
-    var t = 0.45;
+    var tp = 0.45;
     if (sailing) {
       var d0 = vcDate(pts[lastAct].dt), d1 = vcDate(pts[lastAct + 1].dt);
-      if (isFinite(d0) && isFinite(d1) && d1 > d0) t = Math.max(0.07, Math.min(0.93, (Date.now() - d0) / (d1 - d0)));
+      if (isFinite(d0) && isFinite(d1) && d1 > d0) tp = Math.max(0.07, Math.min(0.93, (Date.now() - d0) / (d1 - d0)));
     }
 
-    var svg = '<svg viewBox="0 0 ' + W + ' 196" role="img" aria-label="항로 진행 — ' +
+    var svg = '<svg viewBox="0 0 ' + W + ' 196" role="img" aria-label="' + t('cg.vc.aria', '항로 진행') + ' — ' +
       esc(pts.map(function (p) { return vcCode(p.nm); }).join(' → ')) + '" preserveAspectRatio="xMidYMid meet">';
 
     /* 구간(legs) */
@@ -264,7 +264,7 @@
       } else if (i === lastAct && sailing) {
         svg += '<path class="vc-l-todo" d="' + d + '"/>' +
           '<path class="vc-l-flow" d="' + d + '" pathLength="100"/>' +
-          '<path class="vc-l-done" d="' + d + '" pathLength="100" stroke-dasharray="' + (t * 100).toFixed(1) + ' 100"/>';
+          '<path class="vc-l-done" d="' + d + '" pathLength="100" stroke-dasharray="' + (tp * 100).toFixed(1) + ' 100"/>';
       } else {
         svg += '<path class="vc-l-todo" d="' + d + '"/>';
       }
@@ -273,7 +273,7 @@
     /* 선박 마커 — 현재 구간 베지어 위 + 선명·항차 라벨 (텍스트 halo 로 배경과 분리) */
     if (sailing) {
       var x0s = xs[lastAct], x1s = xs[lastAct + 1];
-      var pos = vcQ(x0s, base, (x0s + x1s) / 2, base - rise, x1s, base, t);
+      var pos = vcQ(x0s, base, (x0s + x1s) / 2, base - rise, x1s, base, tp);
       svg += '<g class="vc-ship-g" transform="translate(' + (pos.x - 13) + ' ' + (pos.y - 30) + ')">' +
         '<path d="M3 18l1.3-5a1.6 1.6 0 011.6-1.2h14.2a1.6 1.6 0 011.6 1.2l1.3 5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>' +
         '<path d="M8 11.7V7.9a.9.9 0 01.9-.9h4.6a.9.9 0 01.9.9v3.8M13 4v3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>' +
@@ -405,14 +405,14 @@
             SLOTS.map(function (x) {
               var e = sl[x.k];
               var cls = e ? (e.actual ? 'act' : 'exp') : 'na';
-              var t = e ? fmtShort(e.timeLocal || e.timeUtc) : '';
+              var tv = e ? fmtShort(e.timeLocal || e.timeUtc) : '';
               /* 날짜·시각 2단 스택 — 한 줄이면 이웃 셀과 충돌(오와열 깨짐) */
-              var dparts = String(t || '').split(' ');
-              var dEl = t
+              var dparts = String(tv || '').split(' ');
+              var dEl = tv
                 ? '<span class="gs-dt"><b>' + esc((dparts[0] || '').replace(/^\d\d-/, '')) + '</b>' +
                   (dparts[1] ? '<small>' + esc(dparts[1]) + '</small>' : '') + '</span>'
                 : '<span class="gs-dt na">·</span>';
-              return '<span class="gs-cell ' + cls + '" title="' + esc(x.label + (e && e.location ? ' · ' + e.location : '') + (e && !e.actual ? ' · 예정' : '')) + '">' +
+              return '<span class="gs-cell ' + cls + '" title="' + esc(x.label + (e && e.location ? ' · ' + e.location : '') + (e && !e.actual ? ' · ' + t('cg.lb.expected', '예정') : '')) + '">' +
                 '<i class="gs-dot"></i>' + dEl + '</span>';
             }).join('') + '</div>';
         }).join('') +
@@ -421,7 +421,7 @@
       /* 게이트 이벤트를 안 주는 선사(COSCO)는 컨테이너 최신 상태라도 보여준다 */
       var lats = cs.filter(function (c) { return c.latest && c.latest.name; });
       if (lats.length) {
-        h += '<p class="sc-sub" style="margin:10px 0 0; font-size:12px;">최신 상태 — ' +
+        h += '<p class="sc-sub" style="margin:10px 0 0; font-size:12px;">' + t('cg.lb.latest', '최신 상태') + ' — ' +
           lats.map(function (c) {
             return '<b>' + esc(c.cntrNo) + '</b> ' + esc(c.latest.name) +
               (c.latest.location ? ' · ' + esc(String(c.latest.location).split(',')[0]) : '') +
@@ -431,31 +431,31 @@
 
       /* ④ 전체 이력 (접기) */
       if (cs.some(function (c) { return (c.events || []).length; })) {
-        h += tkSecH('컨테이너 이력', 'HISTORY');
+        h += tkSecH(t('cg.sec.history', '컨테이너 이력'), 'HISTORY');
       }
       cs.forEach(function (c) {
         var evs = c.events || [];
         if (!evs.length) return;
-        h += '<details class="trk-more"><summary>' + esc(c.cntrNo || '') + ' 전체 이력 ' + evs.length + '건' +
-          (c.eventsSynthesized ? ' (본선 구간 기준)' : '') + '</summary><ul class="trk-evlist">' +
+        h += '<details class="trk-more"><summary>' + esc(c.cntrNo || '') + ' ' + t('cg.hist.all', '전체 이력') + ' ' + evs.length + t('cg.unit.count', '건') +
+          (c.eventsSynthesized ? ' ' + t('cg.hist.mainleg', '(본선 구간 기준)') : '') + '</summary><ul class="trk-evlist">' +
           evs.map(function (e) {
-            var t = fmtIso(e.timeLocal || e.timeUtc);
+            var tv = fmtIso(e.timeLocal || e.timeUtc);
             return '<li class="' + (e.actual ? 'act' : '') + '"><b>' + esc(evName(e.name)) + '</b>' +
               '<small>' + esc(e.location || '') + (e.yard ? ' · ' + esc(e.yard) : '') +
-              (t ? ' · ' + esc(t) : '') + (e.actual ? '' : ' · 예정') + '</small></li>';
+              (tv ? ' · ' + esc(tv) : '') + (e.actual ? '' : ' · ' + t('cg.lb.expected', '예정')) + '</small></li>';
           }).join('') + '</ul></details>';
       });
       h += '</div>';
     } else {
-      h += '<div class="trk-sec"><p class="sc-sub">컨테이너 정보가 없습니다.</p></div>';
+      h += '<div class="trk-sec"><p class="sc-sub">' + t('cg.msg.nocntr', '컨테이너 정보가 없습니다.') + '</p></div>';
     }
 
     var tz = tzTag(res);
     h += '<div class="trk-head" style="border-bottom:0; border-top:1px solid var(--border);">' +
-      '<span class="trk-asof">데이터 시점 ' + esc(fmtIso(res.fetchedAt)) + ' UTC · 출처 ' + esc(res.source || '') + ' · ' +
+      '<span class="trk-asof">' + t('cg.asof.data', '데이터 시점') + ' ' + esc(fmtIso(res.fetchedAt)) + ' UTC · ' + t('cg.asof.source', '출처') + ' ' + esc(res.source || '') + ' · ' +
       (tz && tz !== 'UTC+9'
-        ? '<b style="color:var(--lv-busy);">시각 표기 ' + esc(tz) + ' — 선사 제공 시간대(한국시각 아님)</b>'
-        : '시각은 항만 현지 기준') + '</span></div>';
+        ? '<b style="color:var(--lv-busy);">' + t('cg.tz.label', '시각 표기') + ' ' + esc(tz) + ' — ' + t('cg.tz.note', '선사 제공 시간대(한국시각 아님)') + '</b>'
+        : t('cg.tz.local', '시각은 항만 현지 기준')) + '</span></div>';
     h += '</div>';
     out.innerHTML = h;
     bindWatchBtn();
@@ -525,8 +525,8 @@
             var a = arr[i], b = arr[i - 1];
             if (String(a.eta || '') !== String(b.eta || '') || String(a.etd || '') !== String(b.etd || '')) {
               chg++;
-              hist.push(b.collected_date + ' 접안 ' + (fmtShort(a.eta) || '-') + '→' + (fmtShort(b.eta) || '-') +
-                ' · 출항 ' + (fmtShort(a.etd) || '-') + '→' + (fmtShort(b.etd) || '-'));
+              hist.push(b.collected_date + ' ' + t('cg.lb.berth', '접안') + ' ' + (fmtShort(a.eta) || '-') + '→' + (fmtShort(b.eta) || '-') +
+                ' · ' + t('cg.lb.dep', '출항') + ' ' + (fmtShort(a.etd) || '-') + '→' + (fmtShort(b.etd) || '-'));
             }
           }
           cards.push({ cur: cur, chg: chg, hist: hist });
@@ -534,7 +534,7 @@
         if (!cards.length) return;
 
         var h = '<div class="trk-sec tml-sec">' +
-          tkSecH('국내 터미널', 'TERMINAL CROSS-CHECK · ' + esc(vq) + (s.voyage ? ' ' + esc(s.voyage) : '')) +
+          tkSecH(t('cg.sec.terminal', '국내 터미널'), 'TERMINAL CROSS-CHECK · ' + esc(vq) + (s.voyage ? ' ' + esc(s.voyage) : '')) +
           '<div class="tml-row">';
         cards.forEach(function (c) {
           var r = c.cur;
@@ -546,7 +546,7 @@
               var hh = Math.floor(ms / 36e5);
               left = 'D-' + Math.floor(hh / 24) + ' ' + (hh % 24) + 'h';
               if (ms < 24 * 36e5) cls = ' warn';
-            } else left = '마감';
+            } else left = t('cg.cct.closed', '마감');
           }
           /* P5 교차검증 — 이 기항이 수출(출항)·수입(접안) 어느 쪽인지는 시간 근접으로 판정.
              선사 값이 아직 예정(EST)인 경우에만 비교한다 — 실적 확정 후 불일치는 과거사다. */
@@ -554,24 +554,24 @@
           var dPol = isFinite(polT) ? Math.abs(refT2 - polT) : Infinity;
           var dPod = isFinite(podT) ? Math.abs(refT2 - podT) : Infinity;
           var cmp = dPol <= dPod
-            ? { cv: cPol, tv: vcDate(r.etd), lb: '출항', ts: fmtShort(r.etd) }
-            : { cv: cPod, tv: vcDate(r.eta), lb: '접안', ts: fmtShort(r.eta) };
+            ? { cv: cPol, tv: vcDate(r.etd), lb: t('cg.lb.dep', '출항'), ts: fmtShort(r.etd) }
+            : { cv: cPod, tv: vcDate(r.eta), lb: t('cg.lb.berth', '접안'), ts: fmtShort(r.eta) };
           var xbadge = '';
           if (cmp.cv && !cmp.cv.actual) {
             var cvT = vcDate(cmp.cv.date);
             if (isFinite(cvT) && isFinite(cmp.tv) && Math.abs(cvT - cmp.tv) > 12 * 36e5) {
-              xbadge = '<i class="t-x" title="선사 ' + cmp.lb + ' ' + esc(fmtShort(cmp.cv.date)) +
-                ' ↔ 터미널 ' + cmp.lb + ' ' + esc(cmp.ts) +
-                ' — 12시간 이상 차이. 국내 구간은 터미널 값이 통상 더 최신입니다.">소스 불일치</i>';
+              xbadge = '<i class="t-x" title="' + t('cg.x.carrier', '선사') + ' ' + cmp.lb + ' ' + esc(fmtShort(cmp.cv.date)) +
+                ' ↔ ' + t('cg.x.terminal', '터미널') + ' ' + cmp.lb + ' ' + esc(cmp.ts) +
+                ' — ' + t('cg.x.note', '12시간 이상 차이. 국내 구간은 터미널 값이 통상 더 최신입니다.') + '">' + t('cg.x.mismatch', '소스 불일치') + '</i>';
             }
           }
           h += '<div class="tml-card' + cls + '">' +
             '<div class="t-hd"><b>' + esc(r.terminal_cd) + '</b><span>' + esc(TML_PORT[r.terminal_cd] || '') + '</span>' +
-            (r.berth ? '<em>선석 ' + esc(r.berth) + '</em>' : '') + xbadge +
-            (c.chg ? '<i class="t-chg" title="' + esc(c.hist.join('\n')) + '">변경 ' + c.chg + '회</i>' : '') +
+            (r.berth ? '<em>' + t('cg.lb.berthno', '선석') + ' ' + esc(r.berth) + '</em>' : '') + xbadge +
+            (c.chg ? '<i class="t-chg" title="' + esc(c.hist.join('\n')) + '">' + t('cg.lb.changed', '변경') + ' ' + c.chg + t('cg.unit.times', '회') + '</i>' : '') +
             '</div>' +
-            '<div class="t-bd">접안 <b>' + esc(fmtShort(r.eta) || '-') + '</b> · 출항 <b>' + esc(fmtShort(r.etd) || '-') + '</b></div>' +
-            (r.cct ? '<div class="t-cct">반입마감 ' + esc(fmtShort(r.cct)) +
+            '<div class="t-bd">' + t('cg.lb.berth', '접안') + ' <b>' + esc(fmtShort(r.eta) || '-') + '</b> · ' + t('cg.lb.dep', '출항') + ' <b>' + esc(fmtShort(r.etd) || '-') + '</b></div>' +
+            (r.cct ? '<div class="t-cct">' + t('cg.lb.cct', '반입마감') + ' ' + esc(fmtShort(r.cct)) +
               (left ? ' <b class="left">' + left + '</b>' : '') + '</div>' : '') +
             '</div>';
         });
@@ -629,9 +629,9 @@
     });
   }
   function markBtnWatching(b) {
-    b.innerHTML = SVG.check + ' 감시 중';
+    b.innerHTML = SVG.check + ' ' + t('cg.w.watching', '감시 중');
     b.classList.add('is-on');
-    b.title = '이미 추적 등록됨 — 아래 목록에서 관리';
+    b.title = t('cg.watch.already', '이미 추적 등록됨 — 아래 목록에서 관리');
     b.onclick = function () { var s = el('watch'); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   }
   /* 목록이 (조회 이후) 늦게 로드된 경우에도 버튼 상태를 맞춘다 */
@@ -648,15 +648,15 @@
     ov.className = 'reg-ov';
     var many = rows.length > 1;
     ov.innerHTML = '<div class="reg-card">' +
-      '<h3>추적 등록' + (many ? ' <small>' + rows.length + '건</small>' : ' <small>' + esc(rows[0].mbl_no) + '</small>') + '</h3>' +
-      '<label class="reg-l">추적 기간</label>' +
-      '<div class="reg-seg" id="regTerm"><button data-m="3" class="on">3개월</button><button data-m="6">6개월</button></div>' +
-      '<p class="reg-hint">기간이 지나면 자동으로 추적이 해제됩니다.</p>' +
-      '<label class="reg-l">알림 이메일 <span class="reg-opt">(비우면 등록만, 메일 없음)</span></label>' +
+      '<h3>' + t('cg.watch.register', '추적 등록') + (many ? ' <small>' + rows.length + t('cg.unit.count', '건') + '</small>' : ' <small>' + esc(rows[0].mbl_no) + '</small>') + '</h3>' +
+      '<label class="reg-l">' + t('cg.reg.term', '추적 기간') + '</label>' +
+      '<div class="reg-seg" id="regTerm"><button data-m="3" class="on">' + t('cg.reg.m3', '3개월') + '</button><button data-m="6">' + t('cg.reg.m6', '6개월') + '</button></div>' +
+      '<p class="reg-hint">' + t('cg.reg.termHint', '기간이 지나면 자동으로 추적이 해제됩니다.') + '</p>' +
+      '<label class="reg-l">' + t('cg.reg.mail', '알림 이메일') + ' <span class="reg-opt">' + t('cg.reg.mailOpt', '(비우면 등록만, 메일 없음)') + '</span></label>' +
       '<input type="email" id="regMail" class="focus-search" placeholder="you@twsc.co.kr" value="' + esc(myEmail()) + '">' +
       '<div id="regMsg" class="reg-msg"></div>' +
-      '<div class="reg-btns"><button class="btn btn-ghost" id="regCancel">취소</button>' +
-      '<button class="btn btn-primary" id="regOk">등록</button></div></div>';
+      '<div class="reg-btns"><button class="btn btn-ghost" id="regCancel">' + t('cg.btn.cancel', '취소') + '</button>' +
+      '<button class="btn btn-primary" id="regOk">' + t('cg.btn.register', '등록') + '</button></div></div>';
     document.body.appendChild(ov);
     var term = 3;
     ov.querySelectorAll('#regTerm button').forEach(function (x) {
@@ -672,22 +672,22 @@
     el2(ov, 'regOk').addEventListener('click', function () {
       var mail = el2(ov, 'regMail').value.trim();
       var msg = el2(ov, 'regMsg');
-      el2(ov, 'regOk').disabled = true; el2(ov, 'regOk').textContent = '등록 중…';
+      el2(ov, 'regOk').disabled = true; el2(ov, 'regOk').textContent = t('cg.btn.registering', '등록 중…');
       var body = many
         ? { action: 'bulk', token: myToken(), term_months: term, notify_email: mail, rows: rows }
         : { action: 'add', token: myToken(), mbl_no: rows[0].mbl_no, carrier: rows[0].carrier, term_months: term, notify_email: mail };
       fetch(WATCH_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
         .then(function (r) { return r.json(); }).then(function (d) {
-          if (d.error) { msg.innerHTML = '<span class="reg-err">' + esc(d.error) + '</span>'; el2(ov, 'regOk').disabled = false; el2(ov, 'regOk').textContent = '등록'; return; }
+          if (d.error) { msg.innerHTML = '<span class="reg-err">' + esc(d.error) + '</span>'; el2(ov, 'regOk').disabled = false; el2(ov, 'regOk').textContent = t('cg.btn.register', '등록'); return; }
           if (many) {
-            msg.innerHTML = '<span class="reg-ok">등록 ' + d.added + '건 · 실패 ' + d.failed + '건</span>' +
+            msg.innerHTML = '<span class="reg-ok">' + t('cg.btn.register', '등록') + ' ' + d.added + t('cg.unit.count', '건') + ' · ' + t('cg.msg.failed', '실패') + ' ' + d.failed + t('cg.unit.count', '건') + '</span>' +
               (d.failed ? '<div class="reg-fail">' + (d.results || []).filter(function (x) { return !x.ok; })
                 .map(function (x) { return esc(x.mbl_no) + ' — ' + esc(x.error); }).join('<br>') + '</div>' : '');
             setTimeout(function () { close(); loadWatchList(); onDone && onDone(); }, d.failed ? 2500 : 700);
           } else {
             close(); loadWatchList(); onDone && onDone();
           }
-        }).catch(function () { msg.innerHTML = '<span class="reg-err">네트워크 오류 — 잠시 후 다시.</span>'; el2(ov, 'regOk').disabled = false; el2(ov, 'regOk').textContent = '등록'; });
+        }).catch(function () { msg.innerHTML = '<span class="reg-err">' + t('cg.msg.neterr', '네트워크 오류 — 잠시 후 다시.') + '</span>'; el2(ov, 'regOk').disabled = false; el2(ov, 'regOk').textContent = t('cg.btn.register', '등록'); });
     });
   }
   function el2(root, id) { return root.querySelector('#' + id); }
@@ -732,23 +732,23 @@
   function watchRowHtml(it) {
     var s = it.snapshot || {};
     var ch = it.changes || [];
-    var badge = it.active ? '<span class="trk-badge is-move">감시 중</span>' : '<span class="trk-badge is-done">종료</span>';
+    var badge = it.active ? '<span class="trk-badge is-move">' + t('cg.w.watching', '감시 중') + '</span>' : '<span class="trk-badge is-done">' + t('cg.w.ended', '종료') + '</span>';
     var dl = daysLeft(it.expires_at);
     var expTxt = it.active && dl != null
-      ? (dl <= 0 ? '<span style="color:var(--up);">만료</span>' : (dl <= 14 ? '<span style="color:var(--lv-busy);">' + dl + '일</span>' : dl + '일'))
+      ? (dl <= 0 ? '<span style="color:var(--up);">' + t('cg.w.expired', '만료') + '</span>' : (dl <= 14 ? '<span style="color:var(--lv-busy);">' + dl + t('cg.unit.day', '일') + '</span>' : dl + t('cg.unit.day', '일')))
       : '-';
     /* 알림 아이콘 — 이메일 등록 여부를 한눈에. 클릭하면 이메일을 바로 수정한다(BL 재조회 불필요).
        추적이 종료된 건(반납 완료·기간 만료)은 수집 자체가 멈춰 알림이 나가지 않으므로
        종을 비활성으로 그린다 — 켜진 채 두면 "계속 알림이 가는 것"처럼 보인다. */
     var bell = !it.active
-      ? '<button class="wf-bell dead" type="button" disabled title="추적 종료 — 알림 발송 안 함' +
-        (it.notify_email ? '\n(종료 전 수신: ' + esc(it.notify_email) + ')' : '') + '">' + SVG.bellOff + '</button>'
+      ? '<button class="wf-bell dead" type="button" disabled title="' + t('cg.bell.dead', '추적 종료 — 알림 발송 안 함') +
+        (it.notify_email ? '\n' + t('cg.bell.deadRcv', '(종료 전 수신: ') + esc(it.notify_email) + ')' : '') + '">' + SVG.bellOff + '</button>'
       : (it.notify_email
-        ? '<button class="wf-bell on" type="button" data-mail="' + esc(it.mbl_no) + '" title="알림 수신: ' + esc(it.notify_email) + '\n(클릭하여 변경)">' + SVG.bell + '</button>'
-        : '<button class="wf-bell off" type="button" data-mail="' + esc(it.mbl_no) + '" title="알림 없음 — 클릭하여 이메일 등록">' + SVG.bellOff + '</button>');
+        ? '<button class="wf-bell on" type="button" data-mail="' + esc(it.mbl_no) + '" title="' + t('cg.bell.on', '알림 수신: ') + esc(it.notify_email) + '\n' + t('cg.bell.click', '(클릭하여 변경)') + '">' + SVG.bell + '</button>'
+        : '<button class="wf-bell off" type="button" data-mail="' + esc(it.mbl_no) + '" title="' + t('cg.bell.off', '알림 없음 — 클릭하여 이메일 등록') + '">' + SVG.bellOff + '</button>');
     return '<tr>' +
       '<td class="cn">' + SVG.box + ' ' + esc(it.mbl_no) + '</td>' +
-      '<td title="' + esc(carrierName(it.carrier)) + '">' + esc(it.carrier || '') + (it.carrier && !isLive(it.carrier) ? ' <small style="color:var(--muted);">딥링크</small>' : '') + '</td>' +
+      '<td title="' + esc(carrierName(it.carrier)) + '">' + esc(it.carrier || '') + (it.carrier && !isLive(it.carrier) ? ' <small style="color:var(--muted);">' + t('cg.lb.deeplink', '딥링크') + '</small>' : '') + '</td>' +
       '<td>' + badge + '</td>' +
       '<td class="wf-bell-cell">' + bell + '</td>' +
       '<td>' + esc(s.status || it.last_status || '-') + '</td>' +
@@ -756,12 +756,12 @@
       '<td class="dt">' + esc(fmtShort(s.etd) || '-') + '</td>' +
       '<td class="dt">' + esc(fmtShort(s.eta) || '-') + '</td>' +
       '<td><button class="wf-hist' + (ch.length ? ' has' : '') + '" type="button" data-hist="' + esc(it.mbl_no) + '" title="' +
-        (ch.length ? esc(ch.map(function (c) { return c.field + ': ' + c.old_value + ' → ' + c.new_value; }).join('\n')) + '\n(클릭 — 변경 이력·ETA 추이)' : '변경 이력·ETA 추이 열기') +
-        '">' + (ch.length ? ch.length + '건' : '이력') + '</button></td>' +
+        (ch.length ? esc(ch.map(function (c) { return c.field + ': ' + c.old_value + ' → ' + c.new_value; }).join('\n')) + '\n' + t('cg.w.histClick', '(클릭 — 변경 이력·ETA 추이)') : t('cg.w.histOpen', '변경 이력·ETA 추이 열기')) +
+        '">' + (ch.length ? ch.length + t('cg.unit.count', '건') : t('cg.w.hist', '이력')) + '</button></td>' +
       '<td class="dt">' + expTxt + '</td>' +
       (watchState.admin ? '<td>' + esc(it.created_by || '-') + '</td>' : '') +
       '<td class="dt">' + esc(fmtShort(it.last_polled_at) || '-') + '</td>' +
-      '<td>' + (it.active ? '<button class="btn btn-ghost trk-mini" type="button" data-off="' + esc(it.mbl_no) + '">해제</button>' : '') + '</td>' +
+      '<td>' + (it.active ? '<button class="btn btn-ghost trk-mini" type="button" data-off="' + esc(it.mbl_no) + '">' + t('cg.w.release', '해제') + '</button>' : '') + '</td>' +
       '</tr>';
   }
 
@@ -770,7 +770,10 @@
      KLNET HISTORY 그리드 대응: 내 감시 화물 전체의 최근 변경을 한 피드로.
      행 클릭 상세: 폴링 스냅샷으로 ETA 가 어떻게 밀려왔는지 SVG 계단 차트로 그린다.
      ============================================================ */
-  var KIND_LB = { etd: '출항 변경', eta: '도착 변경', vessel: '모선·항차 변경', stage: '진행 상태', gate: '게이트', tml: '터미널 변경' };
+  var KIND_LB = {
+    etd: t('cg.kind.etd', '출항 변경'), eta: t('cg.kind.eta', '도착 변경'), vessel: t('cg.kind.vessel', '모선·항차 변경'),
+    stage: t('cg.kind.stage', '진행 상태'), gate: t('cg.kind.gate', '게이트'), tml: t('cg.kind.tml', '터미널 변경')
+  };
 
   /* 값이 일시로 파싱되면 짧게, 아니면 원문 그대로 (상태 변경 old/new 는 문자열) */
   function chVal(v) { var d = vcDate(v); return isFinite(d) ? fmtShort(v) : String(v || ''); }
@@ -802,32 +805,32 @@
     var shown = rows.slice(0, 30);
     var hasFilter = feedState.q || feedState.kind || feedState.carrier;
 
-    var kindOpts = ['<option value="">이슈 전체</option>'].concat(
+    var kindOpts = ['<option value="">' + t('cg.fd.allKind', '이슈 전체') + '</option>'].concat(
       Array.from(new Set(all.map(function (r) { return r.kind; }).filter(Boolean))).sort()
         .map(function (k) { return '<option value="' + esc(k) + '"' + (feedState.kind === k ? ' selected' : '') + '>' + esc(KIND_LB[k] || k) + '</option>'; })).join('');
-    var carOpts = ['<option value="">전체 선사</option>'].concat(
+    var carOpts = ['<option value="">' + t('cg.opt.allCarrier', '전체 선사') + '</option>'].concat(
       Array.from(new Set(all.map(function (r) { return r.carrier; }).filter(Boolean))).sort()
         .map(function (c) { return '<option value="' + esc(c) + '"' + (feedState.carrier === c ? ' selected' : '') + '>' + esc(c) + '</option>'; })).join('');
 
     return '<div class="card trk-card" style="margin-bottom:14px;">' +
-      '<div class="trk-head"><span class="trk-bl">최근 변경</span>' +
-      '<span class="trk-carrier">' + rows.length + '건 / 전체 ' + all.length + '건 · 최신순' +
-      (shown.length < rows.length ? ' · 최근 ' + shown.length + '건 표시' : '') + '</span>' +
-      '<span class="trk-spacer"></span><span class="trk-asof">변경 시 등록 이메일로 자동 발송</span></div>' +
+      '<div class="trk-head"><span class="trk-bl">' + t('cg.fd.title', '최근 변경') + '</span>' +
+      '<span class="trk-carrier">' + rows.length + t('cg.unit.count', '건') + ' / ' + t('cg.lb.total', '전체') + ' ' + all.length + t('cg.unit.count', '건') + ' · ' + t('cg.fd.newest', '최신순') +
+      (shown.length < rows.length ? ' · ' + t('cg.fd.recent', '최근') + ' ' + shown.length + t('cg.unit.count', '건') + ' ' + t('cg.fd.shown', '표시') : '') + '</span>' +
+      '<span class="trk-spacer"></span><span class="trk-asof">' + t('cg.fd.mailNote', '변경 시 등록 이메일로 자동 발송') + '</span></div>' +
       '<div class="berth-toolbar" style="margin:0; padding:12px 18px; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:8px;">' +
-      '<input type="search" id="fd_q" class="focus-search" placeholder="B/L 검색" value="' + esc(feedState.q) + '" style="max-width:180px;">' +
+      '<input type="search" id="fd_q" class="focus-search" placeholder="' + t('cg.fd.ph', 'B/L 검색') + '" value="' + esc(feedState.q) + '" style="max-width:180px;">' +
       '<select id="fd_kind" class="focus-search" style="max-width:150px;">' + kindOpts + '</select>' +
       '<select id="fd_carrier" class="focus-search" style="max-width:130px;">' + carOpts + '</select>' +
-      (hasFilter ? '<button class="btn btn-ghost trk-mini" id="fd_reset" type="button">필터 초기화</button>' : '') +
+      (hasFilter ? '<button class="btn btn-ghost trk-mini" id="fd_reset" type="button">' + t('cg.btn.resetFilter', '필터 초기화') + '</button>' : '') +
       '</div>' +
       '<div class="trk-sec" style="padding-top:12px;"><div class="trk-tbl-wrap"><table class="trk-tbl sc-feed">' +
-      '<thead><tr><th>기준일시</th><th>이슈</th><th>B/L</th><th>변경 내용</th></tr></thead><tbody>' +
+      '<thead><tr><th>' + t('cg.th.at', '기준일시') + '</th><th>' + t('cg.th.issue', '이슈') + '</th><th>B/L</th><th>' + t('cg.th.change', '변경 내용') + '</th></tr></thead><tbody>' +
       (shown.length ? shown.map(function (r) {
         return '<tr><td class="dt">' + esc(fmtShort(r.at)) + '</td>' +
-          '<td><span class="sc-kind k-' + esc(r.kind || 'etc') + '">' + esc(KIND_LB[r.kind] || r.field || '변경') + '</span></td>' +
+          '<td><span class="sc-kind k-' + esc(r.kind || 'etc') + '">' + esc(KIND_LB[r.kind] || r.field || t('cg.lb.changed', '변경')) + '</span></td>' +
           '<td class="cn">' + esc(r.mbl) + ' <small style="color:var(--muted);">' + esc(r.carrier || '') + '</small></td>' +
           '<td>' + esc(r.field) + ' · <s class="sc-old">' + esc(chVal(r.o)) + '</s> → <b class="sc-new">' + esc(chVal(r.n)) + '</b></td></tr>';
-      }).join('') : '<tr><td colspan="4" class="na" style="text-align:center;padding:16px;">조건에 맞는 변경이 없습니다.</td></tr>') +
+      }).join('') : '<tr><td colspan="4" class="na" style="text-align:center;padding:16px;">' + t('cg.fd.empty', '조건에 맞는 변경이 없습니다.') + '</td></tr>') +
       '</tbody></table></div></div></div>';
   }
 
@@ -868,7 +871,7 @@
     var yi = function (v) { return T + (mx - v) / (mx - mn) * (H - T - B); };
     var dfmt = function (v) { var d = new Date(v); return (d.getMonth() + 1 < 10 ? '0' : '') + (d.getMonth() + 1) + '-' + (d.getDate() < 10 ? '0' : '') + d.getDate(); };
 
-    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="sc-drift" role="img" aria-label="ETA 추이">';
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="sc-drift" role="img" aria-label="' + t('cg.drift.aria', 'ETA 추이') + '">';
     /* 가로 눈금 3줄 */
     for (var g = 0; g <= 2; g++) {
       var gv = mn + (mx - mn) * g / 2, gy = yi(gv);
@@ -883,16 +886,16 @@
     for (i = 0; i < pts.length; i++) {
       var chg = i > 0 && pts[i].v !== pts[i - 1].v;
       svg += '<circle class="d-dot' + (chg ? ' chg' : '') + '" cx="' + xi(i) + '" cy="' + yi(pts[i].v) + '" r="' + (chg ? 4.5 : 3) + '">' +
-        '<title>' + esc(fmtShort(pts[i].at)) + ' 조회 — ETA ' + esc(dfmt(pts[i].v)) + '</title></circle>';
+        '<title>' + esc(fmtShort(pts[i].at)) + ' ' + t('cg.drift.polled', '조회') + ' — ETA ' + esc(dfmt(pts[i].v)) + '</title></circle>';
       if (chg) {
         var dd = Math.round((pts[i].v - pts[i - 1].v) / 864e5 * 10) / 10;
         svg += '<text class="d-delta ' + (dd > 0 ? 'late' : 'early') + '" x="' + xi(i) + '" y="' + (yi(pts[i].v) - 9) + '" text-anchor="middle">' +
-          (dd > 0 ? '+' : '') + dd + '일</text>';
+          (dd > 0 ? '+' : '') + dd + t('cg.unit.day', '일') + '</text>';
       }
     }
     var tot = Math.round((pts[pts.length - 1].v - pts[0].v) / 864e5 * 10) / 10;
-    svg += '<text class="d-title" x="' + L + '" y="14">ETA 추이 · 조회 ' + pts.length + '회 · 누적 ' +
-      (tot > 0 ? '+' : '') + tot + '일</text></svg>';
+    svg += '<text class="d-title" x="' + L + '" y="14">' + t('cg.drift.aria', 'ETA 추이') + ' · ' + t('cg.drift.polled', '조회') + ' ' + pts.length + t('cg.unit.times', '회') + ' · ' + t('cg.drift.cum', '누적') + ' ' +
+      (tot > 0 ? '+' : '') + tot + t('cg.unit.day', '일') + '</text></svg>';
     return svg;
   }
 
@@ -902,7 +905,7 @@
     var h = '';
     if (ch.length || sn.length) {
       /* KLNET "PDF 다운로드" 대응 — 브라우저 인쇄(PDF 저장)용 공문을 새 창에 그린다 */
-      h += '<div class="sc-tools"><button class="btn btn-ghost trk-mini" type="button" data-notice="1">공문 인쇄 · PDF 저장</button></div>';
+      h += '<div class="sc-tools"><button class="btn btn-ghost trk-mini" type="button" data-notice="1">' + t('cg.notice.print', '공문 인쇄 · PDF 저장') + '</button></div>';
     }
     h += driftSvg(sn);
     if (ch.length) {
@@ -910,10 +913,10 @@
         return '<li><span class="dt">' + esc(fmtShort(c.changed_at)) + '</span>' +
           '<span class="sc-kind k-' + esc(c.kind || 'etc') + '">' + esc(KIND_LB[c.kind] || c.field) + '</span>' +
           '<span>' + esc(c.field) + ' · <s class="sc-old">' + esc(chVal(c.old_value)) + '</s> → <b class="sc-new">' + esc(chVal(c.new_value)) + '</b></span>' +
-          (c.notified ? '<i class="sc-sent" title="이메일 발송됨">메일 ✓</i>' : '') + '</li>';
+          (c.notified ? '<i class="sc-sent" title="' + t('cg.hist.sent', '이메일 발송됨') + '">' + t('cg.hist.mailOk', '메일 ✓') + '</i>' : '') + '</li>';
       }).join('') + '</ul>';
     }
-    if (!h) h = '<p class="sc-sub" style="margin:0;">아직 변경 이력이 없습니다 — 다음 수집(08:20·20:20)부터 쌓입니다.</p>';
+    if (!h) h = '<p class="sc-sub" style="margin:0;">' + t('cg.hist.empty', '아직 변경 이력이 없습니다 — 다음 수집(08:20·20:20)부터 쌓입니다.') + '</p>';
     return h;
   }
 
@@ -928,7 +931,7 @@
     btn.classList.add('open');
     var row = document.createElement('tr');
     row.className = 'wf-drow';
-    row.innerHTML = '<td colspan="' + (watchState.admin ? 13 : 12) + '"><div class="wf-dbox">이력 불러오는 중…</div></td>';
+    row.innerHTML = '<td colspan="' + (watchState.admin ? 13 : 12) + '"><div class="wf-dbox">' + t('cg.hist.loading', '이력 불러오는 중…') + '</div></td>';
     tr.parentNode.insertBefore(row, tr.nextSibling);
     fetch(WATCH_API + '?action=detail&no=' + encodeURIComponent(mbl) + '&token=' + encodeURIComponent(myToken()))
       .then(function (r) { return r.json(); })
@@ -941,7 +944,7 @@
       })
       .catch(function () {
         var bx = row.querySelector('.wf-dbox');
-        if (bx) bx.textContent = '이력 조회 실패 — 잠시 후 다시.';
+        if (bx) bx.textContent = t('cg.hist.loadFail', '이력 조회 실패 — 잠시 후 다시.');
       });
   }
 
@@ -968,7 +971,7 @@
             '<td class="new">' + esc(chVal(c.new_value)) + '</td></tr>';
         }).join('')
       : (d.snapshots || []).map(function (s) {
-          return '<tr><td>' + esc(fmtShort(s.polled_at)) + '</td><td>조회</td><td>ETD / ETA</td>' +
+          return '<tr><td>' + esc(fmtShort(s.polled_at)) + '</td><td>' + t('cg.drift.polled', '조회') + '</td><td>ETD / ETA</td>' +
             '<td colspan="2">' + esc(chVal(s.etd)) + ' / ' + esc(chVal(s.eta)) + '</td></tr>';
         }).join('');
 
@@ -992,21 +995,21 @@
       '<p style="font-size:12.5px;">To : Valued Customer<br>Re : Schedule Change Notice — ' + esc(vessel || mbl) + '</p>' +
       '<p style="font-size:12.5px;">We hereby notify you of the schedule change(s) below.<br>아래와 같이 본선 스케줄 변경 사항을 알려드립니다.</p>' +
       '<table class="meta">' +
-      '<tr><th>MBL No.</th><td>' + esc(mbl) + '</td><th>선사</th><td>' + esc(carrierName(it.carrier) || it.carrier || '-') + '</td></tr>' +
-      '<tr><th>본선 / 항차</th><td>' + esc(vessel || '-') + '</td><th>구간</th><td>' + esc(route || '-') + '</td></tr>' +
-      '<tr><th>현재 ETD</th><td>' + esc(chVal(sn.etd || s0.etd) || '-') + '</td><th>현재 ETA</th><td>' + esc(chVal(sn.eta || s0.eta) || '-') + '</td></tr>' +
+      '<tr><th>MBL No.</th><td>' + esc(mbl) + '</td><th>' + t('cg.x.carrier', '선사') + '</th><td>' + esc(carrierName(it.carrier) || it.carrier || '-') + '</td></tr>' +
+      '<tr><th>' + t('cg.nt.vessel', '본선 / 항차') + '</th><td>' + esc(vessel || '-') + '</td><th>' + t('cg.th.route', '구간') + '</th><td>' + esc(route || '-') + '</td></tr>' +
+      '<tr><th>' + t('cg.nt.curEtd', '현재 ETD') + '</th><td>' + esc(chVal(sn.etd || s0.etd) || '-') + '</td><th>' + t('cg.nt.curEta', '현재 ETA') + '</th><td>' + esc(chVal(sn.eta || s0.eta) || '-') + '</td></tr>' +
       '</table>' +
-      '<table><thead><tr><th>기준일시</th><th>구분</th><th>항목</th><th>변경 전</th><th>변경 후</th></tr></thead>' +
-      '<tbody>' + (histRows || '<tr><td colspan="5">기록 없음</td></tr>') + '</tbody></table>' +
+      '<table><thead><tr><th>' + t('cg.th.at', '기준일시') + '</th><th>' + t('cg.nt.kind', '구분') + '</th><th>' + t('cg.nt.field', '항목') + '</th><th>' + t('cg.nt.before', '변경 전') + '</th><th>' + t('cg.nt.after', '변경 후') + '</th></tr></thead>' +
+      '<tbody>' + (histRows || '<tr><td colspan="5">' + t('cg.nt.norec', '기록 없음') + '</td></tr>') + '</tbody></table>' +
       '<p class="note">This notice is generated by TWL Control Tower based on carrier tracking feeds and Korean terminal berth schedules. ' +
       'It may differ from the carrier\'s official announcement.<br>' +
       '본 통지는 선사 트래킹 데이터와 국내 터미널 선석 스케줄을 기반으로 자동 생성되었으며, 선사 공식 공지와 다를 수 있습니다. ' +
       '문의: 태웅로직스 (itt@twsc.co.kr)</p>' +
-      '<button class="btn" onclick="window.print()">인쇄 / PDF 저장</button>' +
+      '<button class="btn" onclick="window.print()">' + t('cg.nt.print', '인쇄 / PDF 저장') + '</button>' +
       '</body></html>';
 
     var w = window.open('', '_blank');
-    if (!w) { alert('팝업이 차단되었습니다 — 브라우저 팝업 허용 후 다시 시도하십시오.'); return; }
+    if (!w) { alert(t('cg.msg.popup', '팝업이 차단되었습니다 — 브라우저 팝업 허용 후 다시 시도하십시오.')); return; }
     w.document.write(html);
     w.document.close();
   }
@@ -1020,21 +1023,20 @@
     /* SECTION 02 — 변경 피드는 자기 섹션(필터 포함) */
     renderFeed();
     if (watchState.needLogin) {
-      watchSummarySet('<span class="cs-muted">로그인 후 이용 가능</span>');
-      box.innerHTML = '<div class="card"><p class="sc-sub" style="margin:0;">추적 감시는 <b>로그인 후</b> 이용할 수 있습니다. ' +
-        '등록한 화물은 <b>본인에게만</b> 보이며, 관리자는 전체를 조회할 수 있습니다.</p></div>';
+      watchSummarySet('<span class="cs-muted">' + t('cg.w.loginOnly', '로그인 후 이용 가능') + '</span>');
+      box.innerHTML = '<div class="card"><p class="sc-sub" style="margin:0;">' +
+        t('cg.w.loginBody', '추적 감시는 <b>로그인 후</b> 이용할 수 있습니다. 등록한 화물은 <b>본인에게만</b> 보이며, 관리자는 전체를 조회할 수 있습니다.') + '</p></div>';
       return;
     }
     if (!all.length) {
-      watchSummarySet('등록 <b>0</b>건');
+      watchSummarySet(t('cg.w.reg', '등록') + ' <b>0</b>' + t('cg.unit.count', '건'));
       /* 비어 있어도 일괄 등록 버튼은 반드시 보여야 한다 — 첫 등록의 진입점이기 때문 */
       box.innerHTML = '<div class="card trk-card">' +
-        '<div class="trk-head"><span class="trk-bl">추적 등록 화물</span>' +
-        '<span class="trk-carrier">등록 0건</span><span class="trk-spacer"></span>' +
-        '<button class="btn btn-primary" id="wf_bulk" type="button">' + SVG.upload + ' 일괄 등록</button></div>' +
+        '<div class="trk-head"><span class="trk-bl">' + t('cg.w.title', '추적 등록 화물') + '</span>' +
+        '<span class="trk-carrier">' + t('cg.w.reg', '등록') + ' 0' + t('cg.unit.count', '건') + '</span><span class="trk-spacer"></span>' +
+        '<button class="btn btn-primary" id="wf_bulk" type="button">' + SVG.upload + ' ' + t('cg.w.bulk', '일괄 등록') + '</button></div>' +
         '<div class="trk-sec" style="padding-top:16px;"><p class="sc-sub" style="margin:0;">' +
-        '등록된 추적 화물이 없습니다. 위에서 B/L 을 조회한 뒤 <b>추적 등록</b>을 누르거나, 오른쪽 위 <b>일괄 등록</b>으로 여러 건을 한 번에 넣으세요. ' +
-        '스케줄러가 매일 08:20 / 20:20 에 조회해 <b>출항·도착 예정일시가 바뀌면 메일로 알려드립니다.</b></p></div></div>';
+        t('cg.w.empty', '등록된 추적 화물이 없습니다. 위에서 B/L 을 조회한 뒤 <b>추적 등록</b>을 누르거나, 오른쪽 위 <b>일괄 등록</b>으로 여러 건을 한 번에 넣으세요. 스케줄러가 매일 08:20 / 20:20 에 조회해 <b>출항·도착 예정일시가 바뀌면 메일로 알려드립니다.</b>') + '</p></div></div>';
       var b0 = el('wf_bulk');
       if (b0) b0.addEventListener('click', openBulkDialog);
       return;
@@ -1045,53 +1047,53 @@
     var start = (watchState.page - 1) * WATCH_PAGE;
     var pageRows = rows.slice(start, start + WATCH_PAGE);
     var actCnt = all.filter(function (x) { return x.active; }).length;
-    watchSummarySet('감시 중 <b>' + actCnt + '</b>건 · 전체 ' + all.length + '건');
-    var carrierOpts = ['<option value="">전체 선사</option>'].concat(
+    watchSummarySet(t('cg.w.watching', '감시 중') + ' <b>' + actCnt + '</b>' + t('cg.unit.count', '건') + ' · ' + t('cg.lb.total', '전체') + ' ' + all.length + t('cg.unit.count', '건'));
+    var carrierOpts = ['<option value="">' + t('cg.opt.allCarrier', '전체 선사') + '</option>'].concat(
       Array.from(new Set(all.map(function (x) { return x.carrier; }).filter(Boolean))).sort()
         .map(function (c) { return '<option value="' + esc(c) + '"' + (watchState.carrier === c ? ' selected' : '') + '>' + esc(c) + '</option>'; })).join('');
     /* 진행상태 옵션은 실제 데이터에서 뽑는다(운송중·입항·양하·선적 등) */
-    var statusOpts = ['<option value="">진행 전체</option>'].concat(
+    var statusOpts = ['<option value="">' + t('cg.opt.allStage', '진행 전체') + '</option>'].concat(
       Array.from(new Set(all.map(progOf).filter(Boolean))).sort()
         .map(function (st) { return '<option value="' + esc(st) + '"' + (watchState.status === st ? ' selected' : '') + '>' + esc(st) + '</option>'; })).join('');
-    var sortOpts = [['reg', '등록순'], ['etd', 'ETD 순'], ['eta', 'ETA 순'], ['exp', '남은기간 순']]
+    var sortOpts = [['reg', t('cg.sort.reg', '등록순')], ['etd', t('cg.sort.etd', 'ETD 순')], ['eta', t('cg.sort.eta', 'ETA 순')], ['exp', t('cg.sort.exp', '남은기간 순')]]
       .map(function (o) { return '<option value="' + o[0] + '"' + (watchState.sort === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('');
     var hasFilter = watchState.q || watchState.carrier || watchState.status || watchState.route || watchState.active !== 'all';
 
     var h = '<div class="card trk-card">' +
       '<div class="trk-head">' +
-      '<span class="trk-bl">추적 등록 화물</span>' +
-      '<span class="trk-carrier">감시 중 ' + actCnt + '건 / 전체 ' + all.length + '건</span>' +
-      (watchState.admin ? '<span class="trk-badge is-move">관리자 · 전체 조회</span>'
-        : '<span class="trk-carrier">' + esc(watchState.me || '') + ' 등록분</span>') +
+      '<span class="trk-bl">' + t('cg.w.title', '추적 등록 화물') + '</span>' +
+      '<span class="trk-carrier">' + t('cg.w.watching', '감시 중') + ' ' + actCnt + t('cg.unit.count', '건') + ' / ' + t('cg.lb.total', '전체') + ' ' + all.length + t('cg.unit.count', '건') + '</span>' +
+      (watchState.admin ? '<span class="trk-badge is-move">' + t('cg.w.adminAll', '관리자 · 전체 조회') + '</span>'
+        : '<span class="trk-carrier">' + esc(watchState.me || '') + ' ' + t('cg.w.mine', '등록분') + '</span>') +
       '<span class="trk-spacer"></span>' +
-      '<span class="trk-asof">매일 08:20 · 20:20 · ETD/ETA 변경 시 메일</span>' +
+      '<span class="trk-asof">' + t('cg.w.schedNote', '매일 08:20 · 20:20 · ETD/ETA 변경 시 메일') + '</span>' +
       '</div>' +
       /* 툴바: 검색·선사·진행·구간·정렬 필터 + 일괄등록 (선석배정 조회 영역 사상) */
       '<div class="berth-toolbar" style="margin:0; padding:12px 18px; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:8px;">' +
-      '<input type="search" id="wf_q" class="focus-search" placeholder="B/L·메모 검색" value="' + esc(watchState.q) + '" style="max-width:180px;">' +
+      '<input type="search" id="wf_q" class="focus-search" placeholder="' + t('cg.w.phSearch', 'B/L·메모 검색') + '" value="' + esc(watchState.q) + '" style="max-width:180px;">' +
       '<select id="wf_carrier" class="focus-search" style="max-width:130px;">' + carrierOpts + '</select>' +
       '<select id="wf_status" class="focus-search" style="max-width:130px;">' + statusOpts + '</select>' +
-      '<input type="search" id="wf_route" class="focus-search" placeholder="구간(항구) 검색" value="' + esc(watchState.route) + '" style="max-width:150px;">' +
+      '<input type="search" id="wf_route" class="focus-search" placeholder="' + t('cg.w.phRoute', '구간(항구) 검색') + '" value="' + esc(watchState.route) + '" style="max-width:150px;">' +
       '<div class="chip-row" style="margin:0;">' +
-      '<button class="f-chip' + (watchState.active === 'all' ? '' : ' off') + '" data-act="all">전체</button>' +
-      '<button class="f-chip' + (watchState.active === 'on' ? '' : ' off') + '" data-act="on">감시 중</button>' +
-      '<button class="f-chip' + (watchState.active === 'off' ? '' : ' off') + '" data-act="off">종료</button>' +
+      '<button class="f-chip' + (watchState.active === 'all' ? '' : ' off') + '" data-act="all">' + t('cg.lb.total', '전체') + '</button>' +
+      '<button class="f-chip' + (watchState.active === 'on' ? '' : ' off') + '" data-act="on">' + t('cg.w.watching', '감시 중') + '</button>' +
+      '<button class="f-chip' + (watchState.active === 'off' ? '' : ' off') + '" data-act="off">' + t('cg.w.ended', '종료') + '</button>' +
       '</div>' +
-      (hasFilter ? '<button class="btn btn-ghost trk-mini" id="wf_reset" type="button">필터 초기화</button>' : '') +
+      (hasFilter ? '<button class="btn btn-ghost trk-mini" id="wf_reset" type="button">' + t('cg.btn.resetFilter', '필터 초기화') + '</button>' : '') +
       '<span class="trk-spacer"></span>' +
       '<select id="wf_sort" class="focus-search" style="max-width:120px;">' + sortOpts + '</select>' +
-      '<button class="btn btn-ghost" id="wf_bulk" type="button">' + SVG.upload + ' 일괄 등록</button>' +
+      '<button class="btn btn-ghost" id="wf_bulk" type="button">' + SVG.upload + ' ' + t('cg.w.bulk', '일괄 등록') + '</button>' +
       '</div>' +
       '<div class="trk-sec" style="padding-top:14px;"><div class="trk-tbl-wrap"><table class="trk-tbl">' +
-      '<thead><tr><th>B/L No.</th><th>선사</th><th>상태</th><th title="이메일 알림 등록 여부 · 클릭하여 변경">알림</th><th>진행</th><th>구간</th><th>ETD</th><th>ETA</th>' +
-      '<th>변경</th><th>남은기간</th>' + (watchState.admin ? '<th>등록자</th>' : '') + '<th>최근 수집</th><th></th></tr></thead><tbody>' +
-      (pageRows.length ? pageRows.map(watchRowHtml).join('') : '<tr><td colspan="' + (watchState.admin ? 13 : 12) + '" class="na" style="text-align:center;padding:18px;">조건에 맞는 화물이 없습니다.</td></tr>') +
+      '<thead><tr><th>B/L No.</th><th>' + t('cg.x.carrier', '선사') + '</th><th>' + t('cg.th.state', '상태') + '</th><th title="' + t('cg.th.alertTip', '이메일 알림 등록 여부 · 클릭하여 변경') + '">' + t('cg.th.alert', '알림') + '</th><th>' + t('cg.th.stage', '진행') + '</th><th>' + t('cg.th.route', '구간') + '</th><th>ETD</th><th>ETA</th>' +
+      '<th>' + t('cg.lb.changed', '변경') + '</th><th>' + t('cg.th.left', '남은기간') + '</th>' + (watchState.admin ? '<th>' + t('cg.th.owner', '등록자') + '</th>' : '') + '<th>' + t('cg.th.polled', '최근 수집') + '</th><th></th></tr></thead><tbody>' +
+      (pageRows.length ? pageRows.map(watchRowHtml).join('') : '<tr><td colspan="' + (watchState.admin ? 13 : 12) + '" class="na" style="text-align:center;padding:18px;">' + t('cg.w.noMatch', '조건에 맞는 화물이 없습니다.') + '</td></tr>') +
       '</tbody></table></div>' +
       /* 페이지네이션 */
       (pages > 1 ? '<div class="wf-pager">' +
-        '<button class="btn btn-ghost trk-mini" id="wf_prev"' + (watchState.page <= 1 ? ' disabled' : '') + '>이전</button>' +
-        '<span class="wf-page">' + watchState.page + ' / ' + pages + ' <small>(' + total + '건)</small></span>' +
-        '<button class="btn btn-ghost trk-mini" id="wf_next"' + (watchState.page >= pages ? ' disabled' : '') + '>다음</button>' +
+        '<button class="btn btn-ghost trk-mini" id="wf_prev"' + (watchState.page <= 1 ? ' disabled' : '') + '>' + t('cg.pg.prev', '이전') + '</button>' +
+        '<span class="wf-page">' + watchState.page + ' / ' + pages + ' <small>(' + total + t('cg.unit.count', '건') + ')</small></span>' +
+        '<button class="btn btn-ghost trk-mini" id="wf_next"' + (watchState.page >= pages ? ' disabled' : '') + '>' + t('cg.pg.next', '다음') + '</button>' +
         '</div>' : '') +
       '</div></div>';
     box.innerHTML = h;
@@ -1131,13 +1133,13 @@
       btn.addEventListener('click', function () {
         var mbl = btn.getAttribute('data-off');
         openConfirm({
-          title: '추적 해제', sub: mbl, ok: '해제',
-          body: '이후 <b>수집과 알림이 중단</b>됩니다.<br>지금까지의 조회 이력과 변경 기록은 그대로 남습니다.'
+          title: t('cg.off.title', '추적 해제'), sub: mbl, ok: t('cg.w.release', '해제'),
+          body: t('cg.off.body', '이후 <b>수집과 알림이 중단</b>됩니다.<br>지금까지의 조회 이력과 변경 기록은 그대로 남습니다.')
         }, function (setErr, close) {
           fetch(WATCH_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'remove', token: myToken(), mbl_no: mbl }) })
             .then(function (r) { return r.json(); })
             .then(function (d) { if (d.error) { setErr(d.error); return; } close(); loadWatchList(); })
-            .catch(function () { setErr('해제 실패 — 잠시 후 다시 시도하십시오.'); });
+            .catch(function () { setErr(t('cg.off.fail', '해제 실패 — 잠시 후 다시 시도하십시오.')); });
         });
       });
     });
@@ -1155,7 +1157,7 @@
         watchState.needLogin = !!d.needLogin;
         renderWatch();
         syncWatchBtn();      // 조회 결과가 이미 떠 있으면 등록 상태를 버튼에 반영
-      }).catch(function () { box.innerHTML = '<div class="card"><p class="sc-sub" style="margin:0;">추적 목록을 불러오지 못했습니다.</p></div>'; });
+      }).catch(function () { box.innerHTML = '<div class="card"><p class="sc-sub" style="margin:0;">' + t('cg.w.listFail', '추적 목록을 불러오지 못했습니다.') + '</p></div>'; });
     });
   }
 
@@ -1165,21 +1167,21 @@
     var ov = document.createElement('div');
     ov.className = 'reg-ov';
     ov.innerHTML = '<div class="reg-card" style="max-width:380px;">' +
-      '<h3>' + esc(opts.title || '확인') + (opts.sub ? ' <small>' + esc(opts.sub) + '</small>' : '') + '</h3>' +
+      '<h3>' + esc(opts.title || t('cg.btn.ok', '확인')) + (opts.sub ? ' <small>' + esc(opts.sub) + '</small>' : '') + '</h3>' +
       '<p class="reg-hint" style="font-size:12.5px;">' + (opts.body || '') + '</p>' +
       '<div id="cfMsg" class="reg-msg"></div>' +
-      '<div class="reg-btns"><button class="btn btn-ghost" id="cfCancel">취소</button>' +
-      '<button class="btn btn-primary" id="cfOk">' + esc(opts.ok || '확인') + '</button></div></div>';
+      '<div class="reg-btns"><button class="btn btn-ghost" id="cfCancel">' + t('cg.btn.cancel', '취소') + '</button>' +
+      '<button class="btn btn-primary" id="cfOk">' + esc(opts.ok || t('cg.btn.ok', '확인')) + '</button></div></div>';
     document.body.appendChild(ov);
     function close() { ov.remove(); }
     ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
     el2(ov, 'cfCancel').addEventListener('click', close);
     el2(ov, 'cfOk').addEventListener('click', function () {
       var b = el2(ov, 'cfOk');
-      b.disabled = true; b.textContent = '처리 중…';
+      b.disabled = true; b.textContent = t('cg.btn.working', '처리 중…');
       onOk(function (err) {
         el2(ov, 'cfMsg').innerHTML = '<span class="reg-err">' + esc(err) + '</span>';
-        b.disabled = false; b.textContent = opts.ok || '확인';
+        b.disabled = false; b.textContent = opts.ok || t('cg.btn.ok', '확인');
       }, close);
     });
   }
@@ -1191,16 +1193,16 @@
     var ov = document.createElement('div');
     ov.className = 'reg-ov';
     ov.innerHTML = '<div class="reg-card">' +
-      '<h3>알림 수신 설정 <small>' + esc(mbl) + '</small></h3>' +
-      '<p class="reg-hint" style="margin:0 0 4px;">출항·도착 예정일시(ETD/ETA)가 바뀌면 이 주소로 메일을 보냅니다.</p>' +
-      '<label class="reg-l">알림 이메일 <span class="reg-opt">(비우고 저장하면 알림 해제)</span></label>' +
+      '<h3>' + t('cg.nf.title', '알림 수신 설정') + ' <small>' + esc(mbl) + '</small></h3>' +
+      '<p class="reg-hint" style="margin:0 0 4px;">' + t('cg.nf.hint', '출항·도착 예정일시(ETD/ETA)가 바뀌면 이 주소로 메일을 보냅니다.') + '</p>' +
+      '<label class="reg-l">' + t('cg.reg.mail', '알림 이메일') + ' <span class="reg-opt">' + t('cg.nf.clearHint', '(비우고 저장하면 알림 해제)') + '</span></label>' +
       '<input type="email" id="ntMail" class="focus-search" style="width:100%;" placeholder="you@twsc.co.kr" value="' + esc(cur || myEmail()) + '">' +
-      (cur ? '<p class="reg-hint">현재 수신: <b>' + esc(cur) + '</b></p>' : '<p class="reg-hint">현재 알림이 설정돼 있지 않습니다.</p>') +
+      (cur ? '<p class="reg-hint">' + t('cg.nf.cur', '현재 수신: ') + '<b>' + esc(cur) + '</b></p>' : '<p class="reg-hint">' + t('cg.nf.none', '현재 알림이 설정돼 있지 않습니다.') + '</p>') +
       '<div id="ntMsg" class="reg-msg"></div>' +
       '<div class="reg-btns">' +
-      (cur ? '<button class="btn btn-ghost" id="ntClear">알림 해제</button>' : '') +
-      '<button class="btn btn-ghost" id="ntCancel">취소</button>' +
-      '<button class="btn btn-primary" id="ntOk">저장</button></div></div>';
+      (cur ? '<button class="btn btn-ghost" id="ntClear">' + t('cg.nf.clear', '알림 해제') + '</button>' : '') +
+      '<button class="btn btn-ghost" id="ntCancel">' + t('cg.btn.cancel', '취소') + '</button>' +
+      '<button class="btn btn-primary" id="ntOk">' + t('cg.btn.save', '저장') + '</button></div></div>';
     document.body.appendChild(ov);
     function close() { ov.remove(); }
     ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
@@ -1211,15 +1213,15 @@
 
     function save(val) {
       var msg = el2(ov, 'ntMsg'), ok = el2(ov, 'ntOk');
-      ok.disabled = true; ok.textContent = '저장 중…';
+      ok.disabled = true; ok.textContent = t('cg.btn.saving', '저장 중…');
       fetch(WATCH_API, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'notify', token: myToken(), mbl_no: mbl, notify_email: val })
       }).then(function (r) { return r.json(); }).then(function (d) {
-        if (d.error) { msg.innerHTML = '<span class="reg-err">' + esc(d.error) + '</span>'; ok.disabled = false; ok.textContent = '저장'; return; }
+        if (d.error) { msg.innerHTML = '<span class="reg-err">' + esc(d.error) + '</span>'; ok.disabled = false; ok.textContent = t('cg.btn.save', '저장'); return; }
         close(); loadWatchList();
       }).catch(function () {
-        msg.innerHTML = '<span class="reg-err">네트워크 오류 — 잠시 후 다시.</span>'; ok.disabled = false; ok.textContent = '저장';
+        msg.innerHTML = '<span class="reg-err">' + t('cg.msg.neterr', '네트워크 오류 — 잠시 후 다시.') + '</span>'; ok.disabled = false; ok.textContent = t('cg.btn.save', '저장');
       });
     }
     el2(ov, 'ntOk').addEventListener('click', function () { save(input.value.trim()); });
@@ -1233,17 +1235,17 @@
       var live = ((watchState.carriers || {}).live || []).map(function (x) { return x.scac + '(' + x.name + ')'; }).join(' · ');
       var ov = document.createElement('div'); ov.className = 'reg-ov';
       ov.innerHTML = '<div class="reg-card" style="max-width:560px;">' +
-        '<h3>B/L 일괄 등록</h3>' +
-        '<p class="reg-hint">B/L 번호를 <b>줄바꿈 또는 쉼표</b>로 구분해 붙여넣으세요 (최대 500건). 선사는 번호로 자동 판별됩니다.</p>' +
-        '<div class="reg-support"><b>실시간 조회:</b> ' + esc(live) + '<br><span style="color:var(--muted);">그 외 선사는 등록되어도 목록에만 표시되고 자동 조회는 되지 않습니다.</span></div>' +
+        '<h3>' + t('cg.bulk.title', 'B/L 일괄 등록') + '</h3>' +
+        '<p class="reg-hint">' + t('cg.bulk.hint', 'B/L 번호를 <b>줄바꿈 또는 쉼표</b>로 구분해 붙여넣으세요 (최대 500건). 선사는 번호로 자동 판별됩니다.') + '</p>' +
+        '<div class="reg-support"><b>' + t('cg.bulk.live', '실시간 조회:') + '</b> ' + esc(live) + '<br><span style="color:var(--muted);">' + t('cg.bulk.other', '그 외 선사는 등록되어도 목록에만 표시되고 자동 조회는 되지 않습니다.') + '</span></div>' +
         '<textarea id="bulkTxt" class="focus-search" style="width:100%; min-height:150px; font-family:monospace; resize:vertical;" placeholder="COSU6504130030&#10;SMLMSEL6C8710500&#10;ONEYSELG97346400"></textarea>' +
-        '<div class="reg-row"><div><label class="reg-l">추적 기간</label>' +
-        '<div class="reg-seg" id="bulkTerm"><button data-m="3" class="on">3개월</button><button data-m="6">6개월</button></div></div>' +
-        '<div style="flex:1;"><label class="reg-l">알림 이메일 <span class="reg-opt">(선택)</span></label>' +
+        '<div class="reg-row"><div><label class="reg-l">' + t('cg.reg.term', '추적 기간') + '</label>' +
+        '<div class="reg-seg" id="bulkTerm"><button data-m="3" class="on">' + t('cg.reg.m3', '3개월') + '</button><button data-m="6">' + t('cg.reg.m6', '6개월') + '</button></div></div>' +
+        '<div style="flex:1;"><label class="reg-l">' + t('cg.reg.mail', '알림 이메일') + ' <span class="reg-opt">' + t('cg.reg.optional', '(선택)') + '</span></label>' +
         '<input type="email" id="bulkMail" class="focus-search" value="' + esc(myEmail()) + '" style="width:100%;"></div></div>' +
         '<div id="bulkMsg" class="reg-msg"></div>' +
-        '<div class="reg-btns"><button class="btn btn-ghost" id="bulkCancel">취소</button>' +
-        '<button class="btn btn-primary" id="bulkOk">등록</button></div></div>';
+        '<div class="reg-btns"><button class="btn btn-ghost" id="bulkCancel">' + t('cg.btn.cancel', '취소') + '</button>' +
+        '<button class="btn btn-primary" id="bulkOk">' + t('cg.btn.register', '등록') + '</button></div></div>';
       document.body.appendChild(ov);
       var term = 3;
       ov.querySelectorAll('#bulkTerm button').forEach(function (x) {
@@ -1256,18 +1258,18 @@
         var raw = el2(ov, 'bulkTxt').value.split(/[\s,;]+/).map(function (x) { return x.replace(/[^A-Za-z0-9]/g, '').toUpperCase(); }).filter(Boolean);
         var uniq = Array.from(new Set(raw));
         var msg = el2(ov, 'bulkMsg');
-        if (!uniq.length) { msg.innerHTML = '<span class="reg-err">등록할 B/L 이 없습니다.</span>'; return; }
-        el2(ov, 'bulkOk').disabled = true; el2(ov, 'bulkOk').textContent = '등록 중… (' + uniq.length + '건)';
+        if (!uniq.length) { msg.innerHTML = '<span class="reg-err">' + t('cg.bulk.none', '등록할 B/L 이 없습니다.') + '</span>'; return; }
+        el2(ov, 'bulkOk').disabled = true; el2(ov, 'bulkOk').textContent = t('cg.btn.registering', '등록 중…') + ' (' + uniq.length + t('cg.unit.count', '건') + ')';
         fetch(WATCH_API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'bulk', token: myToken(), term_months: term, notify_email: el2(ov, 'bulkMail').value.trim(), rows: uniq.map(function (m) { return { mbl_no: m }; }) }) })
           .then(function (r) { return r.json(); }).then(function (d) {
-            if (d.error) { msg.innerHTML = '<span class="reg-err">' + esc(d.error) + '</span>'; el2(ov, 'bulkOk').disabled = false; el2(ov, 'bulkOk').textContent = '등록'; return; }
-            msg.innerHTML = '<span class="reg-ok">등록 ' + d.added + '건 · 실패 ' + d.failed + '건</span>' +
+            if (d.error) { msg.innerHTML = '<span class="reg-err">' + esc(d.error) + '</span>'; el2(ov, 'bulkOk').disabled = false; el2(ov, 'bulkOk').textContent = t('cg.btn.register', '등록'); return; }
+            msg.innerHTML = '<span class="reg-ok">' + t('cg.btn.register', '등록') + ' ' + d.added + t('cg.unit.count', '건') + ' · ' + t('cg.msg.failed', '실패') + ' ' + d.failed + t('cg.unit.count', '건') + '</span>' +
               (d.failed ? '<div class="reg-fail">' + (d.results || []).filter(function (x) { return !x.ok; }).map(function (x) { return esc(x.mbl_no) + ' — ' + esc(x.error); }).join('<br>') + '</div>' : '');
             loadWatchList();
             if (!d.failed) setTimeout(close, 800);
-            else { el2(ov, 'bulkOk').disabled = false; el2(ov, 'bulkOk').textContent = '닫기'; el2(ov, 'bulkOk').onclick = close; }
-          }).catch(function () { msg.innerHTML = '<span class="reg-err">네트워크 오류.</span>'; el2(ov, 'bulkOk').disabled = false; el2(ov, 'bulkOk').textContent = '등록'; });
+            else { el2(ov, 'bulkOk').disabled = false; el2(ov, 'bulkOk').textContent = t('cg.btn.close', '닫기'); el2(ov, 'bulkOk').onclick = close; }
+          }).catch(function () { msg.innerHTML = '<span class="reg-err">' + t('cg.msg.neterr2', '네트워크 오류.') + '</span>'; el2(ov, 'bulkOk').disabled = false; el2(ov, 'bulkOk').textContent = t('cg.btn.register', '등록'); });
       });
     });
   }
@@ -1279,7 +1281,7 @@
     el('carrierOut').innerHTML = '<div class="card reveal in" style="margin-bottom:14px;">' +
       '<h3 style="margin-top:0;">' + esc(title) + (name ? ' <small style="color:var(--muted);">' + esc(name) + '</small>' : '') + '</h3>' +
       '<p class="sc-sub">' + esc(note) + '</p>' +
-      (url ? '<a class="btn btn-primary" target="_blank" rel="noopener" href="' + url + '">' + esc(name || '') + ' 공식 추적 페이지 ↗</a>' : '') +
+      (url ? '<a class="btn btn-primary" target="_blank" rel="noopener" href="' + url + '">' + esc(name || '') + ' ' + t('cg.dl.official', '공식 추적 페이지') + ' ↗</a>' : '') +
       '</div>';
   }
 
@@ -1291,32 +1293,32 @@
     var awb = awbInfo(no);
     var oc = oceanInfo(no);
     el('awbHint').innerHTML = awb
-      ? ('AWB 감지 (프리픽스 ' + awb.prefix + (awb.name ? ' · ' + esc(awb.name) : '') + ')')
+      ? (t('cg.hint.awb', 'AWB 감지 (프리픽스') + ' ' + awb.prefix + (awb.name ? ' · ' + esc(awb.name) : '') + ')')
       : (oc && oc.name
         ? (LIVE_SCACS[oc.scac]
-          ? ('해상 선사 감지 (' + oc.scac + ' · ' + esc(oc.name) + ') — 운송 이벤트를 선사에서 직접 조회합니다.')
-          : ('해상 선사 감지 (' + oc.scac + ' · ' + esc(oc.name) + ') — 이 선사는 공식 추적 페이지에서 확인합니다.'))
+          ? (t('cg.hint.ocean', '해상 선사 감지') + ' (' + oc.scac + ' · ' + esc(oc.name) + ') — ' + t('cg.hint.live', '운송 이벤트를 선사에서 직접 조회합니다.'))
+          : (t('cg.hint.ocean', '해상 선사 감지') + ' (' + oc.scac + ' · ' + esc(oc.name) + ') — ' + t('cg.hint.deeplink', '이 선사는 공식 추적 페이지에서 확인합니다.')))
         : '');
     if (awb) {
-      renderDeeplink('항공 화물 추적', awb.name || ('항공사 프리픽스 ' + awb.prefix), awb.url,
-        awb.name ? 'AWB ' + no + ' — 항공사 공식 추적 페이지에서 조회하십시오.' : '등록되지 않은 항공사 프리픽스입니다. 아래 무료 조회 채널을 이용하십시오.');
+      renderDeeplink(t('cg.dl.airTitle', '항공 화물 추적'), awb.name || (t('cg.dl.airPrefix', '항공사 프리픽스') + ' ' + awb.prefix), awb.url,
+        awb.name ? 'AWB ' + no + ' — ' + t('cg.dl.airNote', '항공사 공식 추적 페이지에서 조회하십시오.') : t('cg.dl.airUnknown', '등록되지 않은 항공사 프리픽스입니다. 아래 무료 조회 채널을 이용하십시오.'));
       return;
     }
     if (oc && LIVE_SCACS[oc.scac]) {
-      el('carrierOut').innerHTML = '<div class="card reveal in" style="margin-bottom:14px;"><div class="sc-sub">선사 운송 정보 조회 중…</div></div>';
+      el('carrierOut').innerHTML = '<div class="card reveal in" style="margin-bottom:14px;"><div class="sc-sub">' + t('cg.trk.loading', '선사 운송 정보 조회 중…') + '</div></div>';
       fetch(CARRIER_API + '?no=' + encodeURIComponent(no))
         .then(function (r) { return r.json(); })
         .then(function (res) { renderCarrier(res, no); })
-        .catch(function () { renderCarrier({ error: '일시적 네트워크 오류입니다 — 잠시 후 다시 시도하십시오.' }, no); });
+        .catch(function () { renderCarrier({ error: t('cg.msg.tmpNet', '일시적 네트워크 오류입니다 — 잠시 후 다시 시도하십시오.') }, no); });
       return;
     }
     if (oc && oc.name) {
-      renderDeeplink('선사 운송 추적', oc.name, oc.url,
-        'MBL ' + no + ' — 이 선사는 봇 차단 정책상 사이트 내 실조회가 불가하여 공식 페이지로 안내합니다.');
+      renderDeeplink(t('cg.trk.title', '선사 운송 추적'), oc.name, oc.url,
+        'MBL ' + no + ' — ' + t('cg.dl.oceanNote', '이 선사는 봇 차단 정책상 사이트 내 실조회가 불가하여 공식 페이지로 안내합니다.'));
       return;
     }
-    renderDeeplink('선사 미감지', null, null,
-      '번호에서 선사를 식별하지 못했습니다. 실조회 지원: ONE·COSCO·SM상선·Evergreen·SITC·ZIM(키 등록 시 머스크·하파그로이드·HMM 자동 확장) / 그 외 선사는 딥링크. 번호를 확인하거나 아래 무료 조회 채널을 이용하십시오.');
+    renderDeeplink(t('cg.dl.noCarrier', '선사 미감지'), null, null,
+      t('cg.dl.noCarrierNote', '번호에서 선사를 식별하지 못했습니다. 실조회 지원: ONE·COSCO·SM상선·Evergreen·SITC·ZIM(키 등록 시 머스크·하파그로이드·HMM 자동 확장) / 그 외 선사는 딥링크. 번호를 확인하거나 아래 무료 조회 채널을 이용하십시오.'));
   }
 
   document.addEventListener('DOMContentLoaded', function () {
