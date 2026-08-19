@@ -51,7 +51,9 @@ async function whoami(token: unknown): Promise<{ login: string; role: string } |
 const isAdmin = (me: { role: string } | null) => !!me && me.role === "admin";
 
 const MBL_RE = /^[A-Z0-9]{8,20}$/;
-const LIVE: Record<string, string> = { ONEY: "ONE", COSU: "COSCO", SMLM: "SM Line", EGLV: "Evergreen", SITC: "SITC" };
+/* ZIM 개통(2026-08-19) 반영 — 조회(carrier-track)만 열고 이 목록을 빠뜨리면
+   등록이 "지원하지 않는 선사"로 거부된다(실사고). 선사 추가 시 여기도 반드시 갱신 */
+const LIVE: Record<string, string> = { ONEY: "ONE", COSU: "COSCO", SMLM: "SM Line", EGLV: "Evergreen", SITC: "SITC", ZIMU: "ZIM" };
 const DEEPLINK: Record<string, string> = { MAEU: "Maersk", MSCU: "MSC", HLCU: "Hapag-Lloyd", CMDU: "CMA CGM", OOLU: "OOCL", HDMU: "HMM", YMLU: "Yang Ming", WHLC: "Wan Hai", KMTC: "KMTC" };
 function detect(no: string): string | null {
   const up = no.toUpperCase();
