@@ -75,8 +75,10 @@
     if (!host || !fxItems || !fxItems.length) return;
     host.innerHTML = fxItems.map(function (i) {
       var up = i.d.pct_change > 0;
+      /* 한국 금융 관례: 상승=빨강, 하락=파랑 — 클래스로 지정(인라인 color는
+         #stats의 muted !important에 죽으므로 금지, 2026-08-19 사용자 지적) */
       var arrow = i.d.pct_change == null ? '' :
-        ' <small style="color:' + (up ? 'var(--lv-congested)' : 'var(--lv-low)') + ';">' +
+        ' <small class="' + (up ? 'pc-up' : 'pc-dn') + '">' +
         (up ? '▲' : '▼') + Math.abs(i.d.pct_change).toFixed(2) + '%</small>';
       return '<div class="live-chip"><div class="k">' + t(i.key, i.ko) +
         '</div><div class="v">' + Number(i.d.value).toLocaleString('ko-KR') + arrow + '</div></div>';
@@ -424,7 +426,8 @@
          감광 존은 텍스트 블록 실제 위치 기준(뷰포트 %가 아님):
          ≥1980px 는 중앙 정렬 문구(css @media 와 동기), 미만은 좌측 칼럼 (W-1200)/2 */
       var dotR = Math.max(1.2, W / 1050);
-      var dzL = W / 2 - 470, dzR = W / 2 + 470, dzT = H * 0.08, dzB = H * 0.56;
+      var colL = Math.max(0, (W - 1200) / 2);
+      var dzL = colL - 40, dzR = colL + 700, dzT = H * 0.20, dzB = H * 0.66;
       for (var i = 0; i < landCells.length; i++) {
         var pt = project(landCells[i][0], landCells[i][1]);
         if (pt.y < -6 || pt.y > H + 6) continue;
@@ -621,7 +624,8 @@
         var pp = project(pd[0], pd[1]);
         var px = pp.x + ox, py = pp.y + oy;
         if (px < -20 || px > W + 20) continue;
-        var inText = px > W / 2 - 560 && px < W / 2 + 560 && py > H * 0.08 && py < H * 0.58;
+        var kL = Math.max(0, (W - 1200) / 2);
+        var inText = px > kL - 60 && px < kL + 780 && py > H * 0.16 && py < H * 0.70;
         var inStrip = py > H * 0.585 && px > W * 0.18 && px < W * 0.82;
         var quiet = inText || inStrip;
         if (pd[3]) {

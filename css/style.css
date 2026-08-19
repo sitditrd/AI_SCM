@@ -45,6 +45,8 @@
                linear-gradient(180deg, #0a1e3f 0%, #0b2d5b 100%);
   --up: #b42318;      /* 악화(증가) 텍스트 */
   --down: #067647;    /* 개선(감소) 텍스트 */
+  --idx-up: #d92d20;  /* 지수 상승 — 한국 금융 관례 빨강 */
+  --idx-dn: #1570ef;  /* 지수 하락 — 파랑 */
 }
 
 :root[data-theme='dark'] {
@@ -64,6 +66,8 @@
                linear-gradient(180deg, #0a0f1e 0%, #0e1830 100%);
   --up: #f97066;
   --down: #32d583;
+  --idx-up: #ff6b61;  /* 지수 상승 — 한국 금융 관례 빨강 */
+  --idx-dn: #5aa9ff;  /* 지수 하락 — 파랑 */
 }
 
 /* ---------- 베이스 ---------- */
@@ -1809,20 +1813,23 @@ table.trk-tbl td .na { color: var(--muted); }
    폭 분기 없음: 1440이든 3440이든 같은 그림 */
 .hero-ops .hero-hud {
   position: absolute; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-  /* 문구는 상단 중앙 — 지도의 제일 화려한 중간·하단 밴드(혜성 항로)를 온전히 개방(2026-08-19 지도 주인공) */
-  padding: clamp(96px, 12vh, 156px) 22px 218px;
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  /* 문구는 좌측 칼럼·세로 중앙 — 지도 한가운데 글자는 어색하다는 지적(2026-08-19).
+     지도는 풀블리드 그대로, 글자만 왼쪽으로 비켜 앉는다 */
+  padding: 40px 22px 200px;
 }
 .hud-brief { position: relative; z-index: 5; }
 /* 박스 제거(2026-08-19 사용자: 카드가 어색) — 비네트 위에 타이포가 직접 앉는다 — 경계선 없음 */
-.hud-brief { max-width: 820px; padding: 0; text-align: center; }
-.hero-ops .hero-ctas { justify-content: center; }
+.hud-brief {
+  max-width: 640px; padding: 0; text-align: left;
+  margin-left: max(22px, calc(50% - 578px));   /* 1200px 컨테이너 좌측선과 동일 */
+}
+.hero-ops .hero-ctas { justify-content: flex-start; }
 .hero-shade {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;
-  /* 기둥형 스크림 폐기(지도를 두 동강 낸다는 지적) → 문구 뒤 타원 비네트만.
-     지도는 끊기지 않고 글자 주변으로 흐른다 */
+  /* 좌측 커튼도 중앙 기둥도 아님 — 글자 뒤 국소 타원 비네트만. 지도는 사방으로 연속 */
   background:
-    radial-gradient(ellipse 880px 470px at 50% 31%, rgba(6, 10, 22, .88) 0%, rgba(6, 10, 22, .58) 52%, rgba(6, 10, 22, 0) 76%),
+    radial-gradient(ellipse 720px 520px at calc(50% - 268px) 46%, rgba(6, 10, 22, .88) 0%, rgba(6, 10, 22, .56) 54%, rgba(6, 10, 22, 0) 78%),
     linear-gradient(180deg, rgba(6, 10, 22, .55) 0%, transparent 20%);
 }
 /* 비네트 밖 글자 가독 보강 — 지도 위에 뜨는 타이포는 그림자가 받쳐준다 */
@@ -1830,9 +1837,9 @@ table.trk-tbl td .na { color: var(--muted); }
 .hero-ops .hero-sub, .hero-ops .hero-note { text-shadow: 0 1px 14px rgba(4, 8, 20, .85); }
 [data-theme="light"] .hero-ops h1 { text-shadow: 0 2px 22px rgba(243, 246, 251, .95), 0 0 52px rgba(243, 246, 251, .7); }
 [data-theme="light"] .hero-ops .hero-sub, [data-theme="light"] .hero-ops .hero-note { text-shadow: 0 1px 14px rgba(243, 246, 251, .9); }
-/* 중앙 무대용 타이포 — 센터 구도는 좌측 칼럼보다 한 급 크게, 줄은 고르게(balance) */
-.hero-ops h1 { font-size: clamp(40px, 3.4vw, 66px); margin: 14px 0 18px; line-height: 1.22; text-wrap: balance; }
-.hero-ops .hero-sub { font-size: 15.5px; margin: 0 auto 24px; max-width: 680px; line-height: 1.75; text-wrap: balance; }
+/* 좌측 칼럼 타이포 — 줄은 고르게(balance) */
+.hero-ops h1 { font-size: clamp(38px, 3.1vw, 60px); margin: 14px 0 18px; line-height: 1.22; text-wrap: balance; }
+.hero-ops .hero-sub { font-size: 15.5px; margin: 0 0 24px; max-width: 560px; line-height: 1.75; text-wrap: balance; word-break: keep-all; }
 .hero-ops .hero-note { margin-top: 18px; font-size: 12px; opacity: .85; }
 .hud-dock {
   position: absolute; z-index: 6; left: 0; right: 0; bottom: 0;
@@ -1907,6 +1914,9 @@ table.trk-tbl td .na { color: var(--muted); }
 #stats .live-strip .live-chip .k { color: var(--muted); }
 #stats .live-strip .live-chip .v { color: var(--ink); }
 #stats .live-strip .live-chip .v small { color: var(--muted) !important; }
+/* 지수 등락 색 — 위 muted 보다 뒤에 선언해 승리. 상승 빨강·하락 파랑(2026-08-19 사용자 지적) */
+#stats .live-strip .live-chip .v small.pc-up { color: var(--idx-up) !important; font-weight: 700; }
+#stats .live-strip .live-chip .v small.pc-dn { color: var(--idx-dn) !important; font-weight: 700; }
 #stats .live-strip { background: transparent; border: 0; box-shadow: none; padding: 0; }
 /* 다크 전용 그라데이션 텍스트 해제 — 라이트에서 숫자가 씻겨 보이던 진범 */
 #stats .live-strip .live-chip .v {
@@ -1927,7 +1937,7 @@ table.trk-tbl td .na { color: var(--muted); }
 [data-theme="light"] .hero-ops .hero-eyebrow { color: #1d6fe0; }
 [data-theme="light"] .hero-shade {
   background:
-    radial-gradient(ellipse 880px 470px at 50% 31%, rgba(243, 246, 251, .92) 0%, rgba(243, 246, 251, .62) 52%, rgba(243, 246, 251, 0) 76%),
+    radial-gradient(ellipse 720px 520px at calc(50% - 268px) 46%, rgba(243, 246, 251, .93) 0%, rgba(243, 246, 251, .6) 54%, rgba(243, 246, 251, 0) 78%),
     linear-gradient(180deg, rgba(243, 246, 251, .55) 0%, transparent 20%);
 }
 [data-theme="light"] .hero-ops .live-chip { background: rgba(255, 255, 255, .66); border-color: rgba(18, 45, 90, .12); box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 14px 34px rgba(30, 60, 120, .10); }
