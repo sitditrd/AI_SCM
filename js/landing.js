@@ -300,10 +300,9 @@
     if (!canvas) return;
 
     var ctx = canvas.getContext('2d');
-    /* 지도는 완전 정적 — "지도 움직이게 하지마 어지러워"(2026-08-19 사용자 지시).
-       reduced=true 로 고정: rAF 루프·혜성 주행·흐름 대시·별 반짝임·패럴랙스·파문 전부 오프,
-       resize()가 정적 프레임 1장만 그린다 (타이핑 연출은 별도 matchMedia — 영향 없음) */
-    var reduced = true;
+    /* 혜성·흐름·반짝임은 살아있다 — 죽인 건 마우스 패럴랙스뿐
+       ("효과를 멈추지 말고 커서따라 흔들리는 것만 제어" 2026-08-19 사용자 정정) */
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var running = true;
     var col = {};
     function setPalette() {
@@ -698,14 +697,8 @@
       new IntersectionObserver(function (ents) { running = ents[0].isIntersecting; }, { threshold: 0 })
         .observe(canvas.parentElement);
     }
-    if (!reduced) {
-      canvas.parentElement.addEventListener('mousemove', function (e) {
-        var r = canvas.parentElement.getBoundingClientRect();
-        mouse.tx = ((e.clientX - r.left) / r.width - 0.5) * 16;
-        mouse.ty = ((e.clientY - r.top) / r.height - 0.5) * 10;
-      });
-      canvas.parentElement.addEventListener('mouseleave', function () { mouse.tx = 0; mouse.ty = 0; });
-    }
+    /* 마우스 패럴랙스 제거 — 지도가 커서 따라 흔들려 어지럽다는 지적(2026-08-19).
+       mouse 는 (0,0) 고정 — 혜성·흐름 등 자체 모션은 그대로 */
     var lastW = 0, lastH = 0, roT = null;
     function sizeChanged() {
       var r = canvas.parentElement.getBoundingClientRect();

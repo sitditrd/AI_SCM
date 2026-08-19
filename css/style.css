@@ -1822,18 +1822,20 @@ table.trk-tbl td .na { color: var(--muted); }
    단, 내부 텍스트는 좌측 정렬(가운데 정렬 = 촌스러움 판정) */
 .hud-brief {
   max-width: 780px; padding: 36px 44px 34px; text-align: left;
-  background: rgba(10, 16, 32, .58);
-  border: 1px solid rgba(255, 255, 255, .09);
-  border-radius: 22px;
-  box-shadow: 0 30px 90px rgba(2, 6, 18, .5), inset 0 1px 0 rgba(255, 255, 255, .05);
-  -webkit-backdrop-filter: blur(16px) saturate(1.15); backdrop-filter: blur(16px) saturate(1.15);
+  /* 어중간한 반투명은 촌스러움 판정(2026-08-19) — 거의 불투명한 딥네이비 패널.
+     지도는 뒤에서 은은하게만 비치고, 상단 하이라이트 한 줄로 마감 */
+  background: linear-gradient(180deg, rgba(15, 23, 43, .94) 0%, rgba(10, 15, 30, .92) 100%);
+  border: 1px solid rgba(126, 224, 255, .13);
+  border-radius: 20px;
+  box-shadow: 0 42px 110px rgba(1, 4, 14, .6), 0 2px 8px rgba(1, 4, 14, .4), inset 0 1px 0 rgba(255, 255, 255, .07);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
   animation: cardIn .6s ease-out both;
 }
 @keyframes cardIn { from { opacity: 0; } to { opacity: 1; } }
 [data-theme="light"] .hud-brief {
-  background: rgba(255, 255, 255, .68);
-  border-color: rgba(18, 45, 90, .13);
-  box-shadow: 0 30px 80px rgba(30, 60, 120, .16), inset 0 1px 0 rgba(255, 255, 255, .85);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .96) 0%, rgba(247, 250, 255, .93) 100%);
+  border-color: rgba(18, 45, 90, .12);
+  box-shadow: 0 42px 100px rgba(24, 48, 96, .18), 0 2px 8px rgba(24, 48, 96, .08), inset 0 1px 0 rgba(255, 255, 255, .9);
 }
 .hero-ops .hero-ctas { justify-content: flex-start; }
 .hero-shade {
