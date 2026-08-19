@@ -320,12 +320,17 @@
     return '<div class="vc-wrap">' + svg + '</div>' + v;
   }
 
-  /* 상태 히어로 (UX 개편 안 4) — 지금 상태·ETA D-day·다음 이벤트만 크게 */
-  function renderStatusHero(res, st, pts) {
-    var host = el('statusHero'); if (!host) return;
+  /* 티켓 요약 칼럼 — 항해도와 한 그리드(오와열 정렬, 2026-08-19 개편) */
+  /* 섹션 레일 — 티켓 내 영역 구분 명시(2026-08-19 지적) */
+  function tkSecH(ko, en) {
+    return '<div class="tk-sh"><i class="tk-tick"></i><b>' + ko + '</b>' +
+      (en ? '<span>' + en + '</span>' : '') + '<i class="tk-ln"></i></div>';
+  }
+
+  function tkSummaryHtml(res, st, pts) {
     var n = (pts || []).length;
-    if (n < 2) { host.innerHTML = ''; return; }
     var s = res.summary || {};
+    if (n < 2) return '<div class="tk-sum"></div>';
     var org = pts[0], dest = pts[n - 1], next = null;
     for (var i = 0; i < n; i++) { if (!pts[i].act) { next = pts[i]; break; } }
     var etaTxt = dest.dt ? fmtShort(dest.dt) : '';
@@ -334,17 +339,13 @@
       var ms = vcDate(dest.dt) - Date.now();
       if (isFinite(ms)) { var d = Math.ceil(ms / 864e5); dd = d >= 0 ? 'D-' + d : 'D+' + (-d); }
     }
-    host.innerHTML = '<div class="cs-hero reveal in">' +
-      '<span class="trk-badge ' + st.c + ' cs-badge">' + esc(st.t) + '</span>' +
-      '<div class="cs-body">' +
-      '<div class="cs-route">' + esc(vcCode(org.nm)) + ' → ' + esc(vcCode(dest.nm)) +
-      (s.vessel ? ' · ' + esc(s.vessel) + (s.voyage ? ' ' + esc(s.voyage) : '') : '') + '</div>' +
-      '<div class="cs-eta">' + (dest.act
-        ? '도착 ' + esc(etaTxt)
-        : 'ETA <b>' + esc(etaTxt || '미정') + '</b>' + (dd ? ' <span class="cs-dd">' + dd + '</span>' : '')) + '</div>' +
-      (next ? '<div class="cs-next">다음 이벤트 · ' + esc(vcCode(next.nm)) +
+    return '<div class="tk-sum">' +
+      '<div class="tk-route">' + esc(vcCode(org.nm)) + ' <i>→</i> ' + esc(vcCode(dest.nm)) + '</div>' +
+      '<div class="tk-eta-k">' + (dest.act ? '도착' : 'ETA') + (dd ? ' <span class="tk-dd">' + dd + '</span>' : '') + '</div>' +
+      '<div class="tk-eta">' + esc(etaTxt || '미정') + '</div>' +
+      (next ? '<div class="tk-next">다음 이벤트<br><b>' + esc(vcCode(next.nm)) + '</b>' +
         (next.dt ? ' ' + esc(fmtShort(next.dt)) : '') + '</div>' : '') +
-      '</div></div>';
+      '</div>';
   }
   function renderCarrier(res, no) {
     var out = el('carrierOut');
@@ -362,7 +363,7 @@
     var cs = res.containers || [];
     var idx = progressOf(cs);
     var st = statusOf(idx);
-    renderStatusHero(res, st, vcPts(res, idx / (SLOTS.length - 1)));
+    var sh1 = el('statusHero'); if (sh1) sh1.innerHTML = '';
 
     var h = '<div class="card trk-card reveal in" style="margin-bottom:14px;">';
 
@@ -378,30 +379,40 @@
       '</div>';
 
     /* ② 경로 — Voyage Canvas(SVG) + ③ 국내 터미널 패널(비동기 채움) */
-    h += voyageCanvas(res, idx);
+    h += tkSecH('운송 요약', 'SUMMARY');
+    h += '<div class="tk-grid">' +
+      tkSummaryHtml(res, st, vcPts(res, idx / (SLOTS.length - 1))) +
+      '<div class="tk-voy">' + voyageCanvas(res, idx) + '</div></div>';
     h += '<div id="tmlPanel"></div>';
 
-    /* ③ 컨테이너별 게이트 이벤트 표 */
+    /* ③ 게이트 스텝 그리드 — KLNET 9단계 도트바 상위호환.
+       등폭 9열 그리드라 컨테이너가 몇 건이든 오와열이 자동 정렬된다(표·가로스크롤 폐기) */
     if (cs.length) {
-      var depCols = SLOTS.filter(function (x) { return x.grp === 'dep'; });
-      var arrCols = SLOTS.filter(function (x) { return x.grp === 'arr'; });
-      h += '<div class="trk-sec"><h4>컨테이너 ' + cs.length + '건 · 게이트 이벤트</h4><div class="trk-tbl-wrap"><table class="trk-tbl">' +
-        '<thead><tr class="grp"><th rowspan="2">컨테이너</th><th rowspan="2">타입</th>' +
-        '<th class="dep" colspan="' + depCols.length + '">' + SVG.out + ' 출발지 (DEPARTURE)</th>' +
-        '<th class="arr" colspan="' + arrCols.length + '">' + SVG.into + ' 도착지 (DESTINATION)</th></tr><tr>' +
-        SLOTS.map(function (x) { return '<th>' + x.label + '</th>'; }).join('') +
-        '</tr></thead><tbody>';
-      cs.forEach(function (c) {
-        var sl = toSlots(c.events);
-        h += '<tr><td class="cn">' + SVG.box + ' ' + esc(c.cntrNo || '') + '</td><td>' + esc(c.szTp || '') + '</td>' +
-          SLOTS.map(function (x) {
-            var e = sl[x.k];
-            if (!e) return '<td class="dt na">-</td>';
-            var t = fmtShort(e.timeLocal || e.timeUtc);
-            return '<td class="dt' + (e.actual ? ' act' : '') + '" title="' + esc(evName(e.name)) + (e.location ? ' · ' + esc(e.location) : '') + '">' + esc(t || '●') + '</td>';
-          }).join('') + '</tr>';
-      });
-      h += '</tbody></table></div>';
+      h += '<div class="trk-sec">' + tkSecH('게이트 이벤트', 'GATE EVENTS · 컨테이너 ' + cs.length + '건') +
+        '<div class="gs-scroll"><div class="gs-wrap">' +
+        '<div class="gs-r gs-heads"><span class="gs-c0"></span>' +
+        '<span class="gs-gh dep">' + SVG.out + ' 출발지 DEPARTURE</span>' +
+        '<span class="gs-gh arr">' + SVG.into + ' 도착지 DESTINATION</span></div>' +
+        '<div class="gs-r gs-labels"><span class="gs-c0"></span>' +
+        SLOTS.map(function (x) { return '<span class="gs-lb">' + x.label + '</span>'; }).join('') + '</div>' +
+        cs.map(function (c) {
+          var sl = toSlots(c.events);
+          return '<div class="gs-r gs-line"><span class="gs-c0">' + SVG.box + ' <b>' + esc(c.cntrNo || '') + '</b><small>' + esc(c.szTp || '') + '</small></span>' +
+            SLOTS.map(function (x) {
+              var e = sl[x.k];
+              var cls = e ? (e.actual ? 'act' : 'exp') : 'na';
+              var t = e ? fmtShort(e.timeLocal || e.timeUtc) : '';
+              /* 날짜·시각 2단 스택 — 한 줄이면 이웃 셀과 충돌(오와열 깨짐) */
+              var dparts = String(t || '').split(' ');
+              var dEl = t
+                ? '<span class="gs-dt"><b>' + esc((dparts[0] || '').replace(/^\d\d-/, '')) + '</b>' +
+                  (dparts[1] ? '<small>' + esc(dparts[1]) + '</small>' : '') + '</span>'
+                : '<span class="gs-dt na">·</span>';
+              return '<span class="gs-cell ' + cls + '" title="' + esc(x.label + (e && e.location ? ' · ' + e.location : '') + (e && !e.actual ? ' · 예정' : '')) + '">' +
+                '<i class="gs-dot"></i>' + dEl + '</span>';
+            }).join('') + '</div>';
+        }).join('') +
+        '</div></div>';
 
       /* 게이트 이벤트를 안 주는 선사(COSCO)는 컨테이너 최신 상태라도 보여준다 */
       var lats = cs.filter(function (c) { return c.latest && c.latest.name; });
@@ -415,6 +426,9 @@
       }
 
       /* ④ 전체 이력 (접기) */
+      if (cs.some(function (c) { return (c.events || []).length; })) {
+        h += tkSecH('컨테이너 이력', 'HISTORY');
+      }
       cs.forEach(function (c) {
         var evs = c.events || [];
         if (!evs.length) return;
@@ -515,8 +529,9 @@
         });
         if (!cards.length) return;
 
-        var h = '<div class="trk-sec tml-sec"><h4>국내 터미널 일정 <small>선석배정 수집 연동 · ' +
-          esc(vq) + (s.voyage ? ' ' + esc(s.voyage) : '') + '</small></h4><div class="tml-row">';
+        var h = '<div class="trk-sec tml-sec">' +
+          tkSecH('국내 터미널', 'TERMINAL CROSS-CHECK · ' + esc(vq) + (s.voyage ? ' ' + esc(s.voyage) : '')) +
+          '<div class="tml-row">';
         cards.forEach(function (c) {
           var r = c.cur;
           var cctT = vcDate(r.cct), left = '';

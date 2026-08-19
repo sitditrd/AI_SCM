@@ -1822,20 +1822,19 @@ table.trk-tbl td .na { color: var(--muted); }
    단, 내부 텍스트는 좌측 정렬(가운데 정렬 = 촌스러움 판정) */
 .hud-brief {
   max-width: 780px; padding: 36px 44px 34px; text-align: left;
-  /* 소프트 플레이트(2026-08-19 확정) — 테두리·모서리 선이 보이는 "상자"는 전부 반려됨.
-     중심은 진한 네이비, 가장자리는 블러로 지도에 안개처럼 녹아든다(경계선 0) */
-  background: rgba(10, 15, 30, .42);
-  border: 0; border-radius: 28px; box-shadow: none;
+  /* 소프트 플레이트 단일층(2026-08-19 최종) — 본체 배경 0. 켜가 두 겹이면 안쪽 박스
+     테두리가 비쳐 "이중 포장"으로 보인다(반려). 흐린 판 한 장: 중심 진함, 가장자리만 융해 */
+  background: transparent;
+  border: 0; box-shadow: none;
   animation: cardIn .6s ease-out both;
 }
 .hud-brief::before {
-  content: ''; position: absolute; inset: -18px; z-index: -1;
-  border-radius: 44px; background: rgba(8, 13, 26, .88);
-  filter: blur(26px);
+  content: ''; position: absolute; inset: -8px; z-index: -1;
+  border-radius: 36px; background: rgba(8, 13, 26, .94);
+  filter: blur(22px);
 }
 @keyframes cardIn { from { opacity: 0; } to { opacity: 1; } }
-[data-theme="light"] .hud-brief { background: rgba(255, 255, 255, .5); }
-[data-theme="light"] .hud-brief::before { background: rgba(247, 250, 255, .92); }
+[data-theme="light"] .hud-brief::before { background: rgba(247, 250, 255, .95); }
 .hero-ops .hero-ctas { justify-content: flex-start; }
 .hero-shade {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;
@@ -2099,3 +2098,54 @@ h1.sr-done .accent::after { content: none; }
   .cc-side { position: static; }
 }
 @media (prefers-reduced-motion: reduce) { .ql-drawer { animation: none; } }
+
+/* ===== 운송 관제 티켓 — 요약 칼럼·9열 게이트 그리드·섹션 레일 (2026-08-19) ===== */
+.tk-sh { display: flex; align-items: center; gap: 9px; padding: 14px 22px 4px; }
+.tk-sh .tk-tick { width: 3.5px; height: 13px; border-radius: 2px; background: var(--brand-accent-2, #38c6ff); box-shadow: 0 0 8px color-mix(in srgb, var(--brand-accent-2, #38c6ff) 55%, transparent); }
+.tk-sh b { font-size: 13px; letter-spacing: .01em; }
+.tk-sh span { font-size: 10px; letter-spacing: .12em; color: var(--muted); font-weight: 600; }
+.tk-sh .tk-ln { flex: 1; height: 1px; background: var(--border); }
+.tk-grid { display: grid; grid-template-columns: 225px minmax(0, 1fr); align-items: stretch; border-bottom: 1px solid var(--border); }
+.tk-sum { padding: 16px 20px 18px 24px; border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center; gap: 5px; }
+.tk-route { font-weight: 700; font-size: 13px; letter-spacing: .02em; color: var(--ink-2); }
+.tk-route i { font-style: normal; color: var(--brand-accent-2, #38c6ff); }
+.tk-eta-k { font-size: 11px; color: var(--muted); letter-spacing: .1em; font-weight: 600; }
+.tk-dd { color: var(--brand-accent-2, #38c6ff); font-weight: 800; letter-spacing: 0; font-size: 12.5px; }
+.tk-eta { font-size: 25px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.12; }
+.tk-next { font-size: 12px; color: var(--muted); margin-top: 5px; line-height: 1.55; }
+.tk-next b { color: var(--ink-2); }
+.tk-voy { min-width: 0; align-self: center; }
+@media (max-width: 740px) {
+  .tk-grid { grid-template-columns: 1fr; }
+  .tk-sum { border-right: 0; border-bottom: 1px solid var(--border); }
+}
+/* 9열 등폭 게이트 그리드 — 오와열 정렬은 그리드가 보증 */
+.gs-scroll { overflow-x: auto; }
+.gs-wrap { min-width: 780px; padding: 8px 0 2px; }
+.gs-r { display: grid; grid-template-columns: 158px repeat(9, 1fr); align-items: center; }
+.gs-gh { font-size: 10.5px; font-weight: 700; letter-spacing: .1em; padding: 5px 8px; border-radius: 7px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.gs-gh.dep { grid-column: 2 / span 4; background: color-mix(in srgb, var(--brand-accent-2, #38c6ff) 9%, transparent); color: var(--brand-accent-2, #38c6ff); margin-right: 5px; }
+.gs-gh.arr { grid-column: 6 / span 5; background: color-mix(in srgb, var(--lv-low, #0ca30c) 10%, transparent); color: var(--lv-low, #2fbf71); margin-left: 5px; }
+.gs-labels .gs-lb { font-size: 11px; color: var(--muted); text-align: center; padding: 8px 2px 0; }
+.gs-line { margin-top: 2px; }
+.gs-c0 { display: flex; align-items: center; gap: 7px; font-size: 12.5px; padding: 10px 10px 10px 2px; }
+.gs-c0 b { font-variant-numeric: tabular-nums; }
+.gs-c0 small { color: var(--muted); }
+.gs-cell { position: relative; display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 12px 0 10px; }
+.gs-cell::before { content: ''; position: absolute; left: 0; right: 0; top: 17px; height: 2px; background: var(--border); }
+.gs-line .gs-cell:nth-child(2)::before { left: 50%; }
+.gs-line .gs-cell:last-child::before { right: 50%; }
+.gs-cell.act::before { background: color-mix(in srgb, var(--brand-accent-2, #38c6ff) 50%, var(--border)); }
+.gs-dot { position: relative; z-index: 1; width: 11px; height: 11px; border-radius: 50%; background: var(--surface); border: 2px solid var(--border); }
+.gs-cell.act .gs-dot { background: var(--brand-accent-2, #38c6ff); border-color: color-mix(in srgb, var(--brand-accent-2, #38c6ff) 70%, #fff); box-shadow: 0 0 9px color-mix(in srgb, var(--brand-accent-2, #38c6ff) 60%, transparent); }
+.gs-cell.exp .gs-dot { border-color: var(--brand-accent-2, #38c6ff); border-style: dashed; }
+.gs-dt { display: flex; flex-direction: column; align-items: center; gap: 1px; font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--muted); line-height: 1.25; }
+.gs-dt b { font-weight: inherit; }
+.gs-dt small { font-size: 10px; opacity: .8; }
+.gs-cell.act .gs-dt { color: var(--ink); font-weight: 700; }
+.gs-cell.exp .gs-dt { color: var(--ink-2); }
+.gs-cell.na .gs-dt { opacity: .35; }
+/* 좌측 레일 카드 리듬 통일 */
+.cc-side .card { padding: 18px; }
+.cc-side h3 { font-size: 13.5px; }
+.cc-qlbtn { padding: 16px 18px; }
