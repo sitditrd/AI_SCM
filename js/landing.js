@@ -12,6 +12,7 @@
     initWxAlert();
     initHeroCanvas();
     initClocks();
+    initHeroTyping();
     initCounters();
   });
 
@@ -44,6 +45,83 @@
   function t(k, ko) { return (window.TWI18N && window.TWI18N.t) ? window.TWI18N.t(k, ko) : ko; }
 
   /* ---------- 세계 시계 HUD — 관제탑의 심장박동(1초 갱신) ---------- */
+  /* ── 콘솔 타이핑 (시안 15 고도화) ──
+     고스트 레이어가 최종 크기를 선점(요동 0) → 라이브 레이어에 한 글자씩.
+     완료 시 twl:herotyped 발생 → 지도가 부산 파문으로 응답.
+     접근성: h1 aria-label 에 전체 문장, 라이브는 aria-hidden.
+     다국어: 전환 시 i18n 이 innerHTML 교체 → 정적 완성형(타이핑은 최초 1회만) */
+  function initHeroTyping() {
+    var h1 = document.querySelector('.hero-ops .hud-brief h1');
+    if (!h1) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var cancelled = false;
+    window.addEventListener('twl:langchange', function () { cancelled = true; });
+
+    /* i18n 의 DOMContentLoaded 치환이 끝난 뒤 현재 언어 문자열로 시작 */
+    setTimeout(function () {
+      if (cancelled) return;
+      var lines = [[]];
+      h1.childNodes.forEach(function (nd) {
+        if (nd.nodeName === 'BR') { lines.push([]); return; }
+        var acc = nd.nodeType === 1 && nd.classList && nd.classList.contains('accent');
+        var t = nd.textContent;
+        if (t) lines[lines.length - 1].push({ t: t, a: acc });
+      });
+      lines = lines.filter(function (l) { return l.length; });
+      if (!lines.length) return;
+
+      h1.setAttribute('aria-label', h1.textContent.replace(/\s+/g, ' ').trim());
+      h1.innerHTML = lines.map(function (segs) {
+        var ghost = segs.map(function (sg) {
+          return sg.a ? '<span class="accent">' + esc(sg.t) + '</span>' : esc(sg.t);
+        }).join('');
+        return '<span class="tl"><span class="tl-in"><span class="tl-ghost">' + ghost +
+               '</span><span class="tl-live" aria-hidden="true"></span></span></span>';
+      }).join('');
+
+      var lives = h1.querySelectorAll('.tl-live');
+      var caret = document.createElement('span');
+      caret.className = 'type-caret';
+      lives[0].appendChild(caret);
+
+      /* [줄index, 세그먼트, 문자] 평탄화 */
+      var q = [];
+      lines.forEach(function (segs, li) {
+        segs.forEach(function (sg) {
+          Array.from(sg.t).forEach(function (chr) { q.push({ li: li, a: sg.a, c: chr }); });
+        });
+      });
+
+      var i = 0, curLine = 0;
+      function tick() {
+        if (cancelled || !h1.isConnected) return;
+        if (i >= q.length) {
+          /* 완료: 잔깜빡 후 커서 페이드 + 지도 파문 */
+          try { window.dispatchEvent(new CustomEvent('twl:herotyped')); } catch (e) { /* */ }
+          setTimeout(function () { caret.classList.add('done'); }, 1200);
+          setTimeout(function () { if (caret.parentNode) caret.parentNode.removeChild(caret); }, 1900);
+          return;
+        }
+        var it = q[i++];
+        if (it.li !== curLine) {
+          curLine = it.li;
+          lives[curLine].appendChild(caret);      /* 커서 줄바꿈 */
+          setTimeout(tick, 300);                  /* 줄 넘김 숨고르기 */
+          i--; return;
+        }
+        var ch = document.createElement('span');
+        ch.className = it.a ? 'ch accent' : 'ch';
+        ch.textContent = it.c;
+        lives[it.li].insertBefore(ch, caret);
+        var d = 34 + Math.random() * 40;
+        if (',·、，'.indexOf(it.c) >= 0) d += 140;  /* 구두점 뒤 멈칧 */
+        setTimeout(tick, d);
+      }
+      /* 부팅 대기 — 커서 단독 깜빡 */
+      setTimeout(tick, 760);
+    }, 160);
+  }
+
   function initClocks() {
     var host = document.getElementById('hudClocks');
     if (!host) return;
@@ -388,6 +466,9 @@
     function yOfLat(lat) { return 92 + ((90 - lat) / 180) * mH * 1.42 - mH * 0.12; }
 
     var mapLayer = null, stars = [], routes = [], hub = null;
+    /* 타이핑 완료 신호 — 부산 허브에서 파문 1회(관제망 접속 연출) */
+    var heroPing = 0;
+    window.addEventListener('twl:herotyped', function () { if (!reduced) heroPing = 1; });
     var mouse = { tx: 0, ty: 0, x: 0, y: 0 };
 
     function resize() {
@@ -426,8 +507,7 @@
          감광 존은 텍스트 블록 실제 위치 기준(뷰포트 %가 아님):
          ≥1980px 는 중앙 정렬 문구(css @media 와 동기), 미만은 좌측 칼럼 (W-1200)/2 */
       var dotR = Math.max(1.2, W / 1050);
-      var colL = Math.max(0, (W - 1200) / 2);
-      var dzL = colL - 40, dzR = colL + 700, dzT = H * 0.20, dzB = H * 0.66;
+      var dzL = W / 2 - 480, dzR = W / 2 + 480, dzT = H * 0.18, dzB = H * 0.64;
       for (var i = 0; i < landCells.length; i++) {
         var pt = project(landCells[i][0], landCells[i][1]);
         if (pt.y < -6 || pt.y > H + 6) continue;
@@ -616,6 +696,18 @@
       ctx.restore();
       ctx.globalAlpha = 1;
 
+      /* 부산 파문 — 타이핑 완료 순간 1회 확산 */
+      if (heroPing > 0.02 && hub) {
+        var pgR = (1 - heroPing) * 130;
+        ctx.save(); ctx.translate(ox, oy);
+        ctx.beginPath(); ctx.arc(hub.x, hub.y, 6 + pgR, 0, Math.PI * 2);
+        ctx.strokeStyle = col.dotHi; ctx.globalAlpha = heroPing * 0.55; ctx.lineWidth = 1.8; ctx.stroke();
+        ctx.beginPath(); ctx.arc(hub.x, hub.y, 6 + pgR * 0.55, 0, Math.PI * 2);
+        ctx.globalAlpha = heroPing * 0.35; ctx.lineWidth = 1.2; ctx.stroke();
+        ctx.restore(); ctx.globalAlpha = 1;
+        heroPing *= 0.972;
+      }
+
       /* 기항지 마커 + 라벨 — 텍스트·KPI 금지구역에서는 점만 */
       ctx.font = '600 9.5px Pretendard Variable, sans-serif';
       try { ctx.letterSpacing = '1.5px'; } catch (e) { /* 미지원 */ }
@@ -624,8 +716,7 @@
         var pp = project(pd[0], pd[1]);
         var px = pp.x + ox, py = pp.y + oy;
         if (px < -20 || px > W + 20) continue;
-        var kL = Math.max(0, (W - 1200) / 2);
-        var inText = px > kL - 60 && px < kL + 780 && py > H * 0.16 && py < H * 0.70;
+        var inText = px > W / 2 - 560 && px < W / 2 + 560 && py > H * 0.14 && py < H * 0.68;
         var inStrip = py > H * 0.585 && px > W * 0.18 && px < W * 0.82;
         var quiet = inText || inStrip;
         if (pd[3]) {
