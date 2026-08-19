@@ -1813,15 +1813,17 @@ table.trk-tbl td .na { color: var(--muted); }
    폭 분기 없음: 1440이든 3440이든 같은 그림 */
 .hero-ops .hero-hud {
   position: absolute; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  /* 시안 15 '콘솔 타이핑' 채택(2026-08-19 사용자 선택) — 센터 스택, 면 스크림 없음 */
+  display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
+  /* 문구 우측 배치(2026-08-19 사용자·제안 합의) — 좌측~중앙에 유럽→아시아→부산 허브 개방,
+     시선 흐름(좌→우)이 지도 먼저, 문구로 끝난다 */
   padding: 40px 22px 218px;
 }
 .hud-brief { position: relative; z-index: 5; }
 /* 중앙 유리 카드 — "뒤가 transparent 라 어색" 지적으로 표면 복원(2026-08-19).
    단, 내부 텍스트는 좌측 정렬(가운데 정렬 = 촌스러움 판정) */
 .hud-brief {
-  max-width: 780px; padding: 36px 44px 34px; text-align: left;
+  max-width: 780px; padding: 36px 44px 34px; text-align: right;
+  margin-right: max(0px, calc(50% - 600px));
   /* 면(面) 계열 전면 폐기(2026-08-19 최종) — 판·박스·레이어 전부 촌스러움 판정.
      글자 뒤 지도 자체를 아웃포커스: 마스크 페더링된 백드롭 블러라 어떤 명도에서도
      사각 실루엣이 생기지 않는다. 색은 얇은 틴트만(마스크와 함께 소멸) */
@@ -1843,7 +1845,7 @@ table.trk-tbl td .na { color: var(--muted); }
   -webkit-backdrop-filter: blur(15px) saturate(1.02) brightness(1.03);
   backdrop-filter: blur(15px) saturate(1.02) brightness(1.03);
 }
-.hero-ops .hero-ctas { justify-content: flex-start; }
+.hero-ops .hero-ctas { justify-content: flex-end; }
 .hero-shade {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;
   /* 면(面) 스크림 전면 금지 — 타원 비네트도 사각 티가 나서 반려(2026-08-19).
@@ -1858,7 +1860,7 @@ table.trk-tbl td .na { color: var(--muted); }
 [data-theme="light"] .hero-ops .hero-sub, [data-theme="light"] .hero-ops .hero-note { text-shadow: 0 1px 14px rgba(243, 246, 251, .9); }
 /* 카드 내부 타이포 — 좌측 정렬 */
 .hero-ops h1 { position: relative; font-size: clamp(36px, 2.9vw, 56px); margin: 14px 0 18px; line-height: 1.26; }
-.hero-ops .hero-sub { font-size: 15.5px; margin: 0 0 24px; max-width: 640px; line-height: 1.75; text-wrap: balance; word-break: keep-all; }
+.hero-ops .hero-sub { font-size: 15.5px; margin: 0 0 24px auto; max-width: 640px; line-height: 1.75; text-wrap: balance; word-break: keep-all; }
 .hero-ops .hero-note { margin-top: 18px; font-size: 12px; opacity: .85; }
 
 /* ── 스캔 리빌 (시안 16 방식 — 2026-08-19 사용자: "바가 우측으로 넘어가며 글씨가 드러나는 것") ──
@@ -1957,13 +1959,15 @@ h1.sr-done .accent::after { content: none; }
   .hero-ops { min-height: 0; }
   /* 모바일은 문서 흐름으로 복귀(absolute면 히어로 높이가 0으로 붕괴) — 중앙 정렬 타이포는 유지 */
   .hero-ops .hero-hud { position: static; display: block; padding: 96px 0 0; }
-  .hud-brief { max-width: 100%; padding: 22px 20px; margin: 0 auto; }
+  .hud-brief { max-width: 100%; padding: 22px 20px; margin: 0 auto; text-align: left; }
+  .hero-ops .hero-ctas { justify-content: flex-start; }
+  .hero-ops .hero-sub { margin: 0 0 24px; }
   .hero-ops h1 { font-size: 30px; }
   .hud-dock { position: static; padding: 14px 0 8px; background: none; }
 }
 
 /* 세계 시계 HUD — 우상단 관제 시계열 */
-.hud-clocks { position: absolute; z-index: 6; top: 92px; right: clamp(16px, 2.5vw, 34px); display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.hud-clocks { position: absolute; z-index: 6; top: 92px; left: clamp(16px, 2.5vw, 34px); display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }  /* 문구 우측 배치로 좌상단 미러(2026-08-19) */
 .hud-clocks .hc { display: inline-flex; align-items: baseline; gap: 10px; padding: 5px 12px; border-radius: 9px; font-size: 12.5px; font-variant-numeric: tabular-nums; letter-spacing: .04em; color: var(--ink-2); background: color-mix(in srgb, var(--bg) 55%, transparent); border: 1px solid rgba(255, 255, 255, .08); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .hud-clocks .hc b { font-size: 10px; font-weight: 700; letter-spacing: .1em; color: var(--muted); }
 .hud-clocks .hc:first-child { border-color: color-mix(in srgb, var(--brand-accent-2) 45%, transparent); color: var(--ink); }

@@ -456,7 +456,9 @@
          감광 존은 텍스트 블록 실제 위치 기준(뷰포트 %가 아님):
          ≥1980px 는 중앙 정렬 문구(css @media 와 동기), 미만은 좌측 칼럼 (W-1200)/2 */
       var dotR = Math.max(1.2, W / 1050);
-      var dzL = W / 2 - 480, dzR = W / 2 + 480, dzT = H * 0.18, dzB = H * 0.64;
+      /* 문구 우측 배치(2026-08-19) — 좌측~중앙은 지도 주인공(부산 허브 포함), 감광은 우측 칼럼만 */
+      var colR = Math.max(0, (W - 1200) / 2);
+      var dzL = W - colR - 720, dzR = W - colR + 60, dzT = H * 0.18, dzB = H * 0.64;
       for (var i = 0; i < landCells.length; i++) {
         var pt = project(landCells[i][0], landCells[i][1]);
         if (pt.y < -6 || pt.y > H + 6) continue;
@@ -665,7 +667,10 @@
         var pp = project(pd[0], pd[1]);
         var px = pp.x + ox, py = pp.y + oy;
         if (px < -20 || px > W + 20) continue;
-        var inText = px > W / 2 - 560 && px < W / 2 + 560 && py > H * 0.14 && py < H * 0.68;
+        var kR = Math.max(0, (W - 1200) / 2);
+        var inText = px > W - kR - 790 && px < W - kR + 60 && py > H * 0.14 && py < H * 0.68;
+        /* 좌상단 시계 HUD 구역 — 라벨(ROTTERDAM 등)과 겹침 방지 */
+        inText = inText || (px < 250 && py < H * 0.34);
         var inStrip = py > H * 0.585 && px > W * 0.18 && px < W * 0.82;
         var quiet = inText || inStrip;
         if (pd[3]) {
