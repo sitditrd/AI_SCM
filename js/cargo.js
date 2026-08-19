@@ -782,8 +782,8 @@
     rows.sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
     rows = rows.slice(0, 12);
     return '<div class="card trk-card" style="margin-bottom:14px;">' +
-      '<div class="trk-head"><span class="trk-bl">스케줄 변경 피드</span>' +
-      '<span class="trk-carrier">감시 화물의 최근 변경 ' + rows.length + '건</span>' +
+      '<div class="trk-head"><span class="trk-bl">최근 변경</span>' +
+      '<span class="trk-carrier">' + rows.length + '건 · 최신순</span>' +
       '<span class="trk-spacer"></span><span class="trk-asof">변경 시 등록 이메일로 자동 발송</span></div>' +
       '<div class="trk-sec" style="padding-top:12px;"><div class="trk-tbl-wrap"><table class="trk-tbl sc-feed">' +
       '<thead><tr><th>기준일시</th><th>이슈</th><th>B/L</th><th>변경 내용</th></tr></thead><tbody>' +
@@ -959,6 +959,11 @@
   function renderWatch() {
     var box = el('watchOut'); if (!box) return;
     var all = watchState.items;
+    /* SECTION 02 — 변경 피드는 자기 섹션으로 분리(2026-08-19 섹션 구분 지적). 내용 없으면 섹션부터 숨김 */
+    var fo = el('feedOut'), fs = document.getElementById('feed');
+    var fh = watchState.needLogin ? '' : feedHtml();
+    if (fo) fo.innerHTML = fh;
+    if (fs) fs.style.display = fh ? '' : 'none';
     if (watchState.needLogin) {
       watchSummarySet('<span class="cs-muted">로그인 후 이용 가능</span>');
       box.innerHTML = '<div class="card"><p class="sc-sub" style="margin:0;">추적 감시는 <b>로그인 후</b> 이용할 수 있습니다. ' +
@@ -997,8 +1002,7 @@
       .map(function (o) { return '<option value="' + o[0] + '"' + (watchState.sort === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('');
     var hasFilter = watchState.q || watchState.carrier || watchState.status || watchState.route || watchState.active !== 'all';
 
-    var h = feedHtml() +
-      '<div class="card trk-card">' +
+    var h = '<div class="card trk-card">' +
       '<div class="trk-head">' +
       '<span class="trk-bl">추적 등록 화물</span>' +
       '<span class="trk-carrier">감시 중 ' + actCnt + '건 / 전체 ' + all.length + '건</span>' +
