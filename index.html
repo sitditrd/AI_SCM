@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TWL Control Tower — 태웅로직스 물류 관제</title>
+  <title data-i18n="pg.title.index">TWL Control Tower — 태웅로직스 물류 관제</title>
   <meta name="description" content="태웅로직스 물류 포털 — 해상·항공·복합운송 등 실서비스 안내와 항만 혼잡도(Port Insight)·선석배정·선박 위치·운임지수 대시보드 제공.">
   <meta name="theme-color" content="#0a0f1e">
   <link rel="canonical" href="https://sitditrd.github.io/AI_SCM/">
@@ -19,7 +19,7 @@
   <meta name="twitter:description" content="태웅로직스 물류 포털 — 해상·항공·복합운송 등 실서비스 안내와 항만 혼잡도(Port Insight)·선석배정·선박 위치·운임지수 대시보드 제공.">
   <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="css/style.css?v=2026-08-20g">
+  <link rel="stylesheet" href="css/style.css?v=2026-08-20h">
   <link rel="icon" href="assets/twl_logo.ico">
 </head>
 <body class="hero-page ops-page">
@@ -96,20 +96,40 @@
             <div class="v" id="lsDelay">—</div>
           </div>
         </a>
-        <div id="wxAlert" style="display:none;" role="status" aria-label="기상특보"></div>
+        <!--
+          i18n: aria-label="기상특보" 는 사전에 대응 구절이 없어 en/zh 에서 한글 그대로 읽혔다.
+          aria-label 은 사전 키 핸들러가 없으므로(js/i18n.js 는 data-i18n / data-i18n-html /
+          data-i18n-ph 만 처리) 키를 직접 걸 수 없다. 또 landing.js:209 renderWx() 가
+          #wxAlert 의 innerHTML 을 통째로 덮어써서 자식으로 넣은 이름표는 지워진다.
+          그래서 형제 요소로 wx.alert 이름표를 두고 aria-labelledby 로 참조한다.
+          hidden 요소라도 aria-labelledby 참조 시 접근명 계산에는 사용되므로(accname 규약)
+          화면·접근성 트리를 오염시키지 않으면서 3개 국어 접근명이 유지된다.
+        -->
+        <span id="wxAlertLbl" hidden data-i18n="wx.alert">기상특보</span>
+        <div id="wxAlert" style="display:none;" role="status" aria-labelledby="wxAlertLbl"></div>
       </div>
     </div>
   </section>
 
   <!-- ================= 운영 규모 스탯 밴드 (2026-08-19) ================= -->
-  <section class="section tight" id="stats" aria-label="운영 규모">
+  <!-- i18n: aria-label="운영 규모" 는 사전에 대응 구절이 없어 en/zh 에서 한글 그대로 노출됐다.
+       섹션 안의 stats.scale 이름표(<b id="stScaleLbl">)가 이미 번역되므로 그것을 참조한다. -->
+  <section class="section tight" id="stats" aria-labelledby="stScaleLbl">
     <div class="container">
       <!-- 운임·물동량 스트립 — 히어로 독을 가볍게 하려고 이곳으로 이동(2026-08-19 개편) -->
-      <div class="stats-rail reveal"><i class="tk-tick"></i><b data-i18n="stats.fx">주간 해상운임지수</b><span data-i18n="ld.stats.fxsrc">SCFI · CCFI — 상하이해운거래소</span><em class="ln"></em></div>
-      <div class="live-strip reveal" id="freightStrip" style="display:none; cursor:default; margin-bottom:10px;" aria-label="주간 해상운임지수"></div>
-      <div class="stats-rail reveal"><i class="tk-tick"></i><b data-i18n="stats.teu">월간 컨테이너 물동량</b><span data-i18n="stats.teud">해양수산부 · 수출입 합계</span><em class="ln"></em></div>
-      <div class="live-strip reveal" id="teuStrip" style="display:none; cursor:default; margin-bottom:14px;" aria-label="월간 컨테이너 물동량"></div>
-      <div class="stats-rail reveal"><i class="tk-tick"></i><b data-i18n="stats.scale">운영 규모</b><span>TWL DATA</span><em class="ln"></em></div>
+      <!--
+        i18n: 아래 스트립의 이름표를 aria-label 에서 aria-labelledby 로 바꾼 이유 —
+        js/i18n.js 는 data-i18n(텍스트)·data-i18n-ph(placeholder) 만 사전 키로 치환하고,
+        aria-label 은 키 핸들러가 없어 translateValue() 의 '부분 문자열 치환'(i18n.js:4027)만 탄다.
+        그래서 "월간 컨테이너 물동량" 이 '컨테이너'→'Container' 만 걸려 '월간 Container 물동량' 으로
+        반쪽 치환됐다. 바로 위 <b> 는 이미 data-i18n 으로 3개 국어가 정상 치환되므로,
+        그 요소를 이름표로 참조하면 사전을 건드리지 않고도 ko/en/zh 전부 올바른 접근명이 된다.
+      -->
+      <div class="stats-rail reveal"><i class="tk-tick"></i><b id="stFxLbl" data-i18n="stats.fx">주간 해상운임지수</b><span data-i18n="ld.stats.fxsrc">SCFI · CCFI — 상하이해운거래소</span><em class="ln"></em></div>
+      <div class="live-strip reveal" id="freightStrip" style="display:none; cursor:default; margin-bottom:10px;" aria-labelledby="stFxLbl"></div>
+      <div class="stats-rail reveal"><i class="tk-tick"></i><b id="stTeuLbl" data-i18n="stats.teu">월간 컨테이너 물동량</b><span data-i18n="stats.teud">해양수산부 · 수출입 합계</span><em class="ln"></em></div>
+      <div class="live-strip reveal" id="teuStrip" style="display:none; cursor:default; margin-bottom:14px;" aria-labelledby="stTeuLbl"></div>
+      <div class="stats-rail reveal"><i class="tk-tick"></i><b id="stScaleLbl" data-i18n="stats.scale">운영 규모</b><span>TWL DATA</span><em class="ln"></em></div>
       <div class="stat-band reveal" id="statBand">
         <div class="stat">
           <div class="s-v"><span data-count="295000" data-suffix="+">0</span></div>
@@ -236,7 +256,7 @@
 
   <script src="js/data.js"></script>
   <script src="js/common.js?v=2026-08-20b"></script>
-  <script src="js/i18n.js?v=2026-08-20b"></script>
+  <script src="js/i18n.js?v=2026-08-20d"></script>
   <script src="js/auth.js?v=2026-08-20b"></script>
   <script src="js/auth-gate.js?v=2026-08-20b"></script>
   <script src="js/data_world.js?v=2026-08-19a"></script>

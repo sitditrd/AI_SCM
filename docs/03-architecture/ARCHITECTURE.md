@@ -1,8 +1,10 @@
 # TWL Control Tower — 아키텍처 문서
 
-**v1.1 · 2026-08-03** · 태웅로직스 IT · 문의 itt@twsc.co.kr
+**v1.2 · 2026-08-19 개정**(v1.1 2026-08-03) · 태웅로직스 IT · 문의 itt@twsc.co.kr
 
 > 근거 문서: `README.md` · `docs/03-architecture/상세기술서_TWL물류포털.md` · `docs/06-operations/스케줄러_체계.md` · `sql/setup_supabase.sql` · `sql/setup_supabase_berth.sql` · `sql/setup_history.sql` · `supabase/auth_setup.sql` · `scripts/run_berth_upload.bat` · `netlify.toml` · `.github/workflows/deploy-pages.yml`
+>
+> v1.2 개정 근거(전부 코드 실측): `supabase/functions/` 디렉터리 6종 · `supabase/functions/carrier-track/index.ts`(선사 레지스트리·시크릿) · `supabase/functions/bl-watch/index.ts`(계정별 감시) · `scripts/collect_bl_watch.py` · `scripts/canary_carriers.py` · `cargo.html`/`js/cargo.js`(2026-08-19 관제 콘솔 개편)
 
 ---
 
@@ -12,7 +14,7 @@ TWL Control Tower는 항만 혼잡도(PCI)·선석배정·선박 위치·화물 
 
 | 계층 | 구성 | 결합 방식 |
 |---|---|---|
-| **수집(배치)** | Python 수집기 6종 + 스케줄러 7종(Cowork 앱 ① · Windows 작업 스케줄러 ② · Claude 앱 ③~⑦) | ②는 `--rest` 모드로 Supabase REST 직접 적재, 나머지는 `--sql` 모드로 SQL 파일 생성 → Supabase MCP로 적재(쓰기) |
+| **수집(배치)** | Python 수집기 8종 + 스케줄러 9종(Cowork 앱 ① · Windows 작업 스케줄러 ②·⑧·⑨ · Claude 앱 ③~⑦) | ②는 `--rest` 모드로 Supabase REST 직접 적재, ⑧⑨는 Edge Function 경유(REST 적재+메일), 나머지는 `--sql` 모드로 SQL 파일 생성 → Supabase MCP로 적재(쓰기) |
 | **저장** | Supabase PostgreSQL (프로젝트 `kvmyiualdodcvreoqfin`) | RLS로 읽기/쓰기 권한 분리 |
 | **표현(정적 웹)** | 빌드 없는 순수 HTML/CSS/JS — GitHub Pages·Netlify | publishable key로 select만, 45초 폴링 |
 
@@ -33,9 +35,10 @@ flowchart LR
         VF["VesselFinder AIS"]
         UNI["관세청 UNIPASS"]
         DGK["data.go.kr<br/>(PORT-MIS 등)"]
+        CARR["선사 트래킹 백엔드 6사<br/>ONE·COSCO·SM·EGLV·SITC·ZIM"]
     end
 
-    subgraph SCH["스케줄러 7종 (배치 계층)"]
+    subgraph SCH["스케줄러 9종 (배치 계층)"]
         S1["① 06:00 매일 · Cowork 앱<br/>터미널 수집 → 통합 xlsx"]
         S2["② 07:30 매일 · Windows 작업 스케줄러<br/>TWL_BerthUpload<br/>run_berth_upload.bat → --rest --today"]
         S3["③ 08:03 매일 · Claude 앱<br/>berth-upload-supabase<br/>미적재·부분적재 자동 복구(②의 안전망)"]
@@ -43,13 +46,18 @@ flowchart LR
         S5["⑤ 매시 30분 · Claude 앱<br/>ais-positions-collect<br/>90초 수신 스냅샷"]
         S6["⑥ 6시간마다 · Claude 앱<br/>weather-history-collect"]
         S7["⑦ 월·금 17:02 · Claude 앱<br/>freight-index-update"]
+        S8["⑧ 2시간 주기 06:20~22:20 · Windows<br/>TWL_BlWatch<br/>collect_bl_watch.py (적응형 폴링)"]
+        S9["⑨ 일요일 08:00 · Windows<br/>TWL_CarrierCanary<br/>canary_carriers.py (조용한 고장 감시)"]
     end
 
     subgraph SB["Supabase (kvmyiualdodcvreoqfin)"]
-        DB[("PostgreSQL<br/>bs_* · pi_* · freight_index<br/>pi_history · weather_history · vessel_positions<br/>app_users · app_sessions · email_codes")]
+        DB[("PostgreSQL<br/>bs_* · pi_* · freight_index<br/>pi_history · weather_history · vessel_positions<br/>app_users · app_sessions · email_codes<br/>bl_watch · bl_snapshot · bl_change_log")]
         EF1["Edge Function send-code<br/>(denomailer + SMTP)"]
-        EF2["Edge Function track<br/>(UNIPASS 프록시)"]
+        EF2["Edge Function track<br/>(UNIPASS 프록시 · 화면 미사용)"]
         EF3["Edge Function datago<br/>(data.go.kr 프록시)"]
+        EF4["Edge Function carrier-track<br/>(선사 직접조회 어댑터)"]
+        EF5["Edge Function bl-watch<br/>(감시 등록/해제/목록)"]
+        EF6["Edge Function notify-bl<br/>(변경 알림 메일)"]
     end
 
     WEB["정적 웹 포털<br/>GitHub Pages(주) · Netlify(미러)<br/>HTML/CSS/JS · 빌드 없음"]
@@ -68,10 +76,19 @@ flowchart LR
     S6 -- "weather_history" --> DB
     S7 -- "freight_index" --> DB
     S2 -. "국내 3항 실측 → ④ 보정" .-> S4
+    S8 -- "감시 B/L 조회 요청" --> EF4
+    S8 -- "bl_snapshot·bl_change_log<br/>(REST 직접 적재)" --> DB
+    S8 -- "ETD/ETA·터미널 변경 알림" --> EF6
+    S9 -- "주간 카나리아 조회" --> EF4
+    S9 -. "이상 시에만 메일" .-> EF6
     DB -- "45초 폴링·publishable key<br/>(RLS select-only)" --> WEB
     WEB -- "인증코드 발송 요청" --> EF1
-    WEB -- "B/L 조회" --> EF2
+    WEB -- "헬스체크(status)" --> EF2
     WEB -- "입출항 실적 조회" --> EF3
+    WEB -- "B/L 실조회" --> EF4
+    WEB -- "감시 등록·해제·목록" --> EF5
+    EF4 --> CARR
+    EF5 -- "소유자 검증 app_me<br/>bl_watch 쓰기(service_role)" --> DB
     EF2 --> UNI
     EF3 --> DGK
     OM -- "브라우저 직접 fetch (CORS)" --> WEB
@@ -80,6 +97,8 @@ flowchart LR
 
 - **②가 주 경로, ③이 안전망**: ②는 Claude 앱 기동 여부와 무관하게 07:30에 정시 적재하고, ③은 최근 7일 건수를 비교해 미적재·부분적재분만 보충한다. 둘 다 동일 수집일 replace(멱등)라 중복 실행해도 안전하다.
 - **④가 ② 이후인 이유**: 부산·광양·인천의 접안/대기 척수를 당일 선석 실측으로 보정하기 때문에, 선석 적재가 끝난 뒤에 PCI를 재산출한다.
+- **⑧⑨는 DB가 아니라 Edge Function 을 경유한다**: 감시 수집(⑧)은 선사 조회를 `carrier-track` 으로, 알림을 `notify-bl` 로 위임한다. 선사별 인증·파싱을 수집기에 복제하지 않고 화면과 같은 경로를 쓰기 때문에 **화면에서 보이는 값과 메일로 나가는 값이 어긋날 수 없다**. ⑨(카나리아)는 같은 경로를 주 1회 되짚어 "HTTP 200인데 내용만 비는" 조용한 고장을 잡는다.
+- 본 문서의 스케줄러 번호 ①~⑨는 이 문서 기준이다. `docs/06-operations/스케줄러_체계.md` 는 등록 위치별로 다르게 번호를 매기므로(⑦=`TWL_BerthUpload`) **번호가 아니라 작업 ID로 대조할 것.**
 
 ---
 
@@ -93,7 +112,7 @@ flowchart LR
 | `insight.html` | `data.js` · `insight.js` | Port Insight — PCI 게이지·분포·권역·Leaflet 지도·순위, 포트 검색, **컨테이너 물동량 추이 SECTION 07**(`datago?api=teuimpexp`, 12개월·페이지 순회) |
 | `berth.html` | `data_berth.js` · `berth.js` · `weather.js` | 선석배정 — 16터미널 고급 그리드(필터·검색·마감임박 강조), 항만 기상 카드, 우클릭 Excel 내보내기 |
 | `vessel.html` | `vessel.js` | 선박 위치 — VesselFinder AIS 지도 임베드, PORT-MIS 입출항 실적 조회(`datago?api=portmis`), **선박 제원 조회**(`api=shipspec`, 행 클릭 시 상세 15항목), 자체 AIS 수신 지도(Leaflet · `vessel_positions`, 5분 재조회) |
-| `cargo.html` | `cargo.js` | 화물 추적 — UNIPASS 조회(Edge Function `track` / 로컬 `server.py` 프록시) + 딥링크 |
+| `cargo.html` | `cargo.js` | 화물 추적 — **선사 직접 실조회 6사**(ONE·COSCO·SM상선·Evergreen·SITC·ZIM, Edge Function `carrier-track`) + 그 외 선사·항공사 자동 감지 딥링크. 화면은 **관제 콘솔 구성**(좌측 조회·감시·채널 레일 / 우측 운송 관제 티켓 — 2026-08-19 개편), **B/L 자동 감시·변경 알림**(`bl-watch`·스케줄러 ⑧), 국내 터미널 교차검증(`bs_vessel_calls`). **유니패스 통관조회는 화면에서 제외**(2026-08-11 사용자 결정 — `track` 은 보존만·status 헬스체크에서만 호출) |
 | `route.html` | `route.js` | 경로 분석 — 몬테카를로 소요일 분포, CARTO Voyager 지도 항로 시각화(사전계산 `routes/` 93개 JSON), **도착국가 물동량 근거 KPI**(`datago?api=teunation`, 도착항 ISO2 매칭·4페이지 순회 후 캐시) |
 | `schedule.html` | `schedule.js` | 해외 스케줄 — 선박 스케줄 3뷰는 준비중(FR-04/05), **항공 화물편 스케줄 실데이터**(`datago?api=aircargoarr`/`aircargodep`/`airschedarr` 3탭) |
 | `status.html` | `status.js` | 데이터 현황(관리자 전용) — 판정 배너·흐름도·신선도 게이지·7일 적재 타임라인(`berth_daily_counts` RPC 실적 기준)·외부 연동 헬스체크(Edge Function track/datago/send-code·Open-Meteo, 45초 주기) |
@@ -112,22 +131,31 @@ flowchart LR
 | `collect_ais_positions.py` | AISStream.io 웹소켓 90초 수신 → 한국 연안 선박 위치 스냅샷(연안 약 200km 이내만 수신) | `vessel_positions`(48시간 보존) |
 | `collect_weather_history.py` | Open-Meteo 현재 기상(파고·파주기·풍속·돌풍) 3항(부산신항·광양항·인천항) 이력 축적 — 예측 분석용 | `weather_history` |
 | `backfill_upload_berth.py` | 과거분 일괄 백필 — 헤더 변형 VARIANTS 자동 대응, `--dry-run` 검증 | `bs_vessel_calls` |
+| `collect_bl_watch.py` | 감시 등록 B/L 조회(Edge Function `carrier-track`) → 스냅샷 적재 → 직전 대비 변경 감지 → ETD/ETA·터미널 변경만 `notify-bl` 메일. 적응형 폴링(`next_poll_at`)으로 임박 건만 자주 본다. **같은 B/L 을 여러 계정이 등록해도 선사 조회·스냅샷·변경로그는 1회, 메일만 계정별 팬아웃**(2026-08-19) | `bl_snapshot` · `bl_change_log` · `bl_watch`(폴링 상태 갱신) |
+| `canary_carriers.py` | 주간 카나리아 — 가동 선사마다 실 B/L 로 조회해 결과 형태·이벤트 수를 지난주 기준선과 대조. **이상이 있을 때만** 메일 | `logs/canary.log` · `logs/canary_baseline.json`(git 제외) |
 
 보조: `upload_berth_sql_parts.py` — 일일 선석 적재 전용. 기존 `--sql`(분할 SQL 생성) 외에 2026-08-03에 `--rest`(Supabase REST 직접 적재, SQL 파일 불필요)·`--today`(당일 통합 엑셀 자동 탐색, 없으면 최근 파일 대체) 모드가 추가되어 스케줄러 ②가 사용한다.
 
 `scripts/run_berth_upload.bat`는 Windows 작업 스케줄러(② `TWL_BerthUpload`)의 진입점으로 `upload_berth_sql_parts.py --rest --today`를 호출하고 `logs/berth_upload.log`에 기록하며 항상 exit 0으로 종료한다. **이 배치 파일은 ASCII 전용으로 유지해야 한다** — cmd.exe가 `.bat`를 콘솔 코드페이지로 파싱하므로 한글이 섞이면 줄이 깨진 채 작업이 "성공(결과 0)"으로 끝나면서 실제로는 아무 일도 하지 않는다(2026-08-03 실측 장애).
 
-②를 제외한 수집기는 `--sql` 모드로 SQL 파일만 생성하고, 실제 DB 쓰기는 스케줄러의 Claude 세션이 Supabase MCP로 실행한다. 적재는 동일 수집일 delete 후 insert(멱등)이므로 ②·③이 겹쳐 실행돼도 안전하다. 수집 스크립트에는 `env_key()`가 추가되어 환경변수가 상속되지 않은 경우 Windows 사용자 환경변수 레지스트리에서 키를 직접 읽는다(`setx` 직후 재시작 불필요).
+②·⑧을 제외한 수집기는 `--sql` 모드로 SQL 파일만 생성하고, 실제 DB 쓰기는 스케줄러의 Claude 세션이 Supabase MCP로 실행한다(⑧ `collect_bl_watch.py` 도 `--sql` 모드를 갖고 있으나, 무인 실행이라 평시에는 `SUPABASE_SERVICE_KEY` 로 REST 직접 적재한다 — 키가 없으면 `--sql` 모드만 가능). 적재는 동일 수집일 delete 후 insert(멱등)이므로 ②·③이 겹쳐 실행돼도 안전하다. 수집 스크립트에는 `env_key()`가 추가되어 환경변수가 상속되지 않은 경우 Windows 사용자 환경변수 레지스트리에서 키를 직접 읽는다(`setx` 직후 재시작 불필요).
 
-### 3.3 Edge Functions (`supabase/functions/`) — 3종
+### 3.3 Edge Functions (`supabase/functions/`) — 6종
+
+전부 `verify_jwt=false` 로 배포되어 정적 사이트·수집기가 헤더 없이 직접 호출한다. 요청/응답 규격은 `docs/03-architecture/API.md` §2.
 
 | 함수 | 역할 | 시크릿 |
 |---|---|---|
 | `send-code` | 가입·비밀번호 재설정 인증코드 이메일 발송 (denomailer + 본인 SMTP, 네이버 `smtp.naver.com:465`) | `SMTP_HOST/PORT/USER/PASS/FROM` |
-| `track` | 관세청 UNIPASS 화물통관진행정보 프록시 (정적 사이트에서 직접 호출, `verify_jwt=false`). 키 미등록 시 `needKey` 안내 반환 | `UNIPASS_API_KEY`(미등록 대기) |
+| `track` | 관세청 UNIPASS 화물통관진행정보 프록시. 키 미등록 시 `needKey` 안내 반환. **cargo 화면에서는 사용하지 않으며**(2026-08-11 결정) status 헬스체크만 호출한다 | `UNIPASS_API_KEY`(미등록 대기) |
+| `carrier-track` | **선사 직접 화물추적 프록시** — SCAC 화이트리스트 어댑터. 무키 공개 JSON 5사(ONEY·COSU·SMLM·EGLV·SITC) + 키 기반 DCSA 어댑터 5사(MAEU·CMDU·HLCU·HDMU·ZIMU). 어댑터는 `ready()` 게이트를 가져 **키가 등록되는 순간 재배포 없이 live 로 승격**되고, 미등록이면 딥링크 폴백. 응답은 레거시 KLNET 3레벨(`summary`/`voyages[]`/`containers[].events[]`)을 계승한 정규화 계약 | 무키 5사는 없음 · `ZIM_API_KEY`+`ZIM_CLIENT_ID`+`ZIM_CLIENT_SECRET`(등록 완료 2026-08-18) · `MAERSK_CONSUMER_KEY`(+`MAERSK_CLIENT_ID`/`MAERSK_CLIENT_SECRET`) · `HLAG_CLIENT_ID`/`HLAG_CLIENT_SECRET` · `HMM_API_KEY` · `CMACGM_API_KEY`(전부 미등록) |
+| `bl-watch` | B/L 자동 감시 등록/해제/목록/일괄등록/알림주소 변경. 정적 사이트는 RLS 로 DB 쓰기가 불가하므로 이 함수가 대행하며, **모든 호출의 세션 토큰을 `app_me` RPC 로 서버에서 검증**해 소유자를 정한다(클라이언트가 보낸 `created_by` 는 신뢰하지 않음). `?action=carriers` 는 `carrier-track?api=list` 프록시라 선사 목록이 이중화되지 않는다 | `SUPABASE_URL`·`SUPABASE_SERVICE_ROLE_KEY`(자동 주입) |
+| `notify-bl` | 스케줄 변경 알림 메일 발송(수집기 ⑧⑨가 호출). **제목·본문은 ASCII 전용** — denomailer 가 비Latin1 문자를 btoa 인코딩하다 실패하는 제약 때문에 한국어 라벨을 영문으로 매핑하고, 남은 비ASCII 는 제거한다 | `SMTP_HOST/PORT/USER/PASS/FROM`(`send-code` 와 공유) |
 | `datago` | data.go.kr 공용 API 프록시 — 별칭 화이트리스트 **15종**(해수부 6 · 인천공항 5 · 인천항만 2 · 기상청 2)으로 허용 대상만 중계. 기관별 JSON 파라미터(`type`/`dataType`/미지원)·페이징(`pageNo` / `skipRow`+`endRow`) 자동 분기 + XML 응답 JSON 변환 + 인증키 Decoding/Encoding 정규화. `?api=list`로 별칭 조회, 키 미등록 시 `needKey` 안내 반환 | `DATA_GO_KR_KEY`(**등록 완료 2026-08-03**, 15종 실조회 검증) |
 
 `DATA_GO_KR_KEY`는 2026-08-03 등록 완료(별칭 15종 실조회 검증). `UNIPASS_API_KEY`는 미등록 상태이며, 시크릿 등록 즉시 코드 수정 없이 동작한다.
+
+**선사 확장 시 갱신 지점은 두 곳이다** — `carrier-track` 의 `CARRIERS` 레지스트리와 `bl-watch` 의 `LIVE` 목록. 후자를 빠뜨리면 **조회는 되는데 감시 등록만 "지원하지 않는 선사"로 거부된다**(2026-08-19 ZIM 개통 당시 실제 발생한 사고이며, 그래서 `bl-watch/index.ts:54` 에 경고 주석이 남아 있다).
 
 ### 3.4 인증 서브시스템
 
@@ -144,7 +172,7 @@ flowchart LR
 
 ## 4. 데이터 모델
 
-핵심 컬럼만 표기. 근거: `sql/setup_supabase.sql`(pi_*), `sql/setup_supabase_berth.sql`(bs_*), `sql/setup_history.sql`(이력 3종·RPC), `supabase/auth_setup.sql`(인증 3종). `freight_index`는 셋업 SQL 없이 운영 중이며 컬럼은 `sql/upload_freight.sql` upsert 문 기준.
+핵심 컬럼만 표기. 근거: `sql/setup_supabase.sql`(pi_*), `sql/setup_supabase_berth.sql`(bs_*), `sql/setup_history.sql`(이력 3종·RPC), `supabase/auth_setup.sql`(인증 3종). `freight_index`는 셋업 SQL 없이 운영 중이며 컬럼은 `sql/upload_freight.sql` upsert 문 기준. **`bl_watch`·`bl_snapshot`·`bl_change_log` 3종도 저장소에 셋업 SQL이 없다** — Supabase 마이그레이션으로 생성·변경됐으므로(최근 `bl_watch_per_account_unique`, 2026-08-19) 아래 컬럼은 운영 DB 실측 기준이다.
 
 ```mermaid
 erDiagram
@@ -266,12 +294,58 @@ erDiagram
         timestamptz expires_at "10분"
         boolean consumed
     }
+    bl_watch {
+        bigint id PK
+        text mbl_no "unique(mbl_no, created_by)"
+        text carrier
+        text notify_email
+        text memo
+        boolean active "공컨반납·기간만료 시 false"
+        text created_by "소유 계정(app_me 검증값)"
+        timestamptz last_polled_at
+        text last_status
+        text poll_error
+        timestamptz expires_at "3·6개월 종료 시각"
+        smallint term_months
+        timestamptz next_poll_at "적응형 폴링"
+        text poll_tier "near·transit·pre"
+    }
+    bl_snapshot {
+        bigint id PK
+        text mbl_no "bl_watch와 논리적 연결(FK 없음)"
+        timestamptz polled_at
+        text carrier
+        text status
+        text por
+        text pod
+        text vessel
+        text voyage
+        text etd "선사 원문 문자열"
+        text eta "선사 원문 문자열"
+        boolean etd_actual
+        boolean eta_actual
+        jsonb payload "carrier-track 응답 원본"
+    }
+    bl_change_log {
+        bigint id PK
+        text mbl_no
+        timestamptz changed_at
+        text kind "etd·eta·vessel·stage·gate·tml"
+        text field
+        text old_value
+        text new_value
+        boolean notified
+        text notify_error
+    }
 ```
 
 - `bs_vessel_calls` 인덱스: `(collected_date desc)`, `(terminal_cd, collected_date desc)`. 적재는 동일 `collected_date` delete 후 insert.
 - `bs_terminals`는 운영 기준 16행(셋업 SQL의 초기 시드는 9행, 2026-07-29 FR-02로 16개 확대 적재).
 - `pi_ports`는 Focus 포트 93행, `pi_snapshot`은 id=1 단일행. 컬럼명 `tpfs`는 구용어(TW-PFS) 유지분으로, 화면 표기는 PCI로 표준화됨.
 - **이력 3종**(`pi_history`·`weather_history`·`vessel_positions`)은 예측 분석용 축적 테이블로, 전부 RLS 활성화 + 익명 select 정책만 부여. `pi_ports`가 매일 덮어써지므로 ④ 갱신 직후 `pi_history`에 일별 append하고, `vessel_positions`는 적재 시 48시간 경과분을 삭제한다.
+- **감시 3종**(`bl_watch`·`bl_snapshot`·`bl_change_log`)도 RLS 활성 + 익명 select 정책만이며, 쓰기는 Edge Function(`bl-watch`, service_role)과 수집기 ⑧만 수행한다.
+- **`bl_watch` 의 유일성 제약은 `unique(mbl_no, created_by)` 다 — 감시는 계정별로 독립이다**(2026-08-19 변경, `supabase/functions/bl-watch/index.ts:82` 의 `on_conflict=mbl_no,created_by`). 그 전에는 `mbl_no` 단독 unique 였는데, 다른 계정이 같은 B/L 을 등록하면 upsert 의 merge-duplicates 가 **남의 행을 통째로 덮어써 감시가 탈취되는 실사고**가 났다(알림 수신자도 행당 1명뿐이었다). 지금은 같은 B/L 이 계정 수만큼 행으로 공존하고, 수집기는 B/L 단위로 1회만 조회하되 메일은 행별 주소로 팬아웃한다.
+- `bl_snapshot.etd`/`eta` 가 timestamptz 가 아니라 **text 인 것은 의도된 것**이다. 선사가 주는 시각은 항만 현지시각이고 시간대 표기가 제각각이라, 타임존을 추정해 변환하면 값이 왜곡된다 — 원문을 그대로 보존하고 표시·비교 단계에서만 해석한다.
 - **RPC `berth_daily_counts(days int default 7)`** → `(collected_date date, cnt bigint)`. `stable`·security invoker, anon/authenticated 실행 허용. PostgREST 집계가 비활성이라 도입했으며, `status.html` 7일 타임라인이 적재 로그(`bs_collect_log`)가 아닌 **실제 적재 실적** 기준으로 판정하도록 바꾼 근거다(실적 있으면 ✓건수, 실적 없이 실패 로그만 있으면 ✗ — 로그 누락·건수 불일치에 좌우되지 않음).
 
 ---
@@ -299,7 +373,8 @@ flowchart LR
 | 인증 테이블 | `app_users`·`app_sessions`·`email_codes`는 RLS 활성화 + **정책 없음** → anon 직접 접근 차단. 접근은 **SECURITY DEFINER 함수 8종**(anon execute grant)으로만 |
 | 비밀번호 | bcrypt 해시(`crypt` + `gen_salt('bf')`, pgcrypto). 평문 미저장 |
 | service_role 키 | 원칙은 **PC 미보관**(수집기는 `--sql` 모드로 SQL 파일만 생성하고 DB 쓰기는 스케줄러 세션이 Supabase MCP로 실행). **②(Windows 작업 스케줄러)만 예외** — 앱과 무관한 정시 REST 적재를 위해 2026-08-03부터 `SUPABASE_SERVICE_KEY`를 PC 사용자 환경변수로 보관한다. 저장소 커밋은 금지 |
-| 시크릿 위치 | GitHub Secrets: `NETLIFY_BUILD_HOOK` · Supabase Edge Functions Secrets: `SMTP_HOST/PORT/USER/PASS/FROM`, `UNIPASS_API_KEY`(미등록), `DATA_GO_KR_KEY`(등록 완료 2026-08-03) · 수집 PC 사용자 환경변수: `SUPABASE_SERVICE_KEY`(②), `AISSTREAM_API_KEY`(⑤) |
+| 시크릿 위치 | GitHub Secrets: `NETLIFY_BUILD_HOOK` · Supabase Edge Functions Secrets: `SMTP_HOST/PORT/USER/PASS/FROM`, `UNIPASS_API_KEY`(미등록), `DATA_GO_KR_KEY`(등록 완료 2026-08-03), **선사 키**(아래) · 수집 PC 사용자 환경변수: `SUPABASE_SERVICE_KEY`(②·⑧), `AISSTREAM_API_KEY`(⑤), `CANARY_EMAIL`(⑨·선택) |
+| 선사 API 키 | **등록 완료**: `ZIM_API_KEY` · `ZIM_CLIENT_ID` · `ZIM_CLIENT_SECRET`(2026-08-18 — ZIM 은 구독 키와 OAuth 토큰의 2단 관문이라 셋 다 있어야 통과한다). **미등록(어댑터는 배포 완료·키만 대기)**: `HMM_API_KEY` · `MAERSK_CONSUMER_KEY`(+`MAERSK_CLIENT_ID`/`MAERSK_CLIENT_SECRET`) · `HLAG_CLIENT_ID`/`HLAG_CLIENT_SECRET` · `CMACGM_API_KEY`(CMA 는 유료 확인으로 신청 보류). 키는 **Supabase Secrets 에만** 두고 저장소에 커밋하지 않으며, 요금 통지가 오면 **키만 삭제하면 `ready()` 가 false 가 되어 즉시 딥링크로 롤백**된다 |
 | 무인 실행 권한 | Claude 앱 스케줄(③~⑦)이 승인 대기 없이 돌도록 `~/.claude/settings.json`의 `permissions.allow`에 필요한 도구만 한정 허용(PowerShell `python *` · Bash `python *` · Read · Supabase `execute_sql`), `additionalDirectories`에 `%TEMP%\berth_sql_parts` 추가 |
 | 화면 게이트 | 미로그인 blur 게이트(`auth-gate.js`)는 정적 사이트 특성상 UX 억제 수준 — 데이터 자체는 RLS select-only로 보호 |
 
@@ -311,8 +386,8 @@ flowchart LR
 |---|---|
 | 프런트엔드 | 순수 HTML/CSS/JS(빌드 없음), Leaflet + CARTO 타일, SheetJS(지연 로드, Excel 내보내기), 라이트/다크 CSS 토큰 |
 | 데이터베이스 | Supabase PostgreSQL (프로젝트 `kvmyiualdodcvreoqfin`), RLS, SECURITY DEFINER 함수, `berth_daily_counts` RPC, pgcrypto |
-| 서버리스 | Supabase Edge Functions (Deno) 3종 — `send-code`(denomailer), `track`(UNIPASS 프록시), `datago`(data.go.kr 프록시) |
-| 배치 | Python (openpyxl, requests, websocket) — ②는 `--rest` REST 직접 적재, 나머지는 `--sql` 생성 + Supabase MCP 적재 |
-| 스케줄러 | 7종 — Cowork 앱 ①(06:00 수집) + **Windows 작업 스케줄러 ②**(07:30 `TWL_BerthUpload`) + Claude 앱 예약 작업 ③~⑦(08:03 선석 복구·08:44 PCI·매시 30분 AIS·6시간마다 기상·월금 17:02 운임지수) |
+| 서버리스 | Supabase Edge Functions (Deno) 6종 — `send-code`(denomailer), `track`(UNIPASS 프록시·화면 미사용), `datago`(data.go.kr 프록시), `carrier-track`(선사 직접조회 어댑터), `bl-watch`(감시 등록·소유자 검증), `notify-bl`(변경 알림 메일) |
+| 배치 | Python (openpyxl, requests, websocket) — ②⑧은 REST 직접 적재, 나머지는 `--sql` 생성 + Supabase MCP 적재 |
+| 스케줄러 | 9종 — Cowork 앱 ①(06:00 수집) + **Windows 작업 스케줄러 ②·⑧·⑨**(07:30 외 `TWL_BerthUpload` · 2시간 주기 `TWL_BlWatch` · 일요일 08:00 `TWL_CarrierCanary`) + Claude 앱 예약 작업 ③~⑦(08:03 선석 복구·08:44 PCI·매시 30분 AIS·6시간마다 기상·월금 17:02 운임지수) |
 | CI/CD | GitHub Actions (`deploy-pages.yml`) → GitHub Pages(주) + Netlify 빌드 훅(미러) |
-| 외부 연동 | IMF PortWatch(ArcGIS REST), 상하이해운거래소(SCFI/CCFI), Open-Meteo Marine(브라우저 직접 + 이력 배치), AISStream.io(웹소켓 AIS), VesselFinder AIS(iframe), 관세청 UNIPASS, data.go.kr(PORT-MIS 등) |
+| 외부 연동 | IMF PortWatch(ArcGIS REST), 상하이해운거래소(SCFI/CCFI), Open-Meteo Marine(브라우저 직접 + 이력 배치), AISStream.io(웹소켓 AIS), VesselFinder AIS(iframe), 관세청 UNIPASS, data.go.kr(PORT-MIS 등), **선사 트래킹 백엔드 6사**(ONE·COSCO·SM상선 공개 JSON, Evergreen HTML, SITC JSON, ZIM DCSA T&T v2) |

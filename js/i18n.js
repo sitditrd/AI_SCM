@@ -167,8 +167,8 @@
       'cargo.ql.carrier.d': '위 조회에서 MBL 입력 시 선사 자동 감지(SCAC 15사) — 실조회 6사 포함 전 선사 공식 추적 직접 링크',
       'cargo.ql.air.t': '항공 화물 (AWB 10사)',
       'cargo.ql.air.d': '위 조회에서 AWB 입력 시 항공사(10사) 자동 감지 — 전 항공사 공식 추적 직접 링크 + 범용조회',
-      'cargo.rel.no': '데이터 인사이트', 'cargo.rel.h': '어느 선사 스케줄을 믿어도 되는가',
-      'cargo.rel.hint': '자사 선적 실적으로 산출한 선사별 출항 정시율 — 확정 스케줄(ETD) 대비 실제 선적일 기준',
+      /* cargo.rel.no / cargo.rel.h / cargo.rel.hint — 정시율 리그 UI 삭제로 참조 0건이라 제거.
+         (ls.ais · cargo.watch.no · cargo.quicklinks.no 도 참조 0건이지만 화면 복구 여지가 있어 남겨 둔다) */
       'stat.shipments': '누적 선적 데이터 (건)', 'stat.ports': '모니터링 글로벌 항만',
       'stat.terminals': '국내 선석 수집 터미널', 'stat.carriers': '실조회 연동 선사', 'stat.watch': '자동 감시·변경 알림',
       'cargo.ql.g.busanNew': '부산신항', 'cargo.ql.g.busanNorth': '부산북항', 'cargo.ql.g.incheon': '인천',
@@ -418,6 +418,10 @@
       'cg.opt.allStage': '진행 전체',
       'cg.pg.next': '다음',
       'cg.pg.prev': '이전',
+      /* cargo.html:78 의 <input id="blNo" data-i18n-ph="cg.ph.blno"> 가 참조.
+         i18n.js apply() 가 [data-i18n-ph] → placeholder 로 치환하므로 이 키가 있어야
+         영/중 전환 시 검색창 안내문이 한국어로 남지 않는다. */
+      'cg.ph.blno': 'MBL / AWB 번호 입력',
       'cg.reg.m3': '3개월',
       'cg.reg.m6': '6개월',
       'cg.reg.mail': '알림 이메일',
@@ -869,6 +873,17 @@
       'wx.period': '파주기',
       'wx.wind': '풍속',
       'wx.gust': '돌풍',
+      /* --- 브라우저 탭 제목 (2026-08-20) — 키가 없어 구절 안전망만 걸려 반쪽 번역되던 것 --- */
+      'pg.title.index': 'TWL Control Tower — 태웅로직스 물류 관제',
+      'pg.title.insight': 'Port Insight — 항만 혼잡도 대시보드 | TWL Control Tower',
+      'pg.title.berth': '선석배정현황 — 국내 터미널 통합 | TWL Control Tower',
+      'pg.title.vessel': '선박 위치 — 실시간 AIS 지도 | TWL Control Tower',
+      'pg.title.cargo': '화물 추적 — 선사 직접 운송 추적 | TWL Control Tower',
+      'pg.title.route': '경로 분석 — 해상 경로·소요일 시뮬레이터 | TWL Control Tower',
+      'pg.title.schedule': '해외 스케줄 — Ship Schedule | TWL Control Tower',
+      'pg.title.status': '데이터 현황 — 파이프라인 모니터링 | TWL Control Tower',
+      'pg.title.login': '로그인 — TWL Control Tower',
+      'pg.title.admin': '관리자 — 회원 승인 | TWL Control Tower',
     },
     en: {
       'nav.home': 'Home', 'nav.portinsight': 'Port Insight',
@@ -911,7 +926,9 @@
       'ls.risk': 'Global Risk', 'ls.delay': 'Avg Berthing Delay',
       'ls.ais': 'Live AIS vessels',
       'fx.scfi': 'SCFI Composite', 'fx.ccfi': 'CCFI Composite', 'fx.ccfiKr': 'CCFI Korea', 'fx.ccfiEu': 'CCFI Europe',
-      'fx.pubdate': 'Published', 'fx.weekly': 'Weekly update', 'unit.ports': '',
+      /* unit.ports 는 landing.js 가 숫자 뒤에 붙이는 단위. 빈 문자열이면 '12' 로만 끝나
+         같은 뜻의 insight.unit.ports 와 처리가 갈렸다 → 두 키 모두 ' ports' 로 통일 */
+      'fx.pubdate': 'Published', 'fx.weekly': 'Weekly update', 'unit.ports': ' ports',
       'teu.total': 'Monthly container volume', 'teu.imp': 'Import', 'teu.exp': 'Export',
       'teu.basis': 'Import + export', 'teu.month': 'Month', 'teu.src': 'MOF · monthly release',
       'wx.alert': 'Weather warning', 'wx.src': 'KMA · nationwide',
@@ -1020,8 +1037,7 @@
       'cargo.ql.carrier.d': 'Entering an MBL above auto-detects the carrier (15 SCACs) - official tracking links for all carriers incl. 6 live',
       'cargo.ql.air.t': 'Air cargo (AWB, 10 airlines)',
       'cargo.ql.air.d': 'Official airline tracking by AWB · airline auto-detection for AWB above (10 airlines)',
-      'cargo.rel.no': 'Data Insight', 'cargo.rel.h': 'Which carrier schedules can you trust?',
-      'cargo.rel.hint': 'Per-carrier departure reliability computed from our own shipment history - confirmed ETD vs actual on-board date',
+      /* cargo.rel.* — 참조 0건(정시율 리그 UI 삭제)이라 ko 와 함께 제거 */
       'stat.shipments': 'Shipment records', 'stat.ports': 'Global ports monitored',
       'stat.terminals': 'Korean terminals collected', 'stat.carriers': 'Live-API carriers', 'stat.watch': 'Auto watch & alerts',
       'cargo.ql.g.busanNew': 'Busan New', 'cargo.ql.g.busanNorth': 'Busan North', 'cargo.ql.g.incheon': 'Incheon',
@@ -1271,6 +1287,7 @@
       'cg.opt.allStage': 'All stages',
       'cg.pg.next': 'Next',
       'cg.pg.prev': 'Prev',
+      'cg.ph.blno': 'Enter MBL / AWB number',
       'cg.reg.m3': '3 months',
       'cg.reg.m6': '6 months',
       'cg.reg.mail': 'Alert email',
@@ -1356,7 +1373,11 @@
       'insight.refresh': 'Refresh',
       'insight.meta.period': 'Analysis period:',
       'insight.meta.mid': '(latest 7 PortWatch days) · weekly data refresh (about 7-10 days delayed) · Focus Port',
-      'insight.unit.ports': '개',
+      /* 한국어 '개' 가 en 사전에 그대로 남아 있었다. 게다가 insight.html:113 의
+         <small data-i18n="insight.unit.ports">개</small> 는 단독 텍스트 노드라
+         en RULES 의 [/^(\s*)개(\s*)$/, '$1$2'] 에 걸려 화면에서 아예 빈 칸으로 사라졌다.
+         unit.ports(= landing.js) 와 같은 뜻이므로 값도 ' ports' 로 통일한다. */
+      'insight.unit.ports': ' ports',
       'insight.stale': 'Live connection delayed - showing the last received data.',
       'insight.s1.h': 'Global Congestion Snapshot',
       'insight.s1.hint': 'Based on last 7 days of activity · week over week',
@@ -1415,7 +1436,8 @@
       'insight.gauge.cur': 'Current range:',
       'insight.unit.portsN': ' ports',
       'insight.unit.portsCall': ' ports',
-      'insight.unit.ships': '척',
+      /* '척' 도 en 사전에 한국어가 남아 있었다 (insight.js 가 숫자 뒤에 붙이는 단위) */
+      'insight.unit.ships': ' vessels',
       'insight.unit.days': ' days',
       'insight.unit.times': '×',
       'insight.rg.tip.worse': 'Worse than last week',
@@ -1722,6 +1744,17 @@
       'wx.period': 'Wave period',
       'wx.wind': 'Wind',
       'wx.gust': 'Gust',
+      /* --- 브라우저 탭 제목 (2026-08-20) — 키가 없어 구절 안전망만 걸려 반쪽 번역되던 것 --- */
+      'pg.title.index': 'TWL Control Tower — Taewoong Logistics',
+      'pg.title.insight': 'Port Insight — Port Congestion Dashboard | TWL Control Tower',
+      'pg.title.berth': 'Berth Plan — Domestic Terminals | TWL Control Tower',
+      'pg.title.vessel': 'Vessel Position — Live AIS Map | TWL Control Tower',
+      'pg.title.cargo': 'Cargo Tracking — Direct Carrier Tracking | TWL Control Tower',
+      'pg.title.route': 'Route Analysis — Sea Route & Transit Time Simulator | TWL Control Tower',
+      'pg.title.schedule': 'Overseas Schedule — Ship Schedule | TWL Control Tower',
+      'pg.title.status': 'Data Status — Pipeline Monitoring | TWL Control Tower',
+      'pg.title.login': 'Sign in — TWL Control Tower',
+      'pg.title.admin': 'Admin — Member Approval | TWL Control Tower',
     },
     zh: {
       'nav.home': '首页', 'nav.portinsight': 'Port Insight',
@@ -1873,8 +1906,7 @@
       'cargo.ql.carrier.d': '上方输入 MBL 时自动识别船司（15家SCAC）- 含实时查询6家的全部船司官方链接',
       'cargo.ql.air.t': '航空货物（AWB 10家）',
       'cargo.ql.air.d': '通过 AWB 进行航空公司官方追踪 · 上方输入 AWB 时自动识别航空公司（10家）',
-      'cargo.rel.no': '数据洞察', 'cargo.rel.h': '哪家船司的船期值得信赖',
-      'cargo.rel.hint': '基于自有出运实绩计算的船司离港准点率 — 确定船期(ETD)对比实际装船日',
+      /* cargo.rel.* — 참조 0건(정시율 리그 UI 삭제)이라 ko 와 함께 제거 */
       'stat.shipments': '累计运单数据 (件)', 'stat.ports': '监测全球港口',
       'stat.terminals': '韩国泊位采集码头', 'stat.carriers': '实时对接船司', 'stat.watch': '自动监控·变更提醒',
       'cargo.ql.g.busanNew': '釜山新港', 'cargo.ql.g.busanNorth': '釜山北港', 'cargo.ql.g.incheon': '仁川',
@@ -2124,6 +2156,7 @@
       'cg.opt.allStage': '全部进度',
       'cg.pg.next': '下一页',
       'cg.pg.prev': '上一页',
+      'cg.ph.blno': '输入 MBL / AWB 号码',
       'cg.reg.m3': '3个月',
       'cg.reg.m6': '6个月',
       'cg.reg.mail': '提醒邮箱',
@@ -2136,9 +2169,12 @@
       'cg.sec.summary': '运输摘要',
       'cg.sec.terminal': '国内码头',
       'cg.slot.ein': '空箱返还',
-      'cg.slot.eout': '空箱提出',
-      'cg.slot.fin': '重箱进港',
-      'cg.slot.fout': '重箱提出',
+      /* 중국어 실무 표준으로 교정.
+         '提出' 은 '(의견을) 제기하다' 라 반출(픽업)의 뜻이 아니다 → 空컨 픽업은 '提空箱'
+         '进港' 은 선박 입항이라 컨테이너 게이트 반입이 아니다 → 야드 반입은 '进场' */
+      'cg.slot.eout': '提空箱',
+      'cg.slot.fin': '重箱进场',
+      'cg.slot.fout': '重箱提箱',
       'cg.slot.load': '装船',
       'cg.slot.ts': '转运',
       'cg.slot.unld': '卸货',
@@ -2149,7 +2185,8 @@
       'cg.st.beforeload': '待装船',
       'cg.st.discharged': '已卸货',
       'cg.st.found': '已查询',
-      'cg.st.gateout': '已提出',
+      /* '已提出' 은 '제기했다' 라 반출 완료의 뜻이 아니다 → '已提箱' (컨테이너 픽업 완료) */
+      'cg.st.gateout': '已提箱',
       'cg.st.loaded': '已装船',
       'cg.st.returned': '已返还',
       'cg.st.sailing': '运输中',
@@ -2542,7 +2579,8 @@
       'vessel.col.grtg': '总吨位',
       'vessel.col.loa': '全长',
       'vessel.col.flag': '船籍国',
-      'vessel.col.arrdt': '进港日时',
+      /* '日时' 는 중국어 단어가 아니다(한국어 '일시'의 직역) → '时间' */
+      'vessel.col.arrdt': '进港时间',
       'vessel.status.planned': '计划',
       'vessel.status.arrived': '已靠泊',
       'vessel.status.working': '作业中',
@@ -2575,6 +2613,17 @@
       'wx.period': '波周期',
       'wx.wind': '风速',
       'wx.gust': '阵风',
+      /* --- 브라우저 탭 제목 (2026-08-20) — 키가 없어 구절 안전망만 걸려 반쪽 번역되던 것 --- */
+      'pg.title.index': 'TWL Control Tower — 泰雄物流管制中心',
+      'pg.title.insight': 'Port Insight — 港口拥堵仪表板 | TWL Control Tower',
+      'pg.title.berth': '泊位分配现况 — 国内码头整合 | TWL Control Tower',
+      'pg.title.vessel': '船舶位置 — 实时 AIS 地图 | TWL Control Tower',
+      'pg.title.cargo': '货物追踪 — 船公司直连追踪 | TWL Control Tower',
+      'pg.title.route': '航线分析 — 海运航线·航程模拟器 | TWL Control Tower',
+      'pg.title.schedule': '海外船期 — Ship Schedule | TWL Control Tower',
+      'pg.title.status': '数据现况 — 数据管道监控 | TWL Control Tower',
+      'pg.title.login': '登录 — TWL Control Tower',
+      'pg.title.admin': '管理员 — 会员审批 | TWL Control Tower',
     },
   };
 
@@ -2680,7 +2729,7 @@
       '회원 승인 관리': 'Account Approval Management',
       '가입 신청을 검토하고 승인/거부합니다. 승인된 계정만 로그인할 수 있습니다.': 'Review account requests and approve or reject them. Only approved accounts can sign in.',
       '이메일(아이디)': 'Email (ID)',
-      '이름/부서': 'Name / Dept',
+      /* '이름/부서' 는 위 로그인 구역에 같은 값으로 이미 있어 중복만 제거(값 동일 → 화면 변화 없음) */
       '상태': 'Status',
       '권한': 'Role',
       '신청일': 'Requested',
@@ -2780,7 +2829,8 @@
       '터미널명': 'Terminal name',
       '항만': 'Port',
       '모선': 'Vessel',
-      '접안·작업중': 'Berthed / Working',
+      /* '접안·작업중' 은 위 '금일 운영 스냅샷' 구역에 같은 값으로 이미 있어 중복만 제거
+         (zh 블록도 그 자리에만 있어 en/zh 구조가 다시 맞는다) */
       '접안지연 6h+ 확률': 'Delay probability 6h+',
       '터미널별 요약': 'Summary by Terminal',
       '물량 소계 · 접안지연 리스크(몬테카를로 4,000회, 실측 접안편차 적합)': 'Volume subtotal · berthing-delay risk (4,000 Monte Carlo runs, fitted to actual berth deviations)',
@@ -2918,7 +2968,7 @@
       '지연 리스크': 'Delay risk',
       '항로망 최단경로': 'Shortest route in route network',
       '중앙값': 'Median',
-      '평균 속력': 'Average speed',
+      /* '평균 속력' 은 이 구역 위쪽에 같은 값으로 이미 있어 중복만 제거(값 동일 → 화면 변화 없음) */
       '10회 중 8회는 이 구간 내 도착': '8 out of 10 arrivals fall in this range',
       'P50 대비 P90 추가 소요 (버퍼 권장치)': 'Extra time from P50 to P90 (recommended buffer)',
       '출발': 'Origin',
@@ -3163,7 +3213,15 @@
       '화물편 도착 현황': 'Cargo arrivals', '화물편 출발 현황': 'Cargo departures', '정기 화물 운항편': 'Scheduled cargo flights',
       '인천국제공항공사': 'Incheon International Airport Corp.',
       '일자': 'Date', '편명': 'Flight', '항공사': 'Airline', '출발지': 'Origin', '목적지': 'Destination',
-      '예정': 'Scheduled', '변경': 'Estimated', '터미널': 'Terminal', '상태': 'Status',
+      /* PHRASES 는 평면 객체라 나중 정의가 앞 정의를 소리 없이 덮어쓴다.
+         '예정'·'터미널'·'상태' 는 위 선석배정/관리자 구역에 이미 있는데 여기서 다시 정의돼
+         전역 의미를 항공편 의미로 바꿔버렸다(zh '터미널'→'航站楼' 가 컨테이너 '码头' 를 덮어써
+         선석배정 화면 전 행이 '光阳港 서부集装箱航站楼' 로 오염). 항공편 열 머리글은
+         이미 T 키 rt.air.col.sched / rt.air.col.term / rt.air.col.status 로 따로 갖고 있으므로
+         여기서는 중복 정의를 걷어내고 컨테이너 문맥 정의가 살아남게 한다.
+         '변경' 은 여기에만 있어 남기되, 'Estimated'(추정)는 오역이라 'Changed' 로 고친다.
+         (항공편 '변경 시각' 뜻은 T 키 rt.air.col.est 가 'Estimated' 로 따로 보유) */
+      '변경': 'Changed',
       '상대공항': 'Counterpart airport', '운항 요일': 'Operating days', '시각': 'Time', '운항 기간': 'Period', '시즌': 'Season',
       '매일': 'Daily',
 
@@ -3185,7 +3243,10 @@
       '조회 결과가 없습니다. 선박명 일부(예: HANJIN) 또는 호출부호로 다시 시도하십시오.': 'No results. Try part of the ship name (e.g. HANJIN) or a call sign.',
       '선박 제원': 'Ship particulars',
       '해양수산부 선박제원정보': 'MOF ship particulars',
-      '선박명': 'Ship name', '호출부호': 'Call sign', '선종': 'Ship type', '국적': 'Flag',
+      /* '선박명' 은 위 화물추적 구역에 'Vessel name' 으로 이미 있는데 여기 'Ship name' 이
+         뒤에서 덮어써 사이트 전역이 'Ship name' 으로 바뀌어 있었다.
+         T 사전이 전부 'Vessel name' 으로 통일돼 있으므로 중복을 걷어내고 그쪽에 맞춘다. */
+      '호출부호': 'Call sign', '선종': 'Ship type', '국적': 'Flag',
       '총톤수': 'Gross tonnage', '전장': 'LOA', '상세 ▾': 'Details ▾',
       '영문 선박명': 'Ship name (EN)', 'IMO 번호': 'IMO number', '항해 형태': 'Service type', '외/내항': 'Ocean/coastal',
       '총톤수(G/T)': 'Gross tonnage (G/T)', '순톤수(N/T)': 'Net tonnage (N/T)', '전장(LOA)': 'LOA', '수선간장(LBP)': 'LBP',
@@ -3242,7 +3303,69 @@
 
       /* --- 홈 (index.html) --- */
       '실시간 지표 — Port Insight 대시보드로 이동': 'Live indicators - go to the Port Insight dashboard',
-      '주간 해상운임지수': 'Weekly ocean freight indices'
+      '주간 해상운임지수': 'Weekly ocean freight indices',
+
+      /* =========================================================
+         보강 표제어 (2026-08-20)
+         (A) 긴 정식 표제어 — 짧은 표제어가 낱말을 잘라먹지 않도록 먼저 잡히게 한다.
+             치환 정렬이 길이 내림차순이므로 여기 있는 긴 항목이 항상 우선한다.
+             (경계 검사 replaceSafe 와 이중 방어: 경계 검사는 '파손 방지',
+              아래 항목은 '정확한 번역 제공' 을 담당)
+         (B) 사전·PHRASES 어디에도 없어 en 화면에 한글로 남던 용어
+         ※ 선사명·항만청명 등 순수 업무 데이터는 번역 대상이 아니므로 넣지 않는다.
+            ('한국머스크'·'전일본공수' 는 경계 검사가 원문 그대로 지켜 준다)
+         ========================================================= */
+      '극동아시아': 'Far East Asia',
+      '북미주': 'North America',
+      '한국어': 'Korean',
+      '호우주의보': 'Heavy rain advisory',
+      '호우경보': 'Heavy rain warning',
+      '풍랑주의보': 'High seas advisory',
+      '풍랑경보': 'High seas warning',
+      '강풍주의보': 'Strong wind advisory',
+      '강풍경보': 'Strong wind warning',
+      /* 터미널명 구성요소 (data_berth.js TERMINALS) */
+      '서부컨테이너터미널': 'West Container Terminal',
+      '컨테이너터미널': 'Container Terminal',
+      '부산항터미널': 'Busan Port Terminal',
+      '서컨': 'West Container Terminal',
+      '1부두': 'Pier 1', '2부두': 'Pier 2', '3부두': 'Pier 3', '4부두': 'Pier 4', '5부두': 'Pier 5',
+      '부두': 'Wharf',
+      '서부': 'West',
+      '통합': 'Integrated',
+      /* 그 밖의 미번역 용어 */
+      '양적하': 'Discharge / Load',
+      '결항': 'Cancelled',
+      '기타': 'Others',
+      '지역': 'Region',
+
+      /* (C) 경계 검사가 막게 된 합성어의 '정식 표제어'.
+         경계 검사만 넣으면 '입출항'→'입Departed' 같은 파손은 사라지지만 한국어로 남는다.
+         코퍼스 전수 비교(프로젝트 내 한글 문자열 1,406건 × en/zh)에서 실제로
+         '완전번역 → 한글잔존' 으로 뒤처진 항목을 여기서 정식 표제어로 되살린다. */
+      '접안예정': 'Berthing scheduled',
+      '출항예정': 'Departure scheduled',
+      '한국항로': 'Korea route',
+      '유럽항로': 'Europe route',
+      '대권항로': 'Great-circle route',
+      '입출항': 'Vessel calls',
+      '수출입': 'Import/export',
+      '동남아시아': 'Southeast Asia',
+      '항만기상': 'Port weather',
+      '풀컨테이너선': 'Full container ship',
+      '실조회': 'Live lookup',
+      '국적사': 'National carrier',
+      '조회됨': 'Found',
+      '최신순': 'Latest first',
+      '발표일': 'Published',
+      '기준월': 'Base month',
+      '기준일시': 'Base date/time',
+      '도착지': 'Destination',
+      '미수집': 'Not collected',
+      '터미널발': 'From terminal',
+      '모선항차': 'Vessel / Voyage',
+      '항차': 'Voyage',
+      '인천 E1컨테이너터미널': 'Incheon E1 Container Terminal'
     },
     zh: {
       '본문으로 건너뛰기': '跳到主要内容',
@@ -3329,7 +3452,7 @@
       '회원 승인 관리': '会员审批管理',
       '가입 신청을 검토하고 승인/거부합니다. 승인된 계정만 로그인할 수 있습니다.': '审核注册申请并审批/拒绝。仅已审批账户可登录。',
       '이메일(아이디)': '邮箱（ID）',
-      '이름/부서': '姓名 / 部门',
+      /* '이름/부서' 는 위 로그인 구역에 같은 값으로 이미 있어 중복만 제거(값 동일 → 화면 변화 없음) */
       '상태': '状态',
       '권한': '权限',
       '신청일': '申请日',
@@ -3566,7 +3689,7 @@
       '지연 리스크': '延迟风险',
       '항로망 최단경로': '航线网络最短路径',
       '중앙값': '中位数',
-      '평균 속력': '平均航速',
+      /* '평균 속력' 은 이 구역 위쪽에 같은 값으로 이미 있어 중복만 제거(값 동일 → 화면 변화 없음) */
       '10회 중 8회는 이 구간 내 도착': '10次中约8次将在此区间内到达',
       'P50 대비 P90 추가 소요 (버퍼 권장치)': 'P90 相对 P50 的额外耗时（建议缓冲）',
       '출발': '出发',
@@ -3811,7 +3934,10 @@
       '화물편 도착 현황': '货运航班到达现况', '화물편 출발 현황': '货运航班出发现况', '정기 화물 운항편': '定期货运航班',
       '인천국제공항공사': '仁川国际机场公社',
       '일자': '日期', '편명': '航班号', '항공사': '航空公司', '출발지': '出发地', '목적지': '目的地',
-      '예정': '预定', '변경': '变更', '터미널': '航站楼', '상태': '状态',
+      /* en 블록과 같은 이유 — '터미널'→'航站楼'(공항 여객터미널) 가 위의 '码头'(컨테이너 터미널)를
+         덮어써 선석배정 화면이 통째로 오염됐다. 항공편 화면은 T 키 rt.air.col.term('航站楼')를
+         따로 갖고 있으므로 여기서 중복 정의를 걷어내도 항공 화면의 뜻은 그대로 유지된다. */
+      '변경': '变更',
       '상대공항': '对方机场', '운항 요일': '运行星期', '시각': '时刻', '운항 기간': '运行期间', '시즌': '航季',
       '매일': '每日',
 
@@ -3833,7 +3959,8 @@
       '조회 결과가 없습니다. 선박명 일부(예: HANJIN) 또는 호출부호로 다시 시도하십시오.': '无查询结果。请用船名的一部分（例如 HANJIN）或呼号重试。',
       '선박 제원': '船舶诸元',
       '해양수산부 선박제원정보': '海洋水产部船舶诸元信息',
-      '선박명': '船名', '호출부호': '呼号', '선종': '船种', '국적': '船籍',
+      /* '선박명': '船名' 은 위 화물추적 구역에 같은 값으로 이미 있어 중복만 제거(값 동일 → 화면 변화 없음) */
+      '호출부호': '呼号', '선종': '船种', '국적': '船籍',
       '총톤수': '总吨位', '전장': '全长', '상세 ▾': '详情 ▾',
       '영문 선박명': '英文船名', 'IMO 번호': 'IMO 编号', '항해 형태': '航行形态', '외/내항': '外航/内航',
       '총톤수(G/T)': '总吨位(G/T)', '순톤수(N/T)': '净吨位(N/T)', '전장(LOA)': '全长(LOA)', '수선간장(LBP)': '垂线间长(LBP)',
@@ -3890,7 +4017,61 @@
 
       /* --- 홈 (index.html) --- */
       '실시간 지표 — Port Insight 대시보드로 이동': '实时指标 - 前往 Port Insight 看板',
-      '주간 해상운임지수': '每周海运运价指数'
+      '주간 해상운임지수': '每周海运运价指数',
+
+      /* =========================================================
+         보강 표제어 (2026-08-20) — en 블록과 같은 목록·같은 이유.
+         zh 에서도 '극동아시아'→'극East Asia' 처럼 똑같이 깨졌다.
+         (지역명은 addDataPhrases 가 zh 에도 영문명을 넣기 때문에 증상이 en 과 동일)
+         ========================================================= */
+      '극동아시아': '远东亚洲',
+      '북미주': '北美洲',
+      '한국어': '韩语',
+      '호우주의보': '暴雨预警',
+      '호우경보': '暴雨警报',
+      '풍랑주의보': '大浪预警',
+      '풍랑경보': '大浪警报',
+      '강풍주의보': '大风预警',
+      '강풍경보': '大风警报',
+      /* 터미널명 구성요소 (data_berth.js TERMINALS) */
+      '서부컨테이너터미널': '西部集装箱码头',
+      '컨테이너터미널': '集装箱码头',
+      '부산항터미널': '釜山港码头',
+      '서컨': '西集装箱码头',
+      '1부두': '1号码头', '2부두': '2号码头', '3부두': '3号码头', '4부두': '4号码头', '5부두': '5号码头',
+      '부두': '码头',
+      '서부': '西部',
+      '통합': '综合',
+      /* 그 밖의 미번역 용어 */
+      '양적하': '装卸',
+      '결항': '取消',
+      '기타': '其他',
+      '지역': '地区',
+
+      /* (C) 경계 검사가 막게 된 합성어의 '정식 표제어' — en 블록과 같은 목록·같은 이유 */
+      '접안예정': '预定靠泊',
+      '출항예정': '预定离港',
+      '한국항로': '韩国航线',
+      '유럽항로': '欧洲航线',
+      '대권항로': '大圆航线',
+      '입출항': '进出港',
+      '수출입': '进出口',
+      '동남아시아': '东南亚',
+      '항만기상': '港口气象',
+      '풀컨테이너선': '全集装箱船',
+      '실조회': '实时查询',
+      '국적사': '国籍船公司',
+      '조회됨': '已查询',
+      '최신순': '按最新',
+      '발표일': '发布日',
+      '기준월': '基准月',
+      '기준일시': '基准时间',
+      '도착지': '目的地',
+      '미수집': '未采集',
+      '터미널발': '来自码头',
+      '모선항차': '船名 / 航次',
+      '항차': '航次',
+      '인천 E1컨테이너터미널': '仁川 E1 集装箱码头'
     }
   };
 
@@ -3986,15 +4167,26 @@
     try {
       if (window.TWDATA && window.TWDATA.getState) {
         var st = window.TWDATA.getState(0);
-        (st.ports || []).forEach(function (p) { if (p.ko && p.en) dict[p.ko] = p[nameLang] || p.en; });
-        (st.focusPorts || []).forEach(function (p) { if (p.ko && p.en) dict[p.ko] = p[nameLang] || p.en; });
-        (st.regional || []).forEach(function (r) { if (r.ko && r.en) dict[r.ko] = r[nameLang] || r.en; });
+        /* zh 는 사전에 이미 중문 표제어(釜山新港 등)가 있다. 데이터 계층은 ko/en 만 갖고 있으므로
+           그대로 주입하면 중문명이 영문으로 덮인다 — 빈 자리만 영문으로 메운다(2026-08-20) */
+        var fill = function (o, key) {
+          if (!o.ko || !o.en) return;
+          if (lang === 'zh' && dict[o.ko]) return;
+          dict[o.ko] = o[nameLang] || o.en;
+        };
+        (st.ports || []).forEach(function (p) { fill(p); });
+        (st.focusPorts || []).forEach(function (p) { fill(p); });
+        (st.regional || []).forEach(function (r) { fill(r); });
       }
     } catch (e) { /* data layer may not be ready yet */ }
     try {
       if (window.TWBERTH && window.TWBERTH.TERMINALS) {
         var ports = { '부산신항': 'Busan New Port', '부산북항': 'Busan North Port', '광양항': 'Gwangyang Port', '인천항': 'Incheon Port' };
-        Object.keys(ports).forEach(function (k) { dict[k] = lang === 'zh' ? ports[k] : ports[k]; });
+        /* 삼항 양변이 같아 zh 에서도 영문명이 들어가던 오타 교정 — 중문 표제어가 있으면 유지한다 */
+        Object.keys(ports).forEach(function (k) {
+          if (lang === 'zh' && dict[k]) return;
+          dict[k] = ports[k];
+        });
       }
     } catch (e2) { /* berth layer may not be ready yet */ }
     return dict;
@@ -4013,6 +4205,47 @@
     return out;
   }
 
+  /* ---------------------------------------------------------------
+     한글 낱말 경계 검사 (2026-08-20)
+     기존 구절 치환은 out.split(k).join(dict[k]) 라 경계가 없어서
+     짧은 표제어가 더 긴 한국어 낱말 속을 잘라먹었다. 실측 파손 예:
+       '한국'→Korea   가 '한국어'  를 'Korea어'      로
+       '동아시아'→East Asia 가 '극동아시아' 를 '극East Asia' 로
+       '북미'→North America 가 '북미주' 를 'North America주' 로
+       '주의'→Watch   가 '호우주의보' 를 '호우Watch보'  로
+       '일본'→Japan   가 '전일본공수' 를 '전Japan공수'  로 (항공사명)
+       '한국'→Korea   가 '한국머스크' 를 'Korea머스크'  로 (선사명)
+     원칙
+       ① 표제어 '앞' 글자가 한글이면 치환하지 않는다.
+          한국어에는 낱말 앞에 붙는 조사가 없으므로, 앞이 한글이면 100% 합성어 내부다.
+       ② 표제어 '뒤' 글자가 한글이면 그것이 조사/어미일 때만 치환한다.
+          ('부산항에서' 같은 정상 치환은 살리고 '한국어·북미주' 파손만 막는다)
+     한쪽 끝이 한글이 아닌 표제어(예: 'B/L구분', '개 항만')는 그 방향 검사를 건너뛰므로
+     기존에 정상 동작하던 치환은 그대로 유지된다.
+     --------------------------------------------------------------- */
+  var HANGUL_CH = /[가-힣]/;
+  /* 표제어 뒤에 붙어도 같은 낱말이 아닌 것으로 보는 조사·접사 (긴 것부터 — 정규식은 선순위 매칭) */
+  var JOSA_RE = /^(?:으로써|으로서|에게서|으로부터|이라도|이라는|입니다|으로|에서|에게|한테|부터|까지|보다|처럼|마다|밖에|조차|마저|라도|이나|이란|이다|와의|과의|들|은|는|이|가|을|를|의|에|와|과|도|만|로|랑|나|뿐)/;
+
+  function replaceSafe(text, key, val) {
+    if (text.indexOf(key) < 0) return text;
+    var headHangul = HANGUL_CH.test(key.charAt(0));
+    var tailHangul = HANGUL_CH.test(key.charAt(key.length - 1));
+    if (!headHangul && !tailHangul) return text.split(key).join(val); /* 기존 동작 그대로 */
+    var out = '', i = 0, at, prev, rest, blocked;
+    for (;;) {
+      at = text.indexOf(key, i);
+      if (at < 0) { out += text.slice(i); return out; }
+      prev = at > 0 ? text.charAt(at - 1) : '';
+      rest = text.slice(at + key.length);
+      blocked =
+        (headHangul && prev !== '' && HANGUL_CH.test(prev)) ||
+        (tailHangul && rest !== '' && HANGUL_CH.test(rest.charAt(0)) && !JOSA_RE.test(rest));
+      out += text.slice(i, at) + (blocked ? key : val);
+      i = at + key.length;
+    }
+  }
+
   function translateValue(value, lang) {
     if (lang === 'ko' || value == null) return value;
     var src = String(value);
@@ -4025,7 +4258,7 @@
 
     var out = applyRules(src, lang);
     Object.keys(dict).sort(function (a, b) { return b.length - a.length; }).forEach(function (k) {
-      if (k && out.indexOf(k) >= 0) out = out.split(k).join(dict[k]);
+      if (k && out.indexOf(k) >= 0) out = replaceSafe(out, k, dict[k]);
     });
     return applyRules(out, lang);
   }

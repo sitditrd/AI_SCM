@@ -137,6 +137,75 @@
 
   function pmCard(html) { return '<div class="card reveal in">' + html + '</div>'; }
 
+  /* ================= 상류(data.go.kr) 결과코드 판독 (2026-08-20) =================
+     왜 필요한가: datago Edge Function 은 XML 을 정상 파싱한 경로에서 error 필드를 만들지 않는다.
+     그래서 상류가 "정상 XML" 본문 안에 resultCode 11(파라미터 오류)을 담아 보내면 res.error 는
+     undefined 가 되고, 화면에는 원인이 통째로 지워진 '조회 결과가 없습니다'만 남는다.
+     실제로 이 죽은 코드 때문에 PORT-MIS 실패 원인이 한 번도 사용자에게 도달한 적이 없다.
+     Edge Function 은 이번 담당 범위가 아니므로, 프론트가 응답 본문의 헤더를 직접 읽어 원인을 복구한다. */
+
+  /* 상류 메시지는 영문 상수라 그대로 보여주면 읽히지 않는다 → 한국어 원인 문장으로 옮긴다.
+     코드 번호는 기관마다 매핑이 달라(해수부는 11 을 INVALID_REQUEST_PARAMETER 로 쓴다)
+     번호가 아니라 메시지 문자열을 1차 판단 근거로 삼는다. */
+  var DG_REASON = {
+    NO_MANDATORY_REQUEST_PARAMETERS: '필수 조회 조건이 빠졌습니다',
+    INVALID_REQUEST_PARAMETER: '조회 조건이 상류 규격에 맞지 않습니다',
+    SERVICE_KEY_IS_NOT_REGISTERED: '공공데이터 인증키가 등록되지 않았습니다',
+    DEADLINE_HAS_EXPIRED: '공공데이터 인증키 활용기간이 만료되었습니다',
+    LIMITED_NUMBER_OF_SERVICE_REQUESTS: '일일 호출 한도를 초과했습니다',
+    SERVICE_ACCESS_DENIED: '해당 서비스 접근 권한이 없습니다',
+    UNREGISTERED_IP: '등록되지 않은 IP 에서의 호출입니다',
+    NO_OPENAPI_SERVICE: '제공기관에 해당 서비스가 없습니다',
+    SERVICE_TIMEOUT: '제공기관 응답이 지연되고 있습니다',
+    APPLICATION_ERROR: '제공기관 시스템 오류입니다',
+    HTTP_ERROR: '제공기관 통신 오류입니다'
+  };
+
+  /* 결과 헤더 위치가 두 갈래다: 정상 계열은 response.header,
+     인증키 오류 계열은 OpenAPI_ServiceResponse.cmmMsgHeader → 둘 다 잡히게 관대하게 훑는다. */
+  function dgHeader(o, depth) {
+    if (o == null || typeof o !== 'object' || depth > 5) return null;
+    if (o.resultMsg != null || o.resultCode != null || o.returnAuthMsg != null || o.errMsg != null) return o;
+    for (var k in o) {
+      var f = dgHeader(o[k], depth + 1);
+      if (f) return f;
+    }
+    return null;
+  }
+
+  /* 조회가 비었을 때 화면에 덧붙일 원인 문장. 원인이 아니면 '' 를 돌려준다. */
+  function dgWhy(res) {
+    if (!res) return '';
+    if (res.error) return String(res.error);   /* 기존 경로 유지 — raw/HTTP 실패는 그대로 살린다 */
+    var h = res.data ? dgHeader(res.data, 0) : null;
+    if (!h) return '';
+    var msg = String(h.resultMsg != null ? h.resultMsg : (h.returnAuthMsg != null ? h.returnAuthMsg : (h.errMsg || ''))).trim();
+    var code = String(h.resultCode != null ? h.resultCode : (h.returnReasonCode != null ? h.returnReasonCode : '')).trim();
+    /* "NORMAL_SERVICE" / "NORMAL SERVICE." = 상류는 정상이고 진짜 0건 → 원인 아님 */
+    if (/NORMAL/i.test(msg) && !/ERROR/i.test(msg)) return '';
+    if (!msg && (code === '' || code === '0' || code === '00')) return '';
+    var key = msg.toUpperCase().replace(/[\s.]+/g, '_');
+    for (var k in DG_REASON) {
+      if (key.indexOf(k) > -1) return DG_REASON[k] + ' [' + (code || '-') + ' ' + msg + ']';
+    }
+    return msg ? msg + (code ? ' [' + code + ']' : '') : '상류 오류 코드 ' + code;
+  }
+
+  /* 상류가 정상인데 0건이면 '조회는 됐고 자료가 없다'는 사실 자체가 정보다 → totalCount 를 같이 보여준다 */
+  function dgTotal(res) {
+    var b = res && res.data && res.data.response && res.data.response.body;
+    var n = b ? b.totalCount : null;
+    return (n == null || n === '') ? null : n;
+  }
+
+  /* 빈 결과 카드에 붙일 꼬리말 — 원인이 있으면 원인, 없으면 '상류 정상 · N건' */
+  function dgNote(res) {
+    var why = dgWhy(res);
+    if (why) return ' — ' + esc(why);
+    var tc = dgTotal(res);
+    return tc == null ? '' : ' — ' + t('vessel.dg.ok0', '상류 정상 응답 · 총 ') + esc(tc) + t('vessel.unit.count', '건');
+  }
+
   function pmFindItems(o, depth) {
     /* data.go.kr 표준 응답(response.body.items.item[]) 변형에 대비해 첫 객체 배열을 관대하게 탐색 */
     if (depth > 6 || o == null) return null;
@@ -152,13 +221,21 @@
 
   function pmSearch() {
     var out = el('pmOut');
-    out.innerHTML = pmCard('<div class="sc-sub">' + t('vessel.pm.loading', 'PORT-MIS 조회 중…') + '</div>');
     var p = new URLSearchParams({ api: 'portmis' });
     var clsgn = el('pmClsgn').value.trim(), port = el('pmPort').value.trim();
     var from = el('pmFrom').value.replace(/-/g, ''), to = el('pmTo').value.replace(/-/g, '');
-    /* PORT-MIS(15006353) 규격 파라미터: clsgn(호출부호)·prtAgCd(항만청)·sde/ede(조회 시작·종료일 YYYYMMDD) */
+    /* prtAgCd(항만청)는 상류 필수 파라미터다 — 예전처럼 조건부(if (port))로 붙이면 값이 없을 때
+       상류가 resultCode 11(INVALID_REQUEST_PARAMETER)로 거부해 조회가 반드시 실패한다.
+       실측(2026-08-20): prtAgCd 없이 호출 → 11 거부 / prtAgCd=020 → 부산 실적 정상 반환.
+       화면은 <select> 라 기본값이 늘 차 있지만, 값이 비는 이례 상황을 침묵으로 넘기지 않는다. */
+    if (!port) {
+      out.innerHTML = pmCard('<div class="sc-sub">' + t('vessel.pm.needport', '항만청을 선택하십시오 — PORT-MIS 는 항만청이 필수 조회 조건입니다.') + '</div>');
+      return;
+    }
+    out.innerHTML = pmCard('<div class="sc-sub">' + t('vessel.pm.loading', 'PORT-MIS 조회 중…') + '</div>');
+    p.set('prtAgCd', port);
+    /* PORT-MIS(15006353) 규격 파라미터: clsgn(호출부호, 선택)·prtAgCd(항만청, 필수)·sde/ede(조회 시작·종료일 YYYYMMDD) */
     if (clsgn) p.set('clsgn', clsgn);
-    if (port) p.set('prtAgCd', port);
     if (from) p.set('sde', from);
     if (to) p.set('ede', to);
     fetch(DATAGO + '?' + p)
@@ -172,8 +249,9 @@
         }
         var items = res.data ? pmFindItems(res.data, 0) : null;
         if (!items || !items.length) {
-          var extra = res.error ? ' (' + esc(res.error) + ')' : '';
-          out.innerHTML = pmCard('<div class="sc-sub">' + t('vessel.pm.none', '조회 결과가 없습니다. 조건(호출부호·기간)을 바꿔 시도하십시오.') + extra + '</div>');
+          /* res.error 만 보던 자리 — 상류가 정상 XML 로 오류코드를 실어 보내면 그 값이 늘 undefined 라
+             원인이 화면에 도달하지 못했다. dgNote 가 응답 헤더까지 읽어 원인을 되살린다. */
+          out.innerHTML = pmCard('<div class="sc-sub">' + t('vessel.pm.none', '조회 결과가 없습니다. 조건(항만청·호출부호·기간)을 바꿔 시도하십시오.') + dgNote(res) + '</div>');
           return;
         }
         var keys = Object.keys(items[0]).slice(0, 8);
@@ -255,8 +333,8 @@
         }
         var items = res.data ? vtsItems(res.data) : null;
         if (!items || !items.length) {
-          var extra = res.error ? ' (' + esc(res.error) + ')' : '';
-          out.innerHTML = pmCard('<div class="sc-sub">' + t('vessel.vts.none', '관제 기록이 없습니다. 항만청 또는 조회 기간을 바꿔 다시 시도하십시오.') + extra + '</div>');
+          /* PORT-MIS 와 같은 이유로 res.error 는 사실상 늘 비어 있다 → 응답 헤더에서 원인을 읽어 붙인다 */
+          out.innerHTML = pmCard('<div class="sc-sub">' + t('vessel.vts.none', '관제 기록이 없습니다. 항만청 또는 조회 기간을 바꿔 다시 시도하십시오.') + dgNote(res) + '</div>');
           return;
         }
         items = items.slice(0, 30);
@@ -350,7 +428,8 @@
         }
         var items = res.data ? pmFindItems(res.data, 0) : null;
         if (!items || !items.length) {
-          out.innerHTML = pmCard('<div class="sc-sub">' + t('vessel.ss.none', '조회 결과가 없습니다. 선박명 일부(예: HANJIN) 또는 호출부호로 다시 시도하십시오.') + '</div>');
+          /* 제원 조회는 원인 표시가 아예 없었다 — 같은 판독기를 붙여 실패와 0건을 구분해 준다 */
+          out.innerHTML = pmCard('<div class="sc-sub">' + t('vessel.ss.none', '조회 결과가 없습니다. 선박명 일부(예: HANJIN) 또는 호출부호로 다시 시도하십시오.') + dgNote(res) + '</div>');
           return;
         }
         out.innerHTML = pmCard(

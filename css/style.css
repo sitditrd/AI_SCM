@@ -518,19 +518,9 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   .live-strip { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 760px) {
-  .site-nav {
-    position: fixed; top: var(--header-h); right: 0; left: 0;
-    background: var(--header-bg); backdrop-filter: blur(16px);
-    flex-direction: column; align-items: stretch; padding: 12px 18px 18px; gap: 2px;
-    border-bottom: 1px solid var(--border);
-    display: none;
-  }
-  .site-nav.open { display: flex; }
-  .site-nav a { padding: 12px 10px; }
-  /* 열린 메뉴 패널은 테마 유리(라이트=흰색)이므로, 미스크롤 화이트 링크 강제를 해제 */
-  .hero-page .site-header:not(.scrolled) .site-nav.open a { color: var(--ink-2); }
-  .nav-burger { display: inline-flex; }
-  .header-actions .btn { display: none; }
+  /* 헤더(버거·드로어·액션) 분기는 파일 끝 '헤더 오버플로 정리' 섹션으로 이관했다.
+     760 을 경계로 두면 761~1059 구간에 버거가 없어 넘친 컨트롤을 담을 곳이 사라지므로,
+     헤더만 경계를 1059 로 올려 한 곳에서 관리한다(여기 남기면 두 분기가 서로를 덮어씀). */
   .grid-3 { grid-template-columns: 1fr; }
   .rg-list { grid-template-columns: 1fr; }
   .bn-row { grid-template-columns: 110px 1fr 56px; gap: 10px; }
@@ -2162,14 +2152,30 @@ h1.sr-done .accent::after { content: none; }
 .stats-rail b { font-size: 13.5px; letter-spacing: .01em; }
 .stats-rail span { font-size: 10.5px; letter-spacing: .1em; color: var(--muted); font-weight: 600; }
 .stats-rail .ln { flex: 1; height: 1px; background: var(--border); }
-/* 발표일·기준월 메타 칼럼을 같은 행 우측에 — 고아 카드 제거, 우측 모서리 정렬 */
-#stats #freightStrip { grid-template-columns: repeat(4, 1fr) 210px; }
-#stats #teuStrip { grid-template-columns: repeat(3, 1fr) 210px; }
+/* 발표일·기준월 메타 칼럼을 같은 행 우측에 — 고아 카드 제거, 우측 모서리 정렬
+   1fr 대신 minmax(0,1fr): 기본 1fr 의 하한은 min-content 라, 칸이 좁아지면 칼럼이
+   내용 폭까지 '부풀어' 그리드가 컨테이너보다 넓어진다. .live-strip 은 overflow:hidden
+   이므로 그렇게 넘친 부분은 스크롤도 없이 그대로 잘려 나간다(숫자 중간 절단의 원인).
+   하한을 0 으로 낮추면 그리드가 항상 컨테이너 안에 머물고, 모자라면 줄바꿈으로 처리된다. */
+#stats #freightStrip { grid-template-columns: repeat(4, minmax(0, 1fr)) 210px; }
+#stats #teuStrip { grid-template-columns: repeat(3, minmax(0, 1fr)) 210px; }
 #stats .live-strip .live-chip {
   background: linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 62%, var(--surface)) 0%, var(--surface) 48%);
 }
-@media (max-width: 900px) {
-  #stats #freightStrip, #stats #teuStrip { grid-template-columns: 1fr 1fr; }
+/* 경계를 900 → 1023 으로: 901~945 는 앞 칼럼이 min-content(177.5px)로 부풀어 최대 43px 이
+   통째로 잘렸고, 946~999 는 잘리진 않아도 칼럼이 숫자(.v 148px + 칩 좌우 패딩 36px)보다
+   좁아 수치가 칩 밖으로 삐져나왔다. 실측상 1000px 부터 깨끗해 여유를 두고 1024 를 경계로.
+   (숫자가 잘리던 폭이 ≤440 만이 아니었다 — 같은 원인이 900 바로 위에도 있었다) */
+@media (max-width: 1023px) {
+  #stats #freightStrip, #stats #teuStrip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* 위 2열 규칙은 특이성 (2,0,0) 이라 반응형 섹션의 '.live-strip { 1fr }'(0,1,0)을 이겨
+   480 이하에서도 2열로 남았다. 2열이 되면 각 칼럼이 min-content(칩 라벨+수치)로 부풀어
+   그리드 전체가 컨테이너보다 넓어지는데, .live-strip 은 overflow:hidden 이므로
+   넘친 오른쪽 칼럼의 숫자가 소리 없이 잘렸다(360/390 실측 칼럼 177.5px×2+12 > 316).
+   → 같은 특이성(2,0,0)·뒤 순서로 1열을 되돌린다. 481 이상의 2열 동작은 그대로 유지. */
+@media (max-width: 480px) {
+  #stats #freightStrip, #stats #teuStrip { grid-template-columns: minmax(0, 1fr); }
 }
 /* ===== CTA 재퍼블리싱(2026-08-19) — 센터 박스 → 좌우 분할, 메일 주소 노출 ===== */
 .cta-band.cta-split {
@@ -2185,4 +2191,164 @@ h1.sr-done .accent::after { content: none; }
 @media (max-width: 720px) {
   .cta-band.cta-split { flex-direction: column; align-items: flex-start; padding: 34px 26px; }
   .cta-split .cta-right { align-items: flex-start; }
+}
+
+/* =========================================================
+   헤더 오버플로 정리(2026-08-20)
+
+   왜 고쳤나: .site-header 가 position:fixed 라 헤더 행이 넘쳐도 문서 스크롤에 잡히지
+   않는다. 그래서 폭이 모자라면 가로 스크롤바조차 생기지 않고 컨트롤이 화면 밖으로
+   '조용히' 밀려나 클릭 자체가 불가능했다(≤480: 언어·테마·계정 / 761~1050: CTA·계정).
+   단순 display:none 은 기능 삭제라 금지 — 넘치는 구간에서는 기존 버거 메뉴 안으로
+   '이동'시켜 어느 폭에서도 모든 컨트롤에 도달할 수 있게 한다.
+
+   왜 경계가 1199/1200 인가: .header-inner 는 max-width:var(--maxw)=1200 + padding 22
+   이므로 화면이 1200 이상이면 콘텐츠 박스가 항상 정확히 1156px 로 '고정'된다. 즉
+   1200 이상은 폭이 변해도 맞춰야 할 값이 하나뿐이라 여백 조정만으로 넘침을 없앨 수 있고,
+   1200 미만은 콘텐츠 박스가 계속 줄어 어떤 값으로도 보장할 수 없다.
+   게다가 헤더 행의 필요폭은 언어(한/EN/中)와 로그인 상태('로그아웃 · 이름' + '회원 승인')에
+   따라 200px 이상 달라져 CSS 로는 감지할 수 없다. 실측상 EN·관리자 조합은 1060 에서
+   여백을 조여도 +67px 이 남았다 → 1199 이하는 통째로 드로어, 1200 이상만 인라인.
+
+   왜 헤더 높이를 늘리지 않나: fixed 헤더라 높이가 커지면 본문 상단이 가려진다.
+   그래서 닫힘 상태의 헤더는 --header-h 그대로 두고, '메뉴가 열린 동안에만'
+   아래로 늘어나 본문 위에 겹치게 한다(드로어 = 오버레이).
+   ========================================================= */
+@media (max-width: 1199px) {
+
+  /* --- 드로어를 헤더 '안'으로: 형제 요소까지 한 패널에 담기 위해 ---
+     기존 .site-nav 는 position:fixed 패널이라 뒤따르는 .header-actions·계정 버튼을
+     품을 수 없었다. 헤더 내부의 줄바꿈(wrap) 항목으로 바꾸면 nav 아래에 액션/계정이
+     자연스럽게 이어 붙는다. 버거가 없는 페이지(login/admin)는 건드리지 않도록
+     :has(> .nav-burger) 로 범위를 좁힌다. */
+  .header-inner:has(> .nav-burger) {
+    flex-wrap: wrap; align-content: flex-start;
+    column-gap: 12px; row-gap: 0;
+    height: auto; min-height: var(--header-h);
+  }
+  /* wrap 이 켜지면 첫 줄 높이가 로고 높이(34px)까지 줄어든다 → 첫 줄만 헤더 높이로 고정 */
+  .header-inner:has(> .nav-burger) > .logo-slot,
+  .header-inner:has(> .nav-burger) > .nav-burger { min-height: var(--header-h); }
+
+  .nav-burger {
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-left: auto; flex: none;
+  }
+
+  /* 여는 수단(버거)이 있는 헤더에서만 숨긴다 — 버거 없는 페이지에 나중에 nav 가 추가되면
+     display:none 이 곧 '도달 불가'가 되므로, 조건을 걸어 안전하게 실패하도록 한다. */
+  .header-inner:has(> .nav-burger) > .site-nav {
+    position: static; margin: 0; order: 2; flex: 1 0 100%;
+    flex-direction: column; align-items: stretch;
+    gap: 2px; padding: 10px 0 4px;
+    background: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+    border-bottom: 0;
+    display: none;
+  }
+  .header-inner:has(> .nav-burger) > .site-nav.open { display: flex; }
+  .site-nav a { padding: 12px 10px; }
+
+  /* 언어·테마·CTA와 계정/관리자 버튼을 드로어의 다음 줄로.
+     DOM 순서가 .site-nav → .header-actions → #adminBtn → #acctBtn 이라
+     일반 형제 결합자(~)만으로 '메뉴 열림'에 연동할 수 있다(JS 변경 불필요). */
+  .header-inner:has(> .nav-burger) > .header-actions {
+    display: none; order: 3; flex: 1 0 100%;
+    flex-wrap: wrap; justify-content: flex-start; gap: 10px; padding: 6px 0 2px;
+  }
+  .header-inner > .site-nav.open ~ .header-actions { display: flex; }
+  /* 기존 ≤760 에서 .header-actions .btn 을 display:none 처리해 모바일에서는 '도입 문의'
+     CTA 자체가 사라졌었다. 드로어 안에서는 다시 노출 — 기능 복구(상위호환). */
+  .header-actions .btn { display: inline-flex; }
+
+  .header-inner:has(> .nav-burger) > .acct-btn { display: none; order: 4; margin-left: 0; }
+  .header-inner > .site-nav.open ~ .acct-btn { display: inline-flex; max-width: none; }
+
+  /* 열린 드로어 배경: nav/액션/계정이 서로 다른 형제라 각자 배경을 주면 이음매가 보인다.
+     헤더 자체를 유리로 칠해 한 판으로 보이게 하고, 닫히면 원래대로 되돌아간다. */
+  .site-header:has(.site-nav.open) {
+    height: auto;
+    /* fixed 헤더라 드로어가 길어지면 화면 아래로 삐져나가 그대로 도달 불가가 된다
+       (가로 방향과 같은 함정 — 기존 fixed 패널에도 상한이 없었다). 뷰포트 높이로 잘라
+       스크롤을 허용해 가로 landscape 폰에서도 마지막 항목까지 닿게 한다. */
+    max-height: 100vh; max-height: 100dvh;
+    overflow-y: auto; overscroll-behavior: contain;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    backdrop-filter: blur(16px) saturate(1.2);
+    border-bottom: 1px solid color-mix(in srgb, var(--brand-accent-2) 18%, var(--border));
+  }
+  .header-inner:has(> .site-nav.open) { padding-bottom: 14px; }
+
+  /* 히어로 상단(미스크롤)에서는 헤더 글자를 화이트로 강제하는 규칙(:116-124)이 있는데,
+     드로어가 열리면 배경이 라이트 유리로 바뀌어 흰 글자가 사라진다 → 열림 동안만 해제.
+     기존 ≤760 의 .site-nav.open a 한 줄로는 로고·아이콘·언어·계정이 누락됐던 것을 보강. */
+  .hero-page .site-header:has(.site-nav.open):not(.scrolled) .logo-slot,
+  .hero-page .site-header:has(.site-nav.open):not(.scrolled) .site-nav a,
+  .hero-page .site-header:has(.site-nav.open):not(.scrolled) .icon-btn,
+  .hero-page .site-header:has(.site-nav.open):not(.scrolled) .lang-switch,
+  .hero-page .site-header:has(.site-nav.open):not(.scrolled) .acct-btn,
+  .hero-page .site-header:has(.site-nav.open):not(.scrolled) .nav-burger { color: var(--ink-2); }
+  .hero-page .site-header:has(.site-nav.open):not(.scrolled) .logo-text .l1 { color: var(--ink); }
+  .hero-page .site-header:has(.site-nav.open):not(.scrolled) .logo-text .l2 { color: var(--muted); }
+}
+
+/* --- 버거가 없는 헤더(login.html / admin.html)의 초협폭 대책 ---
+   이 두 페이지에는 .nav-burger 도 .site-nav 도 없어 넘친 컨트롤을 옮겨 담을 드로어가 없다.
+   그런데 i18n 이 .lang-switch(88px)를 .header-actions 에 자동 주입하므로
+   로고 227 + 언어 88 + 테마 36 + 여백 = 415px 가 되어 390 이하에서 테마 토글이 화면 밖으로
+   나갔다(320 에서 73px 넘침 실측).
+   헤더를 2줄로 흘리는 방법은 쓸 수 없다 — auth.css 가 본문 상단 여백을 (--header-h + 40)
+   으로 잡아 두어 2줄 헤더(약 110px)가 로그인 카드를 덮어버린다(그 파일은 담당 밖이기도 하다).
+   → 컨트롤은 그대로 두고, 행에서 가장 큰 고정 폭인 로고 타이포와 언어 버튼 여백만 줄인다. */
+@media (max-width: 480px) {
+  .header-inner:not(:has(> .nav-burger)) { column-gap: 8px; }
+  .header-inner:not(:has(> .nav-burger)) .logo-sym { height: 22px; }
+  .header-inner:not(:has(> .nav-burger)) .header-actions { gap: 6px; }
+  .header-inner:not(:has(> .nav-burger)) .lang-btn { padding: 5px 5px; }
+  /* 사명(.l1)은 이 행에서 가장 넓은 요소(190px)라 여기서 가장 크게 회수된다.
+     자르지 않고 크기만 줄여 전문을 유지 — 13.5px 도 본문(14px)과 비슷해 가독성은 지킨다. */
+  .header-inner:not(:has(> .nav-burger)) .logo-text .l1 { font-size: 13.5px; }
+
+  /* 그래도 모자라면 무엇이 먼저 양보할지 순서를 정해 둔다.
+     1순위는 계정 버튼 — '로그아웃 · 김태웅관리자'처럼 사용자 이름이 붙어 길이가 가변이고,
+     앞부분만 보여도 무슨 버튼인지 알 수 있다(축소 계수 3).
+     2순위가 로고(계수 1). 단 로고가 0 까지 줄면 브랜드가 통째로 사라지므로 —
+     실제로 admin 헤더에서 logo-slot 이 0px 이 되는 것을 실측했다 — 84px 을 바닥으로 둔다
+     (심볼 + 사명 앞부분이 남는 폭). 결과적으로 어느 쪽도 화면 밖으로 밀려나지 않는다. */
+  .header-inner:not(:has(> .nav-burger)) > .acct-btn {
+    flex: 0 3 auto; min-width: 7ch; overflow: hidden; text-overflow: ellipsis;
+  }
+  .header-inner:not(:has(> .nav-burger)) .logo-slot { gap: 7px; flex: 0 1 auto; min-width: 84px; }
+  .header-inner:not(:has(> .nav-burger)) .logo-text { min-width: 0; }
+  .header-inner:not(:has(> .nav-burger)) .logo-text .l1,
+  .header-inner:not(:has(> .nav-burger)) .logo-text .l2 { overflow: hidden; text-overflow: ellipsis; }
+}
+/* 320px(구형 SE 급)에서는 위 바닥값 합이 아직 22px 모자란다(로그인한 admin 헤더 실측).
+   이 폭에서만 바닥을 한 단계 더 낮춰, 360 이상의 여유를 깎지 않으면서 넘침을 없앤다. */
+@media (max-width: 359px) {
+  .header-inner:not(:has(> .nav-burger)) .logo-slot { min-width: 68px; }
+  .header-inner:not(:has(> .nav-burger)) > .acct-btn { min-width: 5ch; }
+}
+
+/* --- 1200 이상: 인라인 헤더 행이 콘텐츠 박스 1156px 안에 확실히 들어가도록 --- */
+@media (min-width: 1200px) {
+  /* 여백 축소로 약 90px 확보 — EN·관리자 조합이 1200 에서 넘치던 폭(+195)의 절반을 흡수. */
+  .header-inner { column-gap: 10px; }
+  .site-nav { gap: 0; }
+  .site-nav a { padding: 8px 8px; }
+  .header-actions { gap: 6px; }
+  .header-actions .btn { padding: 8px 12px; }
+
+  /* 계정/관리자 버튼만 길이가 사용자 이름·언어에 따라 무한히 늘어난다(예: 'Log out · 홍길동').
+     여기에만 flex-shrink 를 허용해, 자리가 모자랄 때 이 라벨이 먼저 줄어들며(말줄임)
+     행 전체가 화면 밖으로 밀려나는 일을 구조적으로 막는다. 자리가 넉넉하면 축소 없음.
+     전체 라벨은 title 속성(auth-gate.js 가 설정)과 ≤1199 드로어에서 그대로 확인 가능. */
+  .header-inner > .acct-btn {
+    flex: 0 3 auto; min-width: 7ch; overflow: hidden; text-overflow: ellipsis;
+  }
+  /* '회원 승인'은 길이가 고정된 이동 링크라 잘리면 무슨 메뉴인지 알 수 없다.
+     반대로 계정 버튼은 뒤에 사용자 이름이 붙어 길이가 들쭉날쭉하다 → 축소 계수를 3:1 로
+     두어 가변 라벨이 먼저 줄고, 관리자 링크는 최소 11ch 까지만 양보하게 한다.
+     (특이성 동률이므로 반드시 위 .acct-btn 규칙 '뒤'에 와야 한다) */
+  .header-inner > .acct-btn-admin { flex: 0 1 auto; min-width: 11ch; }
 }

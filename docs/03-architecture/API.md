@@ -1,9 +1,9 @@
 # TWL 물류 포털 — API 인터페이스 명세
 
-> **v1.1 · 2026-08-03**
+> **v1.2 · 2026-08-19 개정**(v1.1 2026-08-03) — Edge Function 3종 → **6종**. §2.4 `carrier-track` · §2.5 `bl-watch` · §2.6 `notify-bl` 계약 신설.
 >
 > 본 문서는 실제 코드에서 확인된 인터페이스만 기술한다.
-> 근거: `supabase/functions/track/index.ts` · `supabase/functions/send-code/index.ts` · `supabase/functions/datago/index.ts` · `supabase/auth_setup.sql` · `sql/setup_history.sql` · `server.py` · `js/auth.js` · `js/cargo.js` · `js/data.js` · `js/data_berth.js` · `js/vessel.js` · `js/landing.js` · `js/status.js` · `js/weather.js` · `vessel.html` · `sql/setup_supabase*.sql` · `scripts/collect_*.py` · `scripts/upload_berth_sql_parts.py`
+> 근거: `supabase/functions/track/index.ts` · `supabase/functions/send-code/index.ts` · `supabase/functions/datago/index.ts` · `supabase/functions/carrier-track/index.ts` · `supabase/functions/bl-watch/index.ts` · `supabase/functions/notify-bl/index.ts` · `scripts/collect_bl_watch.py` · `supabase/auth_setup.sql` · `sql/setup_history.sql` · `server.py` · `js/auth.js` · `js/cargo.js` · `js/data.js` · `js/data_berth.js` · `js/vessel.js` · `js/landing.js` · `js/status.js` · `js/weather.js` · `vessel.html` · `sql/setup_supabase*.sql` · `scripts/collect_*.py` · `scripts/upload_berth_sql_parts.py`
 
 ---
 
@@ -24,7 +24,7 @@ Authorization: Bearer <publishable key>
 Content-Type: application/json     (POST일 때)
 ```
 
-단, Edge Function `track`·`datago`는 `verify_jwt=false`로 배포되어 `js/cargo.js`·`js/vessel.js`가 **헤더 없이** 직접 `fetch`한다.
+단, Edge Function `track`·`datago`·`carrier-track`·`bl-watch`·`notify-bl`은 `verify_jwt=false`로 배포되어 `js/cargo.js`·`js/vessel.js`·수집 스크립트가 **헤더 없이** 직접 `fetch`한다. 인증이 필요한 `bl-watch`는 Supabase JWT 대신 **앱 세션 토큰을 본문/쿼리로 받아 서버에서 `app_me` RPC 로 검증**한다(§2.5).
 
 **권한 모델 (RLS)**
 
@@ -37,7 +37,8 @@ Content-Type: application/json     (POST일 때)
 
 ## 2. Edge Functions
 
-배포된 함수 3종: `track`(유니패스) · `send-code`(인증코드) · `datago`(data.go.kr 프록시).
+배포된 함수 **6종**: `track`(유니패스) · `send-code`(인증코드) · `datago`(data.go.kr 프록시) · `carrier-track`(선사 직접조회) · `bl-watch`(B/L 감시 등록) · `notify-bl`(변경 알림 메일).
+전부 `verify_jwt=false` 이며, 6종 모두 CORS `Access-Control-Allow-Origin: *` + `OPTIONS` 프리플라이트를 처리한다.
 
 ### 2.1 `GET /functions/v1/track` — 관세청 유니패스 화물통관진행정보 프록시
 
@@ -169,6 +170,143 @@ POST /functions/v1/send-code
 ```
 GET https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/datago?api=portmis&clsgn=<호출부호>&prtAgCd=<항만코드>&sde=20260801&ede=20260803
 ```
+
+### 2.4 `GET /functions/v1/carrier-track` — 선사 직접 화물추적 프록시 (2026-08-11 신설 · ZIM 개통 2026-08-18)
+
+- 배포 옵션: `verify_jwt=false`, CORS `*`, 허용 메서드 `GET, OPTIONS`
+- 시크릿 의존: **무키 5사는 없음**(선사 공개 백엔드 JSON/HTML 사용). DCSA 계열은 키가 등록된 선사만 활성 — `ZIM_API_KEY`+`ZIM_CLIENT_ID`+`ZIM_CLIENT_SECRET`(등록 완료), `HMM_API_KEY` · `MAERSK_CONSUMER_KEY`(+`MAERSK_CLIENT_ID`/`MAERSK_CLIENT_SECRET`) · `HLAG_CLIENT_ID`/`HLAG_CLIENT_SECRET` · `CMACGM_API_KEY`(미등록)
+- 지원 정책: `CARRIERS` 레지스트리에 등록되고 `ready()` 를 통과한 선사만 실조회하고, 그 외는 `supported:false` + 딥링크를 돌려준다(개방 프록시 방지 — `datago` 화이트리스트와 같은 사상). **키 등록만으로 다음 호출부터 live 로 승격**되며 화면·함수 재배포가 필요 없다.
+
+**요청 파라미터**
+
+| 파라미터 | 필수 | 설명 |
+|---|---|---|
+| `api` | 선택 | `list` 지정 시 조회 대신 **선사 목록**을 반환(다른 파라미터 무시) |
+| `no` | 필수 | B/L 번호 — 영숫자 외 제거 후 **8~20자**. 위반 시 400 |
+| `carrier` | 선택 | SCAC 4자. 생략하면 번호 프리픽스로 자동 감지(긴 프리픽스 우선, SITC 는 3자 `SIT` 특례) |
+
+**응답 — `?api=list`** (화면·`bl-watch` 가 선사 목록의 단일 원천으로 사용)
+
+```json
+{ "live":     [ { "scac": "ONEY", "name": "ONE (Ocean Network Express)", "source": "ecomm.one-line.com" } ],
+  "pending":  [ { "scac": "HDMU", "name": "HMM", "note": "API 키 등록 대기" } ],
+  "deeplink": [ { "scac": "MSCU", "name": "MSC" } ] }
+```
+
+**응답 — 조회**
+
+| 케이스 | HTTP | 본문 |
+|---|---|---|
+| 번호 형식 오류 | 400 | `{"error": "B/L 번호 형식이 아닙니다 (영숫자 8~20자)."}` |
+| live 미지원(딥링크 폴백) | 200 | `{"carrier","carrierName","supported": false, "query":{"no"}, "deeplink": {"name","url"}}` — `url` 은 조회번호가 붙은 완성형 |
+| 정상 조회 | 200 | `{"carrier","carrierName","supported": true, "query":{"no"}, "summary":{…}, "voyages":[…], "containers":[…], "fetchedAt","source"}` |
+| 조회 결과 없음 | 200 | `{"supported": true, "error": "조회 결과가 없습니다 — 번호·선사를 확인하십시오.", "upstream": "<업스트림 원문>"}` |
+| 업스트림 지연·오류 | 200 | `{"supported": true, "error": "선사 서버 응답이 지연되고 있습니다 — 잠시 후 다시 시도하십시오."}` (타임아웃 외에는 "조회에 실패했습니다") |
+| GET 외 메서드 | 405 | `{"error": "method"}` |
+| 그 밖의 예외 | 502 | `{"error": "조회 실패: …"}` |
+
+> **어댑터 실패를 200으로 돌려주는 이유**: 화면은 실패해도 딥링크·안내를 그려야 하므로, 전송 계층 실패(502)와 **조회 계층 실패(200 + `error`)를 구분**한다. 호출자는 HTTP 상태가 아니라 `error` 필드 유무로 판정할 것.
+
+**정규화 응답 계약** — 레거시 KLNET `FMS_API_*` 3레벨 구조를 계승한다.
+
+| 레벨 | 필드 | 내용 |
+|---|---|---|
+| BL | `summary` | `blNo` · `por` · `pod` · `vessel` · `voyage`(선사에 따라 `bookingNo`·`place` 추가) — `FMS_API_MST` 상당 |
+| 항차 | `voyages[]` | `{vessel, voyage, pol:{name,date,actual}, pod:{name,date,actual}}` — `FMS_API_TS` 상당. **N구간**(레거시의 2구간 절단 제약은 계승하지 않음) |
+| 컨테이너 | `containers[]` | `{cntrNo, szTp, latest:{name,location,timeLocal}, events:[…], eventsSynthesized?}` — `FMS_API_CNTR` 상당 |
+| 이벤트 | `containers[].events[]` | `{name, location, yard?, timeLocal, timeUtc?, actual}` — **`timeLocal`(항만 현지시각)이 기본 표시값**, `timeUtc` 는 보조. `actual` 은 실적/예정 구분. `"0"`·null 시각은 미발생으로 보고 필드를 생략한다(레거시 규약) |
+
+- `eventsSynthesized:true` 는 선사가 컨테이너 게이트 이벤트를 주지 않아 **본선 구간(출항·입항)으로 합성**했다는 표시다(COSCO). 화면은 이 경우 "(본선 구간 기준)" 을 덧붙인다.
+- 시각을 UTC 로 변환하지 않는다 — 선사가 주는 현지시각을 임의 변환하면 값이 왜곡되므로 문자열 원문을 그대로 전달하고, 표시 단계에서만 해석한다.
+
+**호출 예시** (`js/cargo.js` — 헤더 없음)
+
+```
+GET https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/carrier-track?no=ONEYSELG97346400
+GET https://kvmyiualdodcvreoqfin.supabase.co/functions/v1/carrier-track?api=list
+```
+
+### 2.5 `GET|POST /functions/v1/bl-watch` — B/L 자동 감시 등록·해제·목록 (2026-08-11 신설 · 계정별 독립 2026-08-19)
+
+- 배포 옵션: `verify_jwt=false`, CORS `*`, 허용 메서드 `GET, POST, OPTIONS`
+- 시크릿 의존: `SUPABASE_URL`·`SUPABASE_SERVICE_ROLE_KEY`(자동 주입). 정적 사이트는 RLS 로 `bl_watch` 쓰기가 불가하므로 이 함수가 service_role 로 대행한다.
+- **인증**: 모든 호출이 앱 세션 토큰을 싣고, 함수가 `POST /rest/v1/rpc/app_me` 로 **서버에서 신원을 검증**한다(§3.2). 클라이언트가 보낸 `created_by` 는 신뢰하지 않는다.
+
+| 역할 | 조회 범위 | 쓰기 범위 |
+|---|---|---|
+| 일반 사용자 | 자기 등록분(`created_by=<본인>`)만 | 자기 등록분만 |
+| 관리자(`role=admin`) | 전체 | 전체 |
+| 비로그인·위조 토큰 | 빈 목록 + `needLogin:true` | 401 |
+
+**요청 — GET**
+
+| `action` | 파라미터 | 응답 |
+|---|---|---|
+| `list`(기본) | `token` · `q`(B/L 부분일치) · `carrier`(SCAC) · `active`(`all`\|`on`\|`off`) | `{total, me, admin, items:[…]}` — 각 item 은 `bl_watch` 행 + `mine`(내 등록분 여부) + `snapshot`(최신 `bl_snapshot` 1건) + `changes`(최근 변경 5건). 최대 2000행 |
+| `detail` | `token` · `no` | `{mbl_no, changes:[…최근 50건], snapshots:[…최근 20건]}`. 소유자 목록에 없고 관리자도 아니면 403 |
+| `carriers` | (토큰 불요) | `carrier-track?api=list` 를 그대로 프록시(8초 타임아웃, 실패 시에만 내장 목록 폴백) — **선사 목록을 두 곳에 하드코딩하지 않기 위함** |
+
+**요청 — POST** (본문 JSON, 공통 필드 `action`·`token`)
+
+| `action` | 본문 | 동작·응답 |
+|---|---|---|
+| `add` | `mbl_no` · `carrier?` · `notify_email?` · `memo?`(200자) · `term_months`(3\|6, 기본 3) | 등록/갱신 후 `{ok:true, item}`. 지원하지 않는 선사면 400 |
+| `bulk` | `rows:[{mbl_no, term_months?, notify_email?, memo?}]` (**최대 500건**) + 상위 기본값 `term_months`·`notify_email` | `{ok:true, added, failed, results:[{mbl_no, ok, error?}]}` — 실패 사유는 `번호 형식 오류`·`중복`·`지원하지 않는 선사` |
+| `remove` | `mbl_no` | 소유 검사 후 `active=false`. 대상이 없으면 403 `내가 등록한 화물이 아니거나 이미 해제되었습니다.` |
+| `notify` | `mbl_no` · `notify_email`(빈 문자열이면 해제) | 알림 수신 주소만 변경 — 목록에서 바로 고치기 위한 액션이라 B/L 재조회가 필요 없다 |
+
+**등록 규칙(코드 실측)**
+
+- `mbl_no`: 영숫자 외 제거 후 대문자화, `^[A-Z0-9]{8,20}$` 위반 시 400.
+- 선사 감지: `SIT` 3자 특례 후 앞 4자 SCAC. **`LIVE`(실조회 6사: ONEY·COSU·SMLM·EGLV·SITC·**ZIMU**) 또는 `DEEPLINK` 목록에 없으면 등록 자체가 거부**된다.
+- 저장은 `on_conflict=mbl_no,created_by` upsert — **`bl_watch` 의 유일성은 (B/L, 계정) 복합키**이므로 같은 B/L 을 여러 계정이 각자 감시할 수 있다(2026-08-19 변경 전에는 `mbl_no` 단독 unique 라 나중 등록자가 남의 행을 덮어썼다).
+- `expires_at` = 등록 시각 + `term_months`. 수집기가 이 시각을 지나면 조회 없이 `active=false` 로 자동 해제한다.
+
+| 오류 | HTTP | 본문 |
+|---|---|---|
+| 토큰 없음·만료 (POST) | 401 | `{"error": "로그인이 필요합니다."}` |
+| 소유자 아님 | 403 | `{"error": "내가 등록한 화물이 아닙니다."}` 등 |
+| 번호 형식 | 400 | `{"error": "B/L 번호 형식이 아닙니다 (영숫자 8~20자)."}` |
+| 미지원 선사 | 400 | `{"error": "지원하지 않는 선사입니다 — 번호에서 선사를 식별하지 못했습니다."}` |
+| 알 수 없는 action | 400 | `{"error": "unknown action"}` |
+| GET/POST 외 | 405 | `{"error": "method"}` |
+
+```
+GET  /functions/v1/bl-watch?action=list&token=<세션토큰>&active=on
+POST /functions/v1/bl-watch     { "action": "add", "token": "<세션토큰>",
+                                  "mbl_no": "ZIMUSEL71219430", "term_months": 6,
+                                  "notify_email": "itt@twsc.co.kr" }
+```
+
+### 2.6 `POST /functions/v1/notify-bl` — 스케줄 변경 알림 메일 (2026-08-11 신설)
+
+- 배포 옵션: `verify_jwt=false`, CORS `*`, 허용 메서드 `POST, OPTIONS`
+- 시크릿 의존: `SMTP_HOST`, `SMTP_PORT`(기본 465), `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` — `send-code` 와 공유
+- 호출자: 수집기 ⑧ `collect_bl_watch.py`(변경 감지 시) · ⑨ `canary_carriers.py`(이상 감지 시). 화면은 호출하지 않는다.
+
+**요청 본문**
+
+| 필드 | 필수 | 설명 |
+|---|---|---|
+| `email` | 필수 | 수신 주소(형식 검증) |
+| `mbl_no` | 필수 | 식별자 — 제목·본문·딥링크에 사용 |
+| `changes` | 필수 | `[{kind, field, old, new}]` — **빈 배열이면 400**(보낼 내용이 없는 메일 방지) |
+| `carrier`·`vessel`·`voyage`·`por`·`pod`·`status` | 선택 | 요약 표에 표시 |
+| `subject`·`intro`·`label` | 선택 | 제목·안내문·식별자 라벨 override(2026-08-14 추가) — B/L 스케줄 변경이 아닌 카나리아 점검 알림이 같은 발송 경로를 쓰되 고정 문구가 오해를 부르지 않게 하기 위함. 미지정이면 기존 문구 그대로 |
+
+| 케이스 | HTTP | 본문 |
+|---|---|---|
+| 정상 | 200 | `{"ok": true, "sent": <changes 건수>}` |
+| 이메일 형식 오류 | 400 | `{"error": "invalid email"}` |
+| `mbl_no` 누락 | 400 | `{"error": "mbl_no required"}` |
+| 변경 0건 | 400 | `{"error": "no changes"}` |
+| POST 외 메서드 | 405 | `{"error": "method"}` |
+| SMTP 미설정 | 503 | `{"error": "SMTP not configured"}` |
+| 발송 예외 | 500 | `{"error": "<예외 문자열>"}` |
+
+> **본문은 ASCII 전용이다.** denomailer 가 비Latin1 문자를 btoa 로 인코딩하다 실패하는 제약(`send-code` 에서 확인)이 있어, 한국어 필드명·상태값을 영문으로 매핑(`ETD (departure)`·`Loaded on vessel` 등)하고 접두 매핑으로 동적 문자열("터미널 접안(ETB) - BCT")까지 처리한 뒤, **남은 비ASCII 문자는 제거**해 어떤 값이 와도 인코딩이 깨지지 않게 한다. 새 알림 종류를 추가할 때 한국어 라벨을 그대로 넘기면 메일에서 글자가 사라지므로 매핑을 함께 등록할 것.
+
+메일의 "Open Cargo Tracking" 버튼은 `cargo.html?no=<B/L>` 딥링크이며, 화면이 이 파라미터를 받아 즉시 조회를 실행한다.
 
 ---
 

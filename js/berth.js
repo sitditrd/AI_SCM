@@ -785,6 +785,69 @@
 
   function icCard(html) { return '<div class="card reveal in">' + html + '</div>'; }
 
+  /* ---------- 상류(data.go.kr) 결과코드 판독 (2026-08-20) ----------
+     왜 필요한가: datago Edge Function 은 XML 을 정상 파싱한 경로에서 error 필드를 만들지 않는다.
+     상류가 "정상 XML" 본문 안에 오류코드를 담아 보내면 res.error 는 undefined 가 되어,
+     아래 빈 결과 분기의 원인 표시가 한 번도 켜진 적이 없는 죽은 코드였다.
+     Edge Function 은 이번 담당 범위가 아니므로 프론트가 응답 헤더를 직접 읽어 원인을 복구한다.
+     (js/vessel.js 에 같은 판독기가 있다 — 두 파일은 각자 IIFE 라 스코프를 공유할 수 없어 의도적으로 중복 유지) */
+  var DG_REASON = {
+    NO_MANDATORY_REQUEST_PARAMETERS: '필수 조회 조건이 빠졌습니다',
+    INVALID_REQUEST_PARAMETER: '조회 조건이 상류 규격에 맞지 않습니다',
+    SERVICE_KEY_IS_NOT_REGISTERED: '공공데이터 인증키가 등록되지 않았습니다',
+    DEADLINE_HAS_EXPIRED: '공공데이터 인증키 활용기간이 만료되었습니다',
+    LIMITED_NUMBER_OF_SERVICE_REQUESTS: '일일 호출 한도를 초과했습니다',
+    SERVICE_ACCESS_DENIED: '해당 서비스 접근 권한이 없습니다',
+    UNREGISTERED_IP: '등록되지 않은 IP 에서의 호출입니다',
+    NO_OPENAPI_SERVICE: '제공기관에 해당 서비스가 없습니다',
+    SERVICE_TIMEOUT: '제공기관 응답이 지연되고 있습니다',
+    APPLICATION_ERROR: '제공기관 시스템 오류입니다',
+    HTTP_ERROR: '제공기관 통신 오류입니다'
+  };
+
+  /* 헤더 위치가 두 갈래다: 정상 계열은 response.header, 인증키 오류 계열은 cmmMsgHeader */
+  function dgHeader(o, depth) {
+    if (o == null || typeof o !== 'object' || depth > 5) return null;
+    if (o.resultMsg != null || o.resultCode != null || o.returnAuthMsg != null || o.errMsg != null) return o;
+    for (var k in o) {
+      var f = dgHeader(o[k], depth + 1);
+      if (f) return f;
+    }
+    return null;
+  }
+
+  function dgWhy(res) {
+    if (!res) return '';
+    if (res.error) return String(res.error);   /* 기존 경로 유지 — raw/HTTP 실패는 그대로 살린다 */
+    var h = res.data ? dgHeader(res.data, 0) : null;
+    if (!h) return '';
+    var msg = String(h.resultMsg != null ? h.resultMsg : (h.returnAuthMsg != null ? h.returnAuthMsg : (h.errMsg || ''))).trim();
+    var code = String(h.resultCode != null ? h.resultCode : (h.returnReasonCode != null ? h.returnReasonCode : '')).trim();
+    /* 인천항만공사는 "NORMAL SERVICE." 를 쓴다 — 상류 정상이고 진짜 0건이라 원인이 아니다 */
+    if (/NORMAL/i.test(msg) && !/ERROR/i.test(msg)) return '';
+    if (!msg && (code === '' || code === '0' || code === '00')) return '';
+    var key = msg.toUpperCase().replace(/[\s.]+/g, '_');
+    for (var k in DG_REASON) {
+      if (key.indexOf(k) > -1) return DG_REASON[k] + ' [' + (code || '-') + ' ' + msg + ']';
+    }
+    return msg ? msg + (code ? ' [' + code + ']' : '') : '상류 오류 코드 ' + code;
+  }
+
+  function dgTotal(res) {
+    var b = res && res.data && res.data.response && res.data.response.body;
+    var n = b ? b.totalCount : null;
+    return (n == null || n === '') ? null : n;
+  }
+
+  /* 빈 결과 카드 꼬리말 — 원인이 있으면 원인, 없으면 '상류 정상 · N건'.
+     '조회가 실패한 것'과 '그 기간에 실적이 없는 것'을 구분해 주는 게 핵심이다. */
+  function dgNote(res) {
+    var why = dgWhy(res);
+    if (why) return ' — ' + esc(why);
+    var tc = dgTotal(res);
+    return tc == null ? '' : ' — ' + t('br.ic.ok0', '상류 정상 응답 · 총 ') + esc(tc) + t('br.ic.unit', '건');
+  }
+
   function icItems(o, depth) {
     /* XML→JSON 변환분은 결과가 1건일 때 items.item 이 배열이 아니라 객체로 온다 → 배열 정규화 */
     if (depth > 6 || o == null) return null;
@@ -851,8 +914,9 @@
         }
         var items = res.data ? icItems(res.data, 0) : null;
         if (!items || !items.length) {
-          var extra = res.error ? ' (' + esc(res.error) + ')' : '';
-          out.innerHTML = icCard('<div class="sc-sub">' + t('br.ic.noresult', '조회 결과가 없습니다. 조건(기간·호출부호)을 바꿔 다시 시도하십시오.') + extra + '</div>');
+          /* res.error 만 보던 자리 — 상류가 정상 XML 로 오류를 실어 보내면 그 값이 늘 undefined 라
+             사용자는 원인이 지워진 '결과 없음'만 봤다. dgNote 가 응답 헤더까지 읽어 원인을 되살린다. */
+          out.innerHTML = icCard('<div class="sc-sub">' + t('br.ic.noresult', '조회 결과가 없습니다. 조건(기간·호출부호)을 바꿔 다시 시도하십시오.') + dgNote(res) + '</div>');
           return;
         }
         items = items.slice(0, 30).sort(function (a, b) {
@@ -885,13 +949,18 @@
   document.addEventListener('DOMContentLoaded', function () {
     var btn = el('icBtn');
     if (!btn) return;
-    /* 기본 조회 구간: 오늘 ~ 3일 후 (KST 기준 로컬 날짜) */
+    /* 기본 조회 구간: 오늘-3일 ~ 오늘 (KST 기준 로컬 날짜).
+       왜 과거 쪽인가: 인천항만공사는 입출항을 '실적'으로 사후 공표한다 — 앞으로의 날짜에는 자료가 없다.
+       실측(2026-08-20): 오늘~+3일 = 0건 / 어제~오늘 = 9건 / 3일전~오늘 = 25건.
+       종전의 '오늘 ~ +3일' 기본값은 999행에서 즉시 조회를 걸기 때문에, 페이지를 열면
+       패널이 항상 '조회 결과가 없습니다'로 시작해 기능이 죽은 것처럼 보였다.
+       기간 입력칸은 그대로라 사용자가 미래 구간으로 바꿔 보는 것은 여전히 가능하다. */
     function ymd(d) {
       return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
     }
     var t = new Date();
-    el('icFrom').value = ymd(t);
-    el('icTo').value = ymd(new Date(t.getTime() + 3 * 86400000));
+    el('icFrom').value = ymd(new Date(t.getTime() - 3 * 86400000));
+    el('icTo').value = ymd(t);
     btn.addEventListener('click', icSearch);
     ['icFrom', 'icTo', 'icCall'].forEach(function (id) {
       el(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') icSearch(); });
