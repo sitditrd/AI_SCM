@@ -59,7 +59,9 @@
     var a = document.getElementById('acctBtn');
     if (!a) { a = document.createElement('a'); a.id = 'acctBtn'; a.className = 'acct-btn'; host.appendChild(a); }
     if (authed) {
-      a.textContent = ti('auth.logout', '로그아웃') + (name ? ' · ' + name : '');
+      /* 버튼은 로그인/로그아웃 상태만 구분하면 된다. 사용자 이름을 붙이던 것을 제거했다
+         — display_name 이 '이름 / 부서명' 이라 헤더 행을 밀어내 레이아웃이 깨졌다(2026-08-20) */
+      a.textContent = ti('auth.logout', '로그아웃');
       a.href = 'javascript:void(0)'; a.title = ti('auth.logout', '로그아웃');
       a.onclick = function () { TWAUTH.logout().then(function () { location.reload(); }); };
     } else {
