@@ -13,6 +13,7 @@
     initHeroCanvas();
     initClocks();
     initHeroTyping();
+    settleHero();
     initCounters();
   });
 
@@ -48,6 +49,16 @@
   /* ── 스캔 리빌 무장 (시안 16 방식 — 2026-08-19 사용자: 바가 우측으로 쓸고 가며 글씨가 드러나는 연출) ──
      h1 내용을 .srw 로 감싸고 광선 바(.srb)를 붙인 뒤 .sr-armed 로 점화.
      클립·바 애니는 전부 CSS 동기. reduced-motion·JS 미동작·언어 전환 = 정적 완성형 */
+  /* 등장 연출 확정 안전망 — heroIn 은 opacity 0 에서 시작하므로 CSS 애니메이션이
+     돌지 못하는 환경에서는 부제·CTA·하단 독이 영영 안 보인다. 연출은 2.9s 에 끝나므로
+     3.5s 에 최종 상태를 확정해도 보이는 차이가 없다(2026-08-20, 헤드라인 sr-done 과 같은 취지) */
+  function settleHero() {
+    setTimeout(function () {
+      var hero = document.querySelector('.hero-ops');
+      if (hero) hero.classList.add('hero-settled');
+    }, 3500);
+  }
+
   function initHeroTyping() {
     var h1 = document.querySelector('.hero-ops .hud-brief h1');
     if (!h1) return;

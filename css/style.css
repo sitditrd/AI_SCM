@@ -1637,6 +1637,10 @@ table.trk-tbl td .na { color: var(--muted); }
 .hero-inner > :nth-child(8) { animation-delay: .88s; }
 .hero-inner > :nth-child(9) { animation-delay: .96s; }
 @keyframes heroIn { to { opacity: 1; transform: none; filter: none; } }
+/* 확정 상태 — JS 가 3.5s 에 .hero-settled 부여. 애니가 못 돈 환경에서도 본문은 반드시 보인다.
+   animation 은 건드리지 않는다(악센트 지속 셔머 등 무한 연출을 죽이면 후퇴다) */
+.hero-ops.hero-settled .hud-brief > *,
+.hero-ops.hero-settled .hud-dock { opacity: 1; transform: none; filter: none; }
 .hero-canvas { opacity: 1; z-index: 0; }
 
 /* 운영 규모 스탯 밴드 */
