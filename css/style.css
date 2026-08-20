@@ -1816,8 +1816,11 @@ table.trk-tbl td .na { color: var(--muted); }
 .hud-brief {
   /* JS 가 left/top 을 넣기 전 첫 프레임 기본값 — 넣은 뒤에는 그 값이 이긴다 */
   position: absolute; left: 62%; top: 58%; transform: translate(-50%, -50%);
-  width: min(780px, calc(100% - 52px));
-  max-width: 780px; padding: 0; text-align: right; margin: 0;   /* 카드 폐기 후 남아 있던 여백 — 블록을 낮춰 더 아래 해역으로 내린다 */
+  /* 폭은 글에 맞춘다(2026-08-20). 780px 고정이던 시절엔 좌측 정렬한 아이브로우가
+     본문보다 140px 왼쪽에 홀로 떠 동아시아 위에 얹혔다 — max-content 로 블록이 글을 감싸면
+     아이브로우가 본문 좌측 라인에 정확히 맞고, 지도를 덮는 면적도 줄어든다 */
+  width: max-content;
+  max-width: min(680px, calc(100% - 52px)); padding: 0; text-align: right; margin: 0;
   /* 면(面) 계열 전면 폐기(2026-08-19 최종) — 판·박스·레이어 전부 촌스러움 판정.
      글자 뒤 지도 자체를 아웃포커스: 마스크 페더링된 백드롭 블러라 어떤 명도에서도
      사각 실루엣이 생기지 않는다. 색은 얇은 틴트만(마스크와 함께 소멸) */
@@ -1839,7 +1842,7 @@ table.trk-tbl td .na { color: var(--muted); }
 .hero-ops .hero-eyebrow { text-shadow: 0 1px 10px rgba(4, 8, 20, .9); }
 /* 카드 내부 타이포 — 좌측 정렬 */
 .hero-ops h1 { position: relative; font-size: clamp(36px, 2.9vw, 56px); margin: 10px 0 14px; line-height: 1.24; }
-.hero-ops .hero-sub { font-size: 15.5px; margin: 0 0 18px auto; max-width: 640px; line-height: 1.7; text-wrap: balance; word-break: keep-all; }
+.hero-ops .hero-sub { font-size: 15.5px; margin: 0 0 18px auto; max-width: 560px; line-height: 1.7; text-wrap: balance; word-break: keep-all; }
 .hero-ops .hero-note { margin-top: 12px; font-size: 12px; opacity: .85; }
 
 /* ── 스캔 리빌 (시안 16 방식 — 2026-08-19 사용자: "바가 우측으로 넘어가며 글씨가 드러나는 것") ──
@@ -1880,6 +1883,11 @@ h1.sr-armed .accent::after {
 @keyframes accFill { to { clip-path: inset(-10% -3% -10% 0); } }
 /* 채움 완료 후 확정 상태 — JS 가 3.2s 에 sr-done 부여. 애니가 어떤 이유로든 못 돌아도
    최종은 반드시 선명한 그라데이션(미지원 브라우저는 원래 파랑) */
+/* 클립 해제 안전망 — srReveal 이 돌지 못한 환경(애니 미지원·프레임 정지)에서
+   .srw 가 inset(...100%...) 에 갇혀 헤드라인이 통째로 사라지는 사고를 막는다.
+   정상 재생 시엔 1.95s 에 이미 끝나 있어 보이는 차이는 없다(2026-08-20) */
+h1.sr-done .srw { clip-path: none; animation: none; }
+h1.sr-done .srb { display: none; }
 h1.sr-done .accent { color: #7cb5f5; }
 h1.sr-done .accent::after { content: none; }
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
@@ -1960,7 +1968,9 @@ h1.sr-done .accent::after { content: none; }
 .hero-ops .btn-ghost { color: rgba(235, 242, 252, .85); border-color: rgba(255, 255, 255, .2); }
 
 
-.hero-ops .hero-eyebrow { color: #cfe0f5; }
+/* 문구 블록은 우측 정렬이지만 아이브로우 배지만 좌측에 붙인다(2026-08-20 사용자 지정).
+   블록 레벨 + width:max-content + margin-right:auto 조합이라 텍스트 정렬과 무관하게 왼쪽에 선다 */
+.hero-ops .hero-eyebrow { color: #cfe0f5; display: flex; width: max-content; margin: 0 auto 0 0; }
 .hero-ops .hero-eyebrow, .hero-ops .hero-eyebrow * { border-color: rgba(255, 255, 255, .16); }
 
 /* 히어로 밖 지표 스트립 — 테마 토큰으로(다크 전용 글래스 금지).
@@ -2363,3 +2373,26 @@ h1.sr-done .accent::after { content: none; }
   .site-nav a { padding: 8px 6px; }
   .header-inner { column-gap: 8px; }
 }
+
+/* ===== 히어로 거점 툴팁 (2026-08-20) =====
+   지도 마커에 마우스를 올리면 그 도시의 태웅 법인·설립연도·주요사업을 보여준다.
+   히어로는 테마 무관 항상 다크라 색은 고정값으로 둔다. */
+.hero-ops .site-tip {
+  position: absolute; z-index: 7; pointer-events: none;
+  max-width: 300px; padding: 10px 13px 11px; border-radius: 11px;
+  background: rgba(8, 13, 26, .95);
+  border: 1px solid rgba(255, 180, 79, .32);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .55);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  opacity: 0; transform: translateY(4px); transition: opacity .16s ease, transform .16s ease;
+  color: #eaf1fb; line-height: 1.5;
+}
+.hero-ops .site-tip.on { opacity: 1; transform: none; }
+.site-tip .st-h { font-size: 13px; font-weight: 700; letter-spacing: .01em; display: flex; align-items: center; gap: 6px; }
+.site-tip .st-h span { font-size: 11px; font-weight: 500; color: #9db8dd; }
+.site-tip .st-hq { font-style: normal; font-size: 9.5px; font-weight: 700; letter-spacing: .1em; color: #ff9d8f; border: 1px solid rgba(255, 106, 92, .5); border-radius: 20px; padding: 1px 6px; }
+.site-tip .st-l { list-style: none; margin: 7px 0 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.site-tip .st-l li { font-size: 12px; color: #ffd79a; }
+.site-tip .st-l li b { font-weight: 600; color: #9db8dd; font-variant-numeric: tabular-nums; }
+.site-tip .st-b { margin-top: 7px; padding-top: 6px; border-top: 1px solid rgba(233, 238, 248, .1); font-size: 11.5px; color: #9db8dd; }
+@media (max-width: 900px) { .hero-ops .site-tip { display: none; } }

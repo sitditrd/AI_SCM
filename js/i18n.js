@@ -873,6 +873,7 @@
       'wx.period': '파주기',
       'wx.wind': '풍속',
       'wx.gust': '돌풍',
+      'site.hq': '본사',
       /* --- 브라우저 탭 제목 (2026-08-20) — 키가 없어 구절 안전망만 걸려 반쪽 번역되던 것 --- */
       'pg.title.index': 'TWL Control Tower — 태웅로직스 물류 관제',
       'pg.title.insight': 'Port Insight — 항만 혼잡도 대시보드 | TWL Control Tower',
@@ -1744,6 +1745,7 @@
       'wx.period': 'Wave period',
       'wx.wind': 'Wind',
       'wx.gust': 'Gust',
+      'site.hq': 'HQ',
       /* --- 브라우저 탭 제목 (2026-08-20) — 키가 없어 구절 안전망만 걸려 반쪽 번역되던 것 --- */
       'pg.title.index': 'TWL Control Tower — Taewoong Logistics',
       'pg.title.insight': 'Port Insight — Port Congestion Dashboard | TWL Control Tower',
@@ -2613,6 +2615,7 @@
       'wx.period': '波周期',
       'wx.wind': '风速',
       'wx.gust': '阵风',
+      'site.hq': '总部',
       /* --- 브라우저 탭 제목 (2026-08-20) — 키가 없어 구절 안전망만 걸려 반쪽 번역되던 것 --- */
       'pg.title.index': 'TWL Control Tower — 泰雄物流管制中心',
       'pg.title.insight': 'Port Insight — 港口拥堵仪表板 | TWL Control Tower',

@@ -428,30 +428,58 @@
        원천: '태웅로직스, 계열사 설립일_v2.xlsx' 해외법인 21건을 도시 단위로 합쳤다
        (중국 3거점·우즈베키스탄/카자흐스탄 각 2법인은 도시가 같아 1개 핀). */
     var TWL_SITES = [
-      [37.50, 127.03, 1],   /* 서울 — 서초 본사 + 역삼 지사 (세계 지도 축척에서 두 곳은 같은 점이라 1개로 통합) */
-      [35.08, 129.05, 1],   /* 부산 센텀 — 본사 등기지·세중종합물류 */
-      [35.10, 128.68, 0],   /* 창원 진해 — 태웅물류센터·티앤씨부산 */
-      [35.68, 139.77, 0],   /* 도쿄 */
-      [31.23, 121.49, 0],   /* 상하이 */
-      [36.07, 120.38, 0],   /* 칭다오 */
-      [22.54, 114.06, 0],   /* 선전 */
-      [10.78, 106.70, 0],   /* 호치민 */
-      [1.49, 103.74, 0],    /* 조호바루 */
-      [-6.21, 106.85, 0],   /* 자카르타 */
-      [41.31, 69.24, 0],    /* 타슈켄트 */
-      [43.24, 76.89, 0],    /* 알마티 */
-      [55.75, 37.62, 0],    /* 모스크바 */
-      [41.01, 28.98, 0],    /* 이스탄불 */
-      [47.50, 19.04, 0],    /* 부다페스트 */
-      [45.81, 15.98, 0],    /* 자그레브 */
-      [50.14, 8.57, 0],     /* 에슈보른(프랑크푸르트) */
-      [41.35, 2.16, 0],     /* 바르셀로나 */
-      [34.03, -84.20, 0],   /* 애틀랜타 */
-      [4.71, -74.07, 0],    /* 보고타 */
-      [-33.45, -70.67, 0],  /* 산티아고 */
-      [-34.60, -58.38, 0]   /* 부에노스아이레스 */
+      /* [위도, 경도, 본사여부, 도시, 국가, [[법인명, 설립연도], ...], 주요사업, 지도표기 약칭] */
+      [37.50, 127.03, 1, '서울', '대한민국', [['㈜태웅로직스 본사 (서초)', 1996], ['역삼 지사', null]], '복합화물운송주선업', 'TWL SEOUL'],
+      [35.08, 129.05, 1, '부산', '대한민국', [['㈜태웅로직스 (센텀)', 1996], ['㈜세중종합물류', 1997]], '운송주선업·화물운송업', 'TWL BUSAN'],
+      [35.10, 128.68, 0, '창원 진해', '대한민국', [['㈜태웅물류센터', 2021], ['㈜티앤씨부산', 2025]], '물류관련서비스', 'TWL JINHAE'],
+      [35.68, 139.77, 0, '도쿄', '일본', [['TGL JAPAN CO., LTD.', 2007]], '복합운송주선업', 'TGL JAPAN'],
+      [31.23, 121.49, 0, '상하이', '중국', [['TGL Shanghai Co., Ltd.', 2009]], '운송주선업', 'TGL SHANGHAI'],
+      [36.07, 120.38, 0, '칭다오', '중국', [['TGL Shanghai — Qingdao Branch', 2011]], '운송주선업', 'TGL QINGDAO'],
+      [22.54, 114.06, 0, '선전', '중국', [['TGL Shanghai — Shenzhen Branch', 2011]], '운송주선업', 'TGL SHENZHEN'],
+      [10.78, 106.70, 0, '호치민', '베트남', [['TAEWOONG GLOBAL LOGISTICS VIETNAM', 2022]], '운송주선업', 'TGL VIETNAM'],
+      [1.49, 103.74, 0, '조호바루', '말레이시아', [['Taewoong Global Logistics Sdn. Bhd.', 2011]], '운송주선업', 'TGL MALAYSIA'],
+      [-6.21, 106.85, 0, '자카르타', '인도네시아', [['PT. TGL INDONESIA LOGISTICS', 2021]], '운송주선업', 'TGL JAKARTA'],
+      [41.31, 69.24, 0, '타슈켄트', '우즈베키스탄', [['FE Taewoong LLC', 2019], ['FE D2C INT TRADING LLC', 2015]], '운송주선업·창고임대업', 'TGL UZBEK'],
+      [43.24, 76.89, 0, '알마티', '카자흐스탄', [['TGL KAZ LOGISTICS', 2020], ['TGL KAZ LOGISTICS CENTER', 2025]], '운송주선업·창고임대업', 'TGL KAZ'],
+      [55.75, 37.62, 0, '모스크바', '러시아', [['TGL RUS LLC', 2015]], '운송주선업', 'TGL RUS'],
+      [41.01, 28.98, 0, '이스탄불', '튀르키예', [['TGL TURKEY LOJISTIK VE TICARET', 2025]], '운송주선업', 'TGL TURKEY'],
+      [47.50, 19.04, 0, '부다페스트', '헝가리', [['TGL HUNGARY KFT', 2018]], '운송주선업', 'TGL HUNGARY'],
+      [45.81, 15.98, 0, '자그레브', '크로아티아', [['LA TRANS D.O.O.', 1993]], '운송주선업', 'LA TRANS'],
+      [50.14, 8.57, 0, '프랑크푸르트', '독일', [['TAEWOONG LOGISTICS GERMANY GMBH', 2023]], '운송주선업', 'TGL GERMANY'],
+      [41.35, 2.16, 0, '바르셀로나', '스페인', [['TGL S. Europe S.L.U', 2022]], '운송주선업', 'TGL SPAIN'],
+      [34.03, -84.20, 0, '애틀랜타', '미국', [['TGL USA INC.', 2021]], '운송주선업', 'TGL USA'],
+      [4.71, -74.07, 0, '보고타', '콜롬비아', [['TGL Colombia Ltda.', 2010]], '운송주선업', 'TGL COLOMBIA'],
+      [-33.45, -70.67, 0, '산티아고', '칠레', [['TGL S. A.', 2011]], '운송주선업', 'TGL CHILE'],
+      [-34.60, -58.38, 0, '부에노스아이레스', '아르헨티나', [['TGL ARGENTINA S.A.U.', 2024]], '운송주선업', 'TGL ARG']
     ];
+    var siteHits = [];        /* 프레임마다 갱신되는 히트박스 — 호버 판정용 */
+    var siteLabelBoxes = [];  /* 이번 프레임에 실제로 찍힌 라벨 사각형 — 충돌 회피·항만 라벨 금지구역 겸용 */
+    var siteLogoBoxes = [];   /* 로고가 차지한 사각형 — 라벨이 남의 로고를 덮지 않게 */
+    var pendLabels = [];      /* 라벨 후보 — 로고 배치가 끝난 뒤 한 번에 판정한다 */
+    function boxHits(c, arr) {
+      for (var q = 0; q < arr.length; q++) {
+        var o = arr[q];
+        if (c.l < o.r && c.r > o.l && c.t < o.b && c.b > o.t) return true;
+      }
+      return false;
+    }
+    var hoverSite = -1;
+
+    /* 지도에 얹을 짧은 라벨 — 법인 정식명은 툴팁이 보여주고, 지도에는 알아볼 최소 단위만 */
+    /* 지도 표기 약칭 — 정식 법인명은 툴팁이 보여준다. 길면 자른다(2026-08-20 사용자: "너무 라벨명이 길면 짤라"). */
+    var TAG_MAX = 12;
+    function siteTag(st0) {
+      var tg = st0[7] || (st0[5] && st0[5][0] ? st0[5][0][0] : '');
+      tg = String(tg).toUpperCase();
+      return tg.length > TAG_MAX ? tg.slice(0, TAG_MAX - 1) + '…' : tg;
+    }
     var lights = null, lightTry = 0, lightAt = 0;
+
+    /* 거점 마커용 태웅 심볼 — 캔버스에 그대로 띄운다(2026-08-20 사용자 요청:
+       '계열사·지사인지 알아볼 수 있게 로고를 띄워달라'). 로드 실패해도 아래 폴백 도형이 그린다. */
+    var siteLogo = new Image(), siteLogoOk = false;
+    siteLogo.onload = function () { siteLogoOk = true; };
+    siteLogo.src = 'assets/twl_symbol.png';
     function ensureLights(now) {
       if (lights || lightTry > 14 || (now - lightAt) < 900) return;
       lightAt = now; lightTry++;
@@ -755,41 +783,121 @@
         ctx.globalAlpha = 1;
       }
 
-      /* 태웅 거점 핀 — 살짝 떠 있고 그림자가 함께 줄었다 늘었다 하며 부유감을 준다.
-         3D 모델 대신 부양 + 접지 그림자만으로 입체를 만든다(과하지 않게, 2026-08-20) */
+      /* 태웅 거점 마커 — 앵커점에서 빔이 올라가고 그 위에 회사 로고 + 법인 약칭 라벨이 떠 있다.
+         부양 높이에 따라 접지 그림자가 커졌다 작아져 입체로 읽힌다(3D 모델 없이 부양+그림자만).
+         siteHits 에 좌표를 남겨 마우스 호버 툴팁이 같은 위치를 집는다. */
+      siteHits.length = 0;
+      siteLabelBoxes.length = 0;
+      siteLogoBoxes.length = 0;
+      ctx.font = '600 9.5px Pretendard Variable, sans-serif';
+      try { ctx.letterSpacing = '0.4px'; } catch (e) { /* 미지원 */ }
+      ctx.textAlign = 'center';
       for (var si = 0; si < TWL_SITES.length; si++) {
         var st0 = TWL_SITES[si], hq = st0[2] === 1;
         var sp = project(st0[0], st0[1]);
         var sx = sp.x + ox, sy = sp.y + oy;
-        if (sx < -14 || sx > W + 14 || sy < -14 || sy > H + 14) continue;
-        var qz = (briefBox && sx > briefBox.l - 10 && sx < briefBox.r + 10 &&
-                  sy > briefBox.t - 8 && sy < briefBox.b + 8) ? 0.25 : 1;
-        var bob = reduced ? 3.2 : 3.2 + Math.sin(now / 1450 + si * 0.9) * 1.8;   /* 부양 높이 */
-        var r0 = hq ? 4.2 : 3.1;
-        /* 접지 그림자 — 높이 오를수록 작고 옅게 */
+        if (sx < -40 || sx > W + 40 || sy < -46 || sy > H + 30) continue;
+        var qz = (briefBox && sx > briefBox.l - 12 && sx < briefBox.r + 12 &&
+                  sy > briefBox.t - 10 && sy < briefBox.b + 10) ? 0.2 : 1;
+        var hov = (hoverSite === si);
+        var lift = hq ? 19 : 15;
+        var bob = reduced ? lift : lift + Math.sin(now / 1500 + si * 0.85) * 2.2;
+        if (hov) bob += 3;                                   /* 호버 시 살짝 더 떠오른다 */
+        var lw = (hq ? 21 : 15) * (hov ? 1.18 : 1);
+        var lh = lw * (siteLogo.height || 27) / (siteLogo.width || 28);
+        var cy = sy - bob - lh / 2;
+
         ctx.save();
-        ctx.globalAlpha = 0.30 * qz * (1 - (bob - 1.4) / 12);
-        ctx.fillStyle = '#02060f';
-        ctx.beginPath(); ctx.ellipse(sx, sy + 1.5, r0 * 1.25, r0 * 0.45, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 0.34 * qz * (1 - (bob - lift + 2.2) / 14);
+        ctx.fillStyle = '#01040c';
+        ctx.beginPath(); ctx.ellipse(sx, sy + 1, lw * 0.34, lw * 0.13, 0, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
-        /* 핀 본체 — 브랜드 컬러 물방울 + 흰 코어 */
+
         ctx.save();
-        ctx.translate(sx, sy - bob);
-        ctx.shadowColor = rgba(hq ? '#ff5a4d' : '#5ac8ff', 0.9);
-        ctx.shadowBlur = hq ? 13 : 9;
-        ctx.beginPath();
-        ctx.moveTo(0, r0 * 1.5);
-        ctx.quadraticCurveTo(-r0, r0 * 0.2, -r0 * 0.72, -r0 * 0.45);
-        ctx.arc(0, -r0 * 0.45, r0 * 0.72, Math.PI, 0);
-        ctx.quadraticCurveTo(r0, r0 * 0.2, 0, r0 * 1.5);
-        ctx.closePath();
-        ctx.fillStyle = hq ? '#ff5a4d' : '#4fc3ff';
-        ctx.globalAlpha = 0.95 * qz;
-        ctx.fill();
-        ctx.beginPath(); ctx.arc(0, -r0 * 0.45, r0 * 0.3, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.9 * qz; ctx.fill();
+        ctx.globalAlpha = (hov ? 0.75 : 0.5) * qz;
+        var beam = ctx.createLinearGradient(sx, sy, sx, cy);
+        /* 지도의 항만 라벨은 흰색, 항로는 시안이다. 태웅 거점은 따뜻한 골드(본사는 브랜드 레드)로
+           계열을 완전히 갈라 '우리 조직'임이 한눈에 구분되게 한다(2026-08-20 사용자 지적) */
+        beam.addColorStop(0, rgba(hq ? '#ff6a5c' : '#ffb44f', 0.6));
+        beam.addColorStop(1, rgba(hq ? '#ff6a5c' : '#ffb44f', 0));
+        ctx.strokeStyle = beam; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx, cy + lh * 0.35); ctx.stroke();
+        ctx.beginPath(); ctx.arc(sx, sy, hq ? 2.1 : 1.6, 0, Math.PI * 2);
+        ctx.fillStyle = hq ? '#ff6a5c' : '#ffb44f'; ctx.globalAlpha = 0.9 * qz; ctx.fill();
         ctx.restore();
+
+        ctx.save();
+        ctx.globalAlpha = qz;
+        var halo = ctx.createRadialGradient(sx, cy, 0, sx, cy, lw * (hov ? 1.15 : 0.95));
+        halo.addColorStop(0, rgba(hq ? '#ff6a5c' : '#ffb44f', hov ? 0.45 : 0.32));
+        halo.addColorStop(1, rgba(hq ? '#ff6a5c' : '#ffb44f', 0));
+        ctx.fillStyle = halo;
+        ctx.beginPath(); ctx.arc(sx, cy, lw * (hov ? 1.15 : 0.95), 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+
+        ctx.save();
+        ctx.globalAlpha = (hq ? 1 : 0.95) * qz;
+        if (siteLogoOk) {
+          ctx.shadowColor = 'rgba(2,6,16,.85)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 1;
+          ctx.drawImage(siteLogo, sx - lw / 2, cy - lh / 2, lw, lh);
+        } else {
+          ctx.beginPath(); ctx.arc(sx, cy, lw * 0.3, 0, Math.PI * 2);
+          ctx.fillStyle = hq ? '#ff5a4d' : '#ffb44f'; ctx.fill();
+        }
+        ctx.restore();
+        siteLogoBoxes.push({ l: sx - lw / 2 - 2, r: sx + lw / 2 + 2, t: cy - lh / 2 - 2, b: cy + lh / 2 + 2 });
+
+        /* 라벨은 자기 로고 '바로 위'에만 놓는다. 예전엔 자리가 막히면 위아래로 비켜 세웠는데,
+           서울·부산·진해처럼 붙어 있는 곳에서 라벨이 옆 마커 위로 올라가 어느 법인인지
+           거꾸로 헷갈리게 만들었다(2026-08-20). 자리가 없으면 접고 호버 툴팁에 맡긴다. */
+        var tag = siteTag(st0);
+        var tw0 = ctx.measureText(tag).width;
+        pendLabels.push({
+          si: si, hq: hq, qz: qz, hov: hov, tag: tag, w: tw0,
+          mx: sx, my: sy, cy: cy, lw: lw, lh: lh
+        });
       }
+
+      /* 라벨 판정 — 로고가 전부 자리를 잡은 뒤라야 '남의 로고를 덮는지'를 볼 수 있다.
+         본사가 배열 앞이라 자연히 우선권을 갖는다. 호버 중인 곳은 무조건 보여준다. */
+      for (var pl = 0; pl < pendLabels.length; pl++) {
+        var L = pendLabels[pl];
+        /* 후보는 셋 다 '자기 로고에 붙은' 자리다 — 위 → 오른쪽 → 왼쪽.
+           위아래로 멀리 밀지 않으므로 옆 마커의 이름으로 오독될 여지가 없다. */
+        var cands = [
+          { x: L.mx, y: L.cy - L.lh / 2 - 5 },
+          { x: L.mx + L.lw / 2 + 5 + L.w / 2, y: L.cy + 3 },
+          { x: L.mx - L.lw / 2 - 5 - L.w / 2, y: L.cy + 3 }
+        ];
+        var put = null;
+        for (var ci = 0; ci < cands.length; ci++) {
+          var cx = Math.min(Math.max(cands[ci].x, 6 + L.w / 2), W - 6 - L.w / 2), cyy = cands[ci].y;
+          var bx = { l: cx - L.w / 2 - 3, r: cx + L.w / 2 + 3, t: cyy - 9, b: cyy + 3 };
+          if (!boxHits(bx, siteLabelBoxes) && !boxHits(bx, siteLogoBoxes)) { put = { x: cx, y: cyy, box: bx }; break; }
+        }
+        if (!put && L.hov) {
+          var hx = Math.min(Math.max(L.mx, 6 + L.w / 2), W - 6 - L.w / 2);
+          put = { x: hx, y: L.cy - L.lh / 2 - 5, box: { l: hx - L.w / 2 - 3, r: hx + L.w / 2 + 3, t: L.cy - L.lh / 2 - 14, b: L.cy - L.lh / 2 - 2 } };
+        }
+        if (!put) {
+          siteHits.push({ i: L.si, x: L.mx, t: L.cy - L.lh, b: L.my + 6, w: Math.max(34, L.lw + 8) });
+          continue;
+        }
+        ctx.save();
+        ctx.globalAlpha = (L.hov ? 1 : 0.9) * L.qz;
+        ctx.shadowColor = 'rgba(2,6,16,.95)'; ctx.shadowBlur = 5;
+        ctx.fillStyle = L.hq ? '#ffc9bf' : '#ffd79a';   /* 항만 라벨(흰색)과 대비되는 웜 톤 */
+        ctx.fillText(L.tag, put.x, put.y);
+        ctx.restore();
+        siteLabelBoxes.push(put.box);
+        siteHits.push({
+          i: L.si, x: (L.mx + put.x) / 2,
+          t: Math.min(put.box.t, L.cy - L.lh) - 2, b: L.my + 6,
+          w: Math.max(34, L.lw + 8, Math.abs(put.x - L.mx) * 2 + L.w + 8)
+        });
+      }
+      pendLabels.length = 0;
+      ctx.textAlign = 'start';
       ctx.globalAlpha = 1;
 
       /* 부산 파문 — 타이핑 완료 순간 1회 확산 */
@@ -819,6 +927,10 @@
           : (px > W - kR - 790 && px < W - kR + 60 && py > H * 0.14 && py < H * 0.68);
         /* 좌상단 시계 HUD 구역 — 라벨(ROTTERDAM 등)과 겹침 방지 */
         inText = inText || (px > W - 250 && py < H * 0.34);
+        /* 태웅 거점 라벨·로고와의 충돌 — 거점이 우선이므로 항만은 점만 찍는다(2026-08-20).
+           라벨이 접힌 자리에도 로고는 남아 있으므로 로고 박스까지 함께 피한다(BUSAN 겹침 사고) */
+        var pbox = { l: px - 4, r: px + 4 + pd[2].length * 7, t: py - 8, b: py + 8 };
+        inText = inText || boxHits(pbox, siteLabelBoxes) || boxHits(pbox, siteLogoBoxes);
         var inStrip = py > H * 0.585 && px > W * 0.18 && px < W * 0.82;
         var quiet = inText || inStrip;
         if (pd[3]) {
@@ -857,6 +969,51 @@
     }
     /* 마우스 패럴랙스 제거 — 지도가 커서 따라 흔들려 어지럽다는 지적(2026-08-19).
        mouse 는 (0,0) 고정 — 혜성·흐름 등 자체 모션은 그대로 */
+    /* 거점 호버 툴팁 (2026-08-20) — 지도 위 마커가 어느 법인인지 라벨만으로는 부족해
+       설립연도·주요사업까지 보여준다. 지도는 움직이지 않는다(히트 판정만 한다). */
+    (function () {
+      var host = canvas.parentElement;
+      var tip = document.createElement('div');
+      tip.className = 'site-tip'; tip.setAttribute('aria-hidden', 'true');
+      host.appendChild(tip);
+
+      function hide() {
+        if (hoverSite !== -1) { hoverSite = -1; host.style.cursor = ''; }
+        tip.classList.remove('on');
+      }
+      host.addEventListener('mouseleave', hide);
+      host.addEventListener('mousemove', function (e) {
+        var r = host.getBoundingClientRect();
+        var mx = e.clientX - r.left, my = e.clientY - r.top;
+        var found = -1;
+        for (var i = 0; i < siteHits.length; i++) {
+          var h = siteHits[i];
+          if (mx > h.x - h.w / 2 && mx < h.x + h.w / 2 && my > h.t && my < h.b) { found = h.i; break; }
+        }
+        if (found < 0) { hide(); return; }
+        if (found !== hoverSite) {
+          hoverSite = found;
+          host.style.cursor = 'help';
+          var st0 = TWL_SITES[found];
+          var rows = st0[5].map(function (c) {
+            return '<li>' + esc(c[0]) + (c[1] ? ' <b>' + c[1] + '</b>' : '') + '</li>';
+          }).join('');
+          tip.innerHTML =
+            '<div class="st-h">' + esc(st0[3]) + ' <span>' + esc(st0[4]) + '</span>' +
+            (st0[2] === 1 ? '<i class="st-hq">' + t('site.hq', '본사') + '</i>' : '') + '</div>' +
+            '<ul class="st-l">' + rows + '</ul>' +
+            '<div class="st-b">' + esc(st0[6]) + '</div>';
+          tip.classList.add('on');
+        }
+        var tw = tip.offsetWidth || 200, th = tip.offsetHeight || 70;
+        var tx = Math.min(Math.max(mx + 16, 8), (r.width - tw - 8));
+        var ty = my - th - 14;
+        if (ty < 8) ty = my + 20;
+        tip.style.left = Math.round(tx) + 'px';
+        tip.style.top = Math.round(ty) + 'px';
+      });
+    })();
+
     var lastW = 0, lastH = 0, roT = null;
     function sizeChanged() {
       var r = canvas.parentElement.getBoundingClientRect();
