@@ -1803,10 +1803,10 @@ table.trk-tbl td .na { color: var(--muted); }
    폭 분기 없음: 1440이든 3440이든 같은 그림 */
 .hero-ops .hero-hud {
   position: absolute; inset: 0;
-  display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
-  /* 문구 우측 배치(2026-08-19 사용자·제안 합의) — 좌측~중앙에 유럽→아시아→부산 허브 개방,
-     시선 흐름(좌→우)이 지도 먼저, 문구로 끝난다 */
-  padding: 40px 22px 218px;
+  /* 배치는 CSS 가 아니라 지도 투영이 정한다 — js/landing.js 의 placeBrief() 가
+     남태평양 좌표를 투영해 left/top 을 픽셀로 지정한다(2026-08-20).
+     flex 중앙정렬을 쓰면 해상도마다 문구가 대륙 위로 올라타 지도를 가렸다. */
+  display: block; padding: 0;
 }
 .hud-brief { position: relative; z-index: 5; }
 /* 중앙 유리 카드 — "뒤가 transparent 라 어색" 지적으로 표면 복원(2026-08-19).
@@ -1814,8 +1814,10 @@ table.trk-tbl td .na { color: var(--muted); }
 /* 텍스트 레이어 = 0장(2026-08-19 최종) — 블롭도 결국 실루엣이 생긴다.
    가독은 캔버스 도트 감광(경계 없음) + 깊은 텍스트 섭도우가 전담 */
 .hud-brief {
-  max-width: 780px; padding: 36px 44px 34px; text-align: right;
-  margin-right: max(0px, calc(50% - 600px));
+  /* JS 가 left/top 을 넣기 전 첫 프레임 기본값 — 넣은 뒤에는 그 값이 이긴다 */
+  position: absolute; left: 62%; top: 58%; transform: translate(-50%, -50%);
+  width: min(780px, calc(100% - 52px));
+  max-width: 780px; padding: 0; text-align: right; margin: 0;   /* 카드 폐기 후 남아 있던 여백 — 블록을 낮춰 더 아래 해역으로 내린다 */
   /* 면(面) 계열 전면 폐기(2026-08-19 최종) — 판·박스·레이어 전부 촌스러움 판정.
      글자 뒤 지도 자체를 아웃포커스: 마스크 페더링된 백드롭 블러라 어떤 명도에서도
      사각 실루엣이 생기지 않는다. 색은 얇은 틴트만(마스크와 함께 소멸) */
@@ -1836,9 +1838,9 @@ table.trk-tbl td .na { color: var(--muted); }
 .hero-ops .hero-sub, .hero-ops .hero-note { text-shadow: 0 1px 2px rgba(4, 8, 20, .95), 0 1px 16px rgba(4, 8, 20, .85); }
 .hero-ops .hero-eyebrow { text-shadow: 0 1px 10px rgba(4, 8, 20, .9); }
 /* 카드 내부 타이포 — 좌측 정렬 */
-.hero-ops h1 { position: relative; font-size: clamp(36px, 2.9vw, 56px); margin: 14px 0 18px; line-height: 1.26; }
-.hero-ops .hero-sub { font-size: 15.5px; margin: 0 0 24px auto; max-width: 640px; line-height: 1.75; text-wrap: balance; word-break: keep-all; }
-.hero-ops .hero-note { margin-top: 18px; font-size: 12px; opacity: .85; }
+.hero-ops h1 { position: relative; font-size: clamp(36px, 2.9vw, 56px); margin: 10px 0 14px; line-height: 1.24; }
+.hero-ops .hero-sub { font-size: 15.5px; margin: 0 0 18px auto; max-width: 640px; line-height: 1.7; text-wrap: balance; word-break: keep-all; }
+.hero-ops .hero-note { margin-top: 12px; font-size: 12px; opacity: .85; }
 
 /* ── 스캔 리빌 (시안 16 방식 — 2026-08-19 사용자: "바가 우측으로 넘어가며 글씨가 드러나는 것") ──
    두 줄을 관통하는 광선 바가 좌→우로 한 번 쓸고, 그 뒤로 텍스트가 드러난다.
@@ -1921,7 +1923,10 @@ h1.sr-done .accent::after { content: none; }
   .hero-ops { min-height: 0; }
   /* 모바일은 문서 흐름으로 복귀(absolute면 히어로 높이가 0으로 붕괴) — 중앙 정렬 타이포는 유지 */
   .hero-ops .hero-hud { position: static; display: block; padding: 96px 0 0; }
-  .hud-brief { max-width: 100%; padding: 22px 20px; margin: 0 auto; text-align: left; }
+  /* 모바일은 문서 흐름 — placeBrief() 도 이 폭에서는 인라인 좌표를 지우지만,
+     전환 순간을 대비해 CSS 로도 절대배치를 확실히 해제한다 */
+  .hud-brief { position: static; transform: none; width: auto; max-width: 100%;
+               padding: 22px 20px; margin: 0 auto; text-align: left; }
   .hero-ops .hero-ctas { justify-content: flex-start; }
   .hero-ops .hero-sub { margin: 0 0 24px; }
   .hero-ops h1 { font-size: 30px; }

@@ -414,11 +414,94 @@
     }
     function yOfLat(lat) { return 92 + ((90 - lat) / 180) * mH * 1.42 - mH * 0.12; }
 
+    /* 히어로 문구를 지도의 '지리 좌표'에 앵커링한다(2026-08-20 사용자 요청).
+       CSS 만으로는 해상도가 바뀔 때 문구가 대륙 위로 올라타는데, 투영식을 그대로 써서
+       남태평양(대륙이 없는 해역) 좌표에 붙이면 어떤 해상도에서도 같은 바다 위에 앉는다. */
+    var HUD_ANCHOR = { lat: -8, lng: -158 };
+
+    /* 살아있는 항만 등불 (2026-08-20) — 장식용 점이 아니라 데이터가 곧 조명이다.
+       Port Insight 가 매일 산출하는 중점 항만 93곳의 실제 혼잡 등급으로 색을 정하고,
+       혼잡할수록 빠르게 맥동한다. 지도를 보는 것만으로 '지금 어디가 막혔는지'가 읽힌다. */
+    var LIGHT_COL = { LOW: '#3ad18a', STABLE: '#f2c14e', BUSY: '#ff9a5b', CONGESTED: '#ff6b6b' };
+
+    /* 태웅 글로벌 네트워크 (2026-08-20) — 본사 + 해외법인 소재 도시.
+       원천: '태웅로직스, 계열사 설립일_v2.xlsx' 해외법인 21건을 도시 단위로 합쳤다
+       (중국 3거점·우즈베키스탄/카자흐스탄 각 2법인은 도시가 같아 1개 핀). */
+    var TWL_SITES = [
+      [37.50, 127.03, 1],   /* 서울 — 서초 본사 + 역삼 지사 (세계 지도 축척에서 두 곳은 같은 점이라 1개로 통합) */
+      [35.08, 129.05, 1],   /* 부산 센텀 — 본사 등기지·세중종합물류 */
+      [35.10, 128.68, 0],   /* 창원 진해 — 태웅물류센터·티앤씨부산 */
+      [35.68, 139.77, 0],   /* 도쿄 */
+      [31.23, 121.49, 0],   /* 상하이 */
+      [36.07, 120.38, 0],   /* 칭다오 */
+      [22.54, 114.06, 0],   /* 선전 */
+      [10.78, 106.70, 0],   /* 호치민 */
+      [1.49, 103.74, 0],    /* 조호바루 */
+      [-6.21, 106.85, 0],   /* 자카르타 */
+      [41.31, 69.24, 0],    /* 타슈켄트 */
+      [43.24, 76.89, 0],    /* 알마티 */
+      [55.75, 37.62, 0],    /* 모스크바 */
+      [41.01, 28.98, 0],    /* 이스탄불 */
+      [47.50, 19.04, 0],    /* 부다페스트 */
+      [45.81, 15.98, 0],    /* 자그레브 */
+      [50.14, 8.57, 0],     /* 에슈보른(프랑크푸르트) */
+      [41.35, 2.16, 0],     /* 바르셀로나 */
+      [34.03, -84.20, 0],   /* 애틀랜타 */
+      [4.71, -74.07, 0],    /* 보고타 */
+      [-33.45, -70.67, 0],  /* 산티아고 */
+      [-34.60, -58.38, 0]   /* 부에노스아이레스 */
+    ];
+    var lights = null, lightTry = 0, lightAt = 0;
+    function ensureLights(now) {
+      if (lights || lightTry > 14 || (now - lightAt) < 900) return;
+      lightAt = now; lightTry++;
+      try {
+        var st = window.TWDATA && window.TWDATA.getState && window.TWDATA.getState(0);
+        var ps = st && st.ports;
+        if (ps && ps.length) {
+          lights = ps.filter(function (p) { return isFinite(p.lat) && isFinite(p.lng); })
+            .map(function (p, i) {
+              return { lat: p.lat, lng: p.lng, lv: p.level || 'LOW', ph: (i * 2.3999) % 6.2832 };
+            });
+        }
+      } catch (e) { /* 데이터 계층이 아직 준비 전 — 다음 프레임에 재시도 */ }
+    }
+    var briefBox = null;      /* 배치 결과 사각형 — 라벨 금지구역이 이걸 그대로 쓴다 */
+
     var mapLayer = null, stars = [], routes = [], hub = null;
     /* 타이핑 완료 신호 — 부산 허브에서 파문 1회(관제망 접속 연출) */
     var heroPing = 0;
     window.addEventListener('twl:herotyped', function () { if (!reduced) heroPing = 1; });
     var mouse = { tx: 0, ty: 0, x: 0, y: 0 };
+
+    /* 문구 블록을 앵커 좌표에 놓되, 헤더·독·화면 밖으로는 절대 나가지 않게 가둔다.
+       (좌표계는 캔버스와 동일 — 둘 다 .hero-ops 기준 절대배치) */
+    function placeBrief() {
+      var brief = document.querySelector('.hero-ops .hud-brief');
+      if (!brief || W < 10 || H < 10) return;
+      if (window.matchMedia('(max-width: 900px)').matches) {
+        brief.style.left = ''; brief.style.top = '';   /* 모바일은 문서 흐름으로 되돌림 */
+        briefBox = null;
+        return;
+      }
+      var bw = brief.offsetWidth, bh = brief.offsetHeight;
+      if (!bw || !bh) return;
+      var p = HUD_ANCHOR_PT();
+      /* 하단 여유는 독 실제 높이 + 여백만 남긴다 — 값이 크면 문구가 대륙 위로 밀려 올라간다
+         (2026-08-20 사용자: '지도를 가리지 않을 만큼 내려라') */
+      var dockEl = document.querySelector('.hero-ops .hud-dock');
+      var dockH = dockEl ? dockEl.getBoundingClientRect().height : 150;
+      var padX = 26, keepTop = 96, keepBottom = Math.max(120, dockH + 16);
+      var x = Math.min(Math.max(p.x, padX + bw / 2), W - padX - bw / 2);
+      var y = Math.min(Math.max(p.y, keepTop + bh / 2), H - keepBottom - bh / 2);
+      brief.style.left = Math.round(x) + 'px';
+      brief.style.top = Math.round(y) + 'px';
+      briefBox = { l: x - bw / 2, r: x + bw / 2, t: y - bh / 2, b: y + bh / 2 };
+    }
+    function HUD_ANCHOR_PT() { return project(HUD_ANCHOR.lat, HUD_ANCHOR.lng); }
+
+    /* 언어를 바꾸면 문장 길이가 달라져 블록 크기가 변한다 → 재배치 */
+    window.addEventListener('twl:langchange', function () { setTimeout(placeBrief, 60); });
 
     function resize() {
       var r = canvas.parentElement.getBoundingClientRect();
@@ -428,6 +511,7 @@
       canvas.width = W * dpr; canvas.height = H * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       mH = Math.max(360, Math.min((H * 0.92 - 92) / 1.03, W * 0.42));
+      placeBrief();          /* 지도 재계산 직후 문구도 같은 좌표계로 다시 앉힌다 */
       buildMap(dpr);
       buildRoutes();
       drawFrame(performance.now());
@@ -645,6 +729,69 @@
       ctx.restore();
       ctx.globalAlpha = 1;
 
+      /* 항만 등불 — 혼잡 등급별 색·맥동. 문구 뒤에서는 눈에 거슬리지 않게 낮춘다 */
+      ensureLights(now);
+      if (lights) {
+        for (var li = 0; li < lights.length; li++) {
+          var lg = lights[li];
+          var lp = project(lg.lat, lg.lng);
+          var lx = lp.x + ox, ly = lp.y + oy;
+          if (lx < -8 || lx > W + 8 || ly < -8 || ly > H + 8) continue;
+          var hot = lg.lv === 'CONGESTED' || lg.lv === 'BUSY';
+          var beat = reduced ? 0.72
+            : 0.5 + 0.5 * (Math.sin(now / (hot ? 780 : 1600) + lg.ph) + 1) / 2;
+          var quietL = (briefBox && lx > briefBox.l - 10 && lx < briefBox.r + 10 &&
+                        ly > briefBox.t - 8 && ly < briefBox.b + 8) ? 0.22 : 1;
+          var cc = LIGHT_COL[lg.lv] || LIGHT_COL.LOW;
+          ctx.save();
+          ctx.shadowColor = rgba(cc, 0.85); ctx.shadowBlur = (hot ? 9 : 6) * beat;
+          ctx.beginPath();
+          ctx.arc(lx, ly, (hot ? 1.9 : 1.5) + beat * 0.7, 0, Math.PI * 2);
+          ctx.fillStyle = cc;
+          ctx.globalAlpha = (hot ? 0.85 : 0.6) * beat * quietL;
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      /* 태웅 거점 핀 — 살짝 떠 있고 그림자가 함께 줄었다 늘었다 하며 부유감을 준다.
+         3D 모델 대신 부양 + 접지 그림자만으로 입체를 만든다(과하지 않게, 2026-08-20) */
+      for (var si = 0; si < TWL_SITES.length; si++) {
+        var st0 = TWL_SITES[si], hq = st0[2] === 1;
+        var sp = project(st0[0], st0[1]);
+        var sx = sp.x + ox, sy = sp.y + oy;
+        if (sx < -14 || sx > W + 14 || sy < -14 || sy > H + 14) continue;
+        var qz = (briefBox && sx > briefBox.l - 10 && sx < briefBox.r + 10 &&
+                  sy > briefBox.t - 8 && sy < briefBox.b + 8) ? 0.25 : 1;
+        var bob = reduced ? 3.2 : 3.2 + Math.sin(now / 1450 + si * 0.9) * 1.8;   /* 부양 높이 */
+        var r0 = hq ? 4.2 : 3.1;
+        /* 접지 그림자 — 높이 오를수록 작고 옅게 */
+        ctx.save();
+        ctx.globalAlpha = 0.30 * qz * (1 - (bob - 1.4) / 12);
+        ctx.fillStyle = '#02060f';
+        ctx.beginPath(); ctx.ellipse(sx, sy + 1.5, r0 * 1.25, r0 * 0.45, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+        /* 핀 본체 — 브랜드 컬러 물방울 + 흰 코어 */
+        ctx.save();
+        ctx.translate(sx, sy - bob);
+        ctx.shadowColor = rgba(hq ? '#ff5a4d' : '#5ac8ff', 0.9);
+        ctx.shadowBlur = hq ? 13 : 9;
+        ctx.beginPath();
+        ctx.moveTo(0, r0 * 1.5);
+        ctx.quadraticCurveTo(-r0, r0 * 0.2, -r0 * 0.72, -r0 * 0.45);
+        ctx.arc(0, -r0 * 0.45, r0 * 0.72, Math.PI, 0);
+        ctx.quadraticCurveTo(r0, r0 * 0.2, 0, r0 * 1.5);
+        ctx.closePath();
+        ctx.fillStyle = hq ? '#ff5a4d' : '#4fc3ff';
+        ctx.globalAlpha = 0.95 * qz;
+        ctx.fill();
+        ctx.beginPath(); ctx.arc(0, -r0 * 0.45, r0 * 0.3, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.9 * qz; ctx.fill();
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+
       /* 부산 파문 — 타이핑 완료 순간 1회 확산 */
       if (heroPing > 0.02 && hub) {
         var pgR = (1 - heroPing) * 130;
@@ -666,7 +813,10 @@
         var px = pp.x + ox, py = pp.y + oy;
         if (px < -20 || px > W + 20) continue;
         var kR = Math.max(0, (W - 1200) / 2);
-        var inText = px > W - kR - 790 && px < W - kR + 60 && py > H * 0.14 && py < H * 0.68;
+        /* 문구 실제 위치를 그대로 금지구역으로 쓴다(앵커 배치라 폭마다 위치가 달라진다) */
+        var inText = briefBox
+          ? (px > briefBox.l - 18 && px < briefBox.r + 18 && py > briefBox.t - 12 && py < briefBox.b + 12)
+          : (px > W - kR - 790 && px < W - kR + 60 && py > H * 0.14 && py < H * 0.68);
         /* 좌상단 시계 HUD 구역 — 라벨(ROTTERDAM 등)과 겹침 방지 */
         inText = inText || (px > W - 250 && py < H * 0.34);
         var inStrip = py > H * 0.585 && px > W * 0.18 && px < W * 0.82;
