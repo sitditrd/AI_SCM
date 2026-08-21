@@ -1318,7 +1318,7 @@
       return;
     }
     renderDeeplink(t('cg.dl.noCarrier', '선사 미감지'), null, null,
-      t('cg.dl.noCarrierNote', '번호에서 선사를 식별하지 못했습니다. 실조회 지원: ONE·COSCO·SM상선·Evergreen·SITC·ZIM(키 등록 시 머스크·하파그로이드·HMM 자동 확장) / 그 외 선사는 딥링크. 번호를 확인하거나 아래 무료 조회 채널을 이용하십시오.'));
+      t('cg.dl.noCarrierNote', '번호에서 선사를 식별하지 못했습니다. 실조회 지원: ONE·COSCO·SM상선·Evergreen·SITC·ZIM·하파그로이드(키 등록 시 머스크·HMM 자동 확장) / 그 외 선사는 딥링크. 번호를 확인하거나 아래 무료 조회 채널을 이용하십시오.'));
   }
 
   document.addEventListener('DOMContentLoaded', function () {
