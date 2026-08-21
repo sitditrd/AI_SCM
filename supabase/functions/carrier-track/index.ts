@@ -604,16 +604,31 @@ function dcsaParse(no: string, raw: unknown): Record<string, unknown> {
    번호 후보가 복수인 이유: 선사별 B/L 표기 관행이 달라서다(머스크는 숫자 9자리, 하파그는 HLCU 포함). */
 async function dcsaFetch(carrier: string, candidates: string[], urlOfs: Array<(bl: string) => string>, headers: Record<string, string>): Promise<Record<string, unknown>> {
   let last: Record<string, unknown> = { empty: true, upstream: "No data" };
-  let authFail = 0;
+  let authFail = 0, forbidden = 0;
+  /* 게이트웨이가 왜 거부했는지 흔적을 남긴다 — 2026-08-21 하파그 개통 때
+     401·403·400·500 이 전부 "조회 결과가 없습니다" 로 뭉개져 원인 추적에 시간을 썼다.
+     본문의 moreInformation/message 를 그대로 실어 다음 사고 때는 바로 보이게 한다. */
+  let detail = "";
+  async function why(r: Response): Promise<string> {
+    try {
+      const t = (await r.text()).slice(0, 400);
+      const m = /"(?:moreInformation|message|detail|error_description)"\s*:\s*"([^"]{1,200})"/i.exec(t);
+      return m ? m[1] : t.replace(/\s+/g, " ").slice(0, 160);
+    } catch { return ""; }
+  }
   for (const urlOf of urlOfs) {
     let denied = false;
     for (const bl of candidates) {
       const r = await fetch(urlOf(bl), { headers: { "User-Agent": UA, Accept: "application/json", ...headers }, signal: AbortSignal.timeout(15000) });
-      if (r.status === 401 || r.status === 403) { denied = true; break; }   // 자격 불일치 — 다음 엔드포인트
+      if (r.status === 401) { denied = true; detail = detail || await why(r); break; }  // 자격 불일치 — 다음 엔드포인트
+      /* 403 은 자격이 아니라 '그 화물을 볼 권한이 없다' 일 수 있다(하파그 스펙에 401 과 별도 정의).
+         401 과 같이 묶으면 "타사 부킹 건은 안 보인다"는 사실을 "키가 안 먹는다"로 오독한다. */
+      if (r.status === 403) { forbidden++; detail = detail || await why(r); continue; }
       if (r.status === 429) return { empty: true, upstream: `${carrier} API 호출 제한(429) — 잠시 후 다시 시도하십시오.` };
       if (r.status === 404) { last = { empty: true, upstream: "No data (404)" }; continue; }
+      if (!r.ok) { last = { empty: true, upstream: `${carrier} HTTP ${r.status}${(detail = await why(r)) ? " — " + detail : ""}` }; continue; }
       const d = await r.json().catch(() => null);
-      if (!d) continue;
+      if (!d) { last = { empty: true, upstream: `${carrier} HTTP ${r.status} — 응답 본문 없음/파싱 불가` }; continue; }
       const parsed = dcsaParse(bl, d);
       if (!parsed.empty) return parsed;
       last = parsed;
@@ -621,7 +636,10 @@ async function dcsaFetch(carrier: string, candidates: string[], urlOfs: Array<(b
     if (denied) authFail++;
   }
   if (authFail && authFail === urlOfs.length) {
-    return { empty: true, upstream: `조회 제한: ${carrier} API 인증 실패 — Supabase Secrets 의 키 상태와 구독 승인 여부를 확인하십시오.` };
+    return { empty: true, upstream: `조회 제한: ${carrier} API 인증 실패 — Supabase Secrets 의 키 상태와 구독 승인 여부를 확인하십시오.${detail ? " (" + detail + ")" : ""}` };
+  }
+  if (forbidden) {
+    return { empty: true, upstream: `${carrier} 조회 권한 없음(403) — 당사 부킹 건이 아닐 수 있습니다.${detail ? " (" + detail + ")" : ""}` };
   }
   return last;
 }
@@ -682,9 +700,30 @@ async function trackCMA(no: string) {
     { keyId: Deno.env.get("CMACGM_API_KEY") ?? "" });
 }
 
+/* 하파그로이드 — 2026-08-21 키 등록 후 실호출로 교정.
+   ★ 경로에 /external 이 빠져 있었다. 현행 스펙 servers = api.hlag.com/hlag/external/v2/events 인데
+     우리는 /hlag/v2/events 를 때리고 있었다. 두 경로 다 게이트웨이에 등록돼 있어 **똑같이 401**
+     ("Invalid client id or secret") 을 돌려주는 바람에 키 문제로 오진하기 딱 좋았다
+     (대조군 /hlag/zzz-not-a-real/v2/events 는 404 라 등록 여부는 갈린다).
+     레거시 경로는 2순위로 남긴다 — 구독이 어느 상품에 묶였는지 키 없이 판정할 수 없었기 때문.
+   · limit: 스펙 기본값이 100 이라 컨테이너 10본짜리 B/L(6~8 이벤트/본)은 조용히 잘린다.
+     잘리면 첫 출항 이벤트가 사라져 ETD·POL 이 통째로 비뚤어진다 → 200 으로 올린다.
+   · 트레일링 슬래시: 스펙 paths=["/"] 이고 공식 예시가 전부 .../events/?... 형식이다.
+   · 번호 후보: ELVIS 실측상 2026년 하파그 B/L 의 82.9% 가 HLCU 16자리 원본이고,
+     그중 SEL 발행분 33.6% 는 꼬리에 영문자가 섞여 HLCU 를 떼면 'SEL2607AXAH0' 같은
+     비숫자가 된다 — 무의미한 호출이다(Basic 은 분당 10회 하드리밋이라 낭비가 곧 429).
+     그래서 원본 → 사내 분할접미사(-X01/-1) 제거 → HLCU 제거(잔여가 숫자일 때만) 순서로 둔다. */
 async function trackHapag(no: string) {
-  return dcsaFetch("Hapag-Lloyd", [no, no.replace(/^HLCU/i, "")],
-    [(bl) => `https://api.hlag.com/hlag/v2/events?transportDocumentReference=${encodeURIComponent(bl)}`],
+  const cands = [no];
+  const noSuffix = no.replace(/-(?:X\d{2}|\d+)$/i, "");
+  if (noSuffix !== no) cands.push(noSuffix);
+  const stripped = noSuffix.replace(/^HLCU/i, "");
+  if (/^\d+$/.test(stripped) && stripped !== noSuffix) cands.push(stripped);
+
+  const q = (base: string) => (bl: string) =>
+    `${base}?transportDocumentReference=${encodeURIComponent(bl)}&limit=200`;
+  return dcsaFetch("Hapag-Lloyd", cands,
+    [q("https://api.hlag.com/hlag/external/v2/events/"), q("https://api.hlag.com/hlag/v2/events")],
     { "X-IBM-Client-Id": Deno.env.get("HLAG_CLIENT_ID") ?? "", "X-IBM-Client-Secret": Deno.env.get("HLAG_CLIENT_SECRET") ?? "" });
 }
 
