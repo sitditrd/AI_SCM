@@ -4,19 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title data-i18n="pg.title.insight">Port Insight — 항만 혼잡도 대시보드 | TWL Control Tower</title>
-  <meta name="description" content="IMF PortWatch 오픈데이터(위성 AIS) 기반으로 전 세계 Focus Port 93개의 혼잡도를 산출하는 태웅로직스 Port Insight 대시보드.">
+  <meta name="description" content="IMF PortWatch 오픈데이터(위성 AIS) 기반으로 전 세계 Focus Port 96개의 혼잡도를 산출하는 태웅로직스 Port Insight 대시보드.">
   <meta name="theme-color" content="#0a0f1e">
   <link rel="canonical" href="https://sitditrd.github.io/AI_SCM/insight.html">
   <link rel="apple-touch-icon" href="assets/og-image.png">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="TWL Control Tower">
   <meta property="og:title" content="Port Insight — 항만 혼잡도 대시보드 | TWL Control Tower">
-  <meta property="og:description" content="IMF PortWatch 오픈데이터(위성 AIS) 기반으로 전 세계 Focus Port 93개의 혼잡도를 산출하는 태웅로직스 Port Insight 대시보드.">
+  <meta property="og:description" content="IMF PortWatch 오픈데이터(위성 AIS) 기반으로 전 세계 Focus Port 96개의 혼잡도를 산출하는 태웅로직스 Port Insight 대시보드.">
   <meta property="og:url" content="https://sitditrd.github.io/AI_SCM/insight.html">
   <meta property="og:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Port Insight — 항만 혼잡도 대시보드 | TWL Control Tower">
-  <meta name="twitter:description" content="IMF PortWatch 오픈데이터(위성 AIS) 기반으로 전 세계 Focus Port 93개의 혼잡도를 산출하는 태웅로직스 Port Insight 대시보드.">
+  <meta name="twitter:description" content="IMF PortWatch 오픈데이터(위성 AIS) 기반으로 전 세계 Focus Port 96개의 혼잡도를 산출하는 태웅로직스 Port Insight 대시보드.">
   <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -55,7 +55,7 @@
       <div class="dash-title-row">
         <div>
           <h1 data-i18n-html="insight.hero.title">Port Insight <span style="font-weight:300; opacity:.75;">— 글로벌 항만 혼잡도</span></h1>
-          <p class="dash-sub" data-i18n-html="insight.hero.sub">전 세계 중점 모니터링 항만(Focus Port) <b>93개</b>의 혼잡도를 IMF PortWatch 오픈데이터(위성 AIS)로 산출합니다</p>
+          <p class="dash-sub" data-i18n-html="insight.hero.sub">전 세계 중점 모니터링 항만(Focus Port) <b>96개</b>의 혼잡도를 IMF PortWatch 오픈데이터(위성 AIS)로 산출합니다</p>
         </div>
         <div class="live-status">
           <span class="pulse-dot" aria-hidden="true"></span>
@@ -67,7 +67,7 @@
         </div>
       </div>
       <p class="dash-sub" style="margin-top:14px; font-size:12.5px;">
-        <span data-i18n="insight.meta.period">분석 기간:</span> <span id="periodLabel">—</span> <span data-i18n="insight.meta.mid">(PortWatch 최신 7일) · 주간 데이터 갱신(약 7~10일 지연) · Focus Port</span> <b id="focusCountLabel">93</b><span data-i18n="insight.unit.ports">개</span>
+        <span data-i18n="insight.meta.period">분석 기간:</span> <span id="periodLabel">—</span> <span data-i18n="insight.meta.mid">(PortWatch 최신 7일) · 주간 데이터 갱신(약 7~10일 지연) · Focus Port</span> <b id="focusCountLabel">96</b><span data-i18n="insight.unit.ports">개</span>
       </p>
     </div>
   </section>
@@ -111,7 +111,7 @@
         <div class="kpi reveal" id="kpiCritical">
           <div class="k" data-i18n="insight.kpi.congested">혼잡(CONGESTED) 항만</div>
           <div class="v"><span id="vCritical">—</span><small data-i18n="insight.unit.ports">개</small></div>
-          <div class="sub" data-i18n="insight.kpi.congested.sub">Focus Port 93개 중 · 활동량 상위 25% 구간</div>
+          <div class="sub" data-i18n="insight.kpi.congested.sub">Focus Port 96개 중 · 활동량 상위 25% 구간</div>
         </div>
         <div class="kpi reveal" id="kpiRisk">
           <div class="k" data-i18n="insight.kpi.risk">글로벌 리스크</div>
@@ -126,7 +126,7 @@
       </div>
 
       <div class="card reveal" style="margin-top:14px;">
-        <h3 style="margin:0; font-size:15.5px;" data-i18n-html="insight.dist.h">혼잡 레벨 분포 <span style="color:var(--muted); font-weight:600; font-size:12.5px;">Focus Port 93개</span></h3>
+        <h3 style="margin:0; font-size:15.5px;" data-i18n-html="insight.dist.h">혼잡 레벨 분포 <span style="color:var(--muted); font-weight:600; font-size:12.5px;">Focus Port 96개</span></h3>
         <div class="dist-bar" id="distBar" role="img" aria-label="혼잡 레벨 분포 스택 바"></div>
         <div class="legend-row" id="distLegend"></div>
         <div class="tbl-scroll" style="margin-top:16px;">
@@ -172,7 +172,7 @@
       <div class="dash-head reveal">
         <span class="no">SECTION 03</span>
         <h2 data-i18n="insight.s3.h">최고 혼잡 Top 10</h2>
-        <span class="hint" data-i18n="insight.s3.hint">PCI 상위 · Focus Port 93개 기준</span>
+        <span class="hint" data-i18n="insight.s3.hint">PCI 상위 · Focus Port 96개 기준</span>
       </div>
 
       <div class="tbl-card reveal" id="tabCongested">
@@ -333,9 +333,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="js/data.js"></script>
   <script src="js/common.js?v=2026-08-20b"></script>
-  <script src="js/i18n.js?v=2026-08-20e"></script>
+  <script src="js/i18n.js?v=2026-08-21a"></script>
   <script src="js/auth.js?v=2026-08-20b"></script>
   <script src="js/auth-gate.js?v=2026-08-20a"></script>
-  <script src="js/insight.js?v=2026-08-20b"></script>
+  <script src="js/insight.js?v=2026-08-21a"></script>
 </body>
 </html>

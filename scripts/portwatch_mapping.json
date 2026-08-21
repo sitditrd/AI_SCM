@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-27",
+  "generated": "2026-08-21",
   "source": "IMF PortWatch",
   "ports": [
     {
@@ -745,6 +745,30 @@
       "portid": "port79",
       "pw_name": "Auckland",
       "pw_country": "New Zealand"
+    },
+    {
+      "en": "Vladivostok",
+      "ko": "블라디보스토크",
+      "cc": "RU",
+      "portid": "port1369",
+      "pw_name": "Vladivostok",
+      "pw_country": "Russia"
+    },
+    {
+      "en": "Nakhodka",
+      "ko": "나홋카",
+      "cc": "RU",
+      "portid": "port787",
+      "pw_name": "Nakhodka",
+      "pw_country": "Russia"
+    },
+    {
+      "en": "Vostochny",
+      "ko": "보스토치니",
+      "cc": "RU",
+      "portid": "port1374",
+      "pw_name": "Vostochnyy",
+      "pw_country": "Russia"
     }
   ],
   "unmatched": []

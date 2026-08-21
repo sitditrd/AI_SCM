@@ -43,7 +43,8 @@ PUBLISHABLE_KEY = 'sb_publishable_jo6oBar-JbfKY3IfhPyBbQ_gH1Lvwsv'  # 읽기 전
 
 WINDOW_DAYS = 120      # 백분위 산출 기간
 CHUNK = 8              # 쿼리당 portid 수 (8개 x 120일 ≈ 960행 < maxRecordCount 1000)
-FOCUS_TOTAL = 93
+# Focus Port 총수는 상수로 두지 않는다 — 항만을 늘렸을 때(2026-08-21 러시아 3곳) 상수만 남아
+# pi_snapshot.total_ports 가 93 으로 굳고 분포 합계(96)와 어긋났다. 실제 처리 건수 n 을 쓴다.
 
 
 def levelOf(t):
@@ -257,7 +258,7 @@ def main():
         lines.append(
             "update public.pi_snapshot set total_ports=%d, tpfs=%s, critical_ports=%d, global_risk='%s', "
             "avg_delay_h=%s, distribution=%s::jsonb, period_start='%s', period_end='%s', updated_at=now() where id=1;"
-            % (FOCUS_TOTAL, avg_tpfs, critical, risk, avg_delay, q(dist_json)[0:], p_start, p_end))
+            % (n, avg_tpfs, critical, risk, avg_delay, q(dist_json)[0:], p_start, p_end))
         open(SQL_OUT, 'w', encoding='utf-8').write('\n'.join(lines))
         print('[OK] %s 생성 — 항만 %d건, 종합 PCI %s, CONGESTED %d, 리스크 %s, 기준 %s~%s%s'
               % (SQL_OUT, n, avg_tpfs, critical, risk, p_start, p_end,
@@ -274,7 +275,7 @@ def main():
         if resp.status_code >= 300:
             sys.exit('[FAIL] pi_ports %s → HTTP %d: %s' % (r['en'], resp.status_code, resp.text[:200]))
     resp = requests.patch(SUPABASE_URL + '/rest/v1/pi_snapshot?id=eq.1', headers=H, json={
-        'total_ports': FOCUS_TOTAL, 'tpfs': avg_tpfs, 'critical_ports': critical, 'global_risk': risk,
+        'total_ports': n, 'tpfs': avg_tpfs, 'critical_ports': critical, 'global_risk': risk,
         'avg_delay_h': avg_delay, 'distribution': json.loads(dist_json),
         'period_start': p_start, 'period_end': p_end}, timeout=30)
     if resp.status_code >= 300:

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-해상 항로 사전 계산 — Focus Port 93개 전 조합(4,278쌍)을 searoute로 계산해
+해상 항로 사전 계산 — Focus Port 96개 전 조합(4,560쌍)을 searoute로 계산해
 정적 JSON(routes/<slug>.json)으로 저장한다. 배포판(Netlify)에서도 백엔드 없이 동작.
 
   python scripts/gen_routes.py     (약 3~5분 소요, 1회 실행)
@@ -24,7 +24,7 @@ ports = []
 for m in re.finditer(r"P\('([^']+)',\s*'[^']*',\s*'[^']*',\s*'[^']*',\s*(-?[\d.]+),\s*(-?[\d.]+)", src):
     ports.append({'en': m.group(1), 'lat': float(m.group(2)), 'lng': float(m.group(3))})
 print('ports:', len(ports))
-assert len(ports) == 93, '93개 항만 파싱 실패'
+assert len(ports) == 96, '96개 항만 파싱 실패'
 
 
 def slug(en):
