@@ -362,7 +362,46 @@ async function trackEvergreen(no: string) {
     }
     return { cntrNo: cntr, events };
   }));
-  return { summary, voyages: [], containers };
+
+  /* 항차(ETD/ETA) — 2026-08-21.
+     그동안 voyages 를 무조건 빈 배열로 돌려줬다. 그런데 ETD·ETA 는 위에서 이미 받아둔
+     같은 html 안에 들어 있다(추가 요청 0건). 결손의 대가가 컸다:
+       · 화면(js/cargo.js vcPts)이 voyages 가 비면 dt:null 폴백 → "ETA 미정" 고정
+       · 수집기(collect_bl_watch.py:96)가 voyages 에서만 스냅샷 ETA 를 뽑으므로 계속 null
+         → diff() 의 `if a and b` 가 never → EGLV 만 ETA 변경 알림이 영구 미발생
+         (실측: bl_change_log 에 ONEY·COSU·ZIMU 는 있는데 EGLV 0건)
+     실측 형태(2026-08-21, 실 B/L EGLV040600314138):
+       ETD  <th …>Estimated On Board Date</th><td …>&nbsp;JUL-09-2026</td>   ← thTd() 로 잡힌다
+       ETA  <td …>Estimated Date of Arrival at Destination : <font …>AUG-27-2026</font></td>
+            ← th/td 가 아니고 font 태그가 끼어 있어 thTd() 로는 안 잡힌다. 전용 패턴이 필요하다. */
+  const etdRaw = thTd(html, "Estimated On Board Date");
+  const mEta = /Estimated Date of Arrival at Destination\s*:\s*(?:<font[^>]*>)?\s*([A-Z]{3}-\d{2}-\d{4})/i.exec(html);
+  const DMY = /^[A-Za-z]{3}-\d{2}-\d{4}$/;
+  const etdEst = etdRaw && DMY.test(etdRaw) ? monToIso(etdRaw) : undefined;
+  const etaEst = mEta ? monToIso(mEta[1]) : undefined;
+
+  /* 출항 노드는 실적이 있으면 실적으로 — 컨테이너 이벤트의 "Loaded (FCL) on vessel" 이 그것이다.
+     ETD 라벨은 이름 그대로 "Estimated" 라, 실적이 있는데도 예정으로 두면 화면의
+     "다음 이벤트"가 이미 지나간 선적항을 가리킨다(cargo.js:339 의 첫 !act 지점). */
+  let loadedAt: string | undefined;
+  for (const c of containers) {
+    for (const e of (c.events as Array<{ name?: string; timeLocal?: string }>)) {
+      if (/loaded/i.test(String(e.name ?? "")) && e.timeLocal && (!loadedAt || e.timeLocal < loadedAt)) {
+        loadedAt = e.timeLocal;
+      }
+    }
+  }
+
+  /* 배송 완료 건은 선사가 ETA 배너를 내린다(실측: 040600390900). 그때는 항차를 만들지 않아
+     기존 동작(요약만 표시)으로 자연히 되돌아간다 — 없는 날짜를 지어내지 않는다. */
+  const voyages = (etdEst || etaEst || loadedAt)
+    ? [{
+        vessel,
+        pol: { name: summary.por, date: loadedAt ?? etdEst, actual: !!loadedAt },
+        pod: { name: summary.pod, date: etaEst, actual: false },
+      }]
+    : [];
+  return { summary, voyages, containers };
 }
 
 /* ---------------- SITC — 2026-08-11 실 BL 로 검증 완료 ----------------
