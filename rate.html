@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src 'self' https://kvmyiualdodcvreoqfin.supabase.co; frame-src 'none'; form-action 'self';">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()">
+  <script>/* 클릭재킹 방어 — GitHub Pages 는 X-Frame-Options 헤더를 못 주므로 스크립트로 막는다.
+     우리 사이트가 iframe 에 박히면(top!==self) 최상위로 튕겨낸다. */
+  (function(){try{if(top!==self){top.location=self.location.href;}}catch(e){try{document.documentElement.style.display='none';}catch(_){}}})();</script>
+  <script>(function(){try{var t=localStorage.getItem('twl-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var L={ko:'ko',en:'en',zh:'zh-CN',ja:'ja',ru:'ru'},l=localStorage.getItem('twl-lang');if(L[l])document.documentElement.setAttribute('lang',L[l]);}catch(e){}})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="pg.title.rate">운임 — 컨테이너 Spot 운임지수 | TWL Control Tower</title>
+  <meta name="description" content="한국발 컨테이너 spot 해상운임(KCCI, USD/FEU)을 13개 항로별로 조회하고 주간 추이와 예상 견적을 확인합니다.">
+  <meta name="theme-color" content="#0a0f1e">
+  <link rel="canonical" href="https://sitditrd.github.io/AI_SCM/rate.html">
+  <link rel="apple-touch-icon" href="assets/og-image.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TWL Control Tower">
+  <meta property="og:title" content="운임 — 컨테이너 Spot 운임지수 | TWL Control Tower">
+  <meta property="og:description" content="한국발 컨테이너 spot 해상운임(KCCI, USD/FEU)을 13개 항로별로 조회하고 주간 추이와 예상 견적을 확인합니다.">
+  <meta property="og:url" content="https://sitditrd.github.io/AI_SCM/rate.html">
+  <meta property="og:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="운임 — 컨테이너 Spot 운임지수 | TWL Control Tower">
+  <meta name="twitter:description" content="한국발 컨테이너 spot 해상운임(KCCI, USD/FEU)을 13개 항로별로 조회하고 주간 추이와 예상 견적을 확인합니다.">
+  <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-05i">
+  <link rel="icon" href="assets/twl_logo.ico">
+</head>
+<body class="hero-page">
+  <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+
+  <!-- ================= 헤더 ================= -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="태웅로직스 홈"></a>
+      <button class="nav-burger" aria-label="메뉴 열기" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <nav class="site-nav" aria-label="주요 메뉴">
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= 타이틀 ================= -->
+  <section id="main-content" tabindex="-1" class="dash-hero">
+    <div class="container">
+      <div class="dash-title-row">
+        <div>
+          <h1 data-i18n-html="rate.hero.title">운임 <span style="font-weight:300; opacity:.75;">— 컨테이너 Spot 해상운임</span></h1>
+          <p class="dash-sub" data-i18n="rate.hero.sub">한국발 13개 항로의 spot 해상운임을 실제 달러(USD/FEU)로 확인합니다</p>
+        </div>
+        <div class="dash-meta">
+          <span class="prep-pill" id="rateAsOf" hidden><span class="pulse-dot"></span><span id="rateAsOfTxt"></span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 1) 항로별 Spot 운임 ================= -->
+  <section class="dash-section" id="kcci">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no" data-i18n="rate.kcci.no">SPOT RATE</span>
+        <h2 data-i18n="rate.kcci.h">항로별 Spot 해상운임</h2>
+        <span class="hint" data-i18n="rate.kcci.hint">KCCI(한국해양진흥공사) 주간 공표 · 단위 USD/FEU</span>
+      </div>
+
+      <!-- 종합지수 헤드라인 -->
+      <div class="card reveal rate-headline" id="rateHeadline" aria-live="polite">
+        <p class="muted" data-i18n="rate.loading">운임지수를 불러오는 중…</p>
+      </div>
+
+      <div class="card reveal">
+        <div id="rateLanes" role="region" aria-live="polite" data-i18n-aria="rate.lanes.aria" aria-label="항로별 spot 운임"></div>
+      </div>
+
+      <!-- ★ 이 문단은 지우지 말 것. 시장지수를 '선사 견적'으로 오해하면 영업 사고가 난다. -->
+      <p class="sc-sub air-note" data-i18n-html="rate.kcci.note">
+        KCCI 는 <b>시장 평균 spot 운임</b>이며 특정 선사의 견적이 아닙니다. 실제 계약운임은 물량·계약형태·시점에 따라 달라집니다.
+        <b>해상운임 기준</b>이라 THC·BAF·CAF·서류비 등 부대비용은 포함되지 않습니다.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= 2) 항로별 추이 ================= -->
+  <section class="dash-section" id="trend">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no" data-i18n="rate.trend.no">TREND</span>
+        <h2 data-i18n="rate.trend.h">항로별 운임 추이</h2>
+        <span class="hint" data-i18n="rate.trend.hint">주간 시계열 — 항로와 기간을 골라 비교합니다</span>
+      </div>
+
+      <div class="card reveal">
+        <div class="sched-form">
+          <label><span data-i18n="rate.trend.lane">항로</span>
+            <select id="trendLane" aria-label="항로 선택" data-i18n-aria="rate.trend.lane.aria"></select></label>
+          <label><span data-i18n="rate.trend.period">기간</span>
+            <select id="trendWeeks" aria-label="기간 선택" data-i18n-aria="rate.trend.period.aria">
+              <option value="13" data-i18n="rate.trend.w13">최근 13주</option>
+              <option value="26" data-i18n="rate.trend.w26">최근 26주</option>
+              <option value="52" selected data-i18n="rate.trend.w52">최근 52주</option>
+              <option value="104" data-i18n="rate.trend.w104">최근 2년</option>
+            </select></label>
+        </div>
+        <div id="trendOut" role="region" aria-live="polite" data-i18n-aria="rate.trend.out.aria" aria-label="운임 추이 차트"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3) 예상 견적 ================= -->
+  <section class="dash-section" id="estimate">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no" data-i18n="rate.est.no">ESTIMATE</span>
+        <h2 data-i18n="rate.est.h">예상 견적</h2>
+        <span class="hint" data-i18n="rate.est.hint">시장 spot 기준 개산 — 확정 견적은 영업 담당자에게 문의하십시오</span>
+      </div>
+
+      <div class="card reveal">
+        <div class="sched-form">
+          <label><span data-i18n="rate.est.lane">항로</span>
+            <select id="estLane" aria-label="항로 선택" data-i18n-aria="rate.est.lane.aria"></select></label>
+          <label><span data-i18n="rate.est.qty">수량 (FEU)</span>
+            <input id="estQty" type="number" min="1" max="999" step="1" value="1" inputmode="numeric"></label>
+          <button class="btn btn-primary" id="estBtn" type="button" data-i18n="rate.est.calc">계산</button>
+        </div>
+        <div id="estOut" role="region" aria-live="polite" data-i18n-aria="rate.est.out.aria" aria-label="예상 견적 결과"></div>
+      </div>
+
+      <p class="sc-sub air-note" data-i18n-html="rate.est.note">
+        표시 금액은 <b>해상운임(Ocean Freight)만</b>의 시장 개산입니다. THC·BAF·CAF·서류비·내륙운송비·보험료는 별도이며,
+        선복 상황과 계약 조건에 따라 실제 운임은 크게 달라질 수 있습니다. <b>견적서로 사용할 수 없습니다.</b>
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= 푸터 ================= -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="index.html" class="logo-slot" aria-label="태웅로직스"></a>
+        <p class="footer-note">
+          태웅로직스 | 문의: itt@twsc.co.kr<br>
+          시각 표기 KST · 지표 산출 기준: 데이터 현황·상세기술서 참조 · 포털 v1.5 (2026-07-28 개정)<br>
+          © <span class="footer-year">2026</span> TAEWOONG LOGISTICS. All rights reserved.
+        </p>
+      </div>
+      <nav class="footer-links" aria-label="푸터 메뉴">
+        <a href="insight.html">Port Insight</a>
+        <a href="berth.html">선석배정</a>
+        <a href="status.html">데이터 현황</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="js/common.js?v=2026-09-04w"></script>
+  <script src="js/menu.js?v=2026-09-04w"></script>
+  <script src="js/i18n.js?v=2026-09-05i"></script>
+  <script src="js/auth.js?v=2026-09-04s"></script>
+  <script src="js/track.js?v=2026-08-31v"></script>
+  <script src="js/auth-gate.js?v=2026-09-04u"></script>
+  <script src="js/rate.js?v=2026-09-04r"></script>
+</body>
+</html>

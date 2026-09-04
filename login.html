@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.vesselfinder.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src 'self' https://kvmyiualdodcvreoqfin.supabase.co https://api.open-meteo.com https://marine-api.open-meteo.com https://server.arcgisonline.com; frame-src 'self' https://www.vesselfinder.com; form-action 'self';">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()">
+  <!-- 테마·언어 선반영: 저장된 값을 그리기 전에 적용해 페이지 이동 시 깜빡임을 없앤다.
+       인라인이어야 의미가 있다(외부 파일은 네트워크를 한 번 더 기다린다). -->
+  <script>/* 클릭재킹 방어 — GitHub Pages 는 X-Frame-Options 헤더를 못 주므로 스크립트로 막는다.
+     우리 사이트가 iframe 에 박히면(top!==self) 최상위로 튕겨낸다. */
+  (function(){try{if(top!==self){top.location=self.location.href;}}catch(e){try{document.documentElement.style.display='none';}catch(_){}}})();</script>
+  <script>(function(){try{var t=localStorage.getItem('twl-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var L={ko:'ko',en:'en',zh:'zh-CN',ja:'ja',ru:'ru'},l=localStorage.getItem('twl-lang');if(L[l])document.documentElement.setAttribute('lang',L[l]);}catch(e){}})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="pg.title.login">로그인 — TWL Control Tower</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="assets/twl_logo.ico">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-05i">
+  <link rel="stylesheet" href="css/auth.css?v=2026-09-01s">
+</head>
+<body class="auth-page">
+  <header class="site-header scrolled">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="태웅로직스 홈">
+        <span class="logo-text"><b class="l1">TWL</b> <span class="l2">Control Tower</span></span>
+      </a>
+      <div class="header-actions" style="margin-left:auto">
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="ab-dot"></div>
+        <div><b>TWL Control Tower</b><span data-i18n="login.brand.sub">태웅로직스 물류 관제</span></div>
+      </div>
+
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab active" data-tab="login" role="tab" data-i18n="auth.tab.login">로그인</button>
+        <button class="auth-tab" data-tab="signup" role="tab" data-i18n="auth.tab.signup">회원가입</button>
+        <button class="auth-tab" data-tab="reset" role="tab" data-i18n="auth.tab.reset">비밀번호 찾기</button>
+      </div>
+
+      <div id="msg" class="auth-msg" role="status" aria-live="polite" hidden></div>
+
+      <!-- 로그인 -->
+      <form id="f-login" class="auth-form">
+        <label><span data-i18n="auth.email">이메일</span> <input type="email" name="login" autocomplete="username" placeholder="you@company.com" required></label>
+        <label><span data-i18n="auth.password">비밀번호</span> <input type="password" name="password" autocomplete="current-password" required></label>
+        <button class="btn btn-primary btn-block" type="submit" data-i18n="auth.tab.login">로그인</button>
+        <p class="auth-hint" data-i18n="auth.hint.login">승인된 계정만 로그인할 수 있습니다. 관리자 승인 후 이용하세요.</p>
+      </form>
+
+      <!-- 회원가입 -->
+      <form id="f-signup" class="auth-form" hidden>
+        <label><span data-i18n="auth.email">이메일</span> <span class="req">*</span>
+          <span class="with-btn">
+            <input type="email" name="login" autocomplete="username" placeholder="you@company.com" required>
+            <button type="button" class="btn btn-ghost btn-sm" data-send="signup" data-i18n="auth.getcode">인증코드 받기</button>
+          </span>
+        </label>
+        <label><span data-i18n="auth.code">인증코드</span> <input type="text" name="code" inputmode="numeric" maxlength="6" placeholder="메일로 받은 6자리" data-i18n-ph="auth.codeHint" required></label>
+        <label><span data-i18n="auth.namedept">이름/부서</span> <input type="text" name="name" placeholder="예: 홍길동 / 영업1팀"></label>
+        <label><span data-i18n="auth.password">비밀번호</span> <span class="req">*</span> <input type="password" name="password" autocomplete="new-password" required></label>
+        <div class="pw-meter" id="pw-signup" hidden>
+          <div class="pw-bar"><span></span></div>
+          <div class="pw-label"></div>
+          <ul class="pw-checks">
+            <li data-k="len" data-i18n="auth.pw.len">8자 이상</li><li data-k="upper" data-i18n="auth.pw.upper">대문자</li><li data-k="lower" data-i18n="auth.pw.lower">소문자</li><li data-k="digit" data-i18n="auth.pw.digit">숫자</li><li data-k="special" data-i18n="auth.pw.special">특수문자</li>
+          </ul>
+        </div>
+        <label><span data-i18n="auth.password2">비밀번호 확인</span> <input type="password" name="password2" autocomplete="new-password" required></label>
+        <button class="btn btn-primary btn-block" type="submit" data-i18n="auth.btn.signup">가입 신청</button>
+        <p class="auth-hint" data-i18n-html="auth.hint.signup">가입 신청 후 <b>관리자 승인</b>이 완료되면 로그인할 수 있습니다.</p>
+      </form>
+
+      <!-- 비밀번호 찾기 -->
+      <form id="f-reset" class="auth-form" hidden>
+        <label><span data-i18n="auth.email">이메일</span> <span class="req">*</span>
+          <span class="with-btn">
+            <input type="email" name="login" autocomplete="username" placeholder="you@company.com" required>
+            <button type="button" class="btn btn-ghost btn-sm" data-send="reset" data-i18n="auth.getcode">인증코드 받기</button>
+          </span>
+        </label>
+        <label><span data-i18n="auth.code">인증코드</span> <input type="text" name="code" inputmode="numeric" maxlength="6" placeholder="메일로 받은 6자리" data-i18n-ph="auth.codeHint" required></label>
+        <label><span data-i18n="auth.password.new">새 비밀번호</span> <input type="password" name="password" autocomplete="new-password" required></label>
+        <div class="pw-meter" id="pw-reset" hidden>
+          <div class="pw-bar"><span></span></div>
+          <div class="pw-label"></div>
+          <ul class="pw-checks">
+            <li data-k="len" data-i18n="auth.pw.len">8자 이상</li><li data-k="upper" data-i18n="auth.pw.upper">대문자</li><li data-k="lower" data-i18n="auth.pw.lower">소문자</li><li data-k="digit" data-i18n="auth.pw.digit">숫자</li><li data-k="special" data-i18n="auth.pw.special">특수문자</li>
+          </ul>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit" data-i18n="auth.btn.reset">비밀번호 재설정</button>
+      </form>
+    </div>
+    <p class="auth-foot"><a href="index.html" data-i18n="auth.home">← 홈으로</a></p>
+  </main>
+
+  <script src="js/common.js?v=2026-09-04w"></script>
+  <script src="js/i18n.js?v=2026-09-05i"></script>
+  <script src="js/auth.js?v=2026-09-04s"></script>
+  <script>
+    (function () {
+      var A = window.TWAUTH;
+      function t(k, ko) { return (window.TWI18N && window.TWI18N.t) ? window.TWI18N.t(k, ko) : ko; }
+      var msg = document.getElementById('msg');
+      function show(text, kind) { msg.hidden = false; msg.textContent = text; msg.className = 'auth-msg ' + (kind || ''); }
+      function clearMsg() { msg.hidden = true; }
+      function domainDeniedMsg() { return t('auth.msg.domainDeniedShort', '허용되지 않는 도메인입니다.'); }
+      function authError(r, fallback) {
+        var s = r && r.error ? String(r.error) : '';
+        if (/외부 메일 도메인|허용되지 않는 도메인|not permitted|domain/i.test(s)) return domainDeniedMsg();
+        return s || fallback;
+      }
+
+      /* 탭 전환 */
+      document.querySelectorAll('.auth-tab').forEach(function (t) {
+        t.addEventListener('click', function () {
+          document.querySelectorAll('.auth-tab').forEach(function (x) { x.classList.remove('active'); });
+          t.classList.add('active'); clearMsg();
+          ['login', 'signup', 'reset'].forEach(function (k) { document.getElementById('f-' + k).hidden = (k !== t.dataset.tab); });
+        });
+      });
+
+      /* 비밀번호 강도 미터 */
+      function bindMeter(formId, meterId) {
+        var f = document.getElementById(formId), box = document.getElementById(meterId);
+        var input = f.querySelector('input[name="password"]');
+        input.addEventListener('input', function () {
+          var v = input.value; box.hidden = !v;
+          var s = A.pwStrength(v);
+          box.querySelector('.pw-bar span').style.width = (s.score * 20) + '%';
+          box.querySelector('.pw-bar span').style.background = s.color;
+          box.querySelector('.pw-label').textContent = t('auth.pw.strengthLabel', '강도: ') + t(s.key, s.label) + (s.checks.special ? '' : t('auth.pw.needSpecial', ' · 특수문자 필요'));
+          box.querySelector('.pw-label').style.color = s.txt;
+          box.querySelectorAll('.pw-checks li').forEach(function (li) { li.classList.toggle('on', !!s.checks[li.dataset.k]); });
+        });
+      }
+      bindMeter('f-signup', 'pw-signup'); bindMeter('f-reset', 'pw-reset');
+
+      /* ★ 가입 허용 도메인 목록을 여기에 두지 마라.
+         예전엔 제휴사 도메인 6개를 배열로 갖고 있었다. 검증 목적으로는 무의미했다 —
+         서버(send-code · app_signup_verified)가 최종 권위라 클라이언트 값을 지워도 우회가 안 된다.
+         반면 공개 로그인 화면에 그룹 구성이 그대로 드러났다. 얻는 것 없이 잃기만 하는 코드였다.
+         지금은 형식만 보고 넘기고, 도메인 판정은 서버가 한다. 서버가 거부하면 아래
+         authError() 가 같은 문구로 받아 준다(116행). 잃는 것은 왕복 1회분의 즉시 안내뿐이다. */
+
+      /* 인증코드 발송 */
+      document.querySelectorAll('[data-send]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var form = btn.closest('form'); var login = form.login.value.trim();
+          if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(login)) { show(t('auth.msg.emailFormat', '이메일 형식을 확인하세요.'), 'err'); return; }
+          btn.disabled = true; btn.textContent = t('auth.sending', '발송중…');
+          var send = btn.dataset.send === 'reset' ? A.resetSendCode(login) : A.signupSendCode(login);
+          send.then(function (r) {
+            if (r && r.ok) { show(t('auth.msg.codeSent', '인증코드를 메일로 보냈습니다. 30분 내 입력하세요.'), 'ok'); }
+            else { show(authError(r, t('auth.msg.sendFail', '발송 실패')), 'err'); }
+          }).finally(function () {
+            var n = 30; btn.textContent = t('auth.resend', '재발송(%s)').replace('%s', n);
+            var iv = setInterval(function () { n--; btn.textContent = t('auth.resend', '재발송(%s)').replace('%s', n); if (n <= 0) { clearInterval(iv); btn.disabled = false; btn.textContent = t('auth.getcode', '인증코드 받기'); } }, 1000);
+          });
+        });
+      });
+
+      /* 로그인 */
+      document.getElementById('f-login').addEventListener('submit', function (e) {
+        e.preventDefault(); clearMsg();
+        var f = e.target;
+        A.login(f.login.value.trim(), f.password.value).then(function (r) {
+          if (r && r.ok) { show(t('auth.msg.loginOk', '로그인 성공. 이동합니다…'), 'ok'); setTimeout(function () { location.href = (r.role === 'admin') ? 'admin.html' : 'index.html'; }, 500); }
+          else { show(r && r.error ? r.error : t('auth.msg.loginFail', '로그인 실패'), 'err'); }
+        });
+      });
+
+      /* 회원가입 */
+      document.getElementById('f-signup').addEventListener('submit', function (e) {
+        e.preventDefault(); clearMsg();
+        var f = e.target;
+        var s = A.pwStrength(f.password.value);
+        if (!s.ok) { show(t('auth.msg.pwRule', '비밀번호는 8자 이상 + 특수문자를 포함해야 합니다.'), 'err'); return; }
+        if (f.password.value !== f.password2.value) { show(t('auth.msg.pwMismatch', '비밀번호 확인이 일치하지 않습니다.'), 'err'); return; }
+        var signupEmail = f.login.value.trim();
+        A.signup(signupEmail, f.password.value, f.code.value.trim(), f.name.value.trim()).then(function (r) {
+          if (r && r.ok) {
+            show(t('auth.msg.signupOk', '가입 신청 완료! 관리자 승인 후 로그인할 수 있습니다.'), 'ok'); f.reset();
+            /* 관리자에게 승인 요청 메일. 서버가 그 주소를 실제 pending 계정으로 검증한 뒤에만
+               보내므로, 여기서 실패해도 가입은 이미 끝난 것이라 사용자 흐름을 막지 않는다. */
+            if (A.signupNotifyAdmin) A.signupNotifyAdmin(signupEmail).catch(function () {});
+          }
+          else { show(authError(r, t('auth.msg.signupFail', '가입 실패')), 'err'); }
+        });
+      });
+
+      /* 비밀번호 재설정 */
+      document.getElementById('f-reset').addEventListener('submit', function (e) {
+        e.preventDefault(); clearMsg();
+        var f = e.target;
+        var s = A.pwStrength(f.password.value);
+        if (!s.ok) { show(t('auth.msg.pwRule', '비밀번호는 8자 이상 + 특수문자를 포함해야 합니다.'), 'err'); return; }
+        A.reset(f.login.value.trim(), f.code.value.trim(), f.password.value).then(function (r) {
+          if (r && r.ok) { show(t('auth.msg.resetOk', '비밀번호가 재설정되었습니다. 로그인해 주세요.'), 'ok'); document.querySelector('.auth-tab[data-tab="login"]').click(); }
+          else { show(r && r.error ? r.error : t('auth.msg.resetFail', '재설정 실패'), 'err'); }
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

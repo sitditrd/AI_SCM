@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.vesselfinder.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src 'self' https://kvmyiualdodcvreoqfin.supabase.co https://api.open-meteo.com https://marine-api.open-meteo.com https://server.arcgisonline.com; frame-src 'self' https://www.vesselfinder.com; form-action 'self';">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()">
+  <!-- 테마·언어 선반영: 저장된 값을 그리기 전에 적용해 페이지 이동 시 깜빡임을 없앤다.
+       인라인이어야 의미가 있다(외부 파일은 네트워크를 한 번 더 기다린다). -->
+  <script>/* 클릭재킹 방어 — GitHub Pages 는 X-Frame-Options 헤더를 못 주므로 스크립트로 막는다.
+     우리 사이트가 iframe 에 박히면(top!==self) 최상위로 튕겨낸다. */
+  (function(){try{if(top!==self){top.location=self.location.href;}}catch(e){try{document.documentElement.style.display='none';}catch(_){}}})();</script>
+  <script>(function(){try{var t=localStorage.getItem('twl-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var L={ko:'ko',en:'en',zh:'zh-CN',ja:'ja',ru:'ru'},l=localStorage.getItem('twl-lang');if(L[l])document.documentElement.setAttribute('lang',L[l]);}catch(e){}})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="pg.title.route">경로 분석 — 해상 경로·소요일 시뮬레이터 | TWL Control Tower</title>
+  <meta name="description" content="주요 항만 96개(Focus Port) 간 해상 항로 거리와 소요일을 몬테카를로 시뮬레이션으로 추정합니다 (searoute 오픈소스).">
+  <meta name="theme-color" content="#0a0f1e">
+  <link rel="canonical" href="https://sitditrd.github.io/AI_SCM/route.html">
+  <link rel="apple-touch-icon" href="assets/og-image.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TWL Control Tower">
+  <meta property="og:title" content="경로 분석 — 해상 경로·소요일 시뮬레이터 | TWL Control Tower">
+  <meta property="og:description" content="주요 항만 96개(Focus Port) 간 해상 항로 거리와 소요일을 몬테카를로 시뮬레이션으로 추정합니다 (searoute 오픈소스).">
+  <meta property="og:url" content="https://sitditrd.github.io/AI_SCM/route.html">
+  <meta property="og:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="경로 분석 — 해상 경로·소요일 시뮬레이터 | TWL Control Tower">
+  <meta name="twitter:description" content="주요 항만 96개(Focus Port) 간 해상 항로 거리와 소요일을 몬테카를로 시뮬레이션으로 추정합니다 (searoute 오픈소스).">
+  <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha384-c6Rcwz4e4CITMbu/NBmnNS8yN2sC3cUElMEMfP3vqqKFp7GOYaaBBCqmaWBjmkjb" crossorigin="anonymous">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-05i">
+  <link rel="icon" href="assets/twl_logo.ico">
+</head>
+<body class="hero-page">
+  <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+
+  <!-- ================= 헤더 ================= -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="태웅로직스 홈"></a>
+      <button class="nav-burger" aria-label="메뉴 열기" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <nav class="site-nav" aria-label="주요 메뉴">
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= 타이틀 ================= -->
+  <section id="main-content" tabindex="-1" class="dash-hero">
+    <div class="container">
+      <div class="dash-title-row">
+        <div>
+          <h1 data-i18n-html="route.hero.title">경로 분석 <span style="font-weight:300; opacity:.75;">— 해상 항로·소요일 시뮬레이터</span></h1>
+          <p class="dash-sub" data-i18n="route.hero.sub">주요 항만 96개(Focus Port) 간 항로 거리 산출 + 몬테카를로 1만 회로 소요일 분포를 추정합니다</p>
+        </div>
+      </div>
+      <p class="dash-sub" style="margin-top:14px; font-size:var(--fs-sm);" data-i18n="route.hero.note">
+        엔진: searoute 사전계산 항로 9,120구간(정적 데이터, 배포판 동일 동작) · 소요일 = 항해(속력 분포) + 항만 버퍼(로그정규) · 참고용 추정
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ 시뮬레이터 ============ -->
+  <section class="dash-section" id="sim">
+    <div class="container">
+      <div class="card reveal" style="margin-bottom:14px;">
+        <div class="berth-toolbar" style="margin:0;">
+          <select id="fromPort" class="focus-search" style="max-width:220px;" aria-label="출발 항만" data-i18n-aria="route.sel.from"></select>
+          <span style="color:var(--muted); font-weight:800;">→</span>
+          <select id="toPort" class="focus-search" style="max-width:220px;" aria-label="도착 항만" data-i18n-aria="route.sel.to"></select>
+          <label style="color:var(--muted); font-size:var(--fs-sm);"><span data-i18n="route.sim.speed">평균 속력</span>
+            <input type="number" id="speedKn" value="16.5" min="10" max="24" step="0.5" class="focus-search" style="width:80px; margin-left:6px;"> kn
+          </label>
+          <button class="btn btn-primary" id="simBtn" type="button" data-i18n="route.sim.run">시뮬레이션 실행</button>
+        </div>
+      </div>
+
+      <div class="src-grid" id="simKpis" style="margin-bottom:14px;"></div>
+
+      <div class="card map-card reveal" id="mapCard" style="padding:6px;">
+        <span id="map-sec" class="anchor-off" aria-hidden="true"></span>
+        <div id="map" style="height:420px;" role="application" aria-label="항로 지도"></div>
+        <div class="map-fallback" data-i18n="route.map.fallback">지도 라이브러리를 불러오지 못했습니다 (오프라인). 수치 결과는 위 카드에서 확인하십시오.</div>
+      </div>
+
+      <div class="card reveal" style="margin-top:14px;">
+        <span id="histo-sec" class="anchor-off" aria-hidden="true"></span>
+        <h3 style="margin:0 0 10px; font-size:var(--fs-lg);" data-i18n-html="route.histo.h">도착 소요일 분포 <span style="color:var(--muted); font-size:var(--fs-sm);">몬테카를로 10,000회</span></h3>
+        <div id="histo" style="width:100%; min-height:120px;"></div>
+        <div id="histoAxis"></div>
+      </div>
+
+      <p class="notice" data-i18n="route.notice">
+        본 시뮬레이터는 항로망 최단경로 거리에 속력 변동(정규분포)과 항만 대기·접안 버퍼(로그정규분포)를 적용한 확률 추정입니다.
+        기항지 수, 운하 통과 대기, 스케줄 윈도우는 반영되지 않으므로 선사 공표 스케줄과 함께 참고하십시오.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ 이 구간 실제 배선 ============
+       시뮬레이터가 내는 것은 '거리와 속력으로 계산한 추정' 이다. 그 옆에 실제로 배가 언제 뜨는지를
+       나란히 두면 추정의 쓸모가 확 달라진다 — 화주가 묻는 것은 결국 '그래서 언제 실을 수 있나' 다.
+       적재분(장금·흥아)이 있는 구간만 답할 수 있고, 없으면 그렇다고 적는다. -->
+  <section class="dash-section" id="sched">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no" data-i18n="route.sched.no">SAILINGS</span>
+        <h2 data-i18n="route.sched.h">이 구간 실제 배선</h2>
+        <span class="hint" data-i18n="route.sched.hint">추정 소요일과 실제 배편을 나란히 봅니다</span>
+      </div>
+      <div class="card reveal">
+        <div id="schedOut" aria-live="polite" data-i18n-aria="route.sched.aria" aria-label="이 구간 배편"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 탄소배출 ============
+       ESG 대응용. 원단위는 국제표준(ISO 14083 / GLEC)에서 확보한 값만 쓴다 —
+       숫자를 지어내면 화주가 그걸 자기 Scope 3 보고에 넣는다. -->
+  <section class="dash-section" id="co2">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no" data-i18n="route.co2.no">CARBON</span>
+        <h2 data-i18n="route.co2.h">탄소배출 추정</h2>
+        <span class="hint" data-i18n="route.co2.hint">국제표준 원단위 기반 · 화주 ESG 보고 참고용</span>
+      </div>
+      <div class="card reveal">
+        <div class="sched-form">
+          <label><span data-i18n="route.co2.equip">컨테이너 규격</span>
+            <select id="co2Equip" data-i18n-aria="route.co2.equip.aria" aria-label="컨테이너 규격">
+              <option value="40GP" data-i18n="route.co2.eq.40GP">40ft 일반 (2 TEU)</option>
+              <option value="20GP" data-i18n="route.co2.eq.20GP">20ft 일반 (1 TEU)</option>
+              <option value="40HC" data-i18n="route.co2.eq.40HC">40ft 하이큐브 (2.25 TEU)</option>
+              <option value="20RF" data-i18n="route.co2.eq.20RF">20ft 리퍼 (1 TEU)</option>
+              <option value="40RH" data-i18n="route.co2.eq.40RH">40ft 리퍼 하이큐브 (2.25 TEU)</option>
+            </select></label>
+          <label><span data-i18n="route.co2.qty">수량</span>
+            <input id="co2Qty" type="number" min="1" max="999" step="1" value="1" inputmode="numeric"></label>
+          <label><span data-i18n="route.co2.wt">화물 실중량 (t · 선택)</span>
+            <input id="co2Wt" type="number" min="0" step="any" inputmode="decimal"
+                   placeholder="미입력 시 GLEC 기본 10t/TEU" data-i18n-ph="route.co2.wt.ph"></label>
+        </div>
+        <div id="co2Out" aria-live="polite" data-i18n-aria="route.co2.aria" aria-label="탄소배출 추정"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 대체 항만 비교 ============
+       화주가 양하항을 고를 수 있는 경우가 실제로 있다. 같은 권역의 다른 항만으로 가면
+       거리가 달라지고 배출도 달라진다. 사전계산 거리쌍이 이미 있어 추가 조회 없이 나온다.
+       ★ '감축량' 이 아니라 '대안 대비 추정 차이' 다 — 1차 데이터·검증 없이 감축을 주장하면 안 된다. -->
+  <section class="dash-section" id="co2alt">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no" data-i18n="route.alt.no">ALTERNATIVES</span>
+        <h2 data-i18n="route.alt.h">대체 항만 비교</h2>
+        <span class="hint" data-i18n="route.alt.hint">같은 권역의 다른 도착항으로 갈 때의 거리·배출 차이</span>
+      </div>
+      <div class="card reveal">
+        <div id="co2AltOut" aria-live="polite" data-i18n-aria="route.alt.aria" aria-label="대체 항만 비교"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 검증 실측 대조 ============
+       우리 배출값은 GLEC 기본계수로 낸 추정치다. 화주 ESG 검증에서 제일 먼저 받는 질문이
+       "그 평균이 실제와 맞다는 근거는?" 이고, 근거 없이 숫자만 내면 거기서 막힌다.
+       EU MRV 는 선사가 보고하고 인정 검증기관이 검증한 선박별 실측치를 공표한다 — 무료·공개.
+       ★ 경계(TtW vs WtW)도 분모(t vs TEU)도 다르다. 겹쳐 보이더라도 '같은 기준이 아니다' 를
+         화면에서 감추지 않는다. -->
+  <section class="dash-section" id="co2verify">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no" data-i18n="route.mrv.no">VERIFIED</span>
+        <h2 data-i18n="route.mrv.h">검증 실측 대조</h2>
+        <span class="hint" data-i18n="route.mrv.hint">EU MRV — 선사 보고 · 제3자 검증된 선박별 실측 배출강도</span>
+      </div>
+      <div class="card reveal">
+        <div id="co2VerifyOut" aria-live="polite" data-i18n-aria="route.mrv.aria" aria-label="검증 실측 대조"></div>
+      </div>
+      <div class="card reveal">
+        <div class="sched-form">
+          <label style="flex:2 1 260px"><span data-i18n="route.mrv.q">선박명 또는 IMO 번호</span>
+            <input id="mrvQ" type="search" autocomplete="off" maxlength="60"
+                   placeholder="예: HMM ALGECIRAS · 9863297" data-i18n-ph="route.mrv.q.ph"></label>
+          <button class="btn btn-primary" id="mrvBtn" type="button" data-i18n="route.mrv.find">조회</button>
+        </div>
+        <div id="mrvOut" aria-live="polite" data-i18n-aria="route.mrv.out.aria" aria-label="선박 검증 실측 조회 결과"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 푸터 ================= -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="index.html" class="logo-slot" aria-label="태웅로직스"></a>
+        <p class="footer-note">
+          태웅로직스 | 문의: itt@twsc.co.kr<br>
+          시각 표기 KST · 지표 산출 기준: 데이터 현황·상세기술서 참조 · 포털 v1.5 (2026-07-28 개정)<br>
+          © <span class="footer-year">2026</span> TAEWOONG LOGISTICS. All rights reserved.
+        </p>
+      </div>
+      <nav class="footer-links" aria-label="푸터 메뉴">
+        <a href="vessel.html">선박 위치</a>
+        <a href="cargo.html">화물 추적</a>
+        <a href="route.html">경로 분석</a>
+        <a href="status.html">데이터 현황</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha384-NElt3Op+9NBMCYaef5HxeJmU4Xeard/Lku8ek6hoPTvYkQPh3zLIrJP7KiRocsxO" crossorigin="anonymous"></script>
+  <script src="js/basemap.js?v=2026-08-31v"></script>
+  <script src="js/data.js"></script>
+  <script src="js/common.js?v=2026-09-04w"></script>
+  <script src="js/menu.js?v=2026-09-04w"></script>
+  <script src="js/i18n.js?v=2026-09-05i"></script>
+  <script src="js/auth.js?v=2026-09-04s"></script>
+  <script src="js/track.js?v=2026-08-31v"></script>
+  <script src="js/auth-gate.js?v=2026-09-04u"></script>
+  <script src="js/co2-factors.js?v=2026-09-05h"></script>
+  <script src="js/co2-verify.js?v=2026-09-05e"></script>
+  <script src="js/co2-report.js?v=2026-09-05h"></script>
+  <script src="js/route.js?v=2026-09-05h"></script>
+</body>
+</html>

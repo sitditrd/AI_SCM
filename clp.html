@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src 'self' https://kvmyiualdodcvreoqfin.supabase.co; frame-src 'none'; form-action 'self';">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()">
+  <script>/* 클릭재킹 방어 — GitHub Pages 는 X-Frame-Options 헤더를 못 주므로 스크립트로 막는다. */
+  (function(){try{if(top!==self){top.location=self.location.href;}}catch(e){try{document.documentElement.style.display='none';}catch(_){}}})();</script>
+  <script>(function(){try{var t=localStorage.getItem('twl-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var L={ko:'ko',en:'en',zh:'zh-CN',ja:'ja',ru:'ru'},l=localStorage.getItem('twl-lang');if(L[l])document.documentElement.setAttribute('lang',L[l]);}catch(e){}})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="pg.title.clp">적입계획 CLP — 컨테이너 적재 시뮬레이션 | TWL Control Tower</title>
+  <meta name="description" content="화물 치수·중량을 넣으면 컨테이너 배분과 3D 적재도를 즉시 계산합니다. 강재 코일·장척 번들 등 비정형 중량화물의 선하중·문 통과·무게중심까지 검사합니다.">
+  <meta name="theme-color" content="#0a0f1e">
+  <link rel="canonical" href="https://sitditrd.github.io/AI_SCM/clp.html">
+  <link rel="apple-touch-icon" href="assets/og-image.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TWL Control Tower">
+  <meta property="og:title" content="적입계획 CLP — 컨테이너 적재 시뮬레이션 | TWL Control Tower">
+  <meta property="og:description" content="화물 치수·중량을 넣으면 컨테이너 배분과 3D 적재도를 즉시 계산합니다. 강재 코일·장척 번들까지.">
+  <meta property="og:url" content="https://sitditrd.github.io/AI_SCM/clp.html">
+  <meta property="og:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="적입계획 CLP — 컨테이너 적재 시뮬레이션 | TWL Control Tower">
+  <meta name="twitter:description" content="화물 치수·중량을 넣으면 컨테이너 배분과 3D 적재도를 즉시 계산합니다.">
+  <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-05i">
+  <link rel="icon" href="assets/twl_logo.ico">
+</head>
+<body class="hero-page">
+  <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="태웅로직스 홈"></a>
+      <button class="nav-burger" aria-label="메뉴 열기" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <nav class="site-nav" aria-label="주요 메뉴"></nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+      </div>
+    </div>
+  </header>
+
+  <section id="main-content" tabindex="-1" class="dash-hero">
+    <div class="container">
+      <div class="dash-title-row">
+        <div>
+          <h1 data-i18n-html="clp.hero.title">적입계획 <span style="font-weight:300; opacity:.75;">— 컨테이너 적재 시뮬레이션</span></h1>
+          <p class="dash-sub" data-i18n="clp.hero.sub">화물을 넣으면 컨테이너 배분과 적재도를 즉시 계산합니다. 코일·장척 번들 등 비정형 중량화물도 다룹니다.</p>
+        </div>
+        <div class="dash-meta">
+          <!-- ★ 이 배지는 지우지 말 것. 로딩 표시가 아니라 상시 표기다.
+               이 화면 결과가 확정 적입도로 오해되면 고박·안전 사고로 이어진다. -->
+          <span class="prep-pill clp-draft"><span class="pulse-dot"></span><span data-i18n="clp.hero.draft">참고용 개산 · 확정 적입도 아님</span></span>
+          <span id="clpGuideHost"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 1) 화물 입력 ================= -->
+  <section class="dash-section" id="plan">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no" data-i18n="clp.plan.no">CARGO</span>
+        <h2 data-i18n="clp.plan.h">화물 입력</h2>
+        <span class="hint" data-i18n="clp.plan.hint">유형을 고르면 필요한 항목만 나옵니다 · 카드를 끌어 적재 우선순위를 바꿉니다</span>
+      </div>
+
+      <div class="card reveal">
+        <!-- 유형 선택 — 큰 타일로. 고르면 아래 입력이 그 유형에 맞게 바뀐다. -->
+        <div class="clp-typebar" id="clpTypes" role="tablist" aria-label="화물 유형" data-i18n-aria="clp.type.aria"></div>
+
+        <div class="clp-form" id="clpForm"></div>
+
+        <div class="clp-actions">
+          <button class="btn btn-primary" id="clpAdd" type="button" data-i18n="clp.add">화물 추가</button>
+          <button class="btn btn-ghost" id="clpSample" type="button" data-i18n="clp.sample">예시 넣기</button>
+          <button class="btn btn-ghost" id="clpClear" type="button" data-i18n="clp.clear">전체 비우기</button>
+        </div>
+      </div>
+
+      <div class="card reveal">
+        <div class="clp-listhead">
+          <h3 data-i18n="clp.list.h">적재 목록</h3>
+          <span class="clp-listsum" id="clpSum"></span>
+        </div>
+        <!-- 드래그로 순서를 바꾼다 = 적재 우선순위. 큰 화물을 먼저 넣는 게 기본이지만
+             실무에선 '이건 문 쪽에 둬야 한다' 같은 요구가 있어 사용자가 직접 정할 수 있어야 한다. -->
+        <ul class="clp-cargolist" id="clpList" role="list" aria-live="polite" data-i18n-aria="clp.list.aria" aria-label="적재 목록"></ul>
+        <p class="clp-empty" id="clpEmpty" data-i18n="clp.list.empty">화물을 추가하면 여기에 쌓입니다.</p>
+      </div>
+
+      <div class="card reveal">
+        <div class="sched-form">
+          <label><span data-i18n="clp.opt.equip">사용할 컨테이너</span>
+            <span class="clp-chips" id="clpEquip"></span></label>
+          <label><span data-i18n="clp.opt.floor">바닥 재질</span>
+            <select id="clpFloor" data-i18n-aria="clp.opt.floor.aria" aria-label="바닥 재질">
+              <option value="wood" data-i18n="clp.floor.wood">목재 (기본)</option>
+              <option value="steel" data-i18n="clp.floor.steel">강재 — 실물 확인 필요</option>
+            </select></label>
+          <button class="btn btn-primary clp-run" id="clpRun" type="button" data-i18n="clp.run">적재 계산</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 2) 적재도 ================= -->
+  <section class="dash-section" id="layout">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no" data-i18n="clp.layout.no">LOAD PLAN</span>
+        <h2 data-i18n="clp.layout.h">적재도</h2>
+        <span class="hint" data-i18n="clp.layout.hint">끌어서 돌려 보고, 화물을 눌러 상세를 확인합니다</span>
+      </div>
+
+      <div class="card reveal">
+        <div class="clp-stage" id="clpStage">
+          <div class="clp-tabs" id="clpTabs" role="tablist" aria-label="컨테이너" data-i18n-aria="clp.tabs.aria"></div>
+          <div class="clp-canvas-wrap">
+            <canvas id="clpCanvas" role="img" data-i18n-aria="clp.canvas.aria" aria-label="컨테이너 적재도"></canvas>
+            <div class="clp-tip" id="clpTip" hidden></div>
+            <div class="clp-hintbar">
+              <span data-i18n="clp.canvas.drag">드래그: 회전</span>
+              <span data-i18n="clp.canvas.wheel">휠: 확대</span>
+              <button class="btn btn-ghost btn-sm" id="clpReplay" type="button" data-i18n="clp.replay">다시 재생</button>
+              <button class="btn btn-ghost btn-sm" id="clpReset" type="button" data-i18n="clp.resetView">시점 초기화</button>
+            </div>
+          </div>
+          <div class="clp-gauges" id="clpGauges"></div>
+        </div>
+        <p class="clp-empty" id="clpNoPlan" data-i18n="clp.layout.empty">화물을 넣고 적재 계산을 누르면 여기에 그려집니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3) 판정 ================= -->
+  <section class="dash-section" id="result">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no" data-i18n="clp.res.no">CHECK</span>
+        <h2 data-i18n="clp.res.h">판정 · 경고</h2>
+        <span class="hint" data-i18n="clp.res.hint">중량 · 바닥 선하중 · 문 통과 · 무게중심 · 규격 초과</span>
+      </div>
+      <div class="card reveal">
+        <div id="clpChecks" aria-live="polite" data-i18n-aria="clp.res.aria" aria-label="판정 결과"></div>
+      </div>
+
+      <!-- ★ 이 문단은 지우지 말 것. 시장에서 이 화면이 '확정 적입도'로 유통되면 사고가 난다. -->
+      <p class="sc-sub air-note" data-i18n-html="clp.res.note">
+        이 화면은 <b>참고용 개산</b>입니다. 실제 적입도·고박(래싱) 계획을 대체하지 않으며, <b>견적서나 선적서류로 사용할 수 없습니다.</b>
+        컨테이너 내부치수는 여러 선사 공표값의 최솟값을 합성한 보수값이라 <b>배정된 실물과 다를 수 있습니다.</b>
+        고박·받침(더니지)·래싱 설계는 반드시 적입 주체와 선사 규정을 따르십시오.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= 고박 검토 =================
+       ★ 이 화면은 "고박이 충분하다" 는 판정을 내지 않는다. 표준 자체가 받침·빔 설계를
+         CTU 운영자 협의로 위임하고(Annex 7 3.1.2), 마찰·표면상태·실제 시공 여부는
+         우리가 알 수 없다. 여기서 하는 일은 무엇을 얼마나 막아야 하는지를 숫자로 내고
+         무엇을 모르는지 명시하는 것이다. 등급은 검토필요·초과·판정불가 셋뿐이다. -->
+  <section class="dash-section" id="securing">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no" data-i18n="clp.sec.no">SECURING</span>
+        <h2 data-i18n="clp.sec.h">고박 검토</h2>
+        <span class="hint" data-i18n="clp.sec.hint">CTU Code 기준 요구 구속력 · 공극 · 벽면하중 · 도로 총중량</span>
+      </div>
+
+      <div class="card reveal">
+        <div class="sched-form">
+          <label><span data-i18n="clp.sec.legs">운송 구간</span>
+            <select id="secLegs" multiple size="5" data-i18n-aria="clp.sec.legs.aria" aria-label="운송 구간 선택">
+              <option value="ROAD" selected data-i18n="clp.sec.leg.road">도로</option>
+              <option value="RAIL" data-i18n="clp.sec.leg.rail">철도(복합)</option>
+              <option value="SEA_A" data-i18n="clp.sec.leg.seaA">해상 A (Hs 8m 이하)</option>
+              <option value="SEA_B" data-i18n="clp.sec.leg.seaB">해상 B (8~12m)</option>
+              <option value="SEA_C" selected data-i18n="clp.sec.leg.seaC">해상 C (12m 초과·무제한)</option>
+            </select></label>
+          <label><span data-i18n="clp.sec.pair">접촉면 재질</span>
+            <select id="secPair" data-i18n-aria="clp.sec.pair.aria" aria-label="접촉면 재질 조합">
+              <option value="" data-i18n="clp.sec.pair.none">미확인 — 판정하지 않음</option>
+              <option value="timber/plywood" data-i18n="clp.sec.pair.tp">받침목 · 합판바닥 (0.45)</option>
+              <option value="steel-crate/plywood" data-i18n="clp.sec.pair.cp">강재 크레이트 · 합판바닥 (0.45)</option>
+              <option value="steel/steel-rough-unpainted" data-i18n="clp.sec.pair.su">무도장 거친 강재끼리 (0.40)</option>
+              <option value="steel/steel-rough-painted" data-i18n="clp.sec.pair.sp">도장 거친 강재끼리 (0.30)</option>
+              <option value="steel/steel-smooth" data-i18n="clp.sec.pair.ss">매끈한 강재끼리 (0.20)</option>
+              <option value="plastic-pallet/plywood" data-i18n="clp.sec.pair.pp">플라스틱 팔레트 · 합판바닥 (0.20)</option>
+            </select></label>
+          <label><span data-i18n="clp.sec.cond">표면 상태</span>
+            <select id="secCond" data-i18n-aria="clp.sec.cond.aria" aria-label="표면 상태">
+              <option value="" data-i18n="clp.sec.cond.none">미선언 — 0.30 상한 적용</option>
+              <option value="unverified" data-i18n="clp.sec.cond.unv">재질쌍 미확인 (0.30)</option>
+              <option value="frostIceSnow" data-i18n="clp.sec.cond.ice">서리·얼음·눈 (0.20)</option>
+              <option value="oilyGreasy" data-i18n="clp.sec.cond.oil">유분·그리스·슬립시트 (0.10)</option>
+            </select></label>
+          <label><span data-i18n="clp.sec.tractor">트랙터 자중 (kg)</span>
+            <input id="secTractor" type="number" min="0" max="30000" step="100" inputmode="numeric"
+                   placeholder="차량등록증 값" data-i18n-ph="clp.sec.tare.ph"></label>
+          <label><span data-i18n="clp.sec.chassis">샤시 자중 (kg)</span>
+            <input id="secChassis" type="number" min="0" max="20000" step="100" inputmode="numeric"
+                   placeholder="차량등록증 값" data-i18n-ph="clp.sec.tare.ph"></label>
+        </div>
+        <div id="secOut" aria-live="polite" data-i18n-aria="clp.sec.aria" aria-label="고박 검토 결과"></div>
+      </div>
+
+      <!-- 코일 크레들 — 코일이 있을 때만 의미가 있다.
+           ★ 배치(개수·간격)를 코드가 정해 주지 않는다. 다만 기하학적으로 불가능한 조합은
+             걸러낼 수 있다 — 각재 사이로 코일이 가라앉아 바닥에 닿으면 크레들이 하중을 못 받는다. -->
+      <div class="card reveal" id="secCradleCard" hidden>
+        <div class="sched-form">
+          <label><span data-i18n="clp.cr.t">각재 두께 (mm)</span>
+            <input id="secTimberT" type="number" min="0" max="400" step="10" value="100" inputmode="numeric"></label>
+          <label><span data-i18n="clp.cr.w">각재 폭 (mm)</span>
+            <input id="secTimberW" type="number" min="0" max="400" step="10" value="100" inputmode="numeric"></label>
+          <label><span data-i18n="clp.cr.s">각재 중심간 거리 (mm)</span>
+            <input id="secTimberS" type="number" min="0" max="3000" step="50" value="600" inputmode="numeric"
+                   placeholder="가장자리간 아님" data-i18n-ph="clp.cr.s.ph"></label>
+          <label><span data-i18n="clp.cr.g">각재 등급</span>
+            <select id="secTimberG" data-i18n-aria="clp.cr.g.aria" aria-label="각재 등급">
+              <option value="low" data-i18n="clp.cr.g.low">저급 (직각압축 0.3 kN/cm2)</option>
+              <option value="medium" data-i18n="clp.cr.g.med">중급 (직각압축 0.5 kN/cm2)</option>
+            </select></label>
+        </div>
+        <div id="secCradleOut" aria-live="polite" data-i18n-aria="clp.cr.aria" aria-label="코일 크레들 검토"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="index.html" class="logo-slot" aria-label="태웅로직스"></a>
+        <p class="footer-note">
+          태웅로직스 | 문의: itt@twsc.co.kr<br>
+          시각 표기 KST · 지표 산출 기준: 데이터 현황·상세기술서 참조 · 포털 v1.5 (2026-07-28 개정)<br>
+          © <span class="footer-year">2026</span> TAEWOONG LOGISTICS. All rights reserved.
+        </p>
+      </div>
+      <nav class="footer-links" aria-label="푸터 메뉴">
+        <a href="insight.html">Port Insight</a>
+        <a href="berth.html">선석배정</a>
+        <a href="status.html">데이터 현황</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="js/common.js?v=2026-09-04w"></script>
+  <script src="js/menu.js?v=2026-09-04w"></script>
+  <script src="js/i18n.js?v=2026-09-05i"></script>
+  <script src="js/auth.js?v=2026-09-04u"></script>
+  <script src="js/track.js?v=2026-08-31v"></script>
+  <script src="js/auth-gate.js?v=2026-09-04u"></script>
+  <script src="js/guide.js?v=2026-09-04z"></script>
+  <script src="js/clp-engine.js?v=2026-09-05f"></script>
+  <script src="js/clp-securing.js?v=2026-09-05i"></script>
+  <script src="js/clp.js?v=2026-09-05i"></script>
+</body>
+</html>

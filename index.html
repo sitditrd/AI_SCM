@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.vesselfinder.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src 'self' https://kvmyiualdodcvreoqfin.supabase.co https://api.open-meteo.com https://marine-api.open-meteo.com https://server.arcgisonline.com; frame-src 'self' https://www.vesselfinder.com; form-action 'self';">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()">
+  <!-- 테마·언어 선반영: 저장된 값을 그리기 전에 적용해 페이지 이동 시 깜빡임을 없앤다.
+       인라인이어야 의미가 있다(외부 파일은 네트워크를 한 번 더 기다린다). -->
+  <script>/* 클릭재킹 방어 — GitHub Pages 는 X-Frame-Options 헤더를 못 주므로 스크립트로 막는다.
+     우리 사이트가 iframe 에 박히면(top!==self) 최상위로 튕겨낸다. */
+  (function(){try{if(top!==self){top.location=self.location.href;}}catch(e){try{document.documentElement.style.display='none';}catch(_){}}})();</script>
+  <script>(function(){try{var t=localStorage.getItem('twl-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var L={ko:'ko',en:'en',zh:'zh-CN',ja:'ja',ru:'ru'},l=localStorage.getItem('twl-lang');if(L[l])document.documentElement.setAttribute('lang',L[l]);}catch(e){}})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="pg.title.index">TWL Control Tower — 태웅로직스 물류 관제</title>
+  <meta name="description" content="태웅로직스 물류 포털 — 해상·항공·복합운송 등 실서비스 안내와 항만 혼잡도(Port Insight)·선석배정·선박 위치·운임지수 대시보드 제공.">
+  <meta name="theme-color" content="#0a0f1e">
+  <link rel="canonical" href="https://sitditrd.github.io/AI_SCM/">
+  <link rel="apple-touch-icon" href="assets/og-image.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TWL Control Tower">
+  <meta property="og:title" content="TWL Control Tower — 태웅로직스 물류 관제">
+  <meta property="og:description" content="태웅로직스 물류 포털 — 해상·항공·복합운송 등 실서비스 안내와 항만 혼잡도(Port Insight)·선석배정·선박 위치·운임지수 대시보드 제공.">
+  <meta property="og:url" content="https://sitditrd.github.io/AI_SCM/">
+  <meta property="og:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="TWL Control Tower — 태웅로직스 물류 관제">
+  <meta name="twitter:description" content="태웅로직스 물류 포털 — 해상·항공·복합운송 등 실서비스 안내와 항만 혼잡도(Port Insight)·선석배정·선박 위치·운임지수 대시보드 제공.">
+  <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-05i">
+  <link rel="icon" href="assets/twl_logo.ico">
+</head>
+<body class="hero-page ops-page">
+  <a class="skip-link" href="#main-content" data-i18n="ld.a11y.skip">본문으로 건너뛰기</a>
+
+  <!-- ================= 헤더 ================= -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="태웅로직스 홈"></a>
+      <button class="nav-burger" aria-label="메뉴 열기" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <nav class="site-nav" aria-label="주요 메뉴">
+      </nav>
+      <div class="header-actions">
+        <select class="lang-select" aria-label="언어 선택 / Language">
+          <option value="ko">한국어</option>
+          <option value="en">English</option>
+          <option value="zh">中文</option>
+          <option value="ja">日本語</option>
+          <option value="ru">Русский</option>
+        </select>
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+        <a class="btn btn-primary" href="#contact" data-i18n="nav.cta">도입 문의</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= 히어로 ================= -->
+  <section id="main-content" tabindex="-1" class="hero hero-ops">
+    <canvas class="hero-canvas" id="heroCanvas" aria-hidden="true"></canvas>
+    <div class="hero-shade" aria-hidden="true"></div>
+    <div class="hud-clocks" id="hudClocks" aria-hidden="true"></div>
+    <div class="hero-hud">
+      <!-- 브리핑 카드 — 유리 패널 위 텍스트(지도와 충돌 원천 차단) -->
+      <div class="hud-brief">
+        <span class="hero-eyebrow"><span class="pulse-dot" aria-hidden="true"></span> TWL-ControlTower</span>
+        <h1 data-i18n-html="hero.h1">항만·선석·운임 데이터,<br><span class="accent">한 화면에서 관리</span>합니다</h1>
+        <p class="hero-sub" data-i18n-html="hero.sub">
+          태웅로직스는 해상·항공·복합운송과 CIS/철도, 프로젝트 물류까지 수행하는 종합물류기업입니다.
+          이 포털에서는 항만 혼잡도 <b>Port Insight</b>, 국내 터미널 <b>선석배정</b>,
+          <b>선박 위치</b>·<b>운임지수</b>를 실데이터로 제공합니다.
+        </p>
+        <div class="hero-ctas">
+          <a class="btn btn-primary btn-lg" href="insight.html" data-i18n="hero.cta1">Port Insight 살펴보기</a>
+          <a class="btn btn-ghost btn-lg" href="berth.html" data-i18n="hero.cta2">선석배정 보기</a>
+        </div>
+        <p class="hero-note" data-i18n-html="hero.note">IMF PortWatch <b id="heroPortCount">2,065</b>개 항만 네트워크 · 중점 모니터링 항만(Focus Port) 96개 매일 산출</p>
+      </div>
+
+      <!-- 하단 HUD 독 — 실시간 지표가 관제 화면의 상태바처럼 떠 있는다 -->
+      <div class="hud-dock">
+        <a class="live-strip" href="insight.html" aria-label="실시간 지표 — Port Insight 대시보드로 이동">
+          <div class="live-chip">
+            <div class="k"><span class="pulse-dot" aria-hidden="true"></span><span data-i18n="ls.pci">종합 PCI (항만 혼잡도 지수)</span></div>
+            <div class="v" id="lsTpfs">—</div>
+          </div>
+          <div class="live-chip">
+            <div class="k" data-i18n="ls.congested">혼잡(CONGESTED) 항만</div>
+            <div class="v" id="lsCritical">—</div>
+          </div>
+          <div class="live-chip">
+            <div class="k" data-i18n="ls.risk">글로벌 리스크</div>
+            <div class="v" id="lsRisk">—</div>
+          </div>
+          <div class="live-chip">
+            <div class="k" data-i18n="ls.delay">평균 접안 지연</div>
+            <div class="v" id="lsDelay">—</div>
+          </div>
+        </a>
+        <!--
+          i18n: aria-label="기상특보" 는 사전에 대응 구절이 없어 en/zh 에서 한글 그대로 읽혔다.
+          aria-label 은 사전 키 핸들러가 없으므로(js/i18n.js 는 data-i18n / data-i18n-html /
+          data-i18n-ph 만 처리) 키를 직접 걸 수 없다. 또 landing.js:209 renderWx() 가
+          #wxAlert 의 innerHTML 을 통째로 덮어써서 자식으로 넣은 이름표는 지워진다.
+          그래서 형제 요소로 wx.alert 이름표를 두고 aria-labelledby 로 참조한다.
+          hidden 요소라도 aria-labelledby 참조 시 접근명 계산에는 사용되므로(accname 규약)
+          화면·접근성 트리를 오염시키지 않으면서 3개 국어 접근명이 유지된다.
+        -->
+        <span id="wxAlertLbl" hidden data-i18n="wx.alert">기상특보</span>
+        <div id="wxAlert" style="display:none;" role="status" aria-labelledby="wxAlertLbl"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 운영 규모 스탯 밴드 (2026-08-19) ================= -->
+  <!-- i18n: aria-label="운영 규모" 는 사전에 대응 구절이 없어 en/zh 에서 한글 그대로 노출됐다.
+       섹션 안의 stats.scale 이름표(<b id="stScaleLbl">)가 이미 번역되므로 그것을 참조한다. -->
+  <section class="section tight" id="stats" aria-labelledby="stScaleLbl">
+    <div class="container">
+      <!-- 운임·물동량 스트립 — 히어로 독을 가볍게 하려고 이곳으로 이동(2026-08-19 개편) -->
+      <!--
+        i18n: 아래 스트립의 이름표를 aria-label 에서 aria-labelledby 로 바꾼 이유 —
+        js/i18n.js 는 data-i18n(텍스트)·data-i18n-ph(placeholder) 만 사전 키로 치환하고,
+        aria-label 은 키 핸들러가 없어 translateValue() 의 '부분 문자열 치환'(i18n.js:4027)만 탄다.
+        그래서 "월간 컨테이너 물동량" 이 '컨테이너'→'Container' 만 걸려 '월간 Container 물동량' 으로
+        반쪽 치환됐다. 바로 위 <b> 는 이미 data-i18n 으로 3개 국어가 정상 치환되므로,
+        그 요소를 이름표로 참조하면 사전을 건드리지 않고도 ko/en/zh 전부 올바른 접근명이 된다.
+      -->
+      <div class="stats-rail reveal"><i class="tk-tick"></i><b id="stFxLbl" data-i18n="stats.fx">주간 해상운임지수</b><span data-i18n="ld.stats.fxsrc">SCFI · CCFI — 상하이해운거래소</span><em class="ln"></em></div>
+      <div class="live-strip reveal" id="freightStrip" style="display:none; cursor:default; margin-bottom:10px;" aria-labelledby="stFxLbl"></div>
+      <div class="stats-rail reveal"><i class="tk-tick"></i><b id="stTeuLbl" data-i18n="stats.teu">월간 컨테이너 물동량</b><span data-i18n="stats.teud">해양수산부 · 수출입 합계</span><em class="ln"></em></div>
+      <div class="live-strip reveal" id="teuStrip" style="display:none; cursor:default; margin-bottom:14px;" aria-labelledby="stTeuLbl"></div>
+      <div class="stats-rail reveal"><i class="tk-tick"></i><b id="stScaleLbl" data-i18n="stats.scale">운영 규모</b><span>TWL DATA</span><em class="ln"></em></div>
+      <div class="stat-band reveal" id="statBand">
+        <div class="stat">
+          <div class="s-v"><span data-count="295000" data-suffix="+">295,000+</span></div>
+          <div class="s-k" data-i18n="stat.shipments">누적 선적 데이터 (건)</div>
+        </div>
+        <div class="stat">
+          <!-- 2,065 는 IMF PortWatch 가 보유한 항만 총수다. 우리가 실제로 산출하는 Focus Port 는 96 개이므로
+               '모니터링 항만'이라고 쓰면 사실과 다르다(2026-08-26 정정). -->
+          <div class="s-v"><span data-count="96">96</span></div>
+          <div class="s-k" data-i18n="stat.ports">Focus Port 혼잡도 산출</div>
+        </div>
+        <div class="stat">
+          <div class="s-v"><span data-count="16">16</span></div>
+          <div class="s-k" data-i18n="stat.terminals">국내 선석 수집 터미널</div>
+        </div>
+        <div class="stat">
+          <!-- 라이브 선사 수의 정본은 carrier-track ?api=list 다. 하드코딩하면 개통할 때마다 어긋나므로
+               (실제로 7사일 때 6 으로, 15사일 때 7 로 남아 있었다) js/landing.js 가 실행 시 덮어쓴다.
+               아래 값은 스크립트가 못 뜰 때의 폴백이다.
+               ★ 초기 텍스트는 0 이 아니라 **최종값**이어야 한다. 카운트업은 화면에 들어올 때
+                 시작하는데, 관찰자가 안 뜨거나 요소가 끝내 안 보이면 0 이 그대로 남아
+                 "선사 0사" 로 읽힌다. 애니메이션은 덤이고 숫자가 본질이다. -->
+            <div class="s-v"><span data-count="21" id="statCarriers">21</span><span class="s-sub" id="statCarriersTot">/31</span></div>
+          <div class="s-k" data-i18n="stat.carriers">실조회 연동 선사</div>
+        </div>
+        <div class="stat">
+          <!-- '24' 와 '/7' 을 옆 타일과 같은 마크업으로 두면 '7 중 24' 로 읽힌다(옆 타일이 진짜 n/m 이라서).
+               연중무휴라는 뜻이 전달되도록 한 덩어리로 쓴다. -->
+          <div class="s-v"><span class="s-whole">24/7</span></div>
+          <div class="s-k" data-i18n="stat.watch">자동 감시·변경 알림</div>
+        </div>
+      </div>
+      <!-- 데이터 소스 마퀴 — 실제 연동 원천만 나열 (장식용 과장 금지) -->
+      <div class="src-marquee reveal" aria-hidden="true">
+        <div class="src-track">
+          <span>IMF PortWatch</span><i></i><span data-i18n="ld.marquee.sse">상하이해운거래소 SCFI · CCFI</span><i></i>
+          <span data-i18n="ld.marquee.mof">해양수산부 수출입 컨테이너 실적</span><i></i><span data-i18n="ld.marquee.kma">기상청 항만기상</span><i></i>
+          <span data-i18n="ld.marquee.terminals">부산신항 · 북항 · 인천 · 광양 · 평택당진 · 대산 16개 터미널</span><i></i>
+          <span data-i18n="ld.marquee.carriers">선사·항공사 실시간 조회 — 화물추적 화면에서 제공 목록 확인</span><i></i>
+          <span data-i18n="ld.marquee.ais">VesselFinder 실시간 선박위치</span><i></i>
+          <span>IMF PortWatch</span><i></i><span data-i18n="ld.marquee.sse">상하이해운거래소 SCFI · CCFI</span><i></i>
+          <span data-i18n="ld.marquee.mof">해양수산부 수출입 컨테이너 실적</span><i></i><span data-i18n="ld.marquee.kma">기상청 항만기상</span><i></i>
+          <span data-i18n="ld.marquee.terminals">부산신항 · 북항 · 인천 · 광양 · 평택당진 · 대산 16개 터미널</span><i></i>
+          <span data-i18n="ld.marquee.carriers">선사·항공사 실시간 조회 — 화물추적 화면에서 제공 목록 확인</span><i></i>
+          <span data-i18n="ld.marquee.ais">VesselFinder 실시간 선박위치</span><i></i>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 서비스 ================= -->
+  <section class="section" id="modules">
+    <div class="container">
+      <div class="reveal">
+        <div class="sec-eyebrow">Services</div>
+        <h2 class="sec-title" data-i18n="svc.title">태웅로직스 사업 영역</h2>
+        <p class="sec-desc" data-i18n="svc.desc">공식 홈페이지(www.e-tgl.com) 기준 실제 제공 서비스입니다.</p>
+      </div>
+      <div class="grid-3">
+        <div class="card hover reveal">
+          <span class="svc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16l1.2-4.6a1.5 1.5 0 011.5-1.1h12.6a1.5 1.5 0 011.5 1.1L21 16"/><path d="M7.5 10.3V6.8a.8.8 0 01.8-.8h4.4a.8.8 0 01.8.8v3.5M11 3.5v2.5"/><path d="M2 16c1.7 0 1.7 1.8 3.3 1.8S7 16 8.7 16s1.7 1.8 3.3 1.8S13.7 16 15.3 16s1.7 1.8 3.3 1.8S20.3 16 22 16"/></svg></span>
+          <h3 data-i18n="svc1.t">해상 운송</h3><p data-i18n="svc1.d">수출입 컨테이너 해상운송 포워딩. 전 세계 주요 항로 선복 확보와 스케줄 관리.</p><span class="tagline">FCL · LCL</span></div>
+        <div class="card hover reveal">
+          <span class="svc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 13.5L3 10l1.5-1.5 7 1.5 5-5.5c.6-.6 1.6-.6 2.1 0 .6.6.6 1.5 0 2.1l-5.5 5 1.5 7L13 20l-3.5-7.5z"/><path d="M4.5 19.5l3-3"/></svg></span>
+          <h3 data-i18n="svc2.t">항공 운송</h3><p data-i18n="svc2.d">긴급 화물·고부가 화물의 항공 수출입 운송 서비스.</p><span class="tagline">Air Freight</span></div>
+        <div class="card hover reveal">
+          <span class="svc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="11" rx="2"/><path d="M4 9.5h16M8 15l-2 4M16 15l2 4M7 19h10"/><circle cx="8.5" cy="12.2" r=".9"/><circle cx="15.5" cy="12.2" r=".9"/></svg></span>
+          <h3 data-i18n="svc3.t">복합 운송 · CIS/철도</h3><p data-i18n="svc3.d">해상+철도 복합운송. CIS·러시아·중앙아시아 철도 운송 전문.</p><span class="tagline">TSR · TCR</span></div>
+        <div class="card hover reveal">
+          <span class="svc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="8" rx="4"/><path d="M7 8V6.5M17 8V6.5M7 17.5V16M17 17.5V16M9.5 12h5"/></svg></span>
+          <h3 data-i18n="svc4.t">ISO TANK · 프로젝트</h3><p data-i18n="svc4.d">액체화물 ISO 탱크 운송과 중량물·플랜트 프로젝트 물류.</p><span class="tagline" data-i18n="svc4.tag">특수 화물</span></div>
+        <div class="card hover reveal">
+          <span class="svc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20V9.5L12 4l9 5.5V20"/><path d="M3 20h18M9 20v-6h6v6M12 4v3"/></svg></span>
+          <h3 data-i18n="svc5.t">창고 · 내륙운송</h3><p data-i18n="svc5.d">보관·재고관리와 내륙운송, 물류 컨설팅.</p><span class="tagline">Warehouse · Trucking</span></div>
+        <div class="card hover reveal">
+          <span class="svc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h2l2.2 10.2a1.5 1.5 0 001.5 1.2h7.6a1.5 1.5 0 001.5-1.2L20.5 8H7"/><circle cx="10.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/></svg></span>
+          <h3 data-i18n="svc6.t">이커머스 물류</h3><p data-i18n="svc6.d">이커머스 국제 물류 및 풀필먼트 지원.</p><span class="tagline">E-Commerce</span></div>
+      </div>
+
+      <div class="reveal" style="margin-top:44px;">
+        <div class="sec-eyebrow">Digital Services</div>
+        <h2 class="sec-title" data-i18n="dig.title">이 포털에서 바로 쓰는 대시보드</h2>
+        <p class="sec-desc" data-i18n="dig.desc">아래는 전부 실데이터로 지금 동작하는 기능입니다.</p>
+      </div>
+      <div class="grid-3">
+        <a class="card hover reveal" href="insight.html"><h3>Port Insight</h3><p data-i18n="d1.d">IMF PortWatch(위성 AIS) 기반 주요 항만 96개 혼잡도 — PCI v2, 매일 산출.</p><span class="tagline" data-i18n="d1.tag">↳ 대시보드 열기</span></a>
+        <a class="card hover reveal" href="berth.html"><h3 data-i18n="d2.t">선석배정 현황</h3><p data-i18n="d2.d">부산·광양·인천 16개 터미널 선석배정, 매일 자동 수집. 반입마감 임박 강조.</p><span class="tagline" data-i18n="d2.tag">↳ 대시보드 열기</span></a>
+        <a class="card hover reveal" href="vessel.html"><h3 data-i18n="d3.t">선박 위치</h3><p data-i18n="d3.d">항만 주변 선박 실시간 위치(AIS). 부산신항·북항·광양·인천 전환.</p><span class="tagline" data-i18n="d3.tag">↳ 지도 열기</span></a>
+        <a class="card hover reveal" href="#freightStrip"><h3 data-i18n="d4.t">주간 운임지수</h3><p data-i18n="d4.d">SCFI·CCFI 종합/항로별 지수 — 상하이해운거래소 공표, 주간 자동 수집(상단 스트립).</p><span class="tagline" data-i18n="d4.tag">↳ 홈 상단 표시</span></a>
+        <a class="card hover reveal" href="berth.html#weather"><h3 data-i18n="d5.t">항만 기상</h3><p data-i18n="d5.d">부산신항·광양·인천 파고/풍속 실황 — 선석배정 페이지 제공.</p><span class="tagline" data-i18n="d5.tag">↳ 기상 카드 보기</span></a>
+        <a class="card hover reveal" href="status.html"><h3 data-i18n="d6.t">데이터 현황</h3><p data-i18n="d6.d">파이프라인 적재 현황·데이터 최신성·적재 이력 운영 보드.</p><span class="tagline" data-i18n="d6.tag">↳ 운영 보드 열기</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CTA ================= -->
+  <section class="section tight" id="contact">
+    <div class="container">
+      <div class="cta-band cta-split reveal">
+        <div class="cta-left">
+          <div class="cta-eyebrow">CONTACT</div>
+          <h2 data-i18n="cta.title">문의</h2>
+          <p data-i18n="cta.text">모듈 구성·데이터 연동 관련 문의는 아래 메일로 부탁드립니다.</p>
+        </div>
+        <div class="cta-right">
+          <a class="btn btn-primary btn-lg" href="mailto:itt@twsc.co.kr?subject=%5BTWL%20SmartBPO%5D%20%EB%8F%84%EC%9E%85%20%EB%AC%B8%EC%9D%98" data-i18n="cta.btn">이메일로 도입 문의</a>
+          <span class="cta-mail">itt@twsc.co.kr</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 푸터 ================= -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="index.html" class="logo-slot" aria-label="태웅로직스"></a>
+        <p class="footer-note" data-i18n-html="foot.note">
+          태웅로직스 | 문의: itt@twsc.co.kr<br>
+          항만 혼잡 지표: PCI(Port Congestion Index) — IMF PortWatch 오픈데이터 기반 TWL 자체 산출 · 선석배정: 각 터미널 공표 데이터<br>
+          © <span class="footer-year">2026</span> TAEWOONG LOGISTICS. All rights reserved.
+        </p>
+      </div>
+      <nav class="footer-links" aria-label="푸터 메뉴">
+        <a href="#modules" data-i18n="nav.services">서비스</a>
+        <a href="insight.html">Port Insight</a>
+        <a href="berth.html" data-i18n="nav.berth">선석배정</a>
+        <a href="vessel.html" data-i18n="nav.vessel">선박 위치</a>
+        <a href="cargo.html" data-i18n="nav.cargo">화물 추적</a>
+        <a href="status.html" data-i18n="nav.status">데이터 현황</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/common.js?v=2026-09-04w"></script>
+  <script src="js/menu.js?v=2026-09-04w"></script>
+  <script src="js/i18n.js?v=2026-09-05i"></script>
+  <script src="js/auth.js?v=2026-09-04s"></script>
+  <script src="js/track.js?v=2026-08-31v"></script>
+  <script src="js/auth-gate.js?v=2026-09-04u"></script>
+  <script src="js/data_world.js?v=2026-08-31v"></script>
+  <script src="js/landing.js?v=2026-08-31v"></script>
+</body>
+</html>

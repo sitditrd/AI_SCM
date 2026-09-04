@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.vesselfinder.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src 'self' https://kvmyiualdodcvreoqfin.supabase.co https://api.open-meteo.com https://marine-api.open-meteo.com https://server.arcgisonline.com; frame-src 'self' https://www.vesselfinder.com; form-action 'self';">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()">
+  <!-- 테마·언어 선반영: 저장된 값을 그리기 전에 적용해 페이지 이동 시 깜빡임을 없앤다.
+       인라인이어야 의미가 있다(외부 파일은 네트워크를 한 번 더 기다린다). -->
+  <script>/* 클릭재킹 방어 — GitHub Pages 는 X-Frame-Options 헤더를 못 주므로 스크립트로 막는다.
+     우리 사이트가 iframe 에 박히면(top!==self) 최상위로 튕겨낸다. */
+  (function(){try{if(top!==self){top.location=self.location.href;}}catch(e){try{document.documentElement.style.display='none';}catch(_){}}})();</script>
+  <script>(function(){try{var t=localStorage.getItem('twl-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var L={ko:'ko',en:'en',zh:'zh-CN',ja:'ja',ru:'ru'},l=localStorage.getItem('twl-lang');if(L[l])document.documentElement.setAttribute('lang',L[l]);}catch(e){}})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="pg.title.berth">선석배정현황 — 국내 터미널 통합 | TWL Control Tower</title>
+  <meta name="description" content="부산신항·부산북항·광양항·인천항·평택당진항·대산항 16개 컨테이너 터미널의 선석배정현황을 매일 오전 6시 자동 수집하여 한 화면에서 제공하는 태웅로직스 Berth Insight.">
+  <meta name="theme-color" content="#0a0f1e">
+  <link rel="canonical" href="https://sitditrd.github.io/AI_SCM/berth.html">
+  <link rel="apple-touch-icon" href="assets/og-image.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TWL Control Tower">
+  <meta property="og:title" content="선석배정현황 — 국내 터미널 통합 | TWL Control Tower">
+  <meta property="og:description" content="부산신항·부산북항·광양항·인천항·평택당진항·대산항 16개 컨테이너 터미널의 선석배정현황을 매일 오전 6시 자동 수집하여 한 화면에서 제공하는 태웅로직스 Berth Insight.">
+  <meta property="og:url" content="https://sitditrd.github.io/AI_SCM/berth.html">
+  <meta property="og:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="선석배정현황 — 국내 터미널 통합 | TWL Control Tower">
+  <meta name="twitter:description" content="부산신항·부산북항·광양항·인천항·평택당진항·대산항 16개 컨테이너 터미널의 선석배정현황을 매일 오전 6시 자동 수집하여 한 화면에서 제공하는 태웅로직스 Berth Insight.">
+  <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-05i">
+  <link rel="icon" href="assets/twl_logo.ico">
+</head>
+<body class="hero-page">
+  <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+
+  <!-- ================= 헤더 ================= -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="태웅로직스 홈"></a>
+      <button class="nav-burger" aria-label="메뉴 열기" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <nav class="site-nav" aria-label="주요 메뉴">
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+        <a class="btn btn-primary" href="index.html#contact">도입 문의</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= 대시보드 타이틀 ================= -->
+  <section id="main-content" tabindex="-1" class="dash-hero">
+    <div class="container">
+      <div class="dash-title-row">
+        <div>
+          <h1 data-i18n-html="berth.hero.title">선석배정현황 <span style="font-weight:300; opacity:.75;">— 국내 터미널 통합</span></h1>
+          <p class="dash-sub" data-i18n-html="berth.hero.sub">부산신항·북항·광양·인천·평택당진·대산 <b>16개 터미널</b>의 선석배정을 매일 오전 6시 자동 수집합니다</p>
+        </div>
+        <div class="live-status">
+          <span class="pulse-dot" aria-hidden="true"></span>
+          <span class="stamp" id="lastUpdated">업데이트 확인 중…</span>
+          <button class="refresh-btn" id="refreshBtn" aria-label="지금 새로고침">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 4v5h-5"/></svg>
+            <span data-i18n="berth.refresh">새로고침</span>
+          </button>
+        </div>
+      </div>
+      <p class="dash-sub" style="margin-top:14px; font-size:var(--fs-sm);">
+        <span data-i18n="berth.meta.basis">수집 기준:</span> <span id="collectLabel">—</span> <span data-i18n="berth.meta.mid">06:00 KST (일일 자동 수집) · 총</span> <b id="totalLabel">—</b><span data-i18n="berth.meta.unit">건</span>
+      </p>
+    </div>
+  </section>
+
+  <div class="stale-banner" id="staleBanner" data-i18n="berth.stale">실시간 연결 지연 — 마지막 수신 데이터를 표시 중입니다.</div>
+
+  <!-- ============ Section 01 KPI ============ -->
+  <section class="dash-section" id="summary">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 01</span>
+        <h2 data-i18n="berth.sec1.h">금일 운영 스냅샷</h2>
+        <span class="hint" data-i18n="berth.sec1.hint">수집일 06:00 기준</span>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi reveal">
+          <div class="k" data-i18n-html="berth.kpi.total"><span class="pulse-dot" aria-hidden="true"></span>총 모선</div>
+          <div class="v"><span id="kTotal">—</span><small data-i18n="berth.unit.ship">척</small></div>
+          <div class="sub" id="kTotalSub" data-i18n="berth.kpi.total.sub">16개 터미널 합산</div>
+        </div>
+        <div class="kpi reveal">
+          <div class="k" data-i18n="berth.kpi.working">접안·작업중</div>
+          <div class="v"><span id="kWorking">—</span><small data-i18n="berth.unit.ship">척</small></div>
+          <div class="sub">ARRIVED + WORKING</div>
+        </div>
+        <div class="kpi reveal">
+          <div class="k" data-i18n="berth.kpi.cct">반입마감 임박</div>
+          <div class="v"><span id="kCct">—</span><small data-i18n="berth.meta.unit">건</small></div>
+          <div class="sub" data-i18n="berth.kpi.cct.sub">기준시각 후 12시간 이내 마감</div>
+        </div>
+        <div class="kpi reveal">
+          <div class="k" data-i18n="berth.kpi.etd">금일 출항 예정</div>
+          <div class="v"><span id="kEtd">—</span><small data-i18n="berth.unit.ship">척</small></div>
+          <div class="sub" data-i18n="berth.kpi.etd.sub">수집일 중 출항 (완료 제외)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Section 02 선석배정 목록 ============ -->
+  <section class="dash-section" id="list">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 02</span>
+        <h2 data-i18n="berth.sec2.h">선석배정 목록</h2>
+        <span class="hint" data-i18n="berth.sec2.hint">접안(예정)일시 오름차순 · 반입마감 12시간 이내 강조</span>
+      </div>
+
+      <div class="chip-row reveal" id="portChips" aria-label="항만 필터"></div>
+      <div class="tab-row reveal" id="terminalTabs" role="tablist" aria-label="터미널 필터" style="flex-wrap:wrap;"></div>
+
+      <div class="berth-toolbar reveal">
+        <div class="chip-row" id="statusChips" aria-label="상태 필터" style="margin:0;"></div>
+        <input type="search" class="focus-search" id="berthSearch" placeholder="선명 / 선사 / 항로 / 항차 검색" data-i18n-ph="berth.search.ph" aria-label="선석배정 검색" style="max-width:280px;">
+        <span style="color:var(--muted); font-size:var(--fs-md);" id="matchLabel" role="status" aria-live="polite" aria-atomic="true"></span>
+      </div>
+
+      <div class="grid-toolbar reveal">
+        <div class="seg" role="group" aria-label="표시 방식">
+          <button class="seg-btn active" id="modePage" aria-pressed="true" data-i18n="berth.mode.page">페이지</button>
+          <button class="seg-btn" id="modeScroll" aria-pressed="false" data-i18n="berth.mode.scroll">연속 스크롤</button>
+        </div>
+        <div class="seg" role="group" aria-label="그리드 형태">
+          <button class="seg-btn active" id="layoutFlat" aria-pressed="true" data-i18n="berth.layout.flat">평면 그리드</button>
+          <button class="seg-btn" id="layoutTree" aria-pressed="false" data-i18n="berth.layout.tree">트리 그리드</button>
+        </div>
+        <button class="seg-btn single" id="colFilterBtn" aria-pressed="false" data-i18n-html="berth.colfilter">컬럼 필터<i class="cf-dot" hidden></i></button>
+        <label class="pg-size"><span data-i18n="berth.pgsize.pre">페이지당</span>
+          <select id="pageSize" aria-label="페이지당 표시 건수">
+            <option value="25" selected>25</option><option value="50">50</option><option value="100">100</option>
+          </select><span data-i18n="berth.meta.unit">건</span>
+        </label>
+        <span class="gt-hint" data-i18n="berth.gthint">행 우클릭 → 퀵뷰 메뉴</span>
+      </div>
+
+      <div class="tbl-card reveal">
+        <div class="tbl-scroll">
+          <table class="tw" id="berthTable">
+            <!-- caption 은 화면에 안 보이지만(.sr-only) 스크린리더가 표에 들어설 때 먼저 읽는다.
+                 이게 없으면 "표, 11열" 이라고만 나와 무슨 표인지 알 수 없다. -->
+            <caption class="sr-only" data-i18n="berth.tbl.caption">국내 컨테이너 터미널 선석배정현황 — 터미널·선석·선박·반입마감·접안·출항·물량·상태</caption>
+            <thead>
+              <tr>
+                <th scope="col" data-i18n="berth.th.terminal">터미널</th><th scope="col" data-i18n="berth.th.berth">선석</th><th scope="col" data-i18n="berth.th.vessel">선명 / 모선항차</th><th scope="col" data-i18n="berth.th.carrier">선사</th><th scope="col" data-i18n="berth.th.route">항로</th>
+                <th scope="col" data-i18n="berth.th.cct">반입마감 (CCT)</th><th scope="col" data-i18n="berth.th.etb">접안 (ETB)</th><th scope="col" data-i18n="berth.th.etd">출항 (ETD)</th>
+                <th scope="col" class="num" data-i18n="berth.th.dis">양하 (VAN)</th><th scope="col" class="num" data-i18n="berth.th.lod">적하 (VAN)</th><th scope="col" data-i18n="berth.th.status">상태</th>
+              </tr>
+              <tr class="colf-row" id="colfRow" hidden>
+                <th><select id="cfTerm" class="colf-in" aria-label="터미널 필터"></select></th>
+                <th><input id="cfBerth" class="colf-in" type="text" placeholder="선석" data-i18n-ph="berth.th.berth" aria-label="선석 필터"></th>
+                <th><input id="cfVessel" class="colf-in" type="text" placeholder="선명/항차" data-i18n-ph="berth.cf.ph.vessel" aria-label="선명 필터"></th>
+                <th><select id="cfCarrier" class="colf-in" aria-label="선사 필터"></select></th>
+                <th><input id="cfRoute" class="colf-in" type="text" placeholder="항로" data-i18n-ph="berth.th.route" aria-label="항로 필터"></th>
+                <th><select id="cfCct" class="colf-in" aria-label="반입마감 필터">
+                  <option value="ALL" data-i18n="berth.cf.cct.all">전체</option><option value="SOON" data-i18n="berth.cf.cct.soon">임박 (12h)</option>
+                  <option value="UPCOMING" data-i18n="berth.cf.cct.upcoming">이후 마감</option><option value="PAST" data-i18n="berth.cf.cct.past">마감 지남</option>
+                </select></th>
+                <th></th><th></th><th></th><th></th>
+                <th><select id="cfStatus" class="colf-in" aria-label="상태 필터"></select></th>
+              </tr>
+            </thead>
+            <tbody id="berthBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="pager-bar reveal" id="pagerBar"></div>
+    </div>
+  </section>
+
+  <!-- 우클릭 퀵뷰 메뉴 (선석배정 행) -->
+  <div class="ctx-menu" id="ctxMenu" role="menu" aria-hidden="true"></div>
+
+  <!-- ============ Section 03 항만 기상 ============ -->
+  <section class="dash-section" id="weather">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 03</span>
+        <h2 data-i18n="berth.sec3.h">항만 기상</h2>
+        <span class="hint" data-i18n="berth.sec3.hint">파고·풍속 현황 (Open-Meteo · 1시간 단위)</span>
+      </div>
+      <div class="kpi-grid" id="wxGrid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));"></div>
+    </div>
+  </section>
+
+  <!-- ============ Section 04 터미널별 요약 ============ -->
+  <section class="dash-section" id="byterminal">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 04</span>
+        <h2 data-i18n="berth.sec4.h">터미널별 요약</h2>
+        <span class="hint" data-i18n="berth.sec4.hint">물량 소계 · 접안지연 리스크(몬테카를로 4,000회, 실측 접안편차 적합)</span>
+      </div>
+      <div class="tbl-card reveal">
+        <div class="tbl-scroll">
+          <table class="tw">
+            <thead>
+              <tr><th data-i18n="berth.th.terminal">터미널</th><th data-i18n="berth.ts.th.port">항만</th><th class="num" data-i18n="berth.ts.th.calls">모선</th><th class="num" data-i18n="berth.kpi.working">접안·작업중</th><th class="num" data-i18n="berth.ts.th.dis">양하 합계</th><th class="num" data-i18n="berth.ts.th.lod">적하 합계</th><th class="num">Shift</th><th class="num" data-i18n="berth.ts.th.risk">접안지연 6h+ 확률</th></tr>
+            </thead>
+            <tbody id="termBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <p class="notice" data-i18n="berth.notice">
+        본 현황은 각 터미널이 공표한 선석배정정보를 매일 오전 6시 자동 수집·정규화한 것입니다.
+        터미널 사정에 따라 실제 일정과 차이가 있을 수 있으며, 확정 정보는 각 터미널 공지를 따릅니다.
+      </p>
+
+    </div>
+  </section>
+
+  <!-- ============ 인천항 선박 입출항 (인천항만공사 15157706 · 2026-08-03) ============ -->
+  <section class="dash-section" id="incheonship">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">INCHEON</span>
+        <h2 data-i18n="berth.incheon.h">인천항 선박 입출항</h2>
+        <span class="hint" data-i18n="berth.incheon.hint">인천항만공사 공공 API · 선석배정 수집분 보완</span>
+      </div>
+
+      <div class="card reveal" style="margin-bottom:14px;">
+        <div class="berth-toolbar" style="margin:0;">
+          <input type="date" class="focus-search" id="icFrom" style="max-width:160px;" aria-label="입항 조회 시작일">
+          <input type="date" class="focus-search" id="icTo" style="max-width:160px;" aria-label="입항 조회 종료일">
+          <input type="search" class="focus-search" id="icCall" style="max-width:230px;" aria-label="호출부호 필터"
+                 placeholder="호출부호 (예: D5OI9) — 선택" data-i18n-ph="berth.incheon.ph.call">
+          <button class="btn btn-primary" id="icBtn" type="button" data-i18n="berth.incheon.btn">입출항 조회</button>
+        </div>
+        <p class="sc-sub" style="margin:10px 0 0; color:var(--muted); font-size:var(--fs-sm);" data-i18n="berth.incheon.note">
+          선석배정 수집 대상은 컨테이너 터미널(E1CT·ICON)뿐이라 일반부두 선박이 빠집니다 · 본 표는 인천항 전체 부두의 입출항 실적으로 이를 보완합니다 (기간은 입항일 기준 · 최대 30건)
+        </p>
+      </div>
+      <div id="icOut"></div>
+    </div>
+  </section>
+
+  <!-- ============ 해외 터미널 (schedule.html 에서 이관 · 2026-08-31) ============
+       성격은 터미널인데 스케줄 화면에 얹혀 있어, 메뉴 군집과 국내/해외 탭이 둘 다 어긋났다.
+       여기로 옮겨 선석배정 화면 안에서 국내 → 해외로 자연스럽게 이어지게 한다. -->
+  <section class="dash-section" id="overseas-terminal">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">OVERSEAS</span>
+        <h2 data-i18n="schedule.term.h">해외 터미널 현황</h2>
+        <span class="hint" data-i18n="schedule.term.hint">LOCODE 기반 해외 포트 조회 · 국내와 동일 UI 패턴</span>
+      </div>
+      <div class="card reveal">
+        <div class="prep-panel">
+          <div class="prep-badge" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="24" r="16"/><path d="M8 24 h32"/><path d="M24 8c6 5 6 27 0 32 M24 8c-6 5 -6 27 0 32"/></svg>
+          </div>
+          <h3 data-i18n="schedule.prep.h">서비스 준비 중입니다</h3>
+          <p data-i18n="schedule.term.prep.p">주요 해외 터미널의 선석·스케줄 정보를 국내 선석배정과 동일한 방식으로 제공할 예정입니다.</p>
+          <p class="muted" data-i18n="schedule.term.prep.muted">데이터 소스(스크래핑 · OCR · 공개 API) 확정 후 순차 오픈합니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 푸터 ================= -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="index.html" class="logo-slot" aria-label="태웅로직스"></a>
+        <p class="footer-note">
+          태웅로직스 | 문의: itt@twsc.co.kr<br>
+          시각 표기 KST · 지표 산출 기준: 데이터 현황·상세기술서 참조 · 포털 v1.5 (2026-07-28 개정)<br>
+          © <span class="footer-year">2026</span> TAEWOONG LOGISTICS. All rights reserved.
+        </p>
+      </div>
+      <nav class="footer-links" aria-label="푸터 메뉴">
+        <a href="insight.html">Port Insight</a>
+        <a href="berth.html">선석배정</a>
+        <a href="status.html">데이터 현황</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="js/data_berth.js?v=2026-08-31v"></script>
+  <script src="js/common.js?v=2026-09-04w"></script>
+  <script src="js/menu.js?v=2026-09-04w"></script>
+  <script src="js/i18n.js?v=2026-09-05i"></script>
+  <script src="js/auth.js?v=2026-09-04s"></script>
+  <script src="js/track.js?v=2026-08-31v"></script>
+  <script src="js/auth-gate.js?v=2026-09-04u"></script>
+  <script src="js/berth.js?v=2026-08-31v"></script>
+  <script src="js/weather.js?v=2026-08-31v"></script>
+</body>
+</html>

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.vesselfinder.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src 'self' https://kvmyiualdodcvreoqfin.supabase.co https://api.open-meteo.com https://marine-api.open-meteo.com https://server.arcgisonline.com; frame-src 'self' https://www.vesselfinder.com; form-action 'self';">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()">
+  <!-- 테마·언어 선반영: 저장된 값을 그리기 전에 적용해 페이지 이동 시 깜빡임을 없앤다.
+       인라인이어야 의미가 있다(외부 파일은 네트워크를 한 번 더 기다린다). -->
+  <script>/* 클릭재킹 방어 — GitHub Pages 는 X-Frame-Options 헤더를 못 주므로 스크립트로 막는다.
+     우리 사이트가 iframe 에 박히면(top!==self) 최상위로 튕겨낸다. */
+  (function(){try{if(top!==self){top.location=self.location.href;}}catch(e){try{document.documentElement.style.display='none';}catch(_){}}})();</script>
+  <script>(function(){try{var t=localStorage.getItem('twl-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var L={ko:'ko',en:'en',zh:'zh-CN',ja:'ja',ru:'ru'},l=localStorage.getItem('twl-lang');if(L[l])document.documentElement.setAttribute('lang',L[l]);}catch(e){}})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="pg.title.insight">Port Insight — 항만 혼잡도 대시보드 | TWL Control Tower</title>
+  <meta name="description" content="IMF PortWatch 오픈데이터(위성 AIS) 기반으로 전 세계 Focus Port 96개의 혼잡도를 산출하는 태웅로직스 Port Insight 대시보드.">
+  <meta name="theme-color" content="#0a0f1e">
+  <link rel="canonical" href="https://sitditrd.github.io/AI_SCM/insight.html">
+  <link rel="apple-touch-icon" href="assets/og-image.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TWL Control Tower">
+  <meta property="og:title" content="Port Insight — 항만 혼잡도 대시보드 | TWL Control Tower">
+  <meta property="og:description" content="IMF PortWatch 오픈데이터(위성 AIS) 기반으로 전 세계 Focus Port 96개의 혼잡도를 산출하는 태웅로직스 Port Insight 대시보드.">
+  <meta property="og:url" content="https://sitditrd.github.io/AI_SCM/insight.html">
+  <meta property="og:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Port Insight — 항만 혼잡도 대시보드 | TWL Control Tower">
+  <meta name="twitter:description" content="IMF PortWatch 오픈데이터(위성 AIS) 기반으로 전 세계 Focus Port 96개의 혼잡도를 산출하는 태웅로직스 Port Insight 대시보드.">
+  <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha384-c6Rcwz4e4CITMbu/NBmnNS8yN2sC3cUElMEMfP3vqqKFp7GOYaaBBCqmaWBjmkjb" crossorigin="anonymous">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-05i">
+  <link rel="icon" href="assets/twl_logo.ico">
+</head>
+<body class="hero-page">
+  <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+
+  <!-- ================= 헤더 ================= -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="태웅로직스 홈"></a>
+      <button class="nav-burger" aria-label="메뉴 열기" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <nav class="site-nav" aria-label="주요 메뉴">
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+        <a class="btn btn-primary" href="index.html#contact" data-i18n="nav.cta">도입 문의</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= 대시보드 타이틀 ================= -->
+  <section id="main-content" tabindex="-1" class="dash-hero">
+    <div class="container">
+      <!-- 글로벌/국내 스코프. 선석배정과 달리 한쪽을 숨기지 않는다 —
+           이 화면의 가치는 "글로벌 혼잡 속에서 우리 항만이 어디쯤인가" 라서
+           한쪽을 감추면 비교가 사라진다. 해당 구간으로 이동하고, 스크롤에 따라 표시가 따라간다. -->
+      <div class="scope-tabs" role="tablist" aria-label="분석 범위">
+        <a class="scope-tab active" href="#snapshot" role="tab" aria-selected="true" data-scope-jump="global" data-i18n="insight.scope.global">글로벌</a>
+        <a class="scope-tab" href="#bottleneck" role="tab" aria-selected="false" data-scope-jump="domestic" data-i18n="insight.scope.domestic">국내</a>
+      </div>
+      <div class="dash-title-row">
+        <div>
+          <h1 data-i18n-html="insight.hero.title">Port Insight <span style="font-weight:300; opacity:.75;">— 글로벌 항만 혼잡도</span></h1>
+          <p class="dash-sub" data-i18n-html="insight.hero.sub">전 세계 중점 모니터링 항만(Focus Port) <b>96개</b>의 혼잡도를 IMF PortWatch 오픈데이터(위성 AIS)로 산출합니다</p>
+        </div>
+        <div class="live-status">
+          <span class="pulse-dot" aria-hidden="true"></span>
+          <span class="stamp" id="lastUpdated" data-i18n="insight.stamp.init">업데이트 확인 중…</span>
+          <button class="refresh-btn" id="refreshBtn" aria-label="지금 새로고침">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 4v5h-5"/></svg>
+            <span data-i18n="insight.refresh">새로고침</span>
+          </button>
+        </div>
+      </div>
+      <p class="dash-sub" style="margin-top:14px; font-size:var(--fs-sm);">
+        <span data-i18n="insight.meta.period">분석 기간:</span> <span id="periodLabel">—</span> <span data-i18n="insight.meta.mid">(PortWatch 최신 7일) · 주간 데이터 갱신(약 7~10일 지연) · Focus Port</span> <b id="focusCountLabel">96</b><span data-i18n="insight.unit.ports">개</span>
+      </p>
+    </div>
+  </section>
+
+  <div class="stale-banner" id="staleBanner" data-i18n="insight.stale">실시간 연결 지연 — 마지막 수신 데이터를 표시 중입니다.</div>
+
+  <!-- 앵커 탭 -->
+  <nav class="anchor-tabs" aria-label="대시보드 섹션">
+    <div class="inner">
+      <a href="#snapshot" class="active">Overview</a>
+      <a href="#regional">Regional</a>
+      <a href="#portfocus">Ports</a>
+      <a href="#map-sec">Map</a>
+      <a href="#waiting">Waiting</a>
+      <span class="nav-sep" aria-hidden="true"></span>
+      <a href="#bottleneck">Terminals</a>
+      <a href="#berthocc">Berth Use</a>
+      <a href="#etbacc">ETB Trust</a>
+      <a href="#teutrend">Volume</a>
+      <a href="#portstat">Calls</a>
+    </div>
+  </nav>
+
+  <!-- ============ Section 01 글로벌 스냅샷 ============ -->
+  <section class="dash-section" id="snapshot">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 01</span>
+        <h2 data-i18n="insight.s1.h">글로벌 혼잡도 스냅샷</h2>
+        <span class="hint" data-i18n="insight.s1.hint">최근 7일 활동량 기준 · 전주 대비</span>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi reveal" id="kpiTpfs">
+          <div class="k" data-i18n-html="insight.kpi.pci"><span class="pulse-dot" aria-hidden="true"></span>종합 PCI (Port Congestion Index)</div>
+          <div class="gauge-wrap">
+            <svg id="gaugeSvg" width="150" height="92" viewBox="0 0 150 92" role="img" aria-label="종합 PCI 게이지"></svg>
+            <div class="gauge-meta">
+              <div class="v"><span id="vTpfs">—</span><small>/100</small></div>
+              <div class="sub" id="vTpfsGrade">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="kpi reveal" id="kpiCritical">
+          <div class="k" data-i18n="insight.kpi.congested">혼잡(CONGESTED) 항만</div>
+          <div class="v"><span id="vCritical">—</span><small data-i18n="insight.unit.ports">개</small></div>
+          <div class="sub" data-i18n="insight.kpi.congested.sub">Focus Port 96개 중 · 활동량 상위 25% 구간</div>
+        </div>
+        <div class="kpi reveal" id="kpiRisk">
+          <div class="k" data-i18n="insight.kpi.risk">글로벌 리스크</div>
+          <div class="risk-badge risk-high" id="vRisk">—</div>
+          <div class="sub" data-i18n="insight.kpi.risk.sub">종합 PCI·혼잡 항만 수·추세 종합 판정</div>
+        </div>
+        <div class="kpi reveal" id="kpiDelay">
+          <div class="k" data-i18n="insight.kpi.delay">평균 접안 지연</div>
+          <div class="v"><span id="vDelay">—</span><small>h</small></div>
+          <div class="sub" data-i18n="insight.kpi.delay.sub">Focus Port 평균 (활동량 기반 추정치)</div>
+        </div>
+      </div>
+
+      <div class="card reveal" style="margin-top:14px;">
+        <h3 style="margin:0; font-size:var(--fs-lg);" data-i18n-html="insight.dist.h">혼잡 레벨 분포 <span style="color:var(--muted); font-weight:600; font-size:var(--fs-sm);">Focus Port 96개</span></h3>
+        <div class="dist-bar" id="distBar" role="img" aria-label="혼잡 레벨 분포 스택 바"></div>
+        <div class="legend-row" id="distLegend"></div>
+        <div class="tbl-scroll" style="margin-top:16px;">
+          <table class="tw" id="distTable">
+            <thead>
+              <tr><th data-i18n="insight.th.level">레벨</th><th class="num" data-i18n="insight.th.ratio">비율</th><th class="num" data-i18n="insight.th.portcount">항만 수</th><th class="num" data-i18n="insight.th.wow">전주 대비</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card reveal takeaway-card" style="margin-top:14px;">
+        <h3 style="margin:0 0 8px; font-size:var(--fs-lg);" data-i18n="insight.tk.h">오늘의 요점</h3>
+        <ul class="takeaway" id="takeaway"></ul>
+      </div>
+
+      <div class="grid-3 g-2to1" style="margin-top:14px;">
+        <div class="formula-card reveal" data-i18n-html="insight.formula.pci">
+          <b>PCI v2</b> — <b>활동량 백분위 60%</b> + <b>물동량 백분위 25%</b> + <b>추세 모멘텀 15%</b>
+          (IMF PortWatch 위성 AIS · 120일 기준선). 부산·광양·인천의 접안·대기 척수는 선석배정 실측을 사용하며,
+          그 외 항만의 지연·대기는 지수 기반 추정치입니다.
+        </div>
+        <div class="formula-card reveal" data-i18n-html="insight.formula.grade">
+          <b>등급 기준</b> · CONGESTED 75+ · BUSY 50–75 · STABLE 25–50 · LOW &lt;25
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Section 02 권역별 ============ -->
+  <section class="dash-section" id="regional">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 02</span>
+        <h2 data-i18n="insight.s2.h">권역별 혼잡도 현황</h2>
+        <span class="hint" data-i18n="insight.s2.hint">BUSY+CON: 해당 권역에서 BUSY 또는 CONGESTED 등급 항만 비율</span>
+      </div>
+      <div class="card reveal">
+        <div class="rg-list" id="rgList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Section 03 주목 항만 ============ -->
+  <section class="dash-section" id="portfocus">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 03</span>
+        <h2 data-i18n="insight.s3.h">최고 혼잡 Top 10</h2>
+        <span class="hint" data-i18n="insight.s3.hint">PCI 상위 · Focus Port 96개 기준</span>
+      </div>
+
+      <div class="tbl-card reveal" id="tabCongested">
+        <div class="tbl-scroll">
+          <table class="tw">
+            <thead><tr><th>#</th><th data-i18n="insight.th.port">항만</th><th data-i18n="insight.th.level">레벨</th><th class="num" data-i18n="insight.s3.th.delay">접안 지연 시간 (1W avg)</th><th class="num" data-i18n="insight.th.vessels">대기/접안 선박</th></tr></thead>
+            <tbody id="tbodyCongested"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Section 04 글로벌 지도 ============ -->
+  <section class="dash-section" id="map-sec">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 04</span>
+        <h2 data-i18n="insight.s4.h">주요 항만 전체 PCI 현황 — 글로벌 지도</h2>
+        <span class="hint" data-i18n="insight.s4.hint">마커 크기 = PCI · 2주 이동평균 기준 · 아래 검색으로 관심 포트 포커스</span>
+      </div>
+
+      <!-- FR-01 관심 포트 검색 -->
+      <div class="port-search reveal" role="search">
+        <svg class="ps-ico" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="search" id="portSearch" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="portAC" aria-autocomplete="list"
+               placeholder="관심 포트 검색 — 항구명(국문/영문) 또는 LOCODE (예: 부산, Savannah, USSAV)" data-i18n-ph="insight.search.ph">
+        <div class="port-ac" id="portAC" role="listbox" hidden></div>
+      </div>
+
+      <div class="chip-row reveal" id="levelChips" aria-label="레벨 필터"></div>
+      <div class="card map-card reveal" id="mapCard" style="padding:6px;">
+        <div id="map" role="application" aria-label="항만 혼잡도 지도"></div>
+        <div class="port-detail" id="portDetail" hidden aria-live="polite"></div>
+        <div class="map-fallback" data-i18n-html="insight.map.fallback">
+          지도 라이브러리를 불러오지 못했습니다 (오프라인 환경).<br>
+          인터넷 연결 후 새로고침하면 지도가 표시됩니다. 데이터는 아래 표에서 동일하게 확인할 수 있습니다.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Section 05 대기시간 최장 ============ -->
+  <section class="dash-section" id="waiting">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 05</span>
+        <h2 data-i18n="insight.s5.h">대기 척수 최다 항만</h2>
+        <span class="hint" data-i18n="insight.s5.hint">대기 척수 기준 Top 10 · 부산·광양·인천은 선석배정 실측, 그 외는 지수 기반 추정</span>
+      </div>
+      <div class="tbl-card reveal">
+        <div class="tbl-scroll">
+          <table class="tw">
+            <thead><tr><th>#</th><th data-i18n="insight.th.port">항만</th><th data-i18n="insight.th.level">레벨</th><th class="num" data-i18n="insight.s5.th.wait">대기 시간 (1W avg)</th><th class="num" data-i18n="insight.th.vessels">대기/접안 선박</th><th class="num" data-i18n="insight.s5.th.days">환산 일수</th></tr></thead>
+            <tbody id="tbodyWaiting"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Section 06 국내 터미널 실측 ============
+       예전엔 'Tw/Ts 병목 순위'였는데 분모 Ts 가 난수였다(js/data.js 의 `8 + rand()*20`).
+       국외는 AIS 추정이라 하역시간을 알 방법이 없으므로, 지어낸 전 세계 순위 대신
+       터미널이 직접 공표하는 국내 16개 터미널 실측으로 교체했다. -->
+  <!-- 여기서부터 국내. 표지가 없으면 글로벌을 보다가 갑자기 국내 항만이 나와 흐름이 끊긴다. -->
+  <div class="container"><div class="scope-divider reveal" id="domestic-start">
+    <span class="sd-line" aria-hidden="true"></span>
+    <span class="sd-label" data-i18n="insight.scope.dhead">여기서부터 국내 항만·터미널</span>
+    <span class="sd-line" aria-hidden="true"></span>
+  </div></div>
+
+  <section class="dash-section" id="bottleneck">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 06</span>
+        <h2 data-i18n="insight.s6.h">국내 터미널 접안 소요시간 · 하역 생산성</h2>
+        <span class="hint" data-i18n="insight.s6.hint">터미널 공표 선석배정 실측 — 추정이 아닌 실제 접안·물량 기준</span>
+      </div>
+      <div class="card reveal">
+        <div class="legend-row" style="margin-bottom:18px;">
+          <span class="item" data-i18n-html="insight.s6.legend.berth"><span class="sw" style="background:var(--series-1);"></span>중앙 접안 소요시간 (ETD−ETB)</span>
+          <span class="item" data-i18n-html="insight.s6.legend.moves"><span class="sw" style="background:var(--series-2);"></span>하역 생산성 (moves/h)</span>
+        </div>
+        <div class="bn-chart" id="bnChart"></div>
+        <p class="src-note" data-i18n-html="insight.s6.note">
+          생산성은 <b>PLANNED 행을 제외</b>한 실적 행(WORKING·ARRIVED·DEPARTED)만으로 산출합니다 —
+          계획 행의 물량은 2,000·5,000처럼 반올림된 추정치라 벤치마크에 쓸 수 없습니다.
+          항차 문자열은 스냅샷마다 표기가 흔들려 괄호 앞을 기준으로 정규화한 뒤 콜 단위로 중복을 제거했습니다.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Section 07 국내 터미널 선석 점유율 ============ -->
+  <section class="dash-section" id="berthocc">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 07</span>
+        <h2 data-i18n="insight.occ.h">국내 터미널 선석 점유율 (향후 7일)</h2>
+        <span class="hint"><span data-i18n="insight.occ.hintPre">기준일</span> <b id="occRef">—</b> <span data-i18n="insight.occ.hintPost">· 접안 점유시간 ÷ (선석 수 × 168h)</span></span>
+      </div>
+      <div class="card reveal">
+        <div class="rg-list" id="occList"></div>
+        <p class="src-note" data-i18n-html="insight.occ.note">
+          분모는 <b>실선석 수</b>입니다 — 선석 표기의 <code>(P)/(S)</code>는 같은 선석의 좌·우현이고
+          <code>1 A / 1 B</code>는 한 선석을 나눈 작업위치라, 문자열을 그대로 세면 분모가 최대 2배가 되어
+          혼잡도가 절반으로 축소됩니다. <b>원본 결손</b> 배지가 붙은 터미널은 해당 터미널의 공표 데이터에
+          접안예정시각이 비어 있어 실제보다 낮게 나옵니다.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Section 08 터미널 ETB 신뢰도 ============ -->
+  <section class="dash-section" id="etbacc">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 08</span>
+        <h2 data-i18n="insight.etb.h">터미널 접안계획 신뢰도</h2>
+        <span class="hint" data-i18n="insight.etb.hint">터미널이 D-n 에 고지한 접안시각이 실제와 몇 시간 어긋나는가 — 계획 대비 실적</span>
+      </div>
+      <div class="grid-3 reveal etb-split">
+        <div class="card">
+          <h3 style="margin:0 0 14px; font-size:var(--fs-lg);" data-i18n="insight.etb.curve">리드타임별 오차 곡선</h3>
+          <div class="etb-chart" id="etbCurve"></div>
+        </div>
+        <div class="tbl-card">
+          <div class="tbl-scroll">
+            <table class="tw">
+              <thead>
+                <tr><th>#</th><th data-i18n="insight.etb.th.term">터미널</th>
+                    <th class="num" data-i18n="insight.etb.th.mae">D-2~4 오차</th>
+                    <th class="num" data-i18n="insight.etb.th.hit">±6h 적중</th>
+                    <th class="num" data-i18n="insight.etb.th.n">표본</th></tr>
+              </thead>
+              <tbody id="tbodyEtbTerm"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <p class="src-note reveal" data-i18n-html="insight.etb.note">
+        매일 쌓아 온 선석배정 스냅샷 이력(콜당 평균 5.8회 재수록)이 있어야만 계산되는 지표입니다 —
+        위성 AIS 추정 기반 서비스에는 <b>‘계획 대비 실적’이라는 개념 자체가 없습니다</b>.
+        실적치는 해당 콜의 마지막 <code>DEPARTED</code> 스냅샷 값으로 확정하며,
+        리드타임은 <b>그 시점의 계획 ETB 기준</b>입니다. 이력이 44일이라 D-7까지만 표시합니다.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ 국내 컨테이너 물동량 추이 (해수부 15059131 · 2026-08-03) ============ -->
+  <section class="dash-section" id="teutrend">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 09</span>
+        <h2 data-i18n="insight.s7.h">국내 컨테이너 물동량 추이</h2>
+        <span class="hint" data-i18n="insight.s7.hint">해양수산부 수출입컨테이너처리실적 · 최근 12개월 · 상대 지역별 수출입 TEU</span>
+      </div>
+      <div class="card reveal">
+        <div class="legend-row" style="margin-bottom:18px;">
+          <span class="item" data-i18n-html="insight.s7.legend.imp"><span class="sw" style="background:var(--series-1);"></span>수입 TEU</span>
+          <span class="item" data-i18n-html="insight.s7.legend.exp"><span class="sw" style="background:var(--series-2);"></span>수출 TEU</span>
+        </div>
+        <div id="teuTrend"><p class="sc-sub" style="color:var(--muted);" data-i18n="insight.s7.loading">물동량 조회 중…</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 항만별 선박 입출항 실적 (해수부 15059059 · 2026-08-03) ============ -->
+  <section class="dash-section" id="portstat">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 10</span>
+        <h2 data-i18n="insight.s8.h">항만별 선박 입출항 실적</h2>
+        <span class="hint" data-i18n="insight.s8.hint">해양수산부 항만별 선박입출항실적 · 실적이 공표된 최신월 · 항만청 기준 입출항 척수와 총톤수</span>
+      </div>
+      <div id="portStat">
+        <div class="card reveal"><p class="sc-sub" style="color:var(--muted); margin:0;" data-i18n="insight.s8.loading">입출항 실적 조회 중…</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Focus Port List ============ -->
+  <section class="dash-section" id="focuslist">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">APPENDIX</span>
+        <h2>Focus Port List <span style="color:var(--muted); font-size:var(--fs-lg);">(96)</span></h2>
+        <span class="hint" data-i18n="insight.s9.hint">Sections 03–07은 이 핵심 항만만 분석 대상입니다</span>
+      </div>
+      <div class="card reveal focus-wrap">
+        <div class="focus-head">
+          <input type="search" class="focus-search" id="focusSearch" placeholder="항만명 검색 (예: 부산, Koper)" data-i18n-ph="insight.focus.ph" aria-label="Focus Port 검색">
+          <span style="color:var(--muted); font-size:var(--fs-md);" id="focusMatch"></span>
+        </div>
+        <div class="focus-grid" id="focusGrid"></div>
+      </div>
+
+      <p class="notice" data-i18n="insight.notice">
+        본 대시보드의 항만 혼잡도 지수 PCI(Port Congestion Index)는 IMF PortWatch 오픈데이터(portwatch.imf.org, 위성 AIS 기반 일별 기항·물동량)를
+        원천으로 TWL이 매일 자체 산출합니다. PortWatch 원천 데이터는 주 1회 배치 갱신되며 약 7~10일의 지연이 있습니다.
+        접안 지연 시간·대기 척수는 활동량 기반 추정치로 실제 터미널 상황과 다를 수 있습니다.
+      </p>
+
+    </div>
+  </section>
+
+  <!-- ================= 푸터 ================= -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="index.html" class="logo-slot" aria-label="태웅로직스"></a>
+        <p class="footer-note">
+          태웅로직스 | 문의: itt@twsc.co.kr<br>
+          시각 표기 KST · 지표 산출 기준: 데이터 현황·상세기술서 참조 · 포털 v1.5 (2026-07-28 개정)<br>
+          © <span class="footer-year">2026</span> TAEWOONG LOGISTICS. All rights reserved.
+        </p>
+      </div>
+      <nav class="footer-links" aria-label="푸터 메뉴">
+        <a href="berth.html">선석배정</a>
+        <a href="vessel.html">선박 위치</a>
+        <a href="cargo.html">화물 추적</a>
+        <a href="status.html">데이터 현황</a>
+        <a href="#snapshot">Overview</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha384-NElt3Op+9NBMCYaef5HxeJmU4Xeard/Lku8ek6hoPTvYkQPh3zLIrJP7KiRocsxO" crossorigin="anonymous"></script>
+  <script src="js/basemap.js?v=2026-08-31v"></script>
+  <script src="js/data.js?v=2026-08-31v"></script>
+  <script src="js/common.js?v=2026-09-04w"></script>
+  <script src="js/menu.js?v=2026-09-04w"></script>
+  <script src="js/i18n.js?v=2026-09-05i"></script>
+  <script src="js/auth.js?v=2026-09-04s"></script>
+  <script src="js/track.js?v=2026-08-31v"></script>
+  <script src="js/auth-gate.js?v=2026-09-04u"></script>
+  <script src="js/insight.js?v=2026-09-04w"></script>
+</body>
+</html>

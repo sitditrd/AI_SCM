@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.vesselfinder.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src 'self' https://kvmyiualdodcvreoqfin.supabase.co https://api.open-meteo.com https://marine-api.open-meteo.com https://server.arcgisonline.com; frame-src 'self' https://www.vesselfinder.com; form-action 'self';">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()">
+  <!-- 테마·언어 선반영: 저장된 값을 그리기 전에 적용해 페이지 이동 시 깜빡임을 없앤다.
+       인라인이어야 의미가 있다(외부 파일은 네트워크를 한 번 더 기다린다). -->
+  <script>/* 클릭재킹 방어 — GitHub Pages 는 X-Frame-Options 헤더를 못 주므로 스크립트로 막는다.
+     우리 사이트가 iframe 에 박히면(top!==self) 최상위로 튕겨낸다. */
+  (function(){try{if(top!==self){top.location=self.location.href;}}catch(e){try{document.documentElement.style.display='none';}catch(_){}}})();</script>
+  <script>(function(){try{var t=localStorage.getItem('twl-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var L={ko:'ko',en:'en',zh:'zh-CN',ja:'ja',ru:'ru'},l=localStorage.getItem('twl-lang');if(L[l])document.documentElement.setAttribute('lang',L[l]);}catch(e){}})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="pg.title.cargo">화물 추적 — 선사 직접 운송 추적 | TWL Control Tower</title>
+  <meta name="description" content="MBL·AWB 번호 하나로 선사·항공사 운송 이벤트를 직접 조회합니다. 실시간 조회·자동 감시·공식 조회 연결을 한 화면에서 구분해 보여줍니다.">
+  <meta name="theme-color" content="#0a0f1e">
+  <link rel="canonical" href="https://sitditrd.github.io/AI_SCM/cargo.html">
+  <link rel="apple-touch-icon" href="assets/og-image.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TWL Control Tower">
+  <meta property="og:title" content="화물 추적 — 선사 직접 운송 추적 | TWL Control Tower">
+  <meta property="og:description" content="MBL·AWB 번호 하나로 선사·항공사 운송 이벤트를 직접 조회합니다. 실시간 조회·자동 감시·공식 조회 연결을 한 화면에서 구분해 보여줍니다.">
+  <meta property="og:url" content="https://sitditrd.github.io/AI_SCM/cargo.html">
+  <meta property="og:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="화물 추적 — 선사 직접 운송 추적 | TWL Control Tower">
+  <meta name="twitter:description" content="MBL·AWB 번호 하나로 선사·항공사 운송 이벤트를 직접 조회합니다. 실시간 조회·자동 감시·공식 조회 연결을 한 화면에서 구분해 보여줍니다.">
+  <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-05i">
+  <link rel="icon" href="assets/twl_logo.ico">
+</head>
+<body class="hero-page">
+  <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+
+  <!-- ================= 헤더 ================= -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="태웅로직스 홈"></a>
+      <button class="nav-burger" aria-label="메뉴 열기" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <nav class="site-nav" aria-label="주요 메뉴">
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= 타이틀 ================= -->
+  <section id="main-content" tabindex="-1" class="dash-hero">
+    <div class="container">
+      <div class="dash-title-row">
+        <div>
+          <h1 data-i18n-html="cargo.hero.title">화물 추적 <span style="font-weight:300; opacity:.75;">— 선사 직접 운송 추적</span></h1>
+          <p class="dash-sub" data-i18n="cargo.hero.sub">MBL / AWB 번호로 선사·항공사 운송 추적을 조회합니다</p>
+        </div>
+      </div>
+      <p class="dash-sub" style="margin-top:14px; font-size:var(--fs-sm);" data-i18n-html="cargo.hero.note">
+        자동 감지 <b>{all}사</b> — 실시간 조회 {live}사(해상 {sea} · 항공 {air}) · 자동 감시 {watch}사 · 공식 조회 연결 {link}사
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ 관제 콘솔 — 좌: 조회·감시 요약·채널 / 우: 상태 히어로 + 상세 (2026-08-19 UX 개편) ============ -->
+  <section class="dash-section" id="trace">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 01</span>
+        <h2 data-i18n="cargo.sec1.h">화물 조회 콘솔</h2>
+        <span class="hint" data-i18n="cargo.sec1.hint">MBL / AWB 번호 하나로 선사 실조회 — 결과는 요약 → 터미널 → 게이트 → 이력 순으로 표시됩니다</span>
+      </div>
+      <div class="cargo-console">
+        <aside class="cc-side reveal">
+          <div class="card cc-search">
+            <h3 data-i18n="cargo.cc.search">화물 조회</h3>
+            <!-- i18n: 화물추적의 주 입력창인데 placeholder 가 사전에 물려 있지 않아 en/zh 에서 한글이 그대로 노출됐다.
+                 js/i18n.js:4191 이 [data-i18n-ph] → placeholder 를 실제로 치환하므로 그 메커니즘에 연결한다. -->
+            <input type="search" class="focus-search" id="blNo" placeholder="MBL / AWB 번호 입력" data-i18n-ph="cg.ph.blno">
+            <button class="btn btn-primary" id="traceBtn" type="button" data-i18n="cargo.trace.btn" style="width:100%;">조회</button>
+            <p class="sc-sub" id="awbHint" style="margin:8px 0 0; color:var(--muted); font-size:var(--fs-sm);"></p>
+          </div>
+          <div class="card cc-watchcard">
+            <h3 data-i18n="cargo.cc.watch">자동 감시</h3>
+            <div class="cc-wsum" id="watchSummary">—</div>
+            <p class="sc-sub" style="margin:6px 0 10px; font-size:var(--fs-sm);" data-i18n="cargo.cc.watchd">매일 08:20 · 20:20 자동 조회 — 출항·도착·터미널 일정 변경 시 이메일</p>
+            <a class="btn btn-ghost" href="#watch" style="width:100%;" data-i18n="cargo.cc.watchgo">감시 그리드 보기 ↓</a>
+          </div>
+          <button class="card cc-qlbtn" id="qlOpen" type="button">
+            <b data-i18n="cargo.cc.ql">터미널·선사·항공 직접 조회 채널</b>
+            <small data-i18n="cargo.cc.qld">해상 {sea}곳 · 항공 {air}곳 — 새 탭</small>
+          </button>
+        </aside>
+        <main class="cc-main">
+          <div id="statusHero"></div>
+          <div id="carrierOut"></div>
+          <div id="traceOut"></div>
+          <div id="ccEmpty" class="card cc-empty reveal">
+            <div class="cc-empty-ic" aria-hidden="true">⌖</div>
+            <p data-i18n-html="cargo.cc.empty"><b>MBL / AWB 번호</b>를 입력하면 이 자리에<br>현재 상태 · 항로 진행 · 국내 터미널 교차검증 · 변경 이력이 표시됩니다.</p>
+            <!-- 선사 이름을 한 줄로 늘어놓으면 15사부터는 읽히지 않는다.
+                 등급별 칩으로 보여주고, 목록의 정본은 carrier-track ?api=list 가 쥔다. -->
+            <div class="carrier-list cc-empty-carriers" id="ccCarriers"></div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 스케줄 변경 피드 (SECTION 02) ============ -->
+  <section class="dash-section" id="feed" style="padding-top:0; display:none;">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 02</span>
+        <h2 data-i18n="cargo.sec2.h">스케줄 변경 피드</h2>
+        <span class="hint" data-i18n="cargo.sec2.hint">감시 화물의 출항·도착·터미널 일정 변경을 시간순으로 기록 — 변경 시 이메일 자동 발송</span>
+      </div>
+      <div id="feedOut" class="reveal"></div>
+    </div>
+  </section>
+
+  <!-- ============ 추적 등록 화물 (스케줄러 감시 + ETD/ETA 변경 알림) ============ -->
+  <section class="dash-section" id="watch" style="padding-top:0;">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 03</span>
+        <h2 data-i18n="cargo.watch.h">등록 화물 자동 감시</h2>
+        <span class="hint" data-i18n="cargo.watch.hint">등록해두면 매일 08:20 · 20:20 에 자동 조회하고, 출항·도착 예정일시가 바뀌면 이메일로 알려드립니다</span>
+      </div>
+      <div id="watchOut" class="reveal"></div>
+    </div>
+  </section>
+
+
+  <!-- ============ 내륙 운송 가시성 (SECTION 04) ============
+       되는 것과 준비 중인 것을 같은 화면에서 구분해 보여준다.
+       실제로 들어오는 구간은 조회 결과의 '내륙 운송 구간' 에 표시되고,
+       여기서는 어디까지 커버되는지와 앞으로 무엇이 붙는지를 알린다. -->
+  <section class="dash-section" id="inland" style="padding-top:0;">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 04</span>
+        <h2 data-i18n="cargo.inland.h">내륙 운송 가시성</h2>
+        <span class="hint" data-i18n="cargo.inland.hint">양하항(POD) 이후 철도·트럭 구간 — 선사가 복합운송으로 인수한 구간에 한해 조회됩니다</span>
+      </div>
+      <div class="grid-3 g-2to1">
+        <div class="card reveal">
+          <h3 style="font-size:var(--fs-base);" data-i18n="cargo.inland.now.t">지금 제공되는 구간</h3>
+          <p class="sc-sub" style="font-size:var(--fs-sm);" data-i18n="cargo.inland.now.d">선사가 해상과 함께 인수한 내륙 구간은 조회 결과에 그대로 표시됩니다. 역·터미널 단위까지 옵니다.</p>
+          <div class="ql-group"><span class="ql-tag" data-i18n="cargo.mode.rail">철도</span>
+            <span class="ql-chips">
+              <a href="https://my.fesco.com/tracking" target="_blank" rel="noopener">시베리아횡단 (FESCO)</a>
+              <a href="https://www.yangming.com/en/esolution/cargo_tracking" target="_blank" rel="noopener">미주 내륙철도 (양밍)</a>
+            </span>
+          </div>
+          <div class="ql-group"><span class="ql-tag" data-i18n="cargo.mode.truckbarge">트럭 · 바지</span>
+            <span class="ql-chips">
+              <a href="https://ebiz.namsung.co.kr/?direct=Y&amp;code=00010025&amp;rtnUrl=/WS/trk/UIE0710.xml&amp;title=cargo" target="_blank" rel="noopener">남성해운</a>
+              <a href="https://www.yangming.com/en/esolution/cargo_tracking" target="_blank" rel="noopener">양밍</a>
+            </span>
+          </div>
+        </div>
+        <div class="card reveal">
+          <!-- 시베리아·만주횡단철도가 열린 뒤로 이 자리는 더는 "대기"가 아니다 — is-live 로 맥동 링을 끈다.
+               아이콘도 트럭에서 기관차로 바꿨다(지금 실제로 제공되는 게 철도 구간이다). -->
+          <div class="prep-panel is-live" style="padding:30px 16px 24px;">
+            <div class="prep-badge" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="13" y="9" width="22" height="24" rx="4"/><path d="M13 20h22"/><path d="M18 38l-4 5M30 38l4 5M10 33h28"/><circle cx="19" cy="27" r="1.6"/><circle cx="29" cy="27" r="1.6"/></svg>
+            </div>
+            <h3 data-i18n="cargo.inland.prep.h">시베리아·만주횡단철도(TSR·TMR)는 감시 등록으로 위치를 제공합니다</h3>
+            <p data-i18n-html="cargo.inland.prep.p">러시아·중국·벨라루스·몽골 구간의 <b>철도 위치</b>를 컨테이너 번호로 조회해 자동 감시에 반영합니다 — 원천이 <b>최신 위치 1건</b>만 제공하므로 이력은 쌓이지 않습니다. 중국횡단(TCR)·국내 육상운송(윙바디·트레일러)·프로젝트/벌크 화물은 아직 준비 중입니다.</p>
+            <p class="muted" data-i18n="cargo.inland.prep.muted">없는 데이터를 추정으로 채우지 않습니다. 원천이 열리면 그때 붙입니다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 무료 조회 채널 — 서랍(Drawer)으로 강등 (2026-08-19 UX 개편: 링크벽 상시 노출 제거) ============ -->
+  <div class="ql-backdrop" id="qlBack" hidden></div>
+  <!-- i18n: aria-label="무료 조회 채널" 은 사전에 통짜 구절이 없어 '조회'→'Search' 부분 치환만 걸려
+       en 에서 '무료 Search 채널' 로 깨졌다. 서랍 제목 h2 는 cargo.quicklinks.h 키로 이미 3개 국어가
+       정상 치환되므로, 그 제목을 이름표로 참조해 접근명과 화면 표기를 한 소스로 일치시킨다. -->
+  <aside class="ql-drawer" id="qlDrawer" hidden aria-labelledby="qlDrawerTitle">
+    <div class="ql-drawer-head">
+      <div>
+        <h2 id="qlDrawerTitle" data-i18n="cargo.quicklinks.h">터미널·선사·항공 무료 조회 채널</h2>
+        <span class="hint" data-i18n="cargo.quicklinks.hint">API 키 없이 즉시 조회 가능한 공식 채널 모음 · 새 탭으로 열림</span>
+      </div>
+      <button class="icon-btn" id="qlClose" aria-label="닫기">✕</button>
+    </div>
+    <div class="ql-drawer-body">
+      <!-- 터미널·해상·항공이 한 줄기로 이어져 있어 어디까지가 무엇인지 보이지 않았다.
+           선석배정의 국내/해외와 같은 스코프 탭 언어를 쓰되, 여기는 한 화면이라 구간을 갈아 끼운다. -->
+      <div class="scope-tabs ql-scope" role="tablist" aria-label="조회 대상">
+        <button class="scope-tab active" type="button" data-scope="sea" role="tab" aria-selected="true" data-i18n="cargo.ql.scope.sea">해상</button>
+        <button class="scope-tab" type="button" data-scope="air" role="tab" aria-selected="false" data-i18n="cargo.ql.scope.air">항공</button>
+      </div>
+      <div class="grid-3" style="grid-template-columns: 1fr;">
+        <div class="card ql-pane" data-scope="sea">
+          <h3 style="font-size:var(--fs-base);" data-i18n="cargo.ql.terminal.t">터미널 반출입·본선작업 ({n}곳)</h3>
+          <p style="font-size:var(--fs-sm); color:var(--muted);" data-i18n="cargo.ql.terminal.d">선석배정 수집 대상 16개 터미널과 동일 — 컨테이너 번호·모선항차로 직접 조회</p>
+          <!-- 링크는 선석배정 수집기가 실제로 긁는 각 터미널 선석 스케줄 화면(2026-08-18 16곳 전수 200 OK 확인) -->
+          <div class="ql-group"><span class="ql-tag" data-i18n="cargo.ql.g.busanNew">부산신항</span>
+            <span class="ql-chips">
+              <a href="https://www.hjnc.co.kr/esvc/vessel/berthScheduleT" target="_blank" rel="noopener">HJNC</a>
+              <a href="https://www.pnitl.com/infoservice/vessel/vslScheduleList.jsp" target="_blank" rel="noopener">PNIT</a>
+              <a href="https://svc.pncport.com/info/CMS/Ship/Info.pnc?mCode=MN014" target="_blank" rel="noopener">PNC</a>
+              <a href="https://info.bnctkorea.com/esvc/vessel/berthScheduleT" target="_blank" rel="noopener">BNCT</a>
+              <a href="https://www.hpnt.co.kr/infoservice/vessel/vslScheduleList.jsp" target="_blank" rel="noopener">HPNT</a>
+              <a href="https://info.dgtbusan.com/DGT/esvc/vessel/berthScheduleT" target="_blank" rel="noopener">DGT</a>
+              <a href="https://info.bct2-4.com/" target="_blank" rel="noopener">BCT</a>
+            </span>
+          </div>
+          <div class="ql-group"><span class="ql-tag" data-i18n="cargo.ql.g.busanNorth">부산북항</span>
+            <span class="ql-chips">
+              <a href="https://info.bptc.co.kr/" target="_blank" rel="noopener">BPT</a>
+              <a href="https://custom.hktl.com/jsp/T01/sunsuk.jsp" target="_blank" rel="noopener">HBCT</a>
+            </span>
+          </div>
+          <div class="ql-group"><span class="ql-tag" data-i18n="cargo.ql.g.incheon">인천</span>
+            <span class="ql-chips">
+              <a href="http://www.e1ct.co.kr/info/terminal/berthText" target="_blank" rel="noopener">E1CT</a>
+              <a href="https://scon.icpa.or.kr/vescall/list.do?menuKey=19" target="_blank" rel="noopener">ICON</a>
+            </span>
+          </div>
+          <div class="ql-group"><span class="ql-tag" data-i18n="cargo.ql.g.gwangyang">광양</span>
+            <span class="ql-chips">
+              <a href="http://www.gwct.co.kr/sub/sub_B2" target="_blank" rel="noopener">GWCT</a>
+              <a href="https://info.kitl.com/jsp/T01/sunsuk.jsp" target="_blank" rel="noopener">KITL</a>
+            </span>
+          </div>
+          <div class="ql-group"><span class="ql-tag" data-i18n="cargo.ql.g.pyeongtaek">평택당진</span>
+            <span class="ql-chips">
+              <a href="http://www.pctc21.com/esvc/vessel/berthScheduleT" target="_blank" rel="noopener">PCTC</a>
+              <a href="http://www.pnct.co.kr/infoservice/index.html" target="_blank" rel="noopener">PNCT</a>
+            </span>
+          </div>
+          <div class="ql-group"><span class="ql-tag" data-i18n="cargo.ql.g.daesan">대산</span>
+            <span class="ql-chips">
+              <a href="https://ds.dongbang.co.kr/infoservice/index.html" target="_blank" rel="noopener">DDCT</a>
+            </span>
+          </div>
+          <div class="ql-group"><span class="ql-tag" data-i18n="cargo.ql.g.unified">통합</span>
+            <span class="ql-chips">
+              <a href="https://www.chainportal.co.kr" target="_blank" rel="noopener">BPA 체인포털</a>
+            </span>
+          </div>
+        </div>
+        <div class="card ql-pane" data-scope="sea">
+          <h3 style="font-size:var(--fs-base);" data-i18n="cargo.ql.carrier.t">선사 컨테이너 트래킹 ({n}사)</h3>
+          <p style="font-size:var(--fs-sm); color:var(--muted);" data-i18n="cargo.ql.carrier.d">위 조회에서 MBL 입력 시 선사 자동 감지(SCAC 24사) — 실조회 15사 + 장금상선·동진상선 감시 포함, 전 선사 공식 추적 직접 링크</p>
+          <div class="ql-group"><span class="ql-tag" data-i18n="cargo.ql.g.live">실조회</span>
+            <span class="ql-chips">
+              <a href="https://ecomm.one-line.com/one-ecom/manage-shipment/cargo-tracking" target="_blank" rel="noopener">ONE</a>
+              <a href="https://elines.coscoshipping.com/ebusiness/cargoTracking" target="_blank" rel="noopener">COSCO</a>
+              <a href="https://esvc.smlines.com/smline/CUP_HOM_3301.do" target="_blank" rel="noopener">SM상선</a>
+              <a href="https://ct.shipmentlink.com/servlet/TDB1_CargoTracking.do" target="_blank" rel="noopener">Evergreen</a>
+              <a href="https://ebusiness.sitcline.com/" target="_blank" rel="noopener">SITC</a>
+              <a href="https://www.zim.com/tools/track-a-shipment" target="_blank" rel="noopener">ZIM</a>
+              <a href="https://www.hapag-lloyd.com/en/online-business/track/track-by-booking-solution.html" target="_blank" rel="noopener">Hapag-Lloyd</a>
+              <a href="http://www.panconline.com/pan/pageLink.pcl?link=COM/WEB_212" target="_blank" rel="noopener">범주해운</a>
+              <a href="https://www.yangming.com/en/esolution/cargo_tracking" target="_blank" rel="noopener">Yang Ming</a>
+              <a href="https://container.panocean.com/" target="_blank" rel="noopener">팬오션</a>
+              <a href="https://ebiz.namsung.co.kr/?direct=Y&amp;code=00010025&amp;rtnUrl=/WS/trk/UIE0710.xml&amp;title=cargo" target="_blank" rel="noopener">남성해운</a>
+              <a href="https://mobile.pcsline.co.kr/?direct=Y&amp;code=00010025&amp;rtnUrl=/WSM/trk/UIE0710M.xml&amp;title=cargo" target="_blank" rel="noopener">동영해운</a>
+              <a href="https://my.fesco.com/tracking" target="_blank" rel="noopener">FESCO</a>
+              <a href="https://es.ckline.co.kr/?cmd=TRK" target="_blank" rel="noopener">천경해운</a>
+              <a href="https://esea.emiratesline.com/ecomonline/tracking.do" target="_blank" rel="noopener">에미레이트</a>
+            </span>
+          </div>
+          <div class="ql-group"><span class="ql-tag" data-i18n="cargo.ql.g.deeplink">공식 조회</span>
+            <span class="ql-chips">
+              <a href="https://www.hmm21.com/e-service/general/trackNTrace/TrackNTrace.do" target="_blank" rel="noopener">HMM</a>
+              <a href="https://www.maersk.com/tracking" target="_blank" rel="noopener">Maersk</a>
+              <a href="https://www.msc.com/en/track-a-shipment" target="_blank" rel="noopener">MSC</a>
+              <a href="https://www.cma-cgm.com/ebusiness/tracking" target="_blank" rel="noopener">CMA CGM</a>
+              <a href="https://www.oocl.com/eng/ourservices/eservices/cargotracking/" target="_blank" rel="noopener">OOCL</a>
+              <a href="https://www.wanhai.com/views/cargoTrack/CargoTrack.xhtml" target="_blank" rel="noopener">Wan Hai</a>
+              <a href="https://www.ekmtc.com/index.html#/cargo-tracking" target="_blank" rel="noopener">고려해운</a>
+              <a href="https://ebiz.sinokor.co.kr" target="_blank" rel="noopener">장금상선</a>
+              <a href="https://www.heungaline.com/en/index.html" target="_blank" rel="noopener">흥아라인</a>
+              <a href="https://esvc.djship.co.kr/gnoss/CUP_HOM_3301.do?sessLocale=en" target="_blank" rel="noopener">동진상선</a>
+            </span>
+          </div>
+        </div>
+        <div class="card ql-pane" data-scope="air">
+          <h3 style="font-size:var(--fs-base);" data-i18n="cargo.ql.air.t">항공 화물 (AWB {n}사)</h3>
+          <p style="font-size:var(--fs-sm); color:var(--muted);" data-i18n="cargo.ql.air.d">위 조회에서 AWB 입력 시 항공사(10사) 자동 감지 — 전 항공사 공식 추적 직접 링크 + 범용조회</p>
+          <div class="ql-group"><span class="ql-tag" data-i18n="cargo.ql.g.flag">국적사</span>
+            <span class="ql-chips">
+              <a href="https://cargo.koreanair.com" target="_blank" rel="noopener">대한항공</a>
+              <a href="https://www.asianacargo.com" target="_blank" rel="noopener">아시아나</a>
+            </span>
+          </div>
+          <div class="ql-group"><span class="ql-tag" data-i18n="cargo.ql.g.foreign">외항사</span>
+            <span class="ql-chips">
+              <a href="https://www.siacargo.com" target="_blank" rel="noopener">싱가포르항공</a>
+              <a href="https://www.cathaycargo.com" target="_blank" rel="noopener">캐세이</a>
+              <a href="https://www.skycargo.com" target="_blank" rel="noopener">에미레이트</a>
+              <a href="https://www.qrcargo.com" target="_blank" rel="noopener">카타르</a>
+              <a href="https://www.cargolux.com" target="_blank" rel="noopener">카고룩스</a>
+              <a href="https://www.airchinacargo.com" target="_blank" rel="noopener">에어차이나</a>
+            </span>
+          </div>
+          <div class="ql-group"><span class="ql-tag" data-i18n="cargo.ql.g.express">특송</span>
+            <span class="ql-chips">
+              <a href="https://www.fedex.com/ko-kr/tracking.html" target="_blank" rel="noopener">FedEx</a>
+              <a href="https://www.ups.com/track" target="_blank" rel="noopener">UPS</a>
+            </span>
+          </div>
+          <div class="ql-group"><span class="ql-tag" data-i18n="cargo.ql.g.multi">범용</span>
+            <span class="ql-chips">
+              <a href="https://track.champ.aero" target="_blank" rel="noopener">CHAMP</a>
+              <a href="https://www.track-trace.com/aircargo" target="_blank" rel="noopener">track-trace.com</a>
+            </span>
+          </div>
+        </div>
+      </div>
+      <p class="notice" data-i18n="cargo.quicklinks.notice">
+        무료 API 확충 로드맵: 관세청 UNIPASS(통관 타임라인)·HMM 등 선사 무료 API(DCSA 표준)·해수부 PORT-MIS(본선 입출항)·
+        인천공항 화물편 현황·AISStream(실시간 선박 위치)은 무료 키 발급 즉시 연동되도록 백엔드가 준비되어 있습니다.
+        키가 확보되는 대로 순차 연동됩니다.
+      </p>
+    </div>
+  </aside>
+
+  <!-- ================= 푸터 ================= -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="index.html" class="logo-slot" aria-label="태웅로직스"></a>
+        <p class="footer-note">
+          태웅로직스 | 문의: itt@twsc.co.kr<br>
+          시각 표기 KST · 지표 산출 기준: 데이터 현황·상세기술서 참조 · 포털 v1.5 (2026-07-28 개정)<br>
+          © <span class="footer-year">2026</span> TAEWOONG LOGISTICS. All rights reserved.
+        </p>
+      </div>
+      <nav class="footer-links" aria-label="푸터 메뉴">
+        <a href="berth.html">선석배정</a>
+        <a href="vessel.html">선박 위치</a>
+        <a href="cargo.html">화물 추적</a>
+        <a href="status.html">데이터 현황</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="js/common.js?v=2026-09-04w"></script>
+  <script src="js/menu.js?v=2026-09-04w"></script>
+  <script src="js/i18n.js?v=2026-09-05i"></script>
+  <script src="js/auth.js?v=2026-09-04s"></script>
+  <script src="js/track.js?v=2026-08-31v"></script>
+  <script src="js/auth-gate.js?v=2026-09-04u"></script>
+  <script src="js/cargo.js?v=2026-08-31v"></script>
+</body>
+</html>

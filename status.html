@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.vesselfinder.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src 'self' https://kvmyiualdodcvreoqfin.supabase.co https://api.open-meteo.com https://marine-api.open-meteo.com https://server.arcgisonline.com; frame-src 'self' https://www.vesselfinder.com; form-action 'self';">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()">
+  <!-- 테마·언어 선반영: 저장된 값을 그리기 전에 적용해 페이지 이동 시 깜빡임을 없앤다.
+       인라인이어야 의미가 있다(외부 파일은 네트워크를 한 번 더 기다린다). -->
+  <script>/* 클릭재킹 방어 — GitHub Pages 는 X-Frame-Options 헤더를 못 주므로 스크립트로 막는다.
+     우리 사이트가 iframe 에 박히면(top!==self) 최상위로 튕겨낸다. */
+  (function(){try{if(top!==self){top.location=self.location.href;}}catch(e){try{document.documentElement.style.display='none';}catch(_){}}})();</script>
+  <script>(function(){try{var t=localStorage.getItem('twl-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var L={ko:'ko',en:'en',zh:'zh-CN',ja:'ja',ru:'ru'},l=localStorage.getItem('twl-lang');if(L[l])document.documentElement.setAttribute('lang',L[l]);}catch(e){}})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="pg.title.status">데이터 현황 — 파이프라인 모니터링 | TWL Control Tower</title>
+  <meta name="description" content="선석배정·Port Insight·운임지수·항만기상 데이터 파이프라인의 상태를 한눈에 보여주는 운영 보드.">
+  <meta name="theme-color" content="#0a0f1e">
+  <link rel="canonical" href="https://sitditrd.github.io/AI_SCM/status.html">
+  <link rel="apple-touch-icon" href="assets/og-image.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TWL Control Tower">
+  <meta property="og:title" content="데이터 현황 — 파이프라인 모니터링 | TWL Control Tower">
+  <meta property="og:description" content="선석배정·Port Insight·운임지수·항만기상 데이터 파이프라인의 상태를 한눈에 보여주는 운영 보드.">
+  <meta property="og:url" content="https://sitditrd.github.io/AI_SCM/status.html">
+  <meta property="og:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="데이터 현황 — 파이프라인 모니터링 | TWL Control Tower">
+  <meta name="twitter:description" content="선석배정·Port Insight·운임지수·항만기상 데이터 파이프라인의 상태를 한눈에 보여주는 운영 보드.">
+  <meta name="twitter:image" content="https://sitditrd.github.io/AI_SCM/assets/og-image.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-05i">
+  <link rel="icon" href="assets/twl_logo.ico">
+</head>
+<body class="hero-page">
+  <a class="skip-link" href="#main-content" data-i18n="ld.a11y.skip">본문으로 건너뛰기</a>
+
+  <!-- ================= 헤더 ================= -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="태웅로직스 홈"></a>
+      <button class="nav-burger" aria-label="메뉴 열기" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <nav class="site-nav" aria-label="주요 메뉴">
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= 타이틀 + 종합 판정 ================= -->
+  <section id="main-content" tabindex="-1" class="dash-hero">
+    <div class="container">
+      <div class="dash-title-row">
+        <div>
+          <h1 data-i18n-html="status.hero.title">데이터 현황 <span style="font-weight:300; opacity:.75;">— 일일 수집·적재 현황</span></h1>
+          <p class="dash-sub" data-i18n="status.hero.sub">4개 데이터 파이프라인의 적재 여부·최신성·이력을 한 화면에서 점검합니다</p>
+        </div>
+        <div class="live-status">
+          <span class="pulse-dot" aria-hidden="true"></span>
+          <span class="stamp" id="lastUpdated" data-i18n="ld.status.checking">확인 중…</span>
+          <button class="refresh-btn" id="refreshBtn" aria-label="지금 새로고침">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 4v5h-5"/></svg>
+            <span data-i18n="status.hero.refresh">새로고침</span>
+          </button>
+        </div>
+      </div>
+      <div class="health-banner" id="healthBanner">
+        <span class="hb-dot" id="hbDot"></span>
+        <b id="hbTitle" data-i18n="ld.status.hb.checking">파이프라인 점검 중…</b>
+        <span id="hbSub" style="color:#9db8dd;"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Section 01 오늘의 파이프라인 흐름 ============ -->
+  <section class="dash-section" id="flow">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 01</span>
+        <h2 data-i18n="status.sec01.h">선석배정 파이프라인 (금일)</h2>
+        <span class="hint" data-i18n="status.sec01.hint">수집 → 적재 → DB → 화면 · 단계별 상태</span>
+      </div>
+      <div class="card reveal">
+        <div class="pipe-flow" id="pipeFlow"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Section 02 데이터 소스 최신성 ============ -->
+  <section class="dash-section" id="sources">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 02</span>
+        <h2 data-i18n="status.sec02.h">데이터 소스 최신성</h2>
+        <span class="hint" data-i18n="status.sec02.hint">갱신 주기 대비 경과 시간 기준 · 게이지 초과 전 정상 판정</span>
+      </div>
+      <div class="src-grid" id="srcGrid"></div>
+    </div>
+  </section>
+
+  <!-- ============ Section 03 최근 7일 ============ -->
+  <section class="dash-section" id="week">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 03</span>
+        <h2 data-i18n="status.sec03.h">최근 7일 적재 기록</h2>
+        <span class="hint" data-i18n="status.sec03.hint">선석배정 일별 적재 이력 · 누락 일자 식별</span>
+      </div>
+      <div class="card reveal">
+        <div class="day-grid" id="dayGrid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Section 04 상세 이력 ============ -->
+  <section class="dash-section" id="history">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 04</span>
+        <h2 data-i18n="status.sec04.h">적재 이력 상세</h2>
+        <span class="hint" data-i18n="status.sec04.hint">최근 7일</span>
+      </div>
+      <div class="tbl-card reveal">
+        <div class="tbl-scroll">
+          <table class="tw">
+            <thead>
+              <tr><th data-i18n="status.tbl.date">수집일</th><th class="num" data-i18n="status.tbl.count">적재 건수</th><th data-i18n="status.tbl.status">상태</th><th data-i18n="status.tbl.note">비고</th><th data-i18n="status.tbl.time">적재 시각</th></tr>
+            </thead>
+            <tbody id="logBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="notice" data-i18n="status.sec04.notice">
+        수집이 지연되면 이 화면의 상태 배지가 먼저 바뀝니다. 지연이 계속되면 관리자에게 알려 주세요.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ Section 05 외부 연동 헬스체크 ============ -->
+  <section class="dash-section" id="integrations">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">SECTION 05</span>
+        <h2 data-i18n="status.sec05.h">외부 연동 헬스체크</h2>
+        <span class="hint" data-i18n="status.sec05.hint">Edge Function·외부 API 응답 상태 · 45초 주기 자동 점검</span>
+      </div>
+      <div class="src-grid" id="intGrid"></div>
+    </div>
+  </section>
+
+  <!-- ================= 푸터 ================= -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="index.html" class="logo-slot" aria-label="태웅로직스"></a>
+        <p class="footer-note" data-i18n-html="ld.status.foot.note">
+          태웅로직스 | 문의: itt@twsc.co.kr<br>
+          시각 표기 KST · 지표 산출 기준: 데이터 현황·상세기술서 참조 · 포털 v1.5 (2026-07-28 개정)<br>
+          © <span class="footer-year">2026</span> TAEWOONG LOGISTICS. All rights reserved.
+        </p>
+      </div>
+      <nav class="footer-links" aria-label="푸터 메뉴">
+        <a href="insight.html">Port Insight</a>
+        <a href="berth.html">선석배정</a>
+        <a href="vessel.html">선박 위치</a>
+        <a href="status.html">데이터 현황</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="js/common.js?v=2026-09-04w"></script>
+  <script src="js/menu.js?v=2026-09-04w"></script>
+  <script src="js/i18n.js?v=2026-09-05i"></script>
+  <script src="js/auth.js?v=2026-09-04s"></script>
+  <script src="js/track.js?v=2026-08-31v"></script>
+  <script src="js/auth-gate.js?v=2026-09-04u"></script>
+  <script src="js/status.js?v=2026-09-02a"></script>
+</body>
+</html>
