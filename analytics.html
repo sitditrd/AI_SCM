@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="ko" data-theme="dark" data-auth-state="pending">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.vesselfinder.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src 'self' https://kvmyiualdodcvreoqfin.supabase.co https://api.open-meteo.com https://marine-api.open-meteo.com https://server.arcgisonline.com; frame-src 'self' https://www.vesselfinder.com; form-action 'self';">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()">
+  <script>(function(){try{if(top!==self){top.location=self.location.href;}}catch(e){try{document.documentElement.style.display='none';}catch(_){}}})();</script>
+  <script>(function(){try{var t=localStorage.getItem('twl-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var L={ko:'ko',en:'en',zh:'zh-CN',ja:'ja',ru:'ru'},l=localStorage.getItem('twl-lang');if(L[l])document.documentElement.setAttribute('lang',L[l]);}catch(e){}})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 브라우저 상단 띠. 한 색으로 고정하면 라이트 테마에서 띠만 새까맣다. -->
+  <meta name="theme-color" content="#f4f6fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0f1e" media="(prefers-color-scheme: dark)">
+  <!-- 이 화면이 실제로 쓰는 원본만 미리 연다. 폰트는 CSS 와 woff2 가 같은 원본이라
+       crossorigin 이 붙은 한 줄로 둘 다 덮인다. -->
+  <link rel="preconnect" href="https://api.open-meteo.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="preconnect" href="https://kvmyiualdodcvreoqfin.supabase.co">
+  <link rel="preconnect" href="https://marine-api.open-meteo.com">
+  <link rel="preconnect" href="https://server.arcgisonline.com">
+  <link rel="preconnect" href="https://www.vesselfinder.com">
+  <title data-i18n="pg.title.analytics">이용 통계 | PHAROS - 태웅로직스</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="assets/twl_logo.ico">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-12-ops">
+  <link rel="stylesheet" href="css/auth.css?v=2026-09-08-final">
+  <style>
+    /* 이용 통계 — 사이트에 **실제로 있는** 토큰만 쓴다.
+       (--card·--fg 처럼 없는 이름을 쓰면 폴백값(#fff)이 나와 다크 화면에 흰 카드가 뜬다. 실제로 그랬다.) */
+    .an-wrap {
+      width: min(100%, 1760px); max-width: none;
+      margin: 0 auto; padding: 96px clamp(20px, 2.2vw, 40px) 60px;
+    }
+
+    /* ── KPI ─────────────────────────────────────────────── */
+    .an-kpis { display: grid; grid-template-columns: repeat(5, minmax(190px, 1fr)); gap: var(--sp-2); margin: 0 0 var(--sp-2); }
+    .an-kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
+    .an-kpi .k { font-size: var(--fs-sm); color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+    .an-kpi .v { font-size: 30px; font-weight: 800; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .an-kpi .v small { font-size: var(--fs-md); font-weight: 700; color: var(--muted); margin-left: 4px; }
+    .an-kpi .s { font-size: var(--fs-xs); color: var(--muted); margin-top: 8px; }
+    .an-scope { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
+      margin: 0 0 var(--sp-2); padding: 10px 14px; background: var(--surface-2);
+      border: 1px solid var(--border); border-radius: 12px; font-size: var(--fs-sm); }
+    .an-scope .lb { color: var(--muted); font-weight: 600; }
+    .an-scope .dm { display: inline-flex; align-items: baseline; gap: 6px; }
+    .an-scope .dm b { font-variant-numeric: tabular-nums; }
+    .an-scope .sep { width: 1px; align-self: stretch; background: var(--border); }
+
+    /* ── 패널 ────────────────────────────────────────────── */
+    /* 격자 한 판에 패널을 직접 놓는다. 예전엔 좌·우를 각각 세로로 쌓아
+       (좌 2칸 · 우 3칸) 두 기둥의 끝이 안 맞고 아래에 빈 공간이 생겼다. */
+    .an-grid { display: grid; grid-template-columns: minmax(760px, 1.45fr) minmax(360px, .9fr); gap: var(--sp-2); align-items: stretch; min-width: 0; }
+    .an-grid > * { min-width: 0; }
+    .an-grid .full { grid-column: 1 / -1; }
+    .an-panel { min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px 18px; margin-bottom: var(--sp-2); display: flex; flex-direction: column; }
+    /* 내용은 위에서부터 쌓고 남는 공간은 아래로 흘린다 — 가운데 정렬하면
+       행 높이를 맞추느라 늘어난 패널에서 위쪽이 휑하게 빈다. 빈 상태만 가운데. */
+    .an-panel > .an-body { flex: 1; min-width: 0; min-height: 132px; display: flex; flex-direction: column; justify-content: flex-start; }
+    .an-panel > .an-body > .an-empty { margin: auto; }
+    .an-grid > .an-panel { margin-bottom: 0; }
+    .an-ph { display: flex; align-items: baseline; gap: var(--sp-2); margin: 0 0 14px; flex-wrap: wrap; }
+    .an-ph h3 { margin: 0; font-size: var(--fs-lg); font-weight: 800; color: var(--ink); }
+    /* 섹션 제목(h2) — 예전엔 h1 다음이 곧장 패널의 h3 라 제목 위계에 h2 가 비어 있었다.
+       화면 낭독기는 이 목차로 화면을 훑기 때문에 한 단이 비면 구조를 잘못 읽는다.
+       크기는 '섹션 소제목' 토큰(--fs-2xl)을 그대로 쓴다 — h3(--fs-lg)보다 한 단 위다. */
+    .an-sec { margin: var(--sp-4) 0 var(--sp-2); font-size: var(--fs-2xl); font-weight: 800; color: var(--ink); }
+    .an-sec:first-of-type { margin-top: 0; }
+    .an-ph .sub { font-size: var(--fs-xs); color: var(--muted); }
+    .an-ph .sp { flex: 1; }
+
+    /* ── 막대 목록 (화면·기능) ───────────────────────────── */
+    .an-bars { display: flex; flex-direction: column; gap: 7px; }
+    .an-bar { display: grid; grid-template-columns: minmax(112px, 168px) 1fr auto auto; align-items: center; gap: 10px; font-size: var(--fs-md); }
+    .an-bar .lb { color: var(--ink-2); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .an-bar .tr { position: relative; height: 18px; border-radius: 5px; background: color-mix(in srgb, var(--grid) 65%, transparent); overflow: hidden; }
+    .an-bar .tr > i { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: linear-gradient(90deg, var(--brand-accent), var(--brand-accent-2)); }
+    .an-bar .tr > i.alt { background: linear-gradient(90deg, var(--series-2), color-mix(in srgb, var(--series-2) 55%, var(--brand-accent))); }
+    .an-bar .vn { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; min-width: 32px; text-align: right; }
+    .an-bar .vu { color: var(--muted); font-size: var(--fs-xs); font-variant-numeric: tabular-nums; min-width: 46px; text-align: right; }
+
+    /* ── 히트맵 (계정별 화면 이용) ───────────────────────── */
+    .an-heat { overflow-x: auto; }
+    .an-heat table { border-collapse: separate; border-spacing: 3px; }
+    .an-heat th { font-size: var(--fs-xs); color: var(--muted); font-weight: 700; padding: 0 2px 5px; white-space: nowrap; text-align: center; }
+    .an-heat th.rh { text-align: left; padding-right: 10px; }
+    .an-heat td.rh { font-size: var(--fs-md); color: var(--ink-2); font-weight: 600; white-space: nowrap; padding-right: 14px; max-width: 280px; overflow: hidden; text-overflow: ellipsis; }
+    .an-heat td.c { width: 42px; height: 28px; border-radius: 6px; text-align: center; font-size: var(--fs-xs); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    /* ── 표 ──────────────────────────────────────────────── */
+    .an-tbl { width: 100%; border-collapse: collapse; }
+    .an-tbl th { font-size: var(--fs-xs); color: var(--muted); font-weight: 700; text-align: left; padding: 0 10px 8px; white-space: nowrap; border-bottom: 1px solid var(--border); }
+    .an-tbl th.num { text-align: right; }
+    .an-tbl td { padding: 10px; border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent); font-size: var(--fs-md); color: var(--ink-2); }
+    .an-tbl tr:last-child td { border-bottom: 0; }
+    .an-tbl .who { color: var(--ink); font-weight: 700; }
+    .an-tbl .nm { color: var(--muted); font-size: var(--fs-xs); margin-top: 2px; }
+    .an-tbl .num { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 700; }
+    .an-chip { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: var(--fs-xs); font-weight: 700;
+               background: color-mix(in srgb, var(--brand-accent) 16%, transparent); color: var(--brand-accent-2); }
+    .an-tbl .sk { width: 96px; height: 24px; display: block; }
+
+    /* 범례 — 차트마다 같은 규약(색 견본 + 이름). 축만 있고 범례가 없으면 무슨 선인지 모른다. */
+    .an-leg { display: flex; gap: var(--sp-3); flex-wrap: wrap; margin: 0 0 10px; }
+    .an-leg span { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-xs); color: var(--muted); font-weight: 600; }
+    .an-leg i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+    .an-leg i.ln { height: 3px; border-radius: 2px; width: 15px; }
+
+    .an-empty { color: var(--muted); text-align: center; padding: 26px; font-size: var(--fs-md); }
+    /* 차트는 JS 가 컨테이너 실폭을 재서 viewBox 를 그 폭으로 잡는다(1 유닛 = 1 CSS px).
+       폭을 CSS 로 100% 로 묶어 두면 그 계산이 무의미해지므로 여기서 폭을 정하지 않는다.
+       화면이 최소 폭보다 좁으면 라벨을 솎지 않고 이 상자가 가로로 스크롤한다. */
+    .an-chart { overflow-x: auto; overflow-y: hidden; }
+    #anTrend, #anHours { display: block; }
+
+    /* ── 헤더가 컨트롤을 화면 밖으로 밀지 않게 (2026-09-08) ──────────────────
+       이 화면 헤더는 로고·배지·이동링크·언어·모션·테마·로그아웃을 한 줄에 세운다.
+       언어 스위처를 넣으면서(그리고 .header-actions 가 생기며 모션 토글까지 딸려 오면서)
+       한 줄 길이가 ko 778px · ru 918px 이 됐다. ≤640 은 css/style.css 가 이미 sticky +
+       줄바꿈으로 받아 두었는데, 641~1199 구간은 헤더가 fixed·한 줄이라 넘친 만큼
+       그대로 잘렸다 — 실측(2026-09-08): 768px 한국어에서 '로그아웃', 900px 러시아어에서
+       'Выход' 가 화면 밖으로 나갔고 body 가 가로 스크롤을 만들지 않아 되찾을 수 없었다.
+       → 그 구간까지 같은 처방을 넓힌다. sticky·top:0 이라 화면에 붙어 있는 것은 fixed 와
+         똑같고(기능을 빼지 않는다), 대신 제 높이만큼 자리를 차지해 본문이 언제나 그
+         아래에서 시작한다. 그래서 본문 위 여백에서 헤더 높이(64px)를 뺀다 — 안 빼면
+         한 줄로 들어가는 언어에서 빈 띠가 생겨 화면이 없는 말을 하게 된다.
+       ≤640 은 css/style.css 담당 구간이라 건드리지 않는다(그래서 min-width:641px). */
+    @media (min-width: 641px) and (max-width: 1199px) {
+      .auth-page .site-header { position: sticky; height: auto; }
+      .auth-page .header-inner {
+        flex-wrap: wrap; align-content: center; row-gap: var(--sp-1);
+        height: auto; min-height: var(--header-h); padding-block: var(--sp-1);
+      }
+      .auth-page .header-actions { flex-wrap: wrap; flex: 0 1 auto; min-width: 0; row-gap: var(--sp-0); }
+      .auth-page .an-wrap { padding-top: var(--sp-5); }   /* 96px = 헤더 64 + 여백 32 → 여백만 */
+    }
+
+    @media (max-width: 1180px) {
+      .an-kpis { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+      .an-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .an-wrap { padding: 86px 14px 36px; }
+      .an-wrap .page-head h1 { font-size: 30px; line-height: 1.12; margin-bottom: 8px; }
+      .an-wrap .page-head p { margin-bottom: 16px; font-size: 15px; line-height: 1.55; word-break: keep-all; }
+      .admin-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: stretch; margin-bottom: 12px; }
+      #rangeSeg { width: 100%; min-width: 0; }
+      #rangeSeg .seg-btn { flex: 1 1 0; min-width: 0; padding: 0 8px; white-space: nowrap; }
+      #reload { min-width: 74px; padding-left: 12px; padding-right: 12px; }
+      .an-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 8px; }
+      .an-kpi:last-child { grid-column: 1 / -1; min-height: 82px; }
+      .an-kpi { min-height: 94px; padding: 12px 13px; border-radius: 12px; }
+      .an-kpi .k { font-size: 11px; line-height: 1.25; margin-bottom: 6px; }
+      .an-kpi .v { font-size: 25px; }
+      .an-kpi .v small { font-size: 11px; margin-left: 2px; }
+      .an-kpi .s { font-size: 10px; line-height: 1.35; margin-top: 6px; }
+      .an-panel { padding: 13px; border-radius: 12px; }
+      .an-ph { gap: 8px; margin-bottom: 10px; }
+      .an-ph h3 { font-size: 16px; }
+      .an-bar { grid-template-columns: minmax(72px, 92px) 1fr auto; gap: 7px; font-size: 12px; }
+      .an-bar .vu { display: none; }
+    }
+
+    @media (max-width: 360px) {
+      .an-wrap { padding-left: 12px; padding-right: 12px; }
+      .admin-toolbar { grid-template-columns: 1fr; }
+      #reload { width: 100%; }
+      .an-kpi { min-height: 90px; padding: 11px 12px; }
+      .an-kpi .v { font-size: 23px; }
+    }
+  </style>
+  <style>html[data-auth-state="pending"] body { visibility: hidden; pointer-events: none; }</style>
+  <noscript><meta http-equiv="refresh" content="0;url=error.html?reason=javascript-required"></noscript>
+  <script defer src="js/auth-gate.js?v=2026-09-11-e2e3"></script>
+</head>
+<body class="auth-page">
+  <a class="skip-link" href="#main-content" data-i18n="ld.a11y.skip">본문으로 건너뛰기</a>
+  <header class="site-header scrolled">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="태웅로직스 홈">
+        <span class="logo-text"><b class="l1">TWL</b> <span class="l2">Control Tower</span></span>
+      </a>
+      <span class="admin-badge" data-i18n="ld.admin.badge">관리자</span>
+      <!-- ★ 헤더 오른쪽 컨트롤은 .header-actions 로 묶는다(index·login·error 와 같은 구조).
+           예전엔 .header-inner 밑에 그냥 늘어놓아 이 래퍼가 없었고, js/i18n.js 의
+           injectSwitch() 가 '.site-header .header-actions' 를 붙일 자리로 삼는 탓에
+           언어 스위처가 이 화면에는 아예 주입되지 않았다 — 문구는 전부 data-i18n 으로
+           묶여 있고 twl:langchange 도 듣는데 정작 화면에서 바꿀 방법이 없었다
+           (2026-09-08 실측: querySelector('.lang-select') 가 5개 언어·2뷰포트 전부 null).
+           자동 주입에 기대지 않고 마크업에 직접 둔다 — i18n.js 가 늦거나 실패해도
+           스위처는 자리에 있고, 주입 쪽은 이미 있는 것을 보면 그냥 지나간다. -->
+      <div class="header-actions" style="margin-left:auto">
+        <select class="lang-select" aria-label="언어 선택 / Language">
+          <option value="ko">한국어</option>
+          <option value="en">English</option>
+          <option value="zh">中文</option>
+          <option value="ja">日本語</option>
+          <option value="ru">Русский</option>
+        </select>
+        <a class="acct-btn" href="admin.html" data-i18n="an.nav.members">회원 승인</a>
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+        <a class="acct-btn" id="logoutBtn" href="javascript:void(0)" data-i18n="auth.logout">로그아웃</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1" class="an-wrap">
+    <div class="page-head">
+      <h1 data-i18n="an.title">이용 통계</h1>
+      <p data-i18n="an.desc">계정별 화면 접속과 주요 서비스 이용을 집계합니다. 로그인된 이용만 기록됩니다.</p>
+    </div>
+
+    <div class="admin-toolbar">
+      <!-- 예전엔 선택 상태가 class="active" 뿐이라 보조기기에는 어느 기간을 보고 있는지
+           전혀 전달되지 않았다. aria-pressed 를 함께 둔다(토글은 js/analytics.js 가 갱신). -->
+      <div class="seg" id="rangeSeg">
+        <button class="seg-btn" data-d="7"  aria-pressed="false" data-i18n="an.range.7">최근 7일</button>
+        <button class="seg-btn active" data-d="30" aria-pressed="true" data-i18n="an.range.30">최근 30일</button>
+        <button class="seg-btn" data-d="90" aria-pressed="false" data-i18n="an.range.90">최근 90일</button>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="reload" data-i18n="ld.common.refresh">새로고침</button>
+    </div>
+
+    <div id="anMsg" class="auth-msg" role="status" aria-live="polite" hidden></div>
+
+    <!-- h1 → h2 → h3 로 위계를 맞춘다. 예전엔 h1 바로 다음이 패널의 h3 라 h2 단이 비어 있었다. -->
+    <h2 class="an-sec" data-i18n="an.sec.summary">집계 요약</h2>
+    <div class="an-kpis" id="anKpis"></div>
+    <!-- 무엇을 뺀 집계인지 · 어느 도메인이 얼마나 썼는지. 숫자만 두면 원장 원본과 달라 보인다. -->
+    <div id="anScope"></div>
+
+    <h2 class="an-sec" data-i18n="an.sec.detail">이용 상세</h2>
+
+    <div class="an-panel">
+      <div class="an-ph">
+        <h3 data-i18n="an.trend.title">일별 추이</h3>
+        <span class="sub" data-i18n="an.trend.legend">막대=이벤트 · 선=활성 계정</span>
+        <span class="sp"></span>
+        <span class="sub" id="anTrendMax"></span>
+      </div>
+      <div class="an-leg" id="anTrendLeg"></div>
+      <!-- 차트의 접근명(aria-label)은 data-i18n-aria 로 건다. 값을 마크업에 한국어로
+           박아 두면 화면 낭독기 사용자에게는 언어를 바꿔도 계속 한국어로 읽힌다
+           (ko·en·zh·ja·ru 5개 언어에서 이 두 개만 안 바뀌는 것을 실측했다).
+           헤더 로고처럼 여러 화면이 공유하는 문구는 공용 구절 사전이 잡아 주지만,
+           이건 이 화면에만 있는 문구라 잡아 줄 곳이 없다 — 화면 전용 키로 올린다. -->
+      <div class="an-chart"><svg id="anTrend" role="img" data-i18n-aria="an.aria.trend" aria-label="일별 이용 추이"></svg></div>
+    </div>
+
+    <div class="an-grid">
+      <!-- 1행: 계정별 화면 이용 | 기능별 사용 -->
+      <div class="an-panel">
+        <div class="an-ph">
+          <h3 data-i18n="an.matrix.title">계정별 화면 이용</h3>
+          <span class="sub" data-i18n="an.matrix.sub">어느 계정이 어느 화면을 쓰는지</span>
+        </div>
+        <div class="an-body an-heat" id="anMatrix"></div>
+      </div>
+
+      <div class="an-panel">
+        <div class="an-ph"><h3 data-i18n="an.act.title">기능별 사용</h3>
+          <span class="sub" data-i18n="an.act.sub">실제로 쓰는 기능</span></div>
+        <div class="an-body an-bars" id="anActions"></div>
+      </div>
+
+      <!-- 2행: 계정별 활동 | 화면별 인기 -->
+      <div class="an-panel">
+        <div class="an-ph">
+          <h3 data-i18n="an.acc.title">계정별 활동</h3>
+          <span class="sub" data-i18n="an.acc.sub">최근 14일 추이 포함</span>
+        </div>
+        <div class="an-body" style="overflow-x:auto;">
+          <table class="an-tbl">
+            <thead><tr>
+              <th data-i18n="an.th.account">계정</th>
+              <th data-i18n="an.th.security">보안</th>
+              <th>IP</th>
+              <th data-i18n="an.th.trend14">14일</th>
+              <th class="num" data-i18n="an.th.views">방문</th>
+              <th class="num" data-i18n="an.th.actions">액션</th>
+              <th class="num" data-i18n="an.th.days">활성일</th>
+              <th data-i18n="an.th.top">주 사용화면</th>
+              <th data-i18n="an.th.last">최근 접속</th>
+            </tr></thead>
+            <tbody id="anRows"><tr><td colspan="9" class="an-empty" data-i18n="an.loading">불러오는 중…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="an-panel">
+        <div class="an-ph"><h3 data-i18n="an.pages.title">화면별 인기</h3>
+          <span class="sub" data-i18n="an.pages.sub">방문 · 이용 계정</span></div>
+        <div class="an-body an-bars" id="anPages"></div>
+      </div>
+
+      <!-- 3행: 시간대 분포 (가로 전체) -->
+      <div class="an-panel full">
+        <div class="an-ph"><h3 data-i18n="an.hours.title">시간대 분포</h3>
+          <span class="sub">KST</span></div>
+        <div class="an-leg" id="anHoursLeg"></div>
+        <!-- 접근명은 위 일별 추이 차트와 같은 이유로 사전 키를 건다. -->
+        <div class="an-chart"><svg id="anHours" role="img" data-i18n-aria="an.aria.hours" aria-label="시간대 분포"></svg></div>
+      </div>
+    </div>
+  </main>
+
+  <script defer src="js/common.js?v=2026-09-12-quota"></script>
+  <script defer src="js/menu.js?v=2026-09-11-watch"></script>
+  <script defer src="js/i18n.js?v=2026-09-12-mailsee"></script>
+  <script defer src="js/auth.js?v=2026-09-11-watch"></script>
+  <!-- 캐시 무효화 — 실패 표시·aria-pressed·기간 URL 복원에 이어, X축 라벨 솎기와
+       히트맵 글자색 계산이 들어갔다. 판을 올리지 않으면 예전 파일이 캐시에서 그대로
+       살아 고친 것이 화면에 안 나타난다. -->
+  <script defer src="js/analytics.js?v=2026-09-11-e2e3"></script>
+</body>
+</html>

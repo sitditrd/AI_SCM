@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self' data:; base-uri 'none'; form-action 'self'; frame-src 'none';">
+  <!-- 브라우저 상단 띠. 한 색으로 고정하면 라이트 테마에서 띠만 새까맣다. -->
+  <meta name="theme-color" content="#f4f6fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0f1e" media="(prefers-color-scheme: dark)">
+  <!-- ★ 이 화면은 CSP(script-src 'self')로 인라인이 막혀 있고 1MB 짜리 js/i18n.js 도 싣지 않는다.
+       그래서 아래 한국어는 '사전을 못 받았을 때의 폴백' 이고, 실제 문구·<html lang>·이 <title> 까지
+       js/access-error.js 안의 5개 언어 표가 저장된 'twl-lang' 을 보고 바꿔 넣는다. -->
+  <title>접근 오류 | PHAROS - 태웅로직스</title>
+  <link rel="stylesheet" href="css/style.css?v=2026-09-12-ops">
+  <link rel="icon" href="assets/twl_logo.ico">
+  <!-- ★ 실행 순서가 의미를 가진다. access-error.js 가 사유를 읽어 data-access 를 심고,
+       pharos-gate.js 가 그 값으로 등대 불빛 색을 정한다. 둘 다 defer 라 문서 순서대로 돈다. -->
+  <script defer src="js/access-error.js?v=2026-09-08-final"></script>
+  <script defer src="js/pharos-gate.js?v=2026-09-08-final"></script>
+</head>
+<body class="access-page">
+  <!-- ★ 카드를 없앴다. 이 화면은 상자가 아니라 장면이다.
+       PHAROS 는 등대다. 사용자가 "못 들어간다" 는 말을 듣는 유일한 화면에서
+       그 등대가 실제로 빛을 비추게 한다. 글의 판독성은 카드 테두리가 아니라
+       .gate-scene::after 의 지면색 스크림이 책임진다(css/style.css 참조). -->
+  <div class="gate-scene" aria-hidden="true"><canvas id="gateSea"></canvas></div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a id="accessLogo" href="index.html" class="logo-slot" aria-label="태웅로직스 홈">
+        <img class="logo-sym" src="assets/twl_symbol.png" alt="" width="28" height="27">
+        <span class="logo-text" aria-label="Taewoong Logistics">
+          <span class="l1"><b>TAEWOONG</b> LOGISTICS</span>
+          <span class="l2">TWL SMARTBPO</span>
+        </span>
+      </a>
+      <div class="header-actions">
+        <a id="accessHomeTop" class="btn btn-ghost" href="index.html">홈으로</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" class="gate-main" tabindex="-1">
+    <section class="gate-copy" aria-labelledby="accessTitle">
+      <p class="gate-eyebrow" id="accessKicker">로그인 안내</p>
+      <h1 id="accessTitle">로그인하면 이어서 보실 수 있습니다</h1>
+      <p class="gate-lead" id="accessBody">승인된 계정으로 로그인해 주세요. 로그인하면 원래 보시려던 화면으로 바로 이동합니다.</p>
+
+      <!-- 우리가 실제로 아는 사실 한 줄. 모르는 화면이면 줄째로 감춘다(access-error.js). -->
+      <div class="gate-dest" id="accessDest" hidden>
+        <span class="k" id="accessDestK">요청하신 화면</span>
+        <b id="accessDestName"></b>
+      </div>
+
+      <nav class="gate-actions" id="accessNav" aria-label="이동">
+        <a id="accessLogin" class="btn btn-primary gate-cta" href="login.html"><span id="accessLoginText">로그인</span> <span class="gate-cta-arw" aria-hidden="true">→</span></a>
+        <a id="accessHome" class="gate-link" href="index.html">홈으로</a>
+      </nav>
+
+      <p class="gate-note" id="accessNote">계정이 없으시면 로그인 화면에서 회원가입을 신청하실 수 있습니다. 승인 후 이용하실 수 있습니다.</p>
+    </section>
+  </main>
+</body>
+</html>

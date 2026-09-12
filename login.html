@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.vesselfinder.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src 'self' https://kvmyiualdodcvreoqfin.supabase.co https://api.open-meteo.com https://marine-api.open-meteo.com https://server.arcgisonline.com; frame-src 'self' https://www.vesselfinder.com; form-action 'self';">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()">
+  <!-- 테마·언어 선반영: 저장된 값을 그리기 전에 적용해 페이지 이동 시 깜빡임을 없앤다.
+       인라인이어야 의미가 있다(외부 파일은 네트워크를 한 번 더 기다린다). -->
+  <script>/* 클릭재킹 방어 — GitHub Pages 는 X-Frame-Options 헤더를 못 주므로 스크립트로 막는다.
+     우리 사이트가 iframe 에 박히면(top!==self) 최상위로 튕겨낸다. */
+  (function(){try{if(top!==self){top.location=self.location.href;}}catch(e){try{document.documentElement.style.display='none';}catch(_){}}})();</script>
+  <script>(function(){try{var t=localStorage.getItem('twl-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var L={ko:'ko',en:'en',zh:'zh-CN',ja:'ja',ru:'ru'},l=localStorage.getItem('twl-lang');if(L[l])document.documentElement.setAttribute('lang',L[l]);}catch(e){}})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 브라우저 상단 띠. 한 색으로 고정하면 라이트 테마에서 띠만 새까맣다. -->
+  <meta name="theme-color" content="#f4f6fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0f1e" media="(prefers-color-scheme: dark)">
+  <!-- 이 화면이 실제로 쓰는 원본만 미리 연다. 폰트는 CSS 와 woff2 가 같은 원본이라
+       crossorigin 이 붙은 한 줄로 둘 다 덮인다. -->
+  <link rel="preconnect" href="https://api.open-meteo.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="preconnect" href="https://kvmyiualdodcvreoqfin.supabase.co">
+  <link rel="preconnect" href="https://marine-api.open-meteo.com">
+  <link rel="preconnect" href="https://server.arcgisonline.com">
+  <link rel="preconnect" href="https://www.vesselfinder.com">
+  <title data-i18n="pg.title.login">로그인 | PHAROS - 태웅로직스</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="assets/twl_logo.ico">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-12-ops">
+  <link rel="stylesheet" href="css/auth.css?v=2026-09-08-final">
+  <!-- 칸별 오류 자리. 예전엔 오류가 폼 맨 위 전역 상자로만 떠서 어느 칸이 틀렸는지
+       화면에서도 스크린리더에서도 알 수 없었다. 이 화면 전용 규칙이라 여기 인라인으로 둔다
+       (auth.css 는 이번 작업 범위 밖이다). 새 색·새 크기를 만들지 않고 토큰만 쓴다 —
+       색 규칙은 저장소의 기존 관용구(css/cargo.css 의 [aria-invalid] 테두리)를 그대로 따른다. -->
+  <style>
+    /* 오류가 없을 땐 비어 있고, 비어 있으면 자리도 차지하지 않는다(:empty).
+       .auth-form label 이 이미 flex column + gap 6px 이라 여백은 따로 주지 않는다. */
+    .auth-form .field-err { display: block; margin: 0; font-size: var(--fs-sm); font-weight: 600; color: var(--up); }
+    .auth-form .field-err:empty { display: none; }
+    /* 색만으로 알리지 않는다 — 테두리와 함께 바로 아래에 문구가 항상 붙는다. */
+    .auth-form input[aria-invalid="true"] { border-color: var(--up); }
+  </style>
+</head>
+<body class="auth-page">
+  <a class="skip-link" href="#main-content" data-i18n="ld.a11y.skip">본문으로 건너뛰기</a>
+  <header class="site-header scrolled">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="태웅로직스 홈">
+        <span class="logo-text"><b class="l1">TWL</b> <span class="l2">Control Tower</span></span>
+      </a>
+      <div class="header-actions" style="margin-left:auto">
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1" class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <img class="ab-sym" src="assets/twl_symbol.png" alt="" width="28" height="27">
+        <!-- ★ 제품명은 PHAROS 다. 13개 화면의 <title>(pg.title.*)이 5개 언어 전부에서
+             "… | PHAROS - 태웅로직스" 로 쓰고(js/access-error.js 의 5개 언어 표도 같다),
+             홈 화면은 보이는 자리에서 PHAROS(고유명) + 번역되는 한 줄(pharos.cap)로 적는다
+             (index.html .pharos-cap). 여기 auth-brand 도 제품명 + 번역되는 부제(login.brand.sub)로
+             짜임새가 같아 그 표기를 그대로 따른다. 혼자 새 표기를 만들지 않는다.
+             ★ 새 사전 키를 만들지 않는다 — PHAROS 는 5개 언어에서 글자가 같다(pg.title.login 참조).
+             ★ translate="no" 는 저장소 관용구다(js/common.js 로고). 크롬 자동번역이 켜지면
+               고유명을 제멋대로 바꿔 화면마다 제품명이 달라진다. 헤더 로고와 같은 이유로 막는다. -->
+        <div><h1 translate="no">PHAROS</h1><span data-i18n="login.brand.sub">태웅로직스 물류 관제</span></div>
+      </div>
+
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab active" data-tab="login" type="button" role="tab" aria-selected="true" aria-controls="f-login" data-i18n="auth.tab.login">로그인</button>
+        <button class="auth-tab" data-tab="signup" type="button" role="tab" aria-selected="false" aria-controls="f-signup" tabindex="-1" data-i18n="auth.tab.signup">회원가입</button>
+        <button class="auth-tab" data-tab="reset" type="button" role="tab" aria-selected="false" aria-controls="f-reset" tabindex="-1" data-i18n="auth.tab.reset">비밀번호 찾기</button>
+      </div>
+
+      <div id="msg" class="auth-msg" role="status" aria-live="polite" hidden></div>
+
+      <!-- 로그인
+           ★ onsubmit="return false" 를 지우지 마라. action·method 가 없는 폼이라
+             핸들러가 붙기 전에 제출되면 브라우저가 같은 URL 로 GET 을 보내고,
+             이메일·비밀번호가 주소창 질의문자열에 실린다(히스토리·리퍼러에도 남는다).
+             아래 addEventListener('submit') 은 그 뒤에 붙으므로 이 한 줄이 그 창을 막는다. -->
+      <!-- ★ novalidate 는 검증을 없앤 것이 아니다. 브라우저 기본 말풍선은 번역이 안 되고,
+             칸에 aria-invalid 를 걸어 주지도, 오류 문구를 aria-describedby 로 이어 주지도 않는다.
+             아래 인라인 스크립트가 같은 조건(필수·이메일 형식·6자리 코드)을 그대로 검사하면서
+             칸별 문구 + aria-invalid + 첫 오류로 포커스까지 얹는다. 상위호환 교체다. -->
+      <form id="f-login" class="auth-form" onsubmit="return false" novalidate>
+        <label><span data-i18n="auth.email">이메일</span> <input id="li-email" type="email" name="login" autocomplete="username" placeholder="you@company.com" required aria-describedby="err-li-email"><small class="field-err" id="err-li-email"></small></label>
+        <label><span data-i18n="auth.password">비밀번호</span> <input id="li-pw" type="password" name="password" autocomplete="current-password" required aria-describedby="err-li-pw"><small class="field-err" id="err-li-pw"></small></label>
+        <label class="auth-keep"><input type="checkbox" id="tabOnly">
+          <span><span data-i18n="auth.tabonly.t">이 브라우저를 닫으면 로그아웃</span>
+            <small class="auth-keep-sub" data-i18n="auth.tabonly.s">공용 PC·공유 단말에서는 켜 두십시오.</small></span></label>
+        <button class="btn btn-primary btn-block" type="submit" data-i18n="auth.tab.login">로그인</button>
+        <p class="auth-hint" data-i18n="auth.hint.login">승인된 계정만 로그인할 수 있습니다. 관리자 승인 후 이용하세요.</p>
+      </form>
+
+      <!-- 회원가입 -->
+      <form id="f-signup" class="auth-form" onsubmit="return false" novalidate hidden>
+        <label><span data-i18n="auth.email">이메일</span> <span class="req">*</span>
+          <span class="with-btn">
+            <input id="su-email" type="email" name="login" autocomplete="username" placeholder="you@company.com" required aria-describedby="err-su-email">
+            <button type="button" class="btn btn-ghost btn-sm" data-send="signup" data-i18n="auth.getcode">인증코드 받기</button>
+          </span>
+          <small class="field-err" id="err-su-email"></small>
+        </label>
+        <label><span data-i18n="auth.code">인증코드</span> <input id="su-code" type="text" name="code" inputmode="numeric" autocomplete="one-time-code" spellcheck="false" autocapitalize="off" pattern="[0-9]{6}" maxlength="6" placeholder="메일로 받은 6자리" data-i18n-ph="auth.codeHint" required aria-describedby="err-su-code"><small class="field-err" id="err-su-code"></small></label>
+        <!-- ★ 이 화면 마크업에서 사전 키가 없던 유일한 자리다. 지금은 규칙 사전(통문장 일치)이
+             받아 주고 있어 화면상 번역은 되지만, 예시 문구를 한 글자만 고치면 4개 언어에서
+             조용히 한국어로 남는다(오류도 안 난다). 키를 달아 T 사전이 먼저 잡게 한다.
+             키가 아직 비어 있어도 i18n apply() 가 그 자리를 건너뛰고 기존 규칙 번역이 그대로
+             받아 주므로, 사전을 채우기 전에도 지금 동작이 줄지 않는다(상위호환 교체다). -->
+        <label><span data-i18n="auth.namedept">이름/부서</span> <input id="su-name" type="text" name="name" placeholder="예: 홍길동 / 영업1팀" data-i18n-ph="auth.namedept.ph"></label>
+        <label><span data-i18n="auth.password">비밀번호</span> <span class="req">*</span> <input id="su-pw" type="password" name="password" autocomplete="new-password" required aria-describedby="err-su-pw"><small class="field-err" id="err-su-pw"></small></label>
+        <!-- ★ 강도 미터는 타이핑에 맞춰 실시간으로 바뀌는데 알림이 전혀 없었다 —
+             보조기술 사용자에게는 막대가 자라는 사실 자체가 전달되지 않았다.
+             role=status + aria-live=polite 로 강도 문구를 읽어 주고, 막대는 progressbar 로
+             값(0~5)까지 노출한다. 색만으로 알리지 않도록 .pw-label 문구를 항상 같이 둔다. -->
+        <div class="pw-meter" id="pw-signup" role="status" aria-live="polite" hidden>
+          <div class="pw-bar" role="progressbar" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" aria-label="비밀번호 강도" data-i18n-aria="auth.pw.meterAria"><span></span></div>
+          <div class="pw-label"></div>
+          <ul class="pw-checks">
+            <li data-k="len" data-i18n="auth.pw.len">8자 이상</li><li data-k="upper" data-i18n="auth.pw.upper">대문자</li><li data-k="lower" data-i18n="auth.pw.lower">소문자</li><li data-k="digit" data-i18n="auth.pw.digit">숫자</li><li data-k="special" data-i18n="auth.pw.special">특수문자</li>
+          </ul>
+        </div>
+        <label><span data-i18n="auth.password2">비밀번호 확인</span> <input id="su-pw2" type="password" name="password2" autocomplete="new-password" required aria-describedby="err-su-pw2"><small class="field-err" id="err-su-pw2"></small></label>
+        <button class="btn btn-primary btn-block" type="submit" data-i18n="auth.btn.signup">가입 신청</button>
+        <p class="auth-hint" data-i18n-html="auth.hint.signup">가입 신청 후 <b>관리자 승인</b>이 완료되면 로그인할 수 있습니다.</p>
+      </form>
+
+      <!-- 비밀번호 찾기 -->
+      <form id="f-reset" class="auth-form" onsubmit="return false" novalidate hidden>
+        <label><span data-i18n="auth.email">이메일</span> <span class="req">*</span>
+          <span class="with-btn">
+            <input id="rs-email" type="email" name="login" autocomplete="username" placeholder="you@company.com" required aria-describedby="err-rs-email">
+            <button type="button" class="btn btn-ghost btn-sm" data-send="reset" data-i18n="auth.getcode">인증코드 받기</button>
+          </span>
+          <small class="field-err" id="err-rs-email"></small>
+        </label>
+        <label><span data-i18n="auth.code">인증코드</span> <input id="rs-code" type="text" name="code" inputmode="numeric" autocomplete="one-time-code" spellcheck="false" autocapitalize="off" pattern="[0-9]{6}" maxlength="6" placeholder="메일로 받은 6자리" data-i18n-ph="auth.codeHint" required aria-describedby="err-rs-code"><small class="field-err" id="err-rs-code"></small></label>
+        <label><span data-i18n="auth.password.new">새 비밀번호</span> <input id="rs-pw" type="password" name="password" autocomplete="new-password" required aria-describedby="err-rs-pw"><small class="field-err" id="err-rs-pw"></small></label>
+        <!-- 강도 미터 — 가입 폼과 같은 이유로 role=status / progressbar 를 붙인다. -->
+        <div class="pw-meter" id="pw-reset" role="status" aria-live="polite" hidden>
+          <div class="pw-bar" role="progressbar" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" aria-label="비밀번호 강도" data-i18n-aria="auth.pw.meterAria"><span></span></div>
+          <div class="pw-label"></div>
+          <ul class="pw-checks">
+            <li data-k="len" data-i18n="auth.pw.len">8자 이상</li><li data-k="upper" data-i18n="auth.pw.upper">대문자</li><li data-k="lower" data-i18n="auth.pw.lower">소문자</li><li data-k="digit" data-i18n="auth.pw.digit">숫자</li><li data-k="special" data-i18n="auth.pw.special">특수문자</li>
+          </ul>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit" data-i18n="auth.btn.reset">비밀번호 재설정</button>
+      </form>
+    </div>
+    <p class="auth-foot"><a href="index.html" data-i18n="auth.home">← 홈으로</a></p>
+  </main>
+
+<!-- ★ 이 화면은 외부 스크립트 뒤에 인라인 <script> 가 온다. defer 를 붙이면 인라인이
+     먼저 실행돼 TWAUTH·TWI18N 등이 아직 없는 상태로 돌아 화면이 죽는다. 그대로 둔다. -->
+  <script src="js/common.js?v=2026-09-12-quota"></script>
+  <script src="js/i18n.js?v=2026-09-12-mailsee"></script>
+  <script src="js/auth.js?v=2026-09-11-watch"></script>
+  <script>
+    (function () {
+      var A = window.TWAUTH;
+      function t(k, ko) { return (window.TWI18N && window.TWI18N.t) ? window.TWI18N.t(k, ko) : ko; }
+      var msg = document.getElementById('msg');
+      function show(text, kind) { msg.hidden = false; msg.textContent = text; msg.className = 'auth-msg ' + (kind || ''); }
+      function clearMsg() { msg.hidden = true; }
+      function domainDeniedMsg() { return t('auth.msg.domainDeniedShort', '허용되지 않는 도메인입니다.'); }
+      function authError(r, fallback) {
+        var s = r && r.error ? String(r.error) : '';
+        if (/외부 메일 도메인|허용되지 않는 도메인|not permitted|domain/i.test(s)) return domainDeniedMsg();
+        return s || fallback;
+      }
+
+      /* ── 칸별 오류 ─────────────────────────────────────────────────────────
+         예전엔 모든 오류가 폼 맨 위 전역 상자(#msg) 하나로만 떴다. 어느 칸이 틀렸는지
+         화면으로도 알기 어려웠고, 스크린리더 사용자는 입력 칸에 머문 채로는 아무것도
+         듣지 못했다. 이제 칸마다 오류 자리를 두고 aria-describedby 로 이어,
+         실패한 칸에 aria-invalid 를 걸고 첫 오류 칸으로 포커스를 옮긴다.
+         전역 상자는 그대로 둔다 — 요약(전역)과 상세(칸별)는 서로를 대체하지 않는다. */
+      function errSlot(input) { var id = input.getAttribute('aria-describedby'); return id ? document.getElementById(id) : null; }
+      function clearField(input) { input.removeAttribute('aria-invalid'); var e = errSlot(input); if (e) e.textContent = ''; }
+      function clearFields(form) { [].forEach.call(form.querySelectorAll('input[aria-describedby]'), clearField); }
+      /* 타이핑을 시작하면 그 칸의 오류 표시를 즉시 거둔다 — 고친 뒤에도 빨간 채로 남으면 거짓말이 된다. */
+      [].forEach.call(document.querySelectorAll('.auth-form input[aria-describedby]'), function (inp) {
+        inp.addEventListener('input', function () { if (inp.hasAttribute('aria-invalid')) clearField(inp); });
+      });
+      /* errs = [[input, 문구], …]. 전부 표시하되 포커스는 첫 칸으로만 옮긴다. */
+      function reportFields(form, errs) {
+        clearFields(form);
+        if (!errs.length) return true;
+        errs.forEach(function (x) { x[0].setAttribute('aria-invalid', 'true'); var e = errSlot(x[0]); if (e) e.textContent = x[1]; });
+        show(errs[0][1], 'err');
+        try { errs[0][0].focus(); } catch (_) { /* 숨은 폼 등 포커스 불가 — 문구는 이미 붙었다 */ }
+        return false;
+      }
+      function collect(pairs) {
+        var out = [];
+        pairs.forEach(function (p) { var m = p[1](p[0]); if (m) out.push([p[0], m]); });
+        return out;
+      }
+      /* novalidate 로 끈 브라우저 기본 검사를 같은 조건으로 여기서 되살린다(빠뜨리면 검증이 준다). */
+      var EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+      function vEmail(i) {
+        var v = i.value.trim();
+        if (!v) return t('auth.err.emailRequired', '이메일을 입력하세요.');
+        return EMAIL_RE.test(v) ? '' : t('auth.msg.emailFormat', '이메일 형식을 확인하세요.');
+      }
+      function vCode(i) {
+        var v = i.value.trim();
+        if (!v) return t('auth.err.codeRequired', '인증코드를 입력하세요.');
+        return /^[0-9]{6}$/.test(v) ? '' : t('auth.err.codeFormat', '인증코드는 숫자 6자리입니다.');
+      }
+      function vPwRequired(i) { return i.value ? '' : t('auth.err.pwRequired', '비밀번호를 입력하세요.'); }
+
+      /* 탭 전환 — 보이는 상태(class)와 보조기기 상태(aria-selected)를 같이 옮긴다.
+         예전엔 class 만 바꿔서, 화면에는 선택이 보이는데 스크린리더에는 셋 다 선택 안 됨으로 들렸다.
+         role=tablist 를 선언했으면 좌우 화살표 이동도 같이 지켜야 한다(로빙 tabindex). */
+      var TABS = [].slice.call(document.querySelectorAll('.auth-tab'));
+      function selectTab(t, focus) {
+        TABS.forEach(function (x) {
+          var on = (x === t);
+          x.classList.toggle('active', on);
+          x.setAttribute('aria-selected', on ? 'true' : 'false');
+          x.tabIndex = on ? 0 : -1;
+        });
+        clearMsg();
+        /* 탭을 옮기면 앞 폼에 남은 칸별 오류도 같이 거둔다 — 전역 상자만 지우면 빨간 칸이 남는다. */
+        ['login', 'signup', 'reset'].forEach(function (k) { var f = document.getElementById('f-' + k); clearFields(f); f.hidden = (k !== t.dataset.tab); });
+        if (focus) t.focus();
+      }
+      TABS.forEach(function (t, i) {
+        t.addEventListener('click', function () { selectTab(t, false); });
+        t.addEventListener('keydown', function (e) {
+          var d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+          if (d) { e.preventDefault(); selectTab(TABS[(i + d + TABS.length) % TABS.length], true); return; }
+          if (e.key === 'Home') { e.preventDefault(); selectTab(TABS[0], true); }
+          if (e.key === 'End') { e.preventDefault(); selectTab(TABS[TABS.length - 1], true); }
+        });
+      });
+
+      /* 비밀번호 강도 미터
+         ★ 예전엔 타이핑에 따라 막대·문구가 바뀌는데 보조기술에는 아무 알림이 없었다.
+           미터 상자에 role=status / aria-live=polite 를 붙였고(HTML), 막대는 progressbar 로
+           만들어 여기서 aria-valuenow(0~5)와 aria-valuetext(말로 된 강도)를 같이 갱신한다.
+         ★ 다만 라이브 영역이라 매 글자마다 읽어 주면 입력을 방해한다. 그래서 문구가
+           **실제로 바뀔 때만** 텍스트 노드를 교체한다(같은 값을 다시 넣어도 변경으로 잡힌다). */
+      function bindMeter(formId, meterId) {
+        var f = document.getElementById(formId), box = document.getElementById(meterId);
+        var input = f.querySelector('input[name="password"]');
+        var bar = box.querySelector('.pw-bar'), fill = box.querySelector('.pw-bar span'), lab = box.querySelector('.pw-label');
+        input.addEventListener('input', function () {
+          var v = input.value; box.hidden = !v;
+          var s = A.pwStrength(v);
+          fill.style.width = (s.score * 20) + '%';
+          fill.style.background = s.color;
+          var text = t('auth.pw.strengthLabel', '강도: ') + t(s.key, s.label) + (s.checks.special ? '' : t('auth.pw.needSpecial', ' · 특수문자 필요'));
+          if (lab.textContent !== text) lab.textContent = text;   /* 바뀔 때만 → 불필요한 낭독을 막는다 */
+          lab.style.color = s.txt;
+          bar.setAttribute('aria-valuenow', String(s.score));
+          bar.setAttribute('aria-valuetext', text);               /* 숫자만 읽히면 뜻이 없다 — 말도 같이 준다 */
+          box.querySelectorAll('.pw-checks li').forEach(function (li) { li.classList.toggle('on', !!s.checks[li.dataset.k]); });
+        });
+      }
+      bindMeter('f-signup', 'pw-signup'); bindMeter('f-reset', 'pw-reset');
+
+      /* ★ 가입 허용 도메인 목록을 여기에 두지 마라.
+         예전엔 제휴사 도메인 6개를 배열로 갖고 있었다. 검증 목적으로는 무의미했다 —
+         서버(send-code · app_signup_verified)가 최종 권위라 클라이언트 값을 지워도 우회가 안 된다.
+         반면 공개 로그인 화면에 그룹 구성이 그대로 드러났다. 얻는 것 없이 잃기만 하는 코드였다.
+         지금은 형식만 보고 넘기고, 도메인 판정은 서버가 한다. 서버가 거부하면 아래
+         authError() 가 같은 문구로 받아 준다(116행). 잃는 것은 왕복 1회분의 즉시 안내뿐이다. */
+
+      /* 인증코드 발송 */
+      document.querySelectorAll('[data-send]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var form = btn.closest('form'); var login = form.login.value.trim();
+          /* 여기서도 오류를 이메일 칸에 붙인다 — 예전엔 전역 상자만 떠서, 버튼 옆 칸을 고쳐야 한다는 걸 알기 어려웠다. */
+          var m = vEmail(form.login);
+          if (m) { reportFields(form, [[form.login, m]]); return; }
+          /* 앞선 쿨다운의 타이머가 남아 있으면 먼저 끈다. 남겨 두면 그 tick 이
+             '발송중…' 이나 새 결과 문구 위에 옛 '재발송(N)' 을 덮어써서, 버튼이
+             제 상태와 다른 말을 한다(실측으로 재현했다). */
+          if (btn._cdIv) { clearInterval(btn._cdIv); btn._cdIv = null; }
+          btn.disabled = true; btn.textContent = t('auth.sending', '발송중…');
+          var send = btn.dataset.send === 'reset' ? A.resetSendCode(login) : A.signupSendCode(login);
+          /* ★ 쿨다운은 '보냈다' 가 사실일 때만 건다(2026-09-08 교정).
+             예전엔 이 블록이 .finally() 안에 있어 결과와 무관하게 항상 돌았다. 실측하면
+             발송 실패 직후에도 버튼이 {txt:'재발송(29)', disabled:true} 였다 — 같은 순간
+             위쪽 배너는 빨간 오류였는데도. 화면이 두 가지를 동시에 말한 셈이고,
+             더 나쁜 것은 보내지도 않은 코드 때문에 30초간 재시도가 막힌 점이다.
+             (오프라인·서버오류·도메인 거부가 전부 이 경로로 온다.)
+             지금은 성공만 쿨다운, 실패는 즉시 다시 누를 수 있게 되돌린다. */
+          function idle() {
+            if (btn._cdIv) { clearInterval(btn._cdIv); btn._cdIv = null; }
+            btn.setAttribute('data-i18n', 'auth.getcode');
+            btn.disabled = false;
+            btn.textContent = t('auth.getcode', '인증코드 받기');
+          }
+          function cooldown() {
+            var n = 30;
+            /* ★ 쿨다운 동안에는 사전 표시를 뗀다. 이 버튼에는 data-i18n="auth.getcode" 가
+               달려 있어서, 세는 중에 헤더에서 언어를 바꾸면 i18n apply() 가 글자를
+               '인증코드 받기' 로 되돌린다 — 눌리지도 않는 버튼이 누르라고 말하게 된다.
+               떼어 두면 다음 1초 tick 이 바뀐 언어의 '재발송(N)' 으로 다시 쓴다. */
+            btn.removeAttribute('data-i18n');
+            btn.textContent = t('auth.resend', '재발송(%s)').replace('%s', n);
+            btn._cdIv = setInterval(function () {
+              n--;
+              btn.textContent = t('auth.resend', '재발송(%s)').replace('%s', n);
+              if (n <= 0) idle();       /* idle() 이 타이머까지 정리한다 */
+            }, 1000);
+          }
+          send.then(function (r) {
+            if (r && r.ok) { show(t('auth.msg.codeSent', '인증코드를 메일로 보냈습니다. 30분 내 입력하세요.'), 'ok'); cooldown(); }
+            else { show(authError(r, t('auth.msg.sendFail', '발송 실패')), 'err'); idle(); }
+          }, function () {
+            /* edge() 가 네트워크 오류를 이미 객체로 바꿔 주므로 여기까지 오는 일은 드물다.
+               그래도 남겨 둔다 — 예상 못 한 예외로 거부되면 버튼이 '발송중…' 인 채 영영 잠긴다. */
+            show(t('auth.msg.sendFail', '발송 실패'), 'err'); idle();
+          });
+        });
+      });
+
+      /* 왜 로그아웃됐는지 먼저 알린다 — 이유를 안 적으면 사용자는 고장난 줄 안다.
+         reason 은 세션 감시가 붙여 보낸다(idle=유휴 만료 · expired=유효시간 상한 · manual=본인 선택). */
+      (function showReason() {
+        var why = new URLSearchParams(location.search).get('reason');
+        if (!why || why === 'manual') return;
+        var k = why === 'expired' ? 'auth.msg.expired' : 'auth.msg.idle';
+        var ko = why === 'expired'
+          ? '로그인 유효시간이 끝나 로그아웃되었습니다. 다시 로그인해 주십시오.'
+          : '일정 시간 사용이 없어 자동으로 로그아웃되었습니다. 다시 로그인해 주십시오.';
+        show(t(k, ko), 'err');
+      })();
+
+      /* 공용 PC 선택 — 이 값만 브라우저에 남고, 세션은 그 선택에 따라 담긴다. */
+      (function bindTabOnly() {
+        var c = document.getElementById('tabOnly');
+        if (!c || !A.tabOnly) return;
+        c.checked = A.tabOnly();
+        c.addEventListener('change', function () { A.setTabOnly(c.checked); });
+      })();
+
+      /* 로그인 */
+      document.getElementById('f-login').addEventListener('submit', function (e) {
+        e.preventDefault(); clearMsg();
+        var f = e.target;
+        /* 칸 검사를 버튼 잠금보다 **먼저** 한다 — 잠근 뒤에 되돌아 나가면 버튼만 죽는다. */
+        if (!reportFields(f, collect([[f.login, vEmail], [f.password, vPwRequired]]))) return;
+        /* ★ 응답이 올 때까지 잠근다. 예전엔 연타하면 로그인 요청이 그만큼 나갔고,
+           먼저 보낸 응답이 나중에 도착해 성공/실패가 뒤집혀 보일 수 있었다.
+           저장소에 이미 있는 잠금 헬퍼를 쓴다(js/common.js TWUI.hold). */
+        var hd = (window.TWUI && TWUI.hold) ? TWUI.hold(f.querySelector('[type=submit]'), 'auth.login') : null;
+        function done() { if (hd) hd.end(); }
+        /* 저장소 선택을 로그인 저장보다 **먼저** 확정한다 — 나중에 바꾸면 세션이 반대쪽에 담긴다. */
+        if (A.setTabOnly) { var cb = document.getElementById('tabOnly'); if (cb) A.setTabOnly(cb.checked); }
+        A.login(f.login.value.trim(), f.password.value).then(function (r) {
+          done();
+          if (r && r.ok) {
+            show(t('auth.msg.loginOk', '로그인 성공. 이동합니다…'), 'ok');
+            var next = (r.role === 'admin') ? 'admin.html' : 'index.html';
+            try {
+              var raw = new URLSearchParams(location.search).get('next');
+              if (raw) {
+                var u = new URL(raw, location.href), file = u.pathname.split('/').pop();
+                if (u.origin === location.origin && /^(index|insight|berth|vessel|cargo|clp|route|rate|schedule|status|admin|analytics)\.html$/.test(file) &&
+                    (r.role === 'admin' || !/^(status|admin|analytics)\.html$/.test(file))) next = file + u.hash;
+              }
+            } catch (_) { /* Keep the default destination. */ }
+            setTimeout(function () { location.replace(next); }, 500);
+          }
+          /* 서버가 거절한 경우는 어느 칸이 틀렸는지 우리가 모른다(아이디·비밀번호를 구분해 알려 주지 않는다).
+             모르는 것을 아는 척하지 않는다 — 특정 칸에 aria-invalid 를 걸지 않고 전역 상자로만 알린다. */
+          else { show(r && r.error ? r.error : t('auth.msg.loginFail', '로그인 실패'), 'err'); }
+        }, done);
+      });
+
+      /* 회원가입 */
+      document.getElementById('f-signup').addEventListener('submit', function (e) {
+        e.preventDefault(); clearMsg();
+        var f = e.target;
+        /* ★ 검사를 버튼 잠금보다 앞으로 옮겼다. 예전엔 잠근 뒤에 강도·일치 검사에서 return 해서,
+           틀린 입력을 고쳐도 안전판(12초)이 풀릴 때까지 버튼이 죽어 있었다.
+           규칙 위반은 이제 해당 칸(비밀번호 / 비밀번호 확인)에 붙는다. */
+        var errs = collect([[f.login, vEmail], [f.code, vCode], [f.password, vPwRequired]]);
+        if (!errs.length) {
+          if (!A.pwStrength(f.password.value).ok) errs.push([f.password, t('auth.msg.pwRule', '비밀번호는 8자 이상 + 특수문자를 포함해야 합니다.')]);
+          if (f.password.value !== f.password2.value) errs.push([f.password2, t('auth.msg.pwMismatch', '비밀번호 확인이 일치하지 않습니다.')]);
+        }
+        if (!reportFields(f, errs)) return;
+        var hd = (window.TWUI && TWUI.hold) ? TWUI.hold(e.target.querySelector('[type=submit]'), 'auth.signup') : null;
+        function done() { if (hd) hd.end(); }
+        setTimeout(done, 12000);   /* 어떤 분기에서도 영구 잠금이 안 생기게 하는 안전판 */
+        var signupEmail = f.login.value.trim();
+        A.signup(signupEmail, f.password.value, f.code.value.trim(), f.name.value.trim()).then(function (r) {
+          if (r && r.ok) {
+            show(t('auth.msg.signupOk', '가입 신청 완료! 관리자 승인 후 로그인할 수 있습니다.'), 'ok'); f.reset();
+            /* 관리자에게 승인 요청 메일. 서버가 그 주소를 실제 pending 계정으로 검증한 뒤에만
+               보내므로, 여기서 실패해도 가입은 이미 끝난 것이라 사용자 흐름을 막지 않는다. */
+            if (A.signupNotifyAdmin) A.signupNotifyAdmin(signupEmail).catch(function () {});
+          }
+          else { show(authError(r, t('auth.msg.signupFail', '가입 실패')), 'err'); }
+        });
+      });
+
+      /* 비밀번호 재설정 */
+      document.getElementById('f-reset').addEventListener('submit', function (e) {
+        e.preventDefault(); clearMsg();
+        var f = e.target;
+        /* 가입 폼과 같은 이유로 검사를 잠금보다 먼저 한다(잠근 뒤 return 하면 버튼만 12초 죽는다). */
+        var errs = collect([[f.login, vEmail], [f.code, vCode], [f.password, vPwRequired]]);
+        if (!errs.length && !A.pwStrength(f.password.value).ok) errs.push([f.password, t('auth.msg.pwRule', '비밀번호는 8자 이상 + 특수문자를 포함해야 합니다.')]);
+        if (!reportFields(f, errs)) return;
+        var hd = (window.TWUI && TWUI.hold) ? TWUI.hold(e.target.querySelector('[type=submit]'), 'auth.reset') : null;
+        function done() { if (hd) hd.end(); }
+        setTimeout(done, 12000);   /* 어떤 분기에서도 영구 잠금이 안 생기게 하는 안전판 */
+        A.reset(f.login.value.trim(), f.code.value.trim(), f.password.value).then(function (r) {
+          if (r && r.ok) { show(t('auth.msg.resetOk', '비밀번호가 재설정되었습니다. 로그인해 주세요.'), 'ok'); document.querySelector('.auth-tab[data-tab="login"]').click(); }
+          else { show(r && r.error ? r.error : t('auth.msg.resetFail', '재설정 실패'), 'err'); }
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

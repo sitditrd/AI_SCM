@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://pharos.e-tgl.com/</loc><lastmod>2026-09-07</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>https://pharos.e-tgl.com/insight.html</loc><lastmod>2026-09-07</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://pharos.e-tgl.com/berth.html</loc><lastmod>2026-09-07</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://pharos.e-tgl.com/vessel.html</loc><lastmod>2026-09-07</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://pharos.e-tgl.com/cargo.html</loc><lastmod>2026-09-07</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://pharos.e-tgl.com/route.html</loc><lastmod>2026-09-07</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://pharos.e-tgl.com/rate.html</loc><lastmod>2026-09-07</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://pharos.e-tgl.com/clp.html</loc><lastmod>2026-09-07</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://pharos.e-tgl.com/schedule.html</loc><lastmod>2026-09-07</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://pharos.e-tgl.com/status.html</loc><lastmod>2026-09-07</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+</urlset>

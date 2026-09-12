@@ -1,0 +1,168 @@
+/* =========================================================
+   TWL Control Tower — 로그인/관리자 페이지 스타일 (style.css 토큰 사용)
+   ========================================================= */
+.auth-page { background: var(--bg); min-height: 100vh; min-height: 100dvh; }
+
+/* 버튼 크기 헬퍼 (style.css .btn 재사용) */
+.btn-block { width: 100%; justify-content: center; }
+/* .btn 의 min-height(40) 를 함께 내려야 실제 높이가 바뀐다 */
+.btn-sm { min-height: var(--ctl-h); height: var(--ctl-h); padding: 0 var(--sp-2); font-size: var(--fs-md); border-radius: 10px; }
+.btn-xs { min-height: var(--ctl-h-sm); height: var(--ctl-h-sm); padding: 0 var(--sp-2); font-size: var(--fs-sm); border-radius: 8px; }
+
+/* ---------- 로그인 카드 ---------- */
+.auth-wrap { max-width: 440px; margin: 0 auto; padding: calc(var(--header-h) + var(--sp-6)) var(--sp-4) var(--sec-y-tight); }
+.auth-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+  box-shadow: var(--shadow); padding: var(--sp-5);
+}
+/* 예전엔 빈 그러데이션 사각형(.ab-dot)이 있었다 — 이미지가 깨진 것처럼 보였다.
+   사이트에는 공식 심볼이 있고 헤더는 이미 그걸 쓴다(js/common.js LOGO_HTML). 여기도 맞춘다. */
+.auth-brand {
+  display: flex; align-items: center; gap: var(--sp-2);
+  margin-bottom: var(--sp-4); padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--border);
+}
+/* 원본이 28x27 이다 — 34 로 키우면 뭉개진다. 헤더(.logo-sym)와 같은 방식으로 높이만 잡는다. */
+.auth-brand .ab-sym { height: 28px; width: auto; flex: none; display: block; }
+/* ★ 이 화면에 heading 이 하나도 없었다 — <b> 가 h1 자리를 대신하고 있어서
+   스크린리더의 제목 목록에 로그인 화면이 통째로 안 잡혔다. h1 으로 바꾸고 꾸밈만 옮긴다. */
+.auth-brand h1 { margin: 0; display: block; font-size: var(--fs-lg); font-weight: 800; letter-spacing: -.015em; color: var(--ink); }
+.auth-brand span { display: block; margin-top: 2px; font-size: var(--fs-sm); color: var(--muted); }
+
+.auth-tabs { display: flex; gap: var(--sp-0); background: var(--surface-2); border-radius: 12px; padding: var(--sp-0); margin-bottom: var(--sp-4); }
+/* 높이를 34px 로 못박아 두면 '비밀번호 찾기'(일본어 パスワード再設定 · 러시아어
+   Восстановление пароля)가 2줄이 될 때 글자가 알약 밖으로 삐져나온다.
+   최소 높이만 남기고 늘어나게 둔다 — 탭 두 개가 같은 flex 라 높이는 서로 맞춰진다. */
+.auth-tab {
+  flex: 1; border: 0; background: transparent; color: var(--ink-2); font-weight: 700;
+  font-size: var(--fs-md); min-height: var(--ctl-h); height: auto; line-height: 1.25;
+  padding: 6px var(--sp-1); border-radius: 9px; transition: all .15s ease;
+}
+.auth-tab.active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.auth-tab:focus-visible { outline-offset: -2px; }
+
+@media (max-width: 420px) {
+  .auth-wrap { padding-left: var(--sp-3); padding-right: var(--sp-3); }
+  .auth-card { padding: var(--sp-3); border-radius: var(--radius); }
+  .auth-tabs { gap: 3px; flex-wrap: wrap; }
+  .auth-tab {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .auth-tab[data-tab="reset"] { flex-grow: 1.4; }
+}
+
+.auth-form { display: flex; flex-direction: column; gap: var(--sp-3); }
+.auth-form[hidden] { display: none; }  /* UA hidden 규칙이 위 flex 에 덮이던 버그(2026-08-19 감사) */
+.auth-form label { display: flex; flex-direction: column; gap: 6px; font-size: var(--fs-md); font-weight: 600; color: var(--ink-2); }
+.auth-form input {
+  font: inherit; font-size: var(--fs-base); color: var(--ink); background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: 11px;
+  height: var(--ctl-h-lg); padding: 0 var(--sp-3); width: 100%; box-sizing: border-box;
+}
+/* outline 을 지우면 전역 :focus-visible 링까지 사라진다 — 부드러운 링만 더한다 */
+.auth-form input:focus { border-color: var(--brand-accent-2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-accent-2) 20%, transparent); }
+/* 원색은 옅은 배경 위 글자로 쓰면 AA 미달 — 글자 전용 토큰을 쓴다 */
+.auth-form .req { color: var(--lv-congested-txt); }
+/* flex 항목의 기본 min-width 는 auto 라, <input> 의 고유 폭(약 177px)이 하한이 되어
+   줄이 카드 밖으로 터졌다 — 375px 폰에서 '인증코드 받기' 버튼이 화면 끝에서 잘렸다.
+   min-width:0 으로 하한을 풀고, 그래도 버튼이 길면(일본어·러시아어) 다음 줄로 내린다.
+   버튼을 자르거나 라벨을 줄이지 않는다 — 눌러야 하는 버튼이라 온전해야 한다. */
+.with-btn { display: flex; gap: var(--sp-1); flex-wrap: wrap; }
+.with-btn input { flex: 1 1 10em; min-width: 0; }
+/* 옆 입력칸과 같은 높이로 — 40 과 44 가 나란히 서면 한쪽만 떠 보인다 */
+.with-btn .btn { flex: 0 0 auto; white-space: nowrap; min-height: var(--ctl-h-lg); height: var(--ctl-h-lg); }
+.btn-block { margin-top: var(--sp-0); }
+/* ---------- 공용 PC 로그아웃 선택 ----------
+   ★ .auth-form label(세로 스택) · .auth-form input(전폭 44px) 을 되돌려야 한다.
+     둘 다 명시도 (0,1,1) 이라 한 클래스짜리 규칙으로는 못 이긴다 — .auth-form 을 앞에 붙인다.
+     예전엔 이 규칙이 style.css 에 있어서 두 줄 모두 덮였고, 체크박스가 입력칸처럼 보였다. */
+.auth-form .auth-keep {
+  flex-direction: row; align-items: flex-start; gap: 10px;
+  margin: -2px 0 0; padding: 11px 13px;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 11px;
+  font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2);
+  line-height: 1.45; cursor: pointer; transition: border-color .15s ease, background .15s ease;
+}
+.auth-form .auth-keep:hover { border-color: color-mix(in srgb, var(--brand-accent-2) 55%, var(--border)); }
+.auth-form .auth-keep input[type="checkbox"] {
+  flex: none; width: 17px; height: 17px; min-height: 0;
+  margin: 1px 0 0; padding: 0; border-radius: 5px;
+  accent-color: var(--brand-accent); cursor: pointer;
+}
+/* 전역 :focus-visible 링이 17px 상자에는 너무 붙는다 — 여백을 준다 */
+.auth-form .auth-keep input[type="checkbox"]:focus-visible { outline-offset: 3px; }
+.auth-keep-sub { display: block; margin-top: 3px; font-size: var(--fs-xs); font-weight: 500; color: var(--muted); }
+
+.auth-hint { margin: 2px 0 0; font-size: var(--fs-sm); color: var(--muted); line-height: 1.5; }
+.auth-foot { text-align: center; margin-top: var(--sp-3); font-size: var(--fs-md); }
+/* 원색 --brand-accent-2 는 흰 카드 위 3.36:1 로 AA 미달이었다(2026-08-30 실측) */
+.auth-foot a { color: var(--accent-2-txt); font-weight: 600; }
+
+.auth-msg { padding: var(--sp-2) var(--sp-3); border-radius: 11px; font-size: var(--fs-md); font-weight: 600; margin-bottom: var(--sp-0); }
+.auth-msg.ok { background: color-mix(in srgb, var(--lv-low) 14%, transparent); color: var(--down); border: 1px solid color-mix(in srgb, var(--lv-low) 30%, transparent); }
+.auth-msg.err { background: color-mix(in srgb, var(--lv-congested) 12%, transparent); color: var(--up); border: 1px solid color-mix(in srgb, var(--lv-congested) 30%, transparent); }
+
+/* ---------- 비밀번호 강도 미터 ---------- */
+.pw-meter { margin: -4px 0 2px; }
+.pw-bar { height: 6px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.pw-bar span { display: block; height: 100%; width: 0; border-radius: 4px; transition: width .2s ease, background .2s ease; }
+.pw-label { font-size: var(--fs-sm); font-weight: 700; margin: 5px 0 6px; }
+.pw-checks { list-style: none; display: flex; flex-wrap: wrap; gap: 6px var(--sp-2); margin: 0; padding: 0; }
+.pw-checks li { font-size: var(--fs-xs); color: var(--muted); position: relative; padding-left: 15px; }
+.pw-checks li::before { content: '○'; position: absolute; left: 0; }
+.pw-checks li.on { color: var(--down); font-weight: 600; }
+.pw-checks li.on::before { content: '✓'; }
+
+/* ---------- 관리자 ---------- */
+.admin-badge { display: inline-flex; align-items: center; justify-content: center; flex: none;
+  font-size: var(--fs-xs); font-weight: 800; letter-spacing: .04em; line-height: 1; white-space: nowrap; color: #fff;
+  background: var(--brand-accent); min-height: 24px; padding: 0 9px; border-radius: 999px; margin-left: var(--sp-2); }
+.admin-wrap { padding-top: calc(var(--header-h) + var(--sp-5)); padding-bottom: var(--sec-y-tight); }
+.admin-wrap .page-head h1 { margin: 0 0 6px; font-size: var(--fs-3xl); font-weight: 800; }
+.admin-wrap .page-head p { margin: 0 0 var(--sp-4); color: var(--ink-2); font-size: var(--fs-base); }
+.admin-toolbar { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-3); flex-wrap: wrap; }
+/* style.css 의 .seg 가 이미 높이 34 를 잡고 있다 — 안쪽 여백 3 을 뺀 28 이 버튼 높이가 된다.
+   여기서 세로 패딩을 다시 주면 알약이 상자 밖으로 넘친다. */
+.seg { display: inline-flex; background: var(--surface-2); border-radius: 10px; padding: 3px; }
+.seg-btn { border: 0; background: transparent; color: var(--ink-2); font-weight: 700; font-size: var(--fs-md); height: calc(var(--ctl-h) - 6px); padding: 0 var(--sp-3); border-radius: 8px; }
+.seg-btn.active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.admin-tbl { width: 100%; border-collapse: collapse; font-size: var(--fs-md); min-width: 640px; }
+.admin-tbl th, .admin-tbl td { text-align: left; padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--border); }
+/* --muted 는 --surface-2 헤더 배경 위에서 라이트 4.0:1 — style.css 표와 같은 --ink-2 로 */
+.admin-tbl thead th { background: var(--surface-2); font-size: var(--fs-sm); color: var(--ink-2); text-transform: uppercase; letter-spacing: .03em; }
+.admin-tbl .ta-r { text-align: right; }
+.row-act { display: inline-flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+.st-pill { font-size: var(--fs-sm); font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+/* 원색은 같은 색 16% 틴트 위에서 AA 미달 — 글자 전용 토큰으로 */
+.st-pending { color: var(--lv-busy-txt); background: color-mix(in srgb, var(--lv-busy) 16%, transparent); }
+.st-approved { color: var(--down); background: color-mix(in srgb, var(--lv-low) 16%, transparent); }
+.st-rejected { color: var(--up); background: color-mix(in srgb, var(--lv-congested) 14%, transparent); }
+
+@media (max-width: 520px) {
+  .header-inner:not(:has(> .nav-burger)) .admin-badge {
+    min-height: 30px;
+    padding: 0 9px;
+    margin-left: 2px;
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+  .header-inner:not(:has(> .nav-burger)) > .acct-btn {
+    min-height: 30px;
+    height: 30px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+  .header-inner:not(:has(> .nav-burger)) .icon-btn {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+@media (max-width: 360px) {
+  .header-inner:not(:has(> .nav-burger)) .admin-badge { display: none; }
+}
