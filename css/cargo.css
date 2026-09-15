@@ -1,0 +1,119 @@
+/* Cargo workspace overrides are isolated from the shared page layouts. */
+/* 예전엔 이 파일만 글자 크기를 30·25·21·16·14·13·12px 로 직접 적어, style.css 의 타이포
+   계단을 손대도 화물 화면만 옛 크기로 남았다(같은 위계인데 화면마다 1~2px 씩 달랐다).
+   값이 같은 자리를 전부 --fs-* 토큰으로 옮겼다 — 지금 렌더 크기는 그대로다.
+   ※ 입력칸의 16px 두 곳만 예외로 남긴다(각 줄의 주석 참조). */
+.cargo-page .container { max-width: 1480px; }
+.cargo-page .dash-hero { padding: calc(var(--header-h) + 28px) 0 0; }
+.cargo-page .dash-hero h1 { font-size: var(--fs-4xl); line-height: 1.25; letter-spacing: 0; }
+.cargo-page .dash-hero .dash-sub { margin-top: 8px; }
+.cargo-page .dash-hero [data-i18n-html="cargo.hero.note"] { margin-top: 10px !important; }
+.cargo-nav { display: flex; gap: 28px; margin-top: 20px; border-bottom: 1px solid var(--border); }
+.cargo-nav a { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 8px 2px; color: #eaf1fb; font-weight: 650; text-align: center; border-bottom: 2px solid transparent; }
+.cargo-nav a:hover, .cargo-nav a:focus-visible { color: var(--ops-cyan); border-bottom-color: var(--ops-cyan); }
+.cargo-nav [hidden] { display: none; }
+.cargo-count { font-size: var(--fs-sm); font-variant-numeric: tabular-nums; color: #c2d4ec; }
+.cargo-page .dash-section { padding: 28px 0; scroll-margin-top: calc(var(--header-h) + 16px); }
+.cargo-page .dash-head { margin-bottom: 14px; align-items: baseline; }
+.cargo-page .dash-head h2 { font-size: var(--fs-2xl); letter-spacing: 0; }
+.cargo-page .dash-head .hint { line-height: 1.6; }
+.cargo-search { padding: 0 0 16px; }
+.cargo-search > label { display: block; margin-bottom: 8px; font-size: var(--fs-base); font-weight: 700; }
+.cargo-search-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(112px, auto); gap: 12px; }
+/* 16 은 디자인 값이 아니라 iOS 가 입력 포커스 때 화면을 확대하지 않는 임계값이라
+   토큰으로 바꾸지 않는다(style.css 의 '모바일 입력 확대 방지' 주석과 같은 이유).
+   id 선택자라 그 전역 규칙보다 명시도가 높아, 이 화면에서는 이 값이 실제로 그 역할을 한다. */
+.cargo-search-row #blNo { width: 100%; max-width: none; min-width: 0; min-height: 48px; font-size: 16px; border-radius: 8px; padding: 10px 14px; }
+.cargo-search-row #traceBtn { min-height: 48px; height: auto; min-width: 112px; border-radius: 8px; justify-content: center; white-space: normal; }
+.cargo-search-row #blNo[aria-invalid="true"] { border-color: var(--up); }
+.cargo-input-status { min-height: 20px; margin: 8px 0 0; color: var(--muted); font-size: var(--fs-md); line-height: 1.55; }
+.cargo-input-status.is-error { color: var(--up); }
+.cargo-guide-result { margin-bottom: var(--sp-3); }
+.cargo-guide-result .reg-hint { margin: 0 0 var(--sp-2); }
+.cargo-guide-form { position: static; z-index: auto; padding: 0 0 var(--sp-3); background: none; backdrop-filter: none; justify-content: flex-start; }
+.cargo-guide-form .reg-card { max-height: none; overflow: visible; }
+.cargo-guide-form h3 small { display: block; margin-top: var(--sp-1); overflow-wrap: anywhere; }
+.cargo-page .cargo-console { display: block; }
+.cargo-page #ccEmpty { min-height: 100px; padding: 20px; border: 1px dashed var(--border); border-radius: 8px; background: none; }
+.cargo-page #ccEmpty h2 { margin: 0; color: var(--muted); font-size: var(--fs-lg); font-weight: 500; letter-spacing: 0; }
+.cargo-page .trk-card { border-radius: 8px; box-shadow: none; }
+.cargo-page .cc-main { min-width: 0; }
+.cargo-support { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; margin-top: 16px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.cargo-watch-summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; font-size: var(--fs-md); }
+.cargo-watch-summary > span:first-child { font-weight: 700; }
+.cargo-watch-summary #watchSummary { color: var(--muted); }
+.cargo-watch-summary b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.cargo-watch-summary a, .cargo-channel-link { color: var(--ops-cyan); font-size: var(--fs-md); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
+.cargo-channel-link { appearance: none; border: 0; background: none; padding: 8px 0; cursor: pointer; font-family: inherit; text-align: left; }
+.cargo-carriers { border-bottom: 1px solid var(--border); }
+.cargo-carriers > summary { cursor: pointer; padding: 14px 0; font-size: var(--fs-md); font-weight: 650; color: var(--ink-2); }
+.cargo-carriers .carrier-list { padding: 4px 0 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 32px; }
+.cargo-carriers .cl-group { margin: 0; }
+.cargo-carriers .cl-note { grid-column: 1 / -1; margin: 0; }
+.cargo-page .wf-toolbar { display: grid; grid-template-columns: minmax(180px, 1.4fr) repeat(2, minmax(120px, 1fr)) minmax(150px, 1fr); }
+.cargo-page .wf-toolbar > .focus-search { width: 100%; max-width: none !important; min-width: 0; }
+.cargo-page .wf-toolbar > .trk-spacer { display: none; }
+.cargo-page .wf-toolbar .chip-row { align-self: center; grid-column: span 2; }
+.cargo-page .wf-toolbar #wf_bulk { justify-self: end; }
+.cargo-page .wf-toolbar #wf_sort { justify-self: end; grid-column: 3; grid-row: 2; }
+.cargo-page .wf-toolbar #wf_bulk { grid-column: 4; grid-row: 2; }
+.cargo-page .wf-toolbar #wf_reset { justify-self: start; }
+.cargo-page .wf-toolbar .f-chip { min-height: 36px; }
+.cargo-page .wf-number { display: inline-flex; align-items: center; gap: 6px; appearance: none; background: none; border: 0; color: var(--ops-cyan); padding: 7px 0; font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; text-align: left; }
+.cargo-page .wf-number:disabled { cursor: wait; opacity: .65; }
+.cargo-page #watchOut .trk-tbl { min-width: 1060px; }
+.cargo-page #watchOut .trk-tbl-wrap { max-height: 650px; overscroll-behavior-x: contain; }
+.cargo-page #watchOut .trk-tbl th { position: sticky; top: 0; z-index: 2; background: var(--surface-2); }
+.cargo-page .wf-result-count { padding: 8px 18px; color: var(--muted); font-size: var(--fs-sm); border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+.cargo-page .wf-retry { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 18px 0; }
+.cargo-page .wf-pager { min-height: 44px; flex-wrap: wrap; gap: 12px; }
+.cargo-page .wf-pager button { min-height: 40px; }
+.cargo-page #feed .trk-tbl-wrap { max-height: 440px; overflow: auto; }
+.cargo-page :is(.wf-toolbar,.cargo-nav,.cargo-support,.cargo-search) :is(button,a,input,select):focus-visible,
+.cargo-page .wf-number:focus-visible,
+.cargo-page .cargo-carriers > summary:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
+:root[data-theme="light"] .cargo-page .cargo-watch-summary a,
+:root[data-theme="light"] .cargo-page .cargo-channel-link,
+:root[data-theme="light"] .cargo-page .wf-number { color: var(--brand-primary); }
+@media (max-width: 740px) {
+  .cargo-page .dash-hero { padding-top: calc(var(--header-h) + 20px); }
+  .cargo-page .dash-hero h1 { font-size: var(--fs-3xl); }
+  .cargo-nav { gap: 0; }
+  .cargo-nav a { flex: 1; min-width: 0; padding: 8px 4px; font-size: var(--fs-md); overflow-wrap: anywhere; }
+  .cargo-page .dash-section { padding-bottom: 24px; }
+  .cargo-page .dash-head { flex-wrap: wrap; gap: 6px; }
+  .cargo-page .dash-head .hint { flex-basis: 100%; }
+  .cargo-search-row { grid-template-columns: minmax(0, 1fr) minmax(76px, auto); gap: 8px; }
+  .cargo-search-row #traceBtn { min-width: 76px; max-width: 140px; padding: 10px 14px; }
+  .cargo-support { gap: 6px; }
+  .cargo-watch-summary { width: 100%; }
+  .cargo-carriers .carrier-list { grid-template-columns: 1fr; }
+  .cargo-page .wf-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cargo-page .wf-toolbar #wf_q,
+  .cargo-page .wf-toolbar #wf_route,
+  .cargo-page .wf-toolbar .chip-row { grid-column: 1 / -1; }
+  .cargo-page .wf-toolbar #wf_reset { grid-column: 1 / -1; justify-self: start; }
+  .cargo-page .wf-toolbar #wf_sort,
+  .cargo-page .wf-toolbar #wf_bulk { grid-column: auto; grid-row: auto; }
+  /* 여기 16 도 iOS 확대 임계값 — 계단 값이 아니므로 토큰으로 바꾸지 않는다 */
+  .cargo-page .wf-toolbar .focus-search { min-height: 44px; font-size: 16px; }
+  .cargo-page .wf-toolbar .chip-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cargo-page .wf-toolbar .f-chip { white-space: normal; min-height: 40px; border-radius: 6px; }
+  .cargo-page #watchOut .trk-tbl-wrap { max-height: 520px; }
+  .cargo-page .wf-toolbar #wf_bulk { white-space: normal; max-width: 100%; text-align: center; height: auto; min-height: 44px; }
+  .cargo-page .trk-head { gap: 8px; }
+  .cargo-page .trk-head .trk-asof { flex-basis: 100%; margin: 0; }
+}
+@media (max-width: 400px) {
+  .cargo-page .site-header .logo-slot { flex: 1 1 0; min-width: 0; max-width: calc(100% - 56px); }
+  .cargo-page .site-header .logo-text { min-width: 0; }
+  .cargo-page .site-header .logo-text .l1 { font-size: var(--fs-md); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cargo-page { scroll-behavior: auto; }
+}
+/* 예전엔 OS·브라우저 설정으로만 이 킬스위치가 켜졌다. 사이트 안에서 직접 끌 수단이
+   없어, 설정을 못 바꾸는 공용 PC 에서는 방법이 아예 없었다.
+   같은 규칙을 클래스로도 발동하게 넓힌다 — <html class="no-motion"> (토글 UI 는 별도).
+   미디어쿼리는 선택자로 열 수 없어 한 벌 더 두는 방법밖에 없다 — 위와 1:1 로 같게 유지할 것. */
+html.no-motion .cargo-page { scroll-behavior: auto; }
