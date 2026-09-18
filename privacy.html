@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark" data-legal="privacy">
+<head>
+  <meta charset="UTF-8">
+  <!-- CSP: 이 화면은 로컬 스크립트만 싣고 서버와 통신하지 않는다. 외부 원본은 Pretendard 폰트(jsDelivr)뿐이다. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self'; frame-src 'none'; form-action 'self';">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()">
+  <!-- 테마·언어 선반영: 저장된 값을 그리기 전에 적용해 페이지 이동 시 깜빡임을 없앤다. -->
+  <script>/* 클릭재킹 방어 — GitHub Pages 는 X-Frame-Options 헤더를 못 주므로 스크립트로 막는다. */
+  (function(){try{if(top!==self){top.location=self.location.href;}}catch(e){try{document.documentElement.style.display='none';}catch(_){}}})();</script>
+  <script>(function(){try{var t=localStorage.getItem('twl-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var L={ko:'ko',en:'en',zh:'zh-CN',ja:'ja',ru:'ru'},l=localStorage.getItem('twl-lang');if(L[l])document.documentElement.setAttribute('lang',L[l]);}catch(e){}})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f4f6fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0f1e" media="(prefers-color-scheme: dark)">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <title>개인정보 처리방침 | PHAROS - 태웅로직스</title>
+  <meta name="description" content="태웅로직스 물류 정보 서비스 PHAROS 개인정보 처리방침입니다.">
+  <link rel="canonical" href="https://pharos.e-tgl.com/privacy.html">
+  <link rel="icon" href="assets/twl_logo.ico">
+  <link rel="apple-touch-icon" href="assets/og-image.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-18-rpt">
+  <link rel="stylesheet" href="css/legal.css?v=2026-09-18-rpt">
+</head>
+<body class="legal-page">
+  <a class="skip-link" href="#main-content" data-i18n="ld.a11y.skip">본문으로 건너뛰기</a>
+
+  <!-- 공개 화면이다(로그인 불필요) — auth-gate.js 를 싣지 않는다. -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="태웅로직스 홈"></a>
+      <div class="header-actions legal-actions">
+        <button class="icon-btn theme-toggle" type="button" aria-label="테마 전환"></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ★ 본문은 두 벌이다: 한국어(정본)와 영어(번역). 전환 규칙은 terms.html 과 같다(js/legal.js).
+       ★ 영어 본문에는 한글을 넣지 않는다(js/i18n.js 자동 치환이 잡종 문장을 만든다).
+       ★ 이 문서는 실제 처리만 적는다. 없는 조치·없는 보존 기한을 적지 않는다 —
+         처리 방식이 바뀌면 본문과 제12조 변경 이력을 함께 고친다. -->
+  <main id="main-content" tabindex="-1" class="legal-wrap">
+
+    <!-- ================= 한국어 (정본) ================= -->
+    <article class="legal-doc" data-doc="ko" lang="ko" aria-labelledby="ko-title">
+      <header class="legal-head">
+        <p class="legal-eyebrow" translate="no">PHAROS</p>
+        <h1 id="ko-title" tabindex="-1">개인정보 처리방침</h1>
+        <p class="legal-meta">
+          <span><b>시행일</b> <time data-legal-date datetime="2026-09-19">2026-09-19</time></span>
+          <span><b>버전</b> <span data-legal-ver>1.0</span></span>
+        </p>
+        <p class="legal-prev">이전 버전: 없음(최초 제정). 개정하면 이전 버전을 <a href="#p12">제12조</a>의 변경 이력에 남깁니다.</p>
+        <p class="legal-switch"><button type="button" class="legal-switch-btn" data-legal-set="en" lang="en">English</button></p>
+      </header>
+
+      <p>태웅로직스(이하 “회사”)는 물류 정보 서비스 PHAROS(https://pharos.e-tgl.com, 이하 “서비스”)를 운영하면서 「개인정보 보호법」에 따라 이용자의 개인정보를 보호하고 관련 고충을 신속하게 처리하기 위해 이 처리방침을 둡니다.</p>
+
+      <nav class="legal-toc" aria-labelledby="ko-toc">
+        <h2 id="ko-toc">목차</h2>
+        <ol>
+          <li><a href="#p1">제1조 처리 목적·항목·보유 기간</a></li>
+          <li><a href="#p2">제2조 파기 절차와 방법</a></li>
+          <li><a href="#p3">제3조 제3자 제공</a></li>
+          <li><a href="#p4">제4조 처리 위탁</a></li>
+          <li><a href="#p5">제5조 국외 이전</a></li>
+          <li><a href="#p6">제6조 정보주체의 권리·의무와 행사 방법</a></li>
+          <li><a href="#p7">제7조 안전성 확보조치</a></li>
+          <li><a href="#p8">제8조 쿠키 등 자동 수집 장치</a></li>
+          <li><a href="#p9">제9조 외부 서비스 연결</a></li>
+          <li><a href="#p10">제10조 개인정보 보호책임자</a></li>
+          <li><a href="#p11">제11조 권익침해 구제 방법</a></li>
+          <li><a href="#p12">제12조 처리방침의 변경</a></li>
+        </ol>
+      </nav>
+
+      <section class="legal-art" id="p1">
+        <h2>제1조 (처리 목적·항목·보유 기간)</h2>
+        <p>① 회사는 아래 목적으로만 개인정보를 처리하며, 목적이 바뀌면 「개인정보 보호법」에 따라 필요한 조치를 합니다.</p>
+
+        <div class="legal-cat">
+          <h3>1. 회원 가입·관리</h3>
+          <dl class="legal-dl">
+            <dt>목적</dt><dd>이메일 인증으로 본인 확인, 가입 승인, 로그인, 권한 관리, 화면과 서비스 메일에 이름 표시</dd>
+            <dt>항목</dt><dd>[필수] 업무용 이메일(아이디), 비밀번호(복원할 수 없는 해시로만 저장), 이메일 인증 기록 · [선택] 이름·부서 · [자동 생성] 회원 상태·권한, 가입·승인 일시</dd>
+            <dt>보유 기간</dt><dd>회원 탈퇴 시까지. 화면에 탈퇴 기능이 없으므로 제10조의 연락처로 요청하시면 처리합니다. 가입이 거절된 신청 정보와 이메일 인증 기록도 삭제를 요청하실 때까지 보관합니다(인증코드 자체는 발급 후 30분이 지나면 쓸 수 없습니다).</dd>
+            <dt>근거</dt><dd>이용계약의 체결·이행(「개인정보 보호법」 제15조제1항제4호)</dd>
+          </dl>
+        </div>
+
+        <div class="legal-cat">
+          <h3>2. 자동 감시와 변경 알림</h3>
+          <dl class="legal-dl">
+            <dt>목적</dt><dd>회원이 등록한 화물의 자동 조회, 일정·상태 변경 알림 메일 발송, 추적 이력 제공</dd>
+            <dt>항목</dt><dd>등록한 B/L·AWB 번호, 선사, 등록 회원, 알림 받을 이메일(회원이 입력한 다른 사람의 주소 포함), 메모(입력한 경우), 등록 기간, 추적 결과, 변경·알림 발송 기록</dd>
+            <dt>보유 기간</dt><dd>등록 정보(알림 받을 이메일 포함)와 추적 이력은 등록 기간(3개월 또는 6개월)이 끝나거나 감시를 멈춰도 회원 탈퇴 또는 삭제 요청 시까지 보관합니다. 다만 등록 정보의 알림 받을 이메일은 화물이 최종 단계에 이르거나 알림을 끄면 그때 삭제합니다(이미 보낸 알림의 발송 기록은 위와 같이 보관합니다).</dd>
+            <dt>근거</dt><dd>이용계약의 이행(같은 법 제15조제1항제4호). 회원이 입력한 다른 수신자의 주소는 회원의 요청에 따른 알림 발송을 위한 회사의 정당한 이익(같은 항 제6호)</dd>
+          </dl>
+        </div>
+
+        <div class="legal-cat">
+          <h3>3. 트레이싱 리포트(해당 기능을 제공하는 경우)</h3>
+          <dl class="legal-dl">
+            <dt>목적</dt><dd>회원이 지정한 수신자에게 화물 추적 보고 메일 발송, 일정 변경 시 갱신 발송, 수신 거부 처리, 발송 한도 관리와 발송 증빙</dd>
+            <dt>항목</dt><dd>회원: 발신자 표시 이름, 회신 주소, 메모, 대상 B/L, 언어 · 수신자: 이메일 주소, 발송 상태 · 발송 기록: 보낸 회원, 수신자 주소의 해시값, 일부를 가린 주소와 도메인, 발송 일시, 리포트를 만들 때(회원)와 수신을 거부할 때(수신자)의 접속 IP·브라우저 정보</dd>
+            <dt>보유 기간</dt><dd>리포트는 최대 6개월 운영되며, 리포트 내용과 수신자 주소는 리포트가 끝난 날부터 180일이 지나면 파기합니다. 발송 기록은 발송 사실 증빙과 분쟁 대응을 위해 따로 기한을 정하지 않고 보관합니다.</dd>
+            <dt>근거</dt><dd>회원: 이용계약의 이행 · 수신자: 회원의 요청에 따른 업무 메일 발송과 수신 거부 처리를 위한 회사의 정당한 이익(같은 법 제15조제1항제6호)</dd>
+          </dl>
+          <p>수신자의 이메일 주소는 회원이 입력한 것이며, 수신자는 메일의 ‘더 받지 않기’ 링크로 언제든지 수신을 거부할 수 있습니다.</p>
+        </div>
+
+        <div class="legal-cat">
+          <h3>4. 접속·보안 기록</h3>
+          <dl class="legal-dl">
+            <dt>목적</dt><dd>로그인 유지, 비정상 접근 탐지·차단, 요청 횟수 제한, 보안 사고와 분쟁 대응</dd>
+            <dt>항목</dt><dd>로그인 세션 정보, 접속 IP, 브라우저 정보(User-Agent), 접속 일시, 로그인 성공·실패와 그 사유(실패 시 입력한 아이디 포함), 계정 관리 기록(승인·거절·비밀번호 초기화 등), 보안 관련 이용 기록(자동 감시 등록·조회 내용 등)</dd>
+            <dt>보유 기간</dt><dd>로그인 세션은 로그아웃, 비밀번호 변경, 계정 상태 변경 시 삭제하고, 만료(30분 미사용, 최대 12시간)되면 효력을 잃으며, 만료된 세션 기록은 그 뒤 순차적으로 삭제합니다. 요청 횟수 제한 기록은 몇 분에서 하루 사이에 만료되고 이후 차례로 삭제됩니다. 그 밖의 접속·보안 기록은 따로 기한을 정하지 않고 보관하며(사내 보관 사본 포함), 삭제를 요청하시면 검토한 뒤 삭제하거나 알아볼 수 없게 처리합니다.</dd>
+            <dt>근거</dt><dd>서비스 보안을 위한 회사의 정당한 이익(같은 법 제15조제1항제6호)</dd>
+          </dl>
+        </div>
+
+        <div class="legal-cat">
+          <h3>5. 이용 통계와 운영 기록</h3>
+          <dl class="legal-dl">
+            <dt>목적</dt><dd>이용 현황 통계, 서비스 개선, 시범 운영 기록 보관과 운영 보고</dd>
+            <dt>항목</dt><dd>회원 아이디, 이용한 화면·기능, 조회 조건(화물번호는 앞 4자리만 남기고 가림), 결과 건수, 처리 시간, 접속 IP·브라우저 정보, 일시. 로그인한 회원의 이용만 기록합니다. 운영 보고에는 이름, 일부를 가린 이메일, 이용 횟수만 넣습니다.</dd>
+            <dt>보유 기간</dt><dd>따로 기한을 정하지 않고 보관하며(사내 보관 사본 포함), 삭제를 요청하시면 검토한 뒤 삭제하거나 알아볼 수 없게 처리합니다.</dd>
+            <dt>근거</dt><dd>서비스 운영·개선을 위한 회사의 정당한 이익(같은 법 제15조제1항제6호)</dd>
+          </dl>
+        </div>
+
+        <p>② 회사는 민감정보와 고유식별정보(주민등록번호 등)를 처리하지 않습니다. 서비스는 업무용이며 만 14세 미만 아동을 대상으로 하지 않습니다.</p>
+        <p>③ 회사가 보낸 메일(인증코드, 가입 안내, 변경 알림 등)은 받는 사람의 메일함에 남으며, 회사가 지울 수 없습니다.</p>
+        <p>④ 따로 기한을 정하지 않은 기록의 보유 기간을 정하면 이 방침을 개정해 알립니다.</p>
+      </section>
+
+      <section class="legal-art" id="p2">
+        <h2>제2조 (파기 절차와 방법)</h2>
+        <p>① 회사는 보유 기간이 끝났거나 처리 목적을 이루었거나 정보주체가 삭제를 요청한 개인정보를 지체 없이 파기합니다. 사후 수정·삭제를 기술적으로 막아 둔 기록(제7조 제5호)은 기록이 남는 정정 절차를 거쳐 삭제하거나 알아볼 수 없게 처리합니다.</p>
+        <p>② 다른 법령에 따라 보존해야 하는 개인정보는 다른 개인정보와 분리해 보관합니다.</p>
+        <p>③ 전자 파일은 복원할 수 없는 방법으로 삭제하고, 종이로 출력한 것은 분쇄하거나 소각합니다.</p>
+      </section>
+
+      <section class="legal-art" id="p3">
+        <h2>제3조 (제3자 제공)</h2>
+        <p>① 회사는 개인정보를 제3자에게 제공하지 않습니다. 다만 정보주체의 별도 동의가 있거나 법률에 특별한 규정이 있는 경우 등 「개인정보 보호법」 제17조와 제18조가 허용하는 경우에는 예외로 합니다.</p>
+        <p>② 회원이 트레이싱 리포트를 보내면, 회원이 정한 발신자 이름과 회신 주소가 회원의 요청에 따라 수신자에게 표시됩니다.</p>
+      </section>
+
+      <section class="legal-art" id="p4">
+        <h2>제4조 (처리 위탁)</h2>
+        <p>① 회사는 서비스 제공을 위해 다음과 같이 개인정보 처리 업무를 위탁합니다.</p>
+        <div class="legal-cat">
+          <dl class="legal-dl">
+            <dt>Supabase Pte. Ltd.</dt><dd>회원·서비스 데이터 보관, 서버·데이터베이스 운영, 서버 기능 실행 (재위탁: Amazon Web Services, Inc. — 서버 설비 · Cloudflare, Inc. — 네트워크 전송)</dd>
+            <dt>GitHub, Inc.</dt><dd>웹사이트(pharos.e-tgl.com) 호스팅</dd>
+            <dt>네이버 주식회사</dt><dd>서비스 메일 발송(인증코드, 가입·승인 안내, 변경 알림, 운영 보고 등)과 운영 메일함 제공</dd>
+          </dl>
+        </div>
+        <p>② 회사는 수탁자가 개인정보를 안전하게 처리하는지 관리·감독하며, 수탁자나 위탁 업무가 바뀌면 이 방침에 반영합니다.</p>
+      </section>
+
+      <section class="legal-art" id="p5">
+        <h2>제5조 (국외 이전)</h2>
+        <p>① 회사는 이용계약의 이행을 위해 필요한 처리위탁·보관으로서, 「개인정보 보호법」 제28조의8제1항제3호가목에 따라 다음과 같이 개인정보를 국외로 이전합니다.</p>
+        <div class="legal-cat">
+          <h3>Supabase Pte. Ltd.</h3>
+          <dl class="legal-dl">
+            <dt>연락처</dt><dd><a href="mailto:privacy@supabase.com">privacy@supabase.com</a></dd>
+            <dt>이전 국가</dt><dd>일본(데이터 보관 — Amazon Web Services 도쿄 리전). 서버 기능은 이용자와 가까운 Supabase 운영 지역에서 실행될 수 있습니다.</dd>
+            <dt>이전 항목</dt><dd>제1조의 개인정보 전부</dd>
+            <dt>시기·방법</dt><dd>서비스를 이용할 때마다 암호화된 통신(HTTPS)으로 전송</dd>
+            <dt>이용 목적·보유 기간</dt><dd>데이터 보관과 서버 운영 · 제1조의 보유 기간 동안(위탁이 끝나면 파기). 시스템 접속 기록은 Supabase의 보존 정책에 따릅니다.</dd>
+          </dl>
+        </div>
+        <div class="legal-cat">
+          <h3>GitHub, Inc.</h3>
+          <dl class="legal-dl">
+            <dt>연락처</dt><dd><a href="mailto:privacy@github.com">privacy@github.com</a></dd>
+            <dt>이전 국가</dt><dd>미국</dd>
+            <dt>이전 항목</dt><dd>웹사이트 방문 시 접속 IP, 브라우저 정보, 요청한 페이지 주소</dd>
+            <dt>시기·방법</dt><dd>웹사이트를 방문할 때마다 네트워크로 전송</dd>
+            <dt>이용 목적·보유 기간</dt><dd>웹사이트 제공 · GitHub의 보존 정책에 따릅니다(회사는 이 기록을 받지 않습니다).</dd>
+          </dl>
+        </div>
+        <p>② 국외 이전을 원하지 않으면 제10조의 연락처로 회원 탈퇴(개인정보 삭제)를 요청해 거부할 수 있습니다. 다만 서비스는 위 설비로만 제공되므로 거부하면 서비스를 이용할 수 없습니다. 웹사이트 방문 기록의 이전을 원하지 않으면 웹사이트 이용을 중단해야 합니다.</p>
+      </section>
+
+      <section class="legal-art" id="p6">
+        <h2>제6조 (정보주체의 권리·의무와 행사 방법)</h2>
+        <p>① 정보주체는 회사에 언제든지 개인정보의 열람, 정정·삭제, 처리정지와 동의 철회를 요구할 수 있습니다.</p>
+        <p>② 요구는 제10조의 이메일로 하시면 됩니다. 회사는 본인 확인(가입한 이메일 주소로 회신하는 등)을 거쳐 10일 이내에 조치하고 그 결과를 알립니다.</p>
+        <p>③ 법정대리인이나 위임을 받은 사람을 통해서도 요구할 수 있으며, 이 경우 위임장을 함께 내야 합니다.</p>
+        <p>④ 법률에 특별한 규정이 있거나 다른 사람의 생명·신체·재산이나 이익을 해칠 우려가 있는 경우 등 「개인정보 보호법」 제35조·제36조·제37조가 정한 경우에는 요구가 제한될 수 있으며, 이때는 그 사유를 알립니다.</p>
+        <p>⑤ 트레이싱 리포트 수신자는 메일의 ‘더 받지 않기’ 링크로 언제든지 수신을 거부할 수 있습니다.</p>
+        <p>⑥ 정보주체는 자신의 개인정보를 정확하게 유지해야 하며, 다른 사람의 이메일 주소 등 개인정보를 그 사람의 뜻에 반해 입력해서는 안 됩니다.</p>
+      </section>
+
+      <section class="legal-art" id="p7">
+        <h2>제7조 (안전성 확보조치)</h2>
+        <p>회사는 개인정보를 안전하게 처리하기 위해 다음 조치를 하고 있습니다.</p>
+        <ol>
+          <li>비밀번호 암호화: 비밀번호는 복원할 수 없는 일방향 해시로만 저장하며, 회사도 원래 비밀번호를 알 수 없습니다.</li>
+          <li>전송 구간 암호화: 웹사이트, 서버 통신, 메일 발송 구간에 암호화 통신(HTTPS·TLS)을 씁니다.</li>
+          <li>접근 통제: 일반 회원과 관리자 권한을 나누고, 회원은 자신이 등록한 정보만 볼 수 있으며, 데이터베이스는 역할별로 접근을 제한합니다.</li>
+          <li>인증과 세션 관리: 가입과 비밀번호 재설정에 이메일 인증을 거치고(인증코드 유효 시간·입력 횟수 제한), 일정 시간 쓰지 않으면 자동으로 로그아웃합니다.</li>
+          <li>접속 기록 보관과 위·변조 방지: 로그인·계정 관리 기록을 보관하고, 사후에 고치거나 지울 수 없도록 기술적으로 막습니다(정정은 기록이 남는 절차로만 합니다).</li>
+          <li>비정상 이용 차단: 요청 횟수를 제한하고, 비정상적인 접근이 감지되면 계정 이용을 자동으로 제한할 수 있습니다. 제한에 이의가 있으면 제10조의 연락처로 알려 주시면 담당자가 검토합니다.</li>
+          <li>최소 기록: 이용 통계에 남기는 화물번호는 일부를 가려 저장합니다.</li>
+        </ol>
+      </section>
+
+      <section class="legal-art" id="p8">
+        <h2>제8조 (쿠키 등 자동 수집 장치)</h2>
+        <p>① 회사는 쿠키를 쓰지 않으며, 광고나 외부 분석 도구도 쓰지 않습니다.</p>
+        <p>② 대신 이용자의 브라우저 저장소(localStorage·sessionStorage)에 다음 정보를 저장합니다.</p>
+        <ul>
+          <li>로그인 상태(세션 토큰, 아이디, 이름, 권한): 로그아웃하거나 세션 만료가 확인되면 삭제</li>
+          <li>로그인 보조 설정(‘이 브라우저를 닫으면 로그아웃’ 선택 등), 화면 설정(테마·언어·화면 움직임), 안내 표시 여부, 즐겨찾기(로그인 계정별로 구분), 조회 결과 임시 저장, 트레이싱 리포트 최근 설정(수신자 주소 제외): 이용자가 브라우저 데이터를 지울 때까지 보관</li>
+        </ul>
+        <p>③ 로그인 상태 외의 정보는 로그아웃해도 브라우저에 남습니다. 공용 PC에서는 로그인 화면의 ‘이 브라우저를 닫으면 로그아웃’을 켜고, 사용한 뒤 브라우저 데이터를 지우십시오.</p>
+        <p>④ 브라우저 설정에서 사이트 데이터 저장을 막거나 지울 수 있습니다. 다만 저장을 막으면 로그인이 유지되지 않아 로그인이 필요한 기능을 이용할 수 없습니다.</p>
+        <p>⑤ 선박 위치 화면에 표시되는 외부 지도(VesselFinder)는 자체 쿠키를 설정할 수 있으며, 이는 해당 제공자의 방침을 따릅니다.</p>
+      </section>
+
+      <section class="legal-art" id="p9">
+        <h2>제9조 (외부 서비스 연결)</h2>
+        <p>① 일부 화면은 글꼴·지도·기상·선박 위치 정보를 외부 제공자에게서 이용자의 브라우저로 직접 불러옵니다. 이때 이용자의 접속 IP와 브라우저 정보가 해당 제공자에게 전달되며, 회사는 회원 정보를 보내지 않습니다.</p>
+        <ul>
+          <li>jsDelivr: 글꼴, 엑셀 내보내기 도구</li>
+          <li>cdnjs(Cloudflare): 지도 표시 도구</li>
+          <li>Esri: 지도 이미지(보고 있는 지역의 지도 조각을 요청합니다)</li>
+          <li>Open-Meteo: 항만 기상(항만의 고정 좌표만 씁니다)</li>
+          <li>VesselFinder: 선박 위치 지도</li>
+        </ul>
+        <p>② 이용자가 누른 외부 링크(선사·항공사 조회 페이지 등)로 이동하면 해당 사이트의 방침이 적용됩니다.</p>
+        <p>③ 회사 서버가 선사·항공사·공공데이터 제공처에서 정보를 조회할 때는 B/L·AWB 번호, 선박명 같은 조회 조건만 보내며, 회원의 이름·이메일·IP는 보내지 않습니다.</p>
+        <p>④ 회사는 이용자의 위치정보를 수집하지 않습니다.</p>
+      </section>
+
+      <section class="legal-art" id="p10">
+        <h2>제10조 (개인정보 보호책임자)</h2>
+        <p>회사는 개인정보 처리에 관한 업무를 총괄하고, 개인정보와 관련한 문의·불만 처리와 피해 구제를 위해 아래와 같이 개인정보 보호책임자를 두고 있습니다. 열람 등 요구와 문의를 아래 연락처로 보내 주시면 지체 없이 답변하고 처리합니다.</p>
+        <div class="legal-cat">
+          <dl class="legal-dl">
+            <dt>개인정보 보호책임자</dt><dd>태웅로직스</dd>
+            <dt>이메일</dt><dd><a href="mailto:itt@twsc.co.kr">itt@twsc.co.kr</a></dd>
+          </dl>
+        </div>
+      </section>
+
+      <section class="legal-art" id="p11">
+        <h2>제11조 (권익침해 구제 방법)</h2>
+        <p>개인정보 침해로 피해 구제나 상담이 필요하면 아래 기관에 문의할 수 있습니다.</p>
+        <ul>
+          <li>개인정보분쟁조정위원회: 1833-6972 (<a href="https://www.kopico.go.kr" rel="noopener">www.kopico.go.kr</a>)</li>
+          <li>개인정보침해신고센터(한국인터넷진흥원): 국번 없이 118 (<a href="https://privacy.kisa.or.kr" rel="noopener">privacy.kisa.or.kr</a>)</li>
+          <li>대검찰청: 국번 없이 1301 (<a href="https://www.spo.go.kr" rel="noopener">www.spo.go.kr</a>)</li>
+          <li>경찰청: 국번 없이 182 (<a href="https://ecrm.police.go.kr" rel="noopener">ecrm.police.go.kr</a>)</li>
+        </ul>
+      </section>
+
+      <section class="legal-art" id="p12">
+        <h2>제12조 (처리방침의 변경)</h2>
+        <p>① 이 처리방침은 <time data-legal-date datetime="2026-09-19">2026-09-19</time>부터 시행합니다.</p>
+        <p>② 처리방침을 바꾸면 시행 7일 전부터 서비스 화면에 공지하며, 이용자 권리에 중요한 변경은 30일 전부터 공지합니다. 이전 버전은 아래 변경 이력에서 확인할 수 있습니다.</p>
+        <table class="legal-table">
+          <caption class="sr-only">변경 이력</caption>
+          <thead><tr><th scope="col">버전</th><th scope="col">시행일</th><th scope="col">내용</th></tr></thead>
+          <tbody><tr><td data-legal-ver>1.0</td><td><time data-legal-date datetime="2026-09-19">2026-09-19</time></td><td>최초 제정</td></tr></tbody>
+        </table>
+      </section>
+    </article>
+
+    <!-- ================= English (translation) ================= -->
+    <article class="legal-doc" data-doc="en" lang="en" aria-labelledby="en-title" hidden>
+      <header class="legal-head">
+        <p class="legal-eyebrow" translate="no">PHAROS</p>
+        <h1 id="en-title" tabindex="-1">Privacy Policy</h1>
+        <p class="legal-meta">
+          <span><b>Effective</b> <time data-legal-date datetime="2026-09-19">2026-09-19</time></span>
+          <span><b>Version</b> <span data-legal-ver>1.0</span></span>
+        </p>
+        <p class="legal-note" role="note">This English text is a translation for convenience. The Korean version is the official text and prevails if the two differ.</p>
+        <p class="legal-prev">Previous versions: none (first edition). When this policy is amended, earlier versions will be listed in the change history in <a href="#en-p12">Article 12</a>.</p>
+        <p class="legal-switch"><button type="button" class="legal-switch-btn" data-legal-set="ko">View the Korean original</button></p>
+      </header>
+
+      <p>Taewoong Logistics (the “Company”) operates PHAROS (https://pharos.e-tgl.com, the “Service”), a logistics information service. The Company adopts this Privacy Policy to protect users' personal information under the Personal Information Protection Act of Korea (the “Act”) and to handle related complaints promptly.</p>
+
+      <nav class="legal-toc" aria-labelledby="en-toc">
+        <h2 id="en-toc">Contents</h2>
+        <ol>
+          <li><a href="#en-p1">Art. 1 Purposes, items and retention</a></li>
+          <li><a href="#en-p2">Art. 2 Destruction</a></li>
+          <li><a href="#en-p3">Art. 3 Provision to third parties</a></li>
+          <li><a href="#en-p4">Art. 4 Outsourcing</a></li>
+          <li><a href="#en-p5">Art. 5 Cross-border transfer</a></li>
+          <li><a href="#en-p6">Art. 6 Your rights and duties</a></li>
+          <li><a href="#en-p7">Art. 7 Security measures</a></li>
+          <li><a href="#en-p8">Art. 8 Cookies and browser storage</a></li>
+          <li><a href="#en-p9">Art. 9 Outside services</a></li>
+          <li><a href="#en-p10">Art. 10 Privacy officer</a></li>
+          <li><a href="#en-p11">Art. 11 Remedies</a></li>
+          <li><a href="#en-p12">Art. 12 Changes to this policy</a></li>
+        </ol>
+      </nav>
+
+      <section class="legal-art" id="en-p1">
+        <h2>Article 1 (Purposes, items and retention)</h2>
+        <p>(1) The Company processes personal information only for the purposes below. If a purpose changes, it takes the steps required by the Act.</p>
+
+        <div class="legal-cat">
+          <h3>1. Membership</h3>
+          <dl class="legal-dl">
+            <dt>Purpose</dt><dd>Identity check by email verification, approval of applications, login, access rights, and showing the member's name on screens and in service emails</dd>
+            <dt>Items</dt><dd>[Required] work email (login ID), password (stored only as an irreversible hash), email verification records · [Optional] name and department · [Generated] membership status and role, application and approval dates</dd>
+            <dt>Retention</dt><dd>Until the member withdraws. There is no withdrawal button in the Service, so please send a request to the contact in Article 10. Rejected applications and email verification records are also kept until you ask for their deletion (a verification code itself cannot be used 30 minutes after it is issued).</dd>
+            <dt>Legal basis</dt><dd>Conclusion and performance of the service agreement (Article 15(1)4 of the Act)</dd>
+          </dl>
+        </div>
+
+        <div class="legal-cat">
+          <h3>2. Auto watch and change alerts</h3>
+          <dl class="legal-dl">
+            <dt>Purpose</dt><dd>Automatic look-up of the cargo a member registers, alert emails on schedule or status changes, and tracking history</dd>
+            <dt>Items</dt><dd>Registered B/L or AWB numbers, carrier, registering member, alert email address (including another person's address entered by the member), note (if entered), watch period, tracking results, change and alert records</dd>
+            <dt>Retention</dt><dd>The registration (including the alert email address) and tracking history are kept until the member withdraws or asks for deletion, even after the watch period (3 or 6 months) ends or the watch is stopped. However, the alert email address in the registration is deleted as soon as the shipment reaches its final stage or the alerts are turned off (records of alerts already sent are kept as above).</dd>
+            <dt>Legal basis</dt><dd>Performance of the service agreement (Article 15(1)4 of the Act). For another recipient's address entered by the member: the Company's legitimate interest in sending the alerts the member requested (Article 15(1)6)</dd>
+          </dl>
+        </div>
+
+        <div class="legal-cat">
+          <h3>3. Tracing reports (where the function is offered)</h3>
+          <dl class="legal-dl">
+            <dt>Purpose</dt><dd>Sending cargo tracking reports to recipients chosen by the member, sending updates when the schedule changes, handling unsubscribes, enforcing sending limits and keeping proof of sending</dd>
+            <dt>Items</dt><dd>Member: sender display name, reply address, note, target B/Ls, language · Recipient: email address, delivery status · Sending records: the sending member, a hash of the recipient address, a partly masked address and domain, the time sent, and the IP address and browser details when the report is created (member) and when the recipient unsubscribes (recipient)</dd>
+            <dt>Retention</dt><dd>A report runs for at most 6 months. The report and its recipient addresses are destroyed 180 days after the report ends. Sending records are kept with no fixed period as proof of sending and for disputes.</dd>
+            <dt>Legal basis</dt><dd>Member: performance of the service agreement · Recipient: the Company's legitimate interest in sending the business emails the member requested and handling unsubscribes (Article 15(1)6 of the Act)</dd>
+          </dl>
+          <p>Recipient addresses are entered by the member. Recipients can unsubscribe at any time with the unsubscribe link in the email.</p>
+        </div>
+
+        <div class="legal-cat">
+          <h3>4. Access and security records</h3>
+          <dl class="legal-dl">
+            <dt>Purpose</dt><dd>Keeping users logged in, detecting and blocking abnormal access, rate limiting, and handling security incidents and disputes</dd>
+            <dt>Items</dt><dd>Login session data, IP address, browser details (User-Agent), access time, login success or failure and its reason (including the ID typed on failure), account administration records (approval, rejection, password reset and the like), security-related usage records (such as auto watch registrations and look-ups)</dd>
+            <dt>Retention</dt><dd>Login sessions are deleted on logout, password change or account status change, and stop working on expiry (30 minutes idle, 12 hours at most); expired session records are then deleted progressively. Rate-limit counters expire within minutes to a day and are then deleted in turn. Other access and security records are kept with no fixed period (including in-house copies); if you ask, the Company will review the request and delete them or make them unidentifiable.</dd>
+            <dt>Legal basis</dt><dd>The Company's legitimate interest in the security of the Service (Article 15(1)6 of the Act)</dd>
+          </dl>
+        </div>
+
+        <div class="legal-cat">
+          <h3>5. Usage statistics and operating records</h3>
+          <dl class="legal-dl">
+            <dt>Purpose</dt><dd>Usage statistics, service improvement, keeping records of the pilot operation and operating reports</dd>
+            <dt>Items</dt><dd>Member login ID, screens and functions used, search conditions (cargo numbers are masked except for the first 4 characters), number of results, processing time, IP address and browser details, time. Only logged-in members' use is recorded. Operating reports contain only names, partly masked email addresses and usage counts.</dd>
+            <dt>Retention</dt><dd>Kept with no fixed period (including in-house copies); if you ask, the Company will review the request and delete them or make them unidentifiable.</dd>
+            <dt>Legal basis</dt><dd>The Company's legitimate interest in operating and improving the Service (Article 15(1)6 of the Act)</dd>
+          </dl>
+        </div>
+
+        <p>(2) The Company does not process sensitive information or unique identifiers (such as resident registration numbers). The Service is for business use and is not directed at children under 14.</p>
+        <p>(3) Emails the Company sends (verification codes, membership notices, change alerts and the like) remain in the recipients' mailboxes, and the Company cannot delete them.</p>
+        <p>(4) When a retention period is set for records that currently have no fixed period, the Company will amend this policy and announce it.</p>
+      </section>
+
+      <section class="legal-art" id="en-p2">
+        <h2>Article 2 (Destruction)</h2>
+        <p>(1) The Company destroys personal information without delay when its retention period ends, its purpose has been achieved or the data subject asks for deletion. Records that are technically protected against later change or deletion (Article 7, item 5) are deleted or made unidentifiable through a correction procedure that leaves a record.</p>
+        <p>(2) Personal information that must be kept under other laws is stored separately from other personal information.</p>
+        <p>(3) Electronic files are deleted so that they cannot be restored, and printouts are shredded or incinerated.</p>
+      </section>
+
+      <section class="legal-art" id="en-p3">
+        <h2>Article 3 (Provision to third parties)</h2>
+        <p>(1) The Company does not provide personal information to third parties, except where Articles 17 and 18 of the Act allow it, such as with the data subject's separate consent or under a specific provision of law.</p>
+        <p>(2) When a member sends a tracing report, the sender name and reply address chosen by the member are shown to the recipients at the member's request.</p>
+      </section>
+
+      <section class="legal-art" id="en-p4">
+        <h2>Article 4 (Outsourcing)</h2>
+        <p>(1) The Company outsources the following processing to provide the Service.</p>
+        <div class="legal-cat">
+          <dl class="legal-dl">
+            <dt>Supabase Pte. Ltd.</dt><dd>Storage of member and service data, server and database operation, running server functions (sub-processors: Amazon Web Services, Inc. for server infrastructure; Cloudflare, Inc. for network delivery)</dd>
+            <dt>GitHub, Inc.</dt><dd>Website hosting (pharos.e-tgl.com)</dd>
+            <dt>NAVER Corporation</dt><dd>Sending service emails (verification codes, membership and approval notices, change alerts, operating reports and the like) and providing the operations mailbox</dd>
+          </dl>
+        </div>
+        <p>(2) The Company supervises its processors to ensure they handle personal information safely, and updates this policy when a processor or the outsourced work changes.</p>
+      </section>
+
+      <section class="legal-art" id="en-p5">
+        <h2>Article 5 (Cross-border transfer)</h2>
+        <p>(1) As outsourcing and storage needed to perform the service agreement, the Company transfers personal information abroad as follows, under Article 28-8(1)3(a) of the Act.</p>
+        <div class="legal-cat">
+          <h3>Supabase Pte. Ltd.</h3>
+          <dl class="legal-dl">
+            <dt>Contact</dt><dd><a href="mailto:privacy@supabase.com">privacy@supabase.com</a></dd>
+            <dt>Country</dt><dd>Japan (data storage in the Amazon Web Services Tokyo region). Server functions may run in the Supabase region closest to the user.</dd>
+            <dt>Items</dt><dd>All personal information listed in Article 1</dd>
+            <dt>When and how</dt><dd>Each time the Service is used, over an encrypted connection (HTTPS)</dd>
+            <dt>Purpose and retention</dt><dd>Data storage and server operation · for the retention periods in Article 1 (destroyed when the outsourcing ends). System access logs follow Supabase's retention policy.</dd>
+          </dl>
+        </div>
+        <div class="legal-cat">
+          <h3>GitHub, Inc.</h3>
+          <dl class="legal-dl">
+            <dt>Contact</dt><dd><a href="mailto:privacy@github.com">privacy@github.com</a></dd>
+            <dt>Country</dt><dd>United States</dd>
+            <dt>Items</dt><dd>IP address, browser details and requested page address when the website is visited</dd>
+            <dt>When and how</dt><dd>Each time the website is visited, over the network</dd>
+            <dt>Purpose and retention</dt><dd>Providing the website · GitHub's retention policy applies (the Company does not receive these logs).</dd>
+          </dl>
+        </div>
+        <p>(2) If you do not want your information transferred abroad, you can refuse by asking the contact in Article 10 to close your account and delete your information. As the Service runs only on the facilities above, refusing means you cannot use the Service. If you do not want website visit data transferred, please stop using the website.</p>
+      </section>
+
+      <section class="legal-art" id="en-p6">
+        <h2>Article 6 (Your rights and duties)</h2>
+        <p>(1) Data subjects may at any time ask the Company to let them access, correct or delete their personal information, to suspend its processing, or to withdraw consent.</p>
+        <p>(2) Please send requests to the email in Article 10. After verifying your identity (for example by replying from your registered email address), the Company will act within 10 days and tell you the result.</p>
+        <p>(3) Requests may also be made through a legal representative or an authorised agent, who must submit a power of attorney.</p>
+        <p>(4) A request may be limited in the cases set out in Articles 35, 36 and 37 of the Act, such as where a law specifically provides otherwise or where it may harm another person's life, body, property or interests. The Company will then tell you the reason.</p>
+        <p>(5) Recipients of tracing reports can unsubscribe at any time with the unsubscribe link in the email.</p>
+        <p>(6) Data subjects must keep their own information accurate and must not enter other people's personal information, such as email addresses, against their will.</p>
+      </section>
+
+      <section class="legal-art" id="en-p7">
+        <h2>Article 7 (Security measures)</h2>
+        <p>The Company takes the following measures to keep personal information safe.</p>
+        <ol>
+          <li>Password protection: passwords are stored only as irreversible one-way hashes, so even the Company cannot know the original password.</li>
+          <li>Encryption in transit: the website, server communication and email sending use encrypted connections (HTTPS and TLS).</li>
+          <li>Access control: member and administrator rights are separated, members can see only what they registered, and database access is restricted by role.</li>
+          <li>Authentication and sessions: sign-up and password reset require email verification (with limited code validity and attempts), and users are logged out automatically after a period of inactivity.</li>
+          <li>Access logs and tamper protection: login and account administration records are kept and technically protected against later change or deletion (corrections are made only through a procedure that leaves a record).</li>
+          <li>Blocking abnormal use: requests are rate-limited, and an account may be restricted automatically when abnormal access is detected. If you disagree with a restriction, tell the contact in Article 10 and a person will review it.</li>
+          <li>Minimal records: cargo numbers kept in usage statistics are partly masked.</li>
+        </ol>
+      </section>
+
+      <section class="legal-art" id="en-p8">
+        <h2>Article 8 (Cookies and browser storage)</h2>
+        <p>(1) The Company does not use cookies, advertising or outside analytics tools.</p>
+        <p>(2) Instead, the following is stored in the browser's storage (localStorage and sessionStorage):</p>
+        <ul>
+          <li>Login state (session token, login ID, name, role): deleted on logout or when the session is found to have expired</li>
+          <li>Login helper settings (such as the “log out when the browser closes” choice), display settings (theme, language, motion), whether guides have been shown, favourites (kept per login account), cached look-up results and the last tracing report settings (without recipient addresses): kept until you clear your browser data</li>
+        </ul>
+        <p>(3) Everything except the login state stays in the browser after logout. On a shared PC, turn on the “log out when the browser closes” option on the login screen and clear your browser data after use.</p>
+        <p>(4) You can block or clear site data in your browser settings. If storage is blocked, however, login cannot be kept and functions that require login cannot be used.</p>
+        <p>(5) The outside map on the vessel position screen (VesselFinder) may set its own cookies under that provider's policy.</p>
+      </section>
+
+      <section class="legal-art" id="en-p9">
+        <h2>Article 9 (Outside services)</h2>
+        <p>(1) Some screens load fonts, maps, weather and vessel positions directly from outside providers into your browser. Your IP address and browser details then reach those providers; the Company sends them no member information.</p>
+        <ul>
+          <li>jsDelivr: fonts and the spreadsheet export tool</li>
+          <li>cdnjs (Cloudflare): the map display library</li>
+          <li>Esri: map images (tiles for the area you are viewing)</li>
+          <li>Open-Meteo: port weather (fixed port coordinates only)</li>
+          <li>VesselFinder: the vessel position map</li>
+        </ul>
+        <p>(2) When you follow an outside link (such as a carrier or airline tracking page), that site's policy applies.</p>
+        <p>(3) When the Company's servers look up information from carriers, airlines or public data sources, they send only search conditions such as B/L or AWB numbers and vessel names, never a member's name, email or IP address.</p>
+        <p>(4) The Company does not collect location information.</p>
+      </section>
+
+      <section class="legal-art" id="en-p10">
+        <h2>Article 10 (Privacy officer)</h2>
+        <p>The Company has designated a privacy officer to oversee the processing of personal information and to handle related enquiries, complaints and remedies. Please send requests and questions to the contact below; the Company will answer and act without delay.</p>
+        <div class="legal-cat">
+          <dl class="legal-dl">
+            <dt>Privacy officer</dt><dd>Taewoong Logistics</dd>
+            <dt>Email</dt><dd><a href="mailto:itt@twsc.co.kr">itt@twsc.co.kr</a></dd>
+          </dl>
+        </div>
+      </section>
+
+      <section class="legal-art" id="en-p11">
+        <h2>Article 11 (Remedies)</h2>
+        <p>If you need a remedy or advice about an infringement of your personal information, you can contact the following bodies (Korean-language services).</p>
+        <ul>
+          <li>Personal Information Dispute Mediation Committee: 1833-6972 (<a href="https://www.kopico.go.kr" rel="noopener">www.kopico.go.kr</a>)</li>
+          <li>Personal Information Infringement Report Center (KISA): 118 (<a href="https://privacy.kisa.or.kr" rel="noopener">privacy.kisa.or.kr</a>)</li>
+          <li>Supreme Prosecutors' Office: 1301 (<a href="https://www.spo.go.kr" rel="noopener">www.spo.go.kr</a>)</li>
+          <li>Korean National Police Agency: 182 (<a href="https://ecrm.police.go.kr" rel="noopener">ecrm.police.go.kr</a>)</li>
+        </ul>
+      </section>
+
+      <section class="legal-art" id="en-p12">
+        <h2>Article 12 (Changes to this policy)</h2>
+        <p>(1) This policy takes effect on <time data-legal-date datetime="2026-09-19">2026-09-19</time>.</p>
+        <p>(2) Changes will be posted in the Service at least 7 days before they take effect, or at least 30 days before for changes that significantly affect users' rights. Earlier versions can be found in the change history below.</p>
+        <table class="legal-table">
+          <caption class="sr-only">Change history</caption>
+          <thead><tr><th scope="col">Version</th><th scope="col">Effective</th><th scope="col">Change</th></tr></thead>
+          <tbody><tr><td data-legal-ver>1.0</td><td><time data-legal-date datetime="2026-09-19">2026-09-19</time></td><td>First edition</td></tr></tbody>
+        </table>
+      </section>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="index.html" class="logo-slot" aria-label="태웅로직스"></a>
+        <p class="footer-note">
+          태웅로직스 | 문의: itt@twsc.co.kr<br>
+          © <span class="footer-year">2026</span> TAEWOONG LOGISTICS. All rights reserved.
+        </p>
+        <p class="footer-legal">
+          <a href="terms.html" data-i18n="legal.link.terms">이용약관</a><span class="sep" aria-hidden="true">·</span><a href="privacy.html" class="footer-privacy" aria-current="page"><strong data-i18n="legal.link.privacy">개인정보 처리방침</strong></a>
+        </p>
+      </div>
+      <nav class="footer-links" aria-label="푸터 메뉴">
+        <a href="insight.html">Port Insight</a>
+        <a href="berth.html">선석배정</a>
+        <a href="vessel.html">선박 위치</a>
+        <a href="cargo.html">화물 추적</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- ★ 순서가 의미를 가진다. legal.js 가 i18n.js 보다 먼저 돌아 첫 화면의 본문 언어를 정한다. -->
+  <script defer src="js/common.js?v=2026-09-18-rpt"></script>
+  <script defer src="js/legal.js?v=2026-09-18-rpt"></script>
+  <script defer src="js/i18n.js?v=2026-09-18-rpt"></script>
+</body>
+</html>
