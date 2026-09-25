@@ -1,0 +1,151 @@
+/* =========================================================
+   PHAROS — 이용약관 · 개인정보 처리방침 (terms.html · privacy.html)
+   style.css 의 토큰만 쓴다. 새 색·새 크기를 만들지 않는다 — 두 테마가 그대로 따라온다.
+   본문 한 줄은 약 72ch(한글 40자 안팎)로 묶어 긴 조문도 눈이 줄을 잃지 않게 한다.
+   ★ 이 파일은 독립 페이지 둘만의 것이 아니다. 약관 팝업(js/common.js TWLEGALMODAL)이 같은
+     조문 서식(.legal-doc · .legal-art …)을 빌려 쓰므로 login.html 은 <head> 에서, 다른 화면은
+     팝업을 처음 열 때 이 파일을 싣는다. 그러니 .site-header · .footer-legal 같은 **전 화면 공통
+     요소를 겨누는 규칙은 반드시 .legal-page(약관·처리방침 화면의 body) 아래로 가둔다** —
+     안 그러면 이 파일이 실린 화면 전체의 모양(인쇄 포함)이 바뀐다. .legal-* 클래스만 겨누는
+     규칙은 팝업 본문에도 그대로 걸려야 하므로 가두지 않는다.
+   ========================================================= */
+
+.legal-page { background: var(--bg); }
+/* 히어로가 없는 화면이다. 투명 헤더로 두면 스크롤할 때 본문 글자가 헤더 글자와 겹쳐 읽힌다. */
+.legal-page .site-header { background: var(--header-bg); box-shadow: 0 1px 0 var(--border); }
+.legal-actions { margin-left: auto; }
+
+/* ---------- 헤더의 '돌아가기' ---------- */
+/* 가입 폼이 이 화면을 새 탭으로 열어 뒤로 갈 이력이 없다 — 나갈 길을 헤더에 둔다(js/legal.js).
+   높이·글자 크기·줄바꿈 금지는 style.css 의 `.header-actions .btn` 이 이미 헤더 줄에 맞춰
+   두었으므로 여기서 다시 적지 않는다. 좁은 폭의 가로 여백만 손본다.
+   ★ order 로 끌어당기지 않는다. i18n 이 언어 콤보를 .header-actions 의 첫 자식으로 끼워 넣어
+     보이는 차례가 [언어][돌아가기][테마] 가 되는데, order 로 눈에 보이는 차례만 바꾸면
+     탭 차례와 어긋나 키보드 사용자가 화면에서 본 순서대로 이동하지 못한다.
+   ★ 글자는 자르지 않는다 — '홈…' 은 뜻을 잃는다. 여백을 줄여도 모자라면 아래
+     @media(max-width:640) 의 헤더 줄바꿈이 받아 준다(320px·러시아어까지 넘침 없음을 확인). */
+@media (max-width: 480px) {
+  .legal-page .header-actions .legal-back { padding: 0 10px; }
+}
+
+.legal-wrap {
+  font-size: var(--fs-lg);
+  line-height: 1.75;
+  max-width: calc(72ch + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: calc(var(--header-h) + var(--sp-5)) var(--gutter) var(--sec-y-tight);
+  /* 메일 주소·URL 같은 긴 낱말이 좁은 폭에서 가로 넘침을 만들지 않게 한다 */
+  overflow-wrap: anywhere;
+}
+.legal-wrap:focus { outline: none; }
+/* 한국어는 어절 단위로 줄을 바꾼다 — 음절 중간에서 끊기면 조문이 읽기 어렵다 */
+.legal-doc[lang="ko"] { word-break: keep-all; }
+
+/* ---------- 머리 ---------- */
+.legal-head { margin: 0 0 var(--sp-5); padding-bottom: var(--sp-4); border-bottom: 1px solid var(--border); }
+.legal-eyebrow { margin: 0 0 var(--sp-1); font-size: var(--fs-sm); font-weight: 800; letter-spacing: .12em; color: var(--accent-2-txt); }
+.legal-head h1 { margin: 0; font-size: var(--fs-4xl); line-height: 1.25; letter-spacing: -.02em; color: var(--ink); }
+.legal-head h1:focus { outline: none; }
+.legal-meta { display: flex; flex-wrap: wrap; gap: var(--sp-0) var(--sp-3); margin: var(--sp-2) 0 0; font-size: var(--fs-md); color: var(--muted); }
+.legal-meta b { color: var(--ink-2); font-weight: 700; }
+.legal-prev { margin: var(--sp-1) 0 0; font-size: var(--fs-md); color: var(--muted); }
+/* 번역본 안내 — 영어 본문 첫머리에 한 줄. 색만이 아니라 왼쪽 띠와 문구로 알린다. */
+.legal-note {
+  margin: var(--sp-3) 0 0; padding: var(--sp-2) var(--sp-3);
+  border-left: 3px solid var(--brand-accent-2); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--surface-2); color: var(--ink); font-size: var(--fs-base); line-height: 1.6;
+}
+.legal-switch { margin: var(--sp-3) 0 0; }
+.legal-switch-btn {
+  display: inline-flex; align-items: center; min-height: var(--ctl-h); padding: 0 var(--sp-3);
+  border: 1px solid var(--border); border-radius: 999px; background: transparent;
+  color: var(--ink-2); font-size: var(--fs-md); font-weight: 700; line-height: 1.3;
+}
+.legal-switch-btn:hover { background: color-mix(in srgb, var(--ink) 7%, transparent); color: var(--ink); }
+
+/* ---------- 요약(약관의 중요 내용) · 목차 ---------- */
+.legal-summary {
+  margin: 0 0 var(--sp-5); padding: var(--sp-3) var(--sp-4);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.legal-summary h2 { margin: 0 0 var(--sp-1); font-size: var(--fs-lg); color: var(--ink); }
+.legal-summary ul { margin: 0; padding-left: 1.2em; font-size: var(--fs-base); }
+.legal-summary li + li { margin-top: var(--sp-1); }
+
+.legal-toc { margin: 0 0 var(--sp-5); padding: var(--sp-3) var(--sp-4); background: var(--surface-2); border-radius: var(--radius); }
+.legal-toc h2 { margin: 0 0 var(--sp-1); font-size: var(--fs-md); font-weight: 800; letter-spacing: .04em; color: var(--ink-2); }
+.legal-toc ol { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: var(--sp-4); font-size: var(--fs-base); }
+.legal-toc li { break-inside: avoid; padding: 2px 0; }
+/* 목차 링크 색은 아래 .legal-doc a(강조색 글자 토큰)를 그대로 쓴다 — 밑줄만 옅게 한다. */
+.legal-doc .legal-toc a { text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); }
+.legal-doc .legal-toc a:hover { text-decoration-color: currentColor; }
+
+/* ---------- 조문 ---------- */
+.legal-art { margin: 0 0 var(--sp-5); }
+.legal-art h2 { margin: 0 0 var(--sp-2); font-size: var(--fs-xl); line-height: 1.4; color: var(--ink); }
+.legal-art h3 { margin: var(--sp-3) 0 var(--sp-1); font-size: var(--fs-lg); line-height: 1.4; color: var(--ink); }
+.legal-art p { margin: 0 0 var(--sp-2); }
+.legal-art ul, .legal-art ol { margin: 0 0 var(--sp-2); padding-left: 1.4em; }
+.legal-art li + li { margin-top: var(--sp-0); }
+.legal-doc a { color: var(--accent-2-txt); text-decoration: underline; text-underline-offset: 3px; }
+.legal-doc strong { color: var(--ink); font-weight: 800; }
+/* 약관의 중요 내용 강조(약관규제법 제3조) — 굵기에 옅은 바탕을 더한다. 줄이 바뀌어도 바탕이 끊기지 않게 한다. */
+.legal-key {
+  background: color-mix(in srgb, var(--brand-accent) 13%, transparent);
+  border-radius: 3px; padding: 0 .15em;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+
+/* 항목 묶음(처리 목적·항목·보유 기간, 수탁자 등) — 표 대신 정의 목록이라 좁은 폭에서도 가로로 넘치지 않는다 */
+.legal-cat {
+  margin: 0 0 var(--sp-2); padding: var(--sp-3);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+}
+.legal-cat h3 { margin-top: 0; }
+.legal-dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--sp-1) var(--sp-3); margin: 0; font-size: var(--fs-base); line-height: 1.65; }
+.legal-dl dt { font-weight: 700; color: var(--ink-2); }
+.legal-dl dd { margin: 0; }
+
+.legal-table { width: 100%; border-collapse: collapse; margin: 0 0 var(--sp-2); font-size: var(--fs-base); }
+.legal-table th, .legal-table td { padding: var(--sp-1) var(--sp-2); border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.legal-table thead th { background: var(--surface-2); color: var(--ink-2); font-size: var(--fs-sm); }
+
+/* ---------- 푸터 법적 고지 링크 ----------
+   규칙은 css/style.css 한 곳에만 둔다('푸터 법적 고지 링크 · 약관 시행 안내' 묶음, 값이 여기 있던 것과
+   글자 하나 다르지 않다). 예전엔 여기에도 같은 규칙을 겹쳐 두었는데, 이 파일이 로그인·팝업 화면에도
+   실리게 되자 겹친 규칙이 뒤늦게 실린 쪽이 이기는 탓에 화면별로 .footer-legal 을 손본 규칙을
+   소리 없이 덮을 수 있게 됐다. 약관 화면도 style.css 를 먼저 실으므로 모양은 그대로다. */
+
+/* ---------- 좁은 폭 ---------- */
+@media (max-width: 640px) {
+  /* 버거 없는 헤더가 줄바꿈될 수 있다(러시아어 등). 로그인 화면과 같은 처방 —
+     헤더를 흐름 안(sticky)으로 두어 몇 줄이 되든 본문을 덮지 않게 한다. */
+  .legal-page .site-header { position: sticky; height: auto; }
+  .legal-page .header-inner {
+    flex-wrap: wrap; align-content: center; row-gap: var(--sp-1);
+    height: auto; min-height: var(--header-h); padding-block: var(--sp-1);
+  }
+  .legal-page .header-actions { flex-wrap: wrap; flex: 0 1 auto; min-width: 0; row-gap: var(--sp-0); }
+  .legal-wrap { padding-top: var(--sp-5); }
+  /* 조문 앵커 여백은 따로 주지 않는다 — style.css 의 scroll-padding(헤더 + 12) 과
+     [id] scroll-margin(90) 이 합쳐 두 줄 헤더(러시아어 126px)보다 넉넉하다. */
+  .legal-toc ol { columns: 1; }
+  .legal-dl { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .legal-dl dd + dt { margin-top: var(--sp-1); }
+}
+@media (max-width: 480px) {
+  .legal-wrap { padding-left: var(--sp-3); padding-right: var(--sp-3); }
+  .legal-head h1 { font-size: var(--fs-3xl); }
+  .legal-summary, .legal-toc { padding: var(--sp-3); }
+  .legal-cat { padding: var(--sp-2) var(--sp-3); }
+}
+
+/* 인쇄는 독립 페이지(terms.html · privacy.html)를 종이에 옮기는 규칙이다. 예전처럼 .site-header 등을
+   맨 선택자로 숨기면, 이 파일이 실리는 로그인 화면(과 팝업을 연 화면)을 인쇄할 때 헤더·푸터까지 사라진다.
+   전부 .legal-page 아래로 가둔다 — 약관 화면에서는 걸리는 요소도 이기는 규칙도 예전과 같다. */
+@media print {
+  .legal-page .site-header, .legal-page .site-footer, .legal-page .skip-link,
+  .legal-page .legal-switch, .legal-page .legal-toc { display: none !important; }
+  .legal-page .legal-wrap { padding: 0; max-width: none; }
+  .legal-page .legal-cat, .legal-page .legal-summary { break-inside: avoid; }
+}

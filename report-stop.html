@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <!-- 주소창에 수신 거부 토큰이 실려 온다 — 이 화면에서 나가는 어떤 요청에도 Referer 로 새지 않게 한다. -->
+  <meta name="referrer" content="no-referrer">
+  <!-- ★ 로그인 없이 화주가 여는 공개 화면이다. auth-gate·i18n.js(1MB)를 싣지 않고, 스크립트는
+       js/report-stop.js 하나뿐이다(인라인 금지). 나가는 요청은 trace-report 수신 거부 한 곳뿐이다.
+       frame-ancestors 는 meta 로 걸 수 없어 js/report-stop.js 의 프레임 탈출로 막는다(다른 화면과 같은 방식). -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self' data:; connect-src https://kvmyiualdodcvreoqfin.supabase.co; base-uri 'none'; form-action 'none'; frame-src 'none'; object-src 'none';">
+  <meta name="theme-color" content="#f4f6fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0f1e" media="(prefers-color-scheme: dark)">
+  <!-- 받는 사람은 대개 해외 화주다 — 사전 없이 한국어·영어를 나란히 적는다(pg.title 키를 쓰지 않는다). -->
+  <title>메일 수신 중단 · Unsubscribe | PHAROS</title>
+  <link rel="stylesheet" href="css/style.css?v=2026-09-26-polish">
+  <link rel="icon" href="assets/twl_logo.ico">
+  <!-- defer 가 아니다 — 프레임 탈출과 테마는 그리기 전에 돌아야 한다. 나머지는 스크립트가 DOM 을 기다린다. -->
+  <script src="js/report-stop.js?v=2026-09-18-rpt"></script>
+</head>
+<body class="access-page">
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="태웅로직스 홈 · Taewoong Logistics home">
+        <img class="logo-sym" src="assets/twl_symbol.png" alt="" width="28" height="27">
+        <span class="logo-text">
+          <span class="l1"><b>TAEWOONG</b> LOGISTICS</span>
+          <span class="l2">PHAROS</span>
+        </span>
+      </a>
+    </div>
+  </header>
+
+  <main id="main-content" class="gate-main" tabindex="-1">
+    <section class="gate-copy" aria-labelledby="rsTitle">
+      <p class="gate-eyebrow">TRACING REPORT</p>
+      <h1 id="rsTitle">자동 업데이트 수신을 중단할까요?</h1>
+      <p class="gate-lead" id="rsTitleEn" lang="en">Stop receiving tracing report updates?</p>
+      <p class="gate-lead" id="rsBody">이 주소로 오던 화물 추적 보고(TRACING REPORT)와 출항·도착 일정이 바뀔 때 오는 업데이트 메일을 더 받지 않습니다. 아래 버튼을 눌러야 처리됩니다.</p>
+      <p class="gate-lead" id="rsBodyEn" lang="en">You will no longer receive this tracing report or its schedule-change updates at this address. Nothing changes until you press the button below.</p>
+      <div class="gate-actions" id="rsActions">
+        <button type="button" class="btn btn-primary gate-cta" id="rsConfirm">수신 중단 · <span lang="en">Unsubscribe</span></button>
+      </div>
+      <!-- 결과는 여기 한 곳에 적는다(보조기기가 읽도록 status). 처음에는 비어 있고 숨겨 둔다. -->
+      <p class="gate-lead" id="rsMsg" role="status" aria-live="polite" tabindex="-1" hidden></p>
+      <noscript><p class="gate-note">이 화면은 JavaScript 가 켜져 있어야 처리할 수 있습니다. · <span lang="en">JavaScript is required to process this request.</span></p></noscript>
+      <p class="gate-note">
+        이 메일은 태웅로직스 담당자가 PHAROS(태웅로직스 물류 포털)를 통해 보낸 화물 추적 보고입니다. 문의는 받은 메일에 회신해 주십시오.<br>
+        <span lang="en">This tracing report was sent by a Taewoong Logistics representative through PHAROS. For questions, please reply to the email you received.</span><br>
+        <a href="privacy.html">개인정보 처리방침 · <span lang="en">Privacy policy</span></a>
+      </p>
+    </section>
+  </main>
+</body>
+</html>

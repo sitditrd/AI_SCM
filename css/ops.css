@@ -1,0 +1,435 @@
+/* =========================================================
+   PHAROS 운영 화면 — 선석배정(berth) · 선박 스케줄(schedule) · 경로 분석(route)
+   css/style.css 위에 얹는 이 세 화면 전용 층이다(2026-09-26).
+   ─────────────────────────────────────────────────────────
+   원칙
+   · 색·간격·서체는 style.css 토큰을 쓴다. 새 토큰은 아래 :root 에서 라이트·다크를 같이 정한다.
+   · 이 파일은 .ops-page(세 화면의 body) 아래에서만 동작한다 — 공용 부품을 다른 화면까지 바꾸지 않는다.
+   · 움직임은 transform·opacity 만 쓴다. 전부 prefers-reduced-motion: no-preference 안에 두고,
+     사이트 토글 html.no-motion 은 style.css 끝의 전역 규칙(animation·transition 강제 해제)이 끈다.
+     애니메이션만 끄면 사라지는 요소가 없도록, 시작 상태는 keyframes 의 from 에만 둔다.
+   · 데이터 위에서 끝없이 도는 움직임은 두지 않는다(불러오는 동안의 뼈대도 횟수를 정해 멈춘다).
+   ========================================================= */
+
+/* ---------- 토큰 ---------- */
+:root {
+  --ops-planned: var(--series-1);
+  --ops-waiting: var(--lv-stable);
+  --ops-working: var(--lv-low);
+  --ops-departed: #8493ac;
+  --ops-late: var(--lv-congested);
+  --ops-ease: cubic-bezier(.2, .7, .2, 1);
+  --ops-rise: 14px;
+}
+:root[data-theme='light'] {
+  --ops-zebra: color-mix(in srgb, var(--ink) 2.6%, transparent);
+  --ops-hover: color-mix(in srgb, var(--brand-accent) 7%, transparent);
+  --ops-track: color-mix(in srgb, var(--ink) 8%, transparent);
+  --ops-chip-bg: color-mix(in srgb, var(--brand-accent) 6%, var(--surface));
+  --ops-skel: color-mix(in srgb, var(--ink) 7%, transparent);
+  --ops-lift: 0 12px 28px rgba(16, 24, 40, .12);
+}
+:root[data-theme='dark'] {
+  --ops-zebra: color-mix(in srgb, #ffffff 2.4%, transparent);
+  --ops-hover: color-mix(in srgb, var(--brand-accent-2) 9%, transparent);
+  --ops-track: color-mix(in srgb, #ffffff 9%, transparent);
+  --ops-chip-bg: color-mix(in srgb, var(--brand-accent) 10%, var(--surface));
+  --ops-skel: color-mix(in srgb, #ffffff 8%, transparent);
+  --ops-lift: 0 14px 34px rgba(0, 0, 0, .45);
+}
+
+/* ---------- 움직임 정의 ---------- */
+@keyframes opsRise { from { opacity: 0; transform: translateY(var(--ops-rise)); } }
+@keyframes opsFade { from { opacity: 0; } }
+@keyframes opsGrowX { from { transform: scaleX(0); } }
+@keyframes opsPulse { 50% { opacity: .45; } }
+@keyframes opsSpin { from { transform: rotate(-180deg); } }
+
+/* =========================================================
+   표 — 줄무늬 · 행 강조 · 머리글 고정
+   ========================================================= */
+.ops-page table.tw tbody tr:nth-child(even):not(.sk-row):not(.tree-hd):not(.ops-empty-row) > td { background-color: var(--ops-zebra); }
+.ops-page table.tw tbody tr:not(.sk-row):not(.ops-empty-row):hover > td { background-color: var(--ops-hover); }
+.ops-page table.tw tbody tr:not(.sk-row):not(.ops-empty-row):hover > td:first-child { box-shadow: inset 3px 0 0 var(--brand-accent-2); }
+/* 반입마감 임박 — 줄무늬보다 앞선다. 왼쪽 띠로 한 번 더 말한다(색만으로 전하지 않는다: ⚠ 는 칸 안에 그대로 있다). */
+.ops-page table.tw tbody tr.row-cct-soon > td { background-color: color-mix(in srgb, var(--lv-stable) 9%, transparent); }
+.ops-page table.tw tbody tr.row-cct-soon:hover > td { background-color: color-mix(in srgb, var(--lv-stable) 15%, transparent); }
+.ops-page table.tw tbody tr.row-cct-soon > td:first-child { box-shadow: inset 3px 0 0 var(--lv-stable); }
+.ops-page table.tw tbody tr[data-ri]:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.ops-page table.tw td.num, .ops-page table.tw th.num { font-variant-numeric: tabular-nums; }
+
+/* 머리글 고정 — 표가 칸 안에 다 들어갈 때만(js 가 .ops-fit 을 단다). 넘치는 표는 가로 스크롤이
+   우선이라 그대로 둔다. overflow:clip 은 스크롤 칸을 만들지 않아 sticky 가 화면 기준으로 붙는다. */
+.ops-page .tbl-card { overflow: clip; }
+.ops-page .tbl-scroll.ops-fit { overflow-x: clip; }
+.ops-page .tbl-scroll.ops-fit > table.tw > thead { position: sticky; top: var(--header-h); z-index: 4; }
+.ops-page .tbl-scroll.ops-fit > table.tw > thead th { box-shadow: inset 0 -1px 0 var(--grid); }
+
+/* 상태 배지 — 점이 상태색을 한 번 더 싣는다(글자는 이미 대비를 맞춘 -txt 값).
+   표 안에서는 inline-block 으로 둔다: inline-flex 의 gap 이 표의 열 너비 계산(최소 내용 폭)에서 빠지는
+   경우가 있어, 언어를 바꾼 뒤 'DEPARTED · Departed' 가 칸 밖으로 10px 넘쳐 카드 가장자리에서 잘렸다. */
+.ops-page .st-badge .lv-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; flex: none; }
+.ops-page table.tw .st-badge { display: inline-block; white-space: nowrap; line-height: 1.4; }
+.ops-page table.tw .st-badge .lv-dot { margin-right: 6px; vertical-align: 1px; }
+/* 선석배정 표의 상태 칸은 폭이 고정(13%)이고 넘치면 말줄임이다(style.css). 한국어 밖의 언어에서는
+   'DEPARTED · Departed' 처럼 같은 뜻이 두 번 적혀 정작 그 언어 낱말이 '…' 로 잘렸다 —
+   영문 코드는 한국어 화면에서만 곁들인다(퀵뷰 메뉴의 배지는 그대로 둘 다 적는다). */
+html:not([lang='ko']) .ops-berth #berthTable .st-code,
+html:not([lang='ko']) .ops-berth #berthTable .st-sep { display: none; }
+.ops-page .st-working .lv-dot { box-shadow: 0 0 0 3px color-mix(in srgb, var(--lv-low) 22%, transparent); }
+
+/* 빈 결과 */
+.ops-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 34px 16px; color: var(--muted); text-align: center; white-space: normal; }
+.ops-empty b { color: var(--ink-2); font-weight: 700; font-size: var(--fs-base); }
+.ops-empty-ic {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: color-mix(in srgb, var(--brand-accent-2) 14%, transparent);
+  position: relative;
+}
+.ops-empty-ic::before {
+  content: ''; position: absolute; inset: 11px; background: var(--brand-accent-2);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M20 20l-4.6-4.6'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M20 20l-4.6-4.6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.ops-empty .ops-reset { margin-top: 2px; }
+
+/* 불러오는 중 — 결과 모양의 뼈대. 정해진 횟수만 숨쉬고 멈춘다. */
+.ops-skel { display: grid; gap: 10px; margin-top: 12px; }
+.ops-skel i { display: block; height: 72px; border-radius: 12px; background: var(--ops-skel); }
+.ops-skel.is-table i { height: 18px; border-radius: 6px; }
+.ops-skel i:nth-child(2) { width: 92%; }
+.ops-skel i:nth-child(3) { width: 78%; }
+
+/* 로그인 만료(401) 안내 */
+.ops-login {
+  display: flex; gap: 14px; align-items: flex-start; padding: 16px 18px; margin: 4px 0;
+  border-radius: 14px; border: 1px solid color-mix(in srgb, var(--lv-busy) 38%, var(--border));
+  background: color-mix(in srgb, var(--lv-busy) 8%, var(--surface));
+}
+.ops-login b { display: block; font-size: var(--fs-base); font-weight: 800; color: var(--ink); }
+.ops-login p { margin: 4px 0 12px; color: var(--ink-2); font-size: var(--fs-sm); line-height: 1.6; }
+.ops-login.is-retry { border-color: color-mix(in srgb, var(--series-1) 38%, var(--border)); background: color-mix(in srgb, var(--series-1) 7%, var(--surface)); }
+.ops-login.is-retry p { margin-bottom: 0; }
+.ops-login-ic { flex: none; width: 38px; height: 38px; border-radius: 11px; position: relative; background: color-mix(in srgb, var(--lv-busy) 18%, transparent); }
+.ops-login.is-retry .ops-login-ic { background: color-mix(in srgb, var(--series-1) 16%, transparent); }
+.ops-login-ic::before {
+  content: ''; position: absolute; inset: 9px; background: var(--lv-busy-txt);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4.5' y='10.5' width='15' height='10' rx='2.5'/%3E%3Cpath d='M8 10.5V7.5a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4.5' y='10.5' width='15' height='10' rx='2.5'/%3E%3Cpath d='M8 10.5V7.5a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.ops-login.is-retry .ops-login-ic::before { background: var(--series-1-txt); }
+.ops-login .ops-relogin { min-height: var(--ctl-h); display: inline-flex; align-items: center; padding: 0 var(--sp-3); font-size: var(--fs-sm); }
+
+/* 누른 자리 바로 아래의 이유 한 줄 */
+.ops-inline-msg {
+  margin: calc(var(--sp-1) * -1) 0 var(--sp-3); padding: 8px 12px; border-radius: 10px;
+  font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.55;
+  border-left: 3px solid var(--series-1); background: color-mix(in srgb, var(--series-1) 8%, transparent);
+}
+.ops-inline-msg.is-warn { border-left-color: var(--lv-stable); background: color-mix(in srgb, var(--lv-stable) 10%, transparent); }
+.ops-inline-msg.is-err { border-left-color: var(--lv-congested); background: color-mix(in srgb, var(--lv-congested) 9%, transparent); color: var(--ink); }
+.ops-page .ops-warn { border-left: 3px solid var(--lv-stable); padding: 6px 12px; background: color-mix(in srgb, var(--lv-stable) 9%, transparent); border-radius: 0 10px 10px 0; }
+
+/* 내보내기 버튼 — 흰 테두리 유령 버튼 대신 도구줄 톤에 맞춘 보조 버튼 + 내려받기 기호 */
+.ops-page .ops-xls {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  min-height: var(--ctl-h); height: auto; padding: 0 14px; opacity: 1;
+  border: 1px solid color-mix(in srgb, var(--brand-accent-2) 40%, var(--border)); border-radius: var(--radius-sm);
+  background: var(--ops-chip-bg); color: var(--ink-2); font-size: var(--fs-sm); font-weight: 700;
+  transition: border-color .18s ease, color .18s ease, background-color .18s ease, transform .18s var(--ops-ease);
+}
+.ops-page .ops-xls::before {
+  content: ''; width: 14px; height: 14px; flex: none; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 20h14'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 20h14'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.ops-page .ops-xls:hover:not(:disabled) { border-color: var(--brand-accent-2); color: var(--ink); }
+.ops-page .ops-xls:disabled { cursor: progress; }
+.ops-page .ops-xls[data-ops-flash] { color: var(--ink); border-color: var(--brand-accent-2); }
+/* 도구줄: 보기 전환·항목은 왼쪽, 내보내기는 오른쪽 끝 — 결과를 받은 뒤 가는 곳이다 */
+.ops-page .schedule-tools .ops-xls { margin-left: auto; }
+.ops-page .schedule-tools { row-gap: 10px; }
+.ops-page .schedule-columns[open] summary { border-color: var(--brand-accent-2); color: var(--ink); }
+
+/* =========================================================
+   선석배정 (berth.html)
+   ========================================================= */
+/* KPI 카드 — 상태의 뜻을 이름표 앞 점으로(윗줄 장식은 style.css 가 2026.3a 에 걷어냈다 — 되살리지 않는다) */
+.ops-berth .ops-kpi-working .k::before,
+.ops-berth .ops-kpi-cct .k::before,
+.ops-berth .ops-kpi-etd .k::before { content: ''; width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.ops-berth .ops-kpi-working .k::before { background: var(--lv-low); box-shadow: 0 0 0 3px color-mix(in srgb, var(--lv-low) 20%, transparent); }
+.ops-berth .ops-kpi-cct .k::before { background: var(--lv-busy); box-shadow: 0 0 0 3px color-mix(in srgb, var(--lv-busy) 20%, transparent); }
+.ops-berth .ops-kpi-etd .k::before { background: var(--series-1); box-shadow: 0 0 0 3px color-mix(in srgb, var(--series-1) 20%, transparent); }
+.ops-berth .ops-kpi-cct { background-image: radial-gradient(260px 120px at 100% 0%, color-mix(in srgb, var(--lv-busy) 9%, transparent), transparent 70%); }
+.ops-berth .ops-kpi-working { background-image: radial-gradient(260px 120px at 100% 0%, color-mix(in srgb, var(--lv-low) 8%, transparent), transparent 70%); }
+
+/* 상태 분포 막대 */
+.ops-statbar {
+  margin-top: var(--sp-3); padding: 14px 18px;
+  display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px 18px;
+  border-radius: var(--radius); border: 1px solid color-mix(in srgb, var(--brand-accent-2) 16%, var(--border));
+  background: color-mix(in srgb, var(--surface) 72%, transparent); box-shadow: var(--shadow);
+}
+.ops-statbar-head { display: flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.ops-statbar-head b { font-size: var(--fs-md); font-weight: 800; color: var(--ink); }
+.ops-statbar-head small { color: var(--muted); font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
+.ops-statbar-track { display: flex; gap: 2px; height: 10px; border-radius: 999px; overflow: hidden; background: var(--ops-track); }
+.ops-statbar-track i { display: block; height: 100%; min-width: 4px; transform-origin: left center; }
+.ops-seg-planned { background: var(--ops-planned); }
+.ops-seg-arrived { background: var(--ops-waiting); }
+.ops-seg-working { background: var(--ops-working); }
+.ops-seg-departed { background: color-mix(in srgb, var(--ops-departed) 75%, transparent); }
+.ops-statbar-legend { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.ops-stat-pick {
+  display: inline-flex; align-items: center; gap: 6px; min-height: var(--ctl-h-sm); padding: 0 11px;
+  border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--ink-2);
+  font: inherit; font-size: var(--fs-sm); font-weight: 700; cursor: pointer; white-space: nowrap;
+  transition: border-color .18s ease, background-color .18s ease, transform .18s var(--ops-ease);
+}
+.ops-stat-pick b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.ops-stat-pick small { color: var(--muted); font-variant-numeric: tabular-nums; }
+.ops-stat-pick:hover { border-color: var(--brand-accent-2); }
+.ops-stat-pick[aria-pressed='true'] { border-color: var(--brand-accent-2); background: color-mix(in srgb, var(--brand-accent-2) 15%, transparent); }
+.ops-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+
+/* 목록 도구줄 — 입력칸 바닥선에 버튼을 맞춘다(날짜칸만 이름표가 위에 있어 들쭉날쭉했다) */
+.ops-berth #list .berth-toolbar { align-items: flex-end; }
+.ops-berth #list .berth-toolbar .date-range input { min-width: 142px; transition: border-color .18s ease, box-shadow .18s ease; }
+.ops-berth #list .berth-toolbar.ops-range-on .date-range input {
+  border-color: color-mix(in srgb, var(--brand-accent-2) 65%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-accent-2) 16%, transparent);
+}
+.ops-berth #list .berth-toolbar #matchLabel { align-self: center; font-variant-numeric: tabular-nums; }
+.ops-range-reset { height: var(--ctl-h); gap: 6px; }
+.ops-range-reset::before { content: '\21BA'; font-weight: 800; }
+#berthRangeBtn[aria-busy='true'] { cursor: progress; }
+
+/* 터미널별 요약 — 접안·작업중 비율과 접안지연 확률을 막대로 */
+.ops-occ { display: inline-flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.ops-occ-bar { display: inline-block; width: 56px; height: 6px; border-radius: 999px; background: var(--ops-track); overflow: hidden; }
+.ops-occ-bar i, .ops-risk i { display: block; width: 100%; height: 100%; border-radius: inherit; transform-origin: left center; }
+.ops-occ-bar i { background: linear-gradient(90deg, var(--lv-low), color-mix(in srgb, var(--lv-low) 55%, var(--brand-point))); }
+.ops-risk { display: block; width: 96px; height: 4px; margin: 6px 0 0 auto; border-radius: 999px; background: var(--ops-track); overflow: hidden; }
+.ops-risk.is-high i { background: var(--lv-congested); }
+.ops-risk.is-mid i { background: var(--lv-busy); }
+.ops-risk.is-low i { background: var(--lv-low); }
+.ops-risk.is-model i { background: color-mix(in srgb, var(--muted) 55%, transparent); }
+
+/* 퀵뷰 메뉴 — 항목 호버에 방향감 */
+.ops-berth .ctx-menu .cm-item { transition: background-color .15s ease, transform .15s var(--ops-ease); }
+
+/* ---------- 폰 폭: 선석배정 표를 카드로 쌓는다 ----------
+   가로 스크롤 끝에 숨던 '상태' 가 선명 옆으로 올라오고, 시각 셋이 한 줄에 나란히 선다.
+   머리글 첫 줄은 화면에서만 숨긴다(보조기술은 그대로 읽는다). 컬럼 필터 줄은 두 칸 격자로 편다. */
+@media (max-width: 640px) {
+  .ops-berth #berthTable { display: block; min-width: 0; }
+  .ops-berth #berthTable > thead { display: block; position: static; }
+  .ops-berth #berthTable > thead > tr:first-child {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+  .ops-berth #berthTable .colf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px 12px; background: color-mix(in srgb, var(--brand-accent) 5%, var(--surface-2)); }
+  .ops-berth #berthTable .colf-row > th { display: block; padding: 0; background: none; box-shadow: none; border: 0; }
+  .ops-berth #berthTable .colf-row > th:empty { display: none; }
+  .ops-berth #berthBody { display: block; }
+  .ops-berth #berthBody > tr { display: block; }
+  .ops-berth #berthBody > tr > td { display: block; }
+  .ops-berth #berthBody > tr[data-ri] {
+    display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 8px 8px;
+    grid-template-areas:
+      "vsl vsl vsl vsl vsl vsl vsl st st st st st"
+      "term term term term term term term berth berth berth berth berth"
+      "cct cct cct cct etb etb etb etb etd etd etd etd"
+      "car car car rt rt rt dis dis dis lod lod lod";
+    padding: 14px 14px 12px; border-bottom: 1px solid var(--grid); position: relative;
+  }
+  .ops-berth #berthBody > tr[data-ri]:nth-child(even) { background-color: var(--ops-zebra); }
+  .ops-berth #berthBody > tr.row-cct-soon { background-color: color-mix(in srgb, var(--lv-stable) 9%, transparent); box-shadow: inset 3px 0 0 var(--lv-stable); }
+  .ops-berth #berthBody > tr[data-ri] > td {
+    padding: 0; border: 0; white-space: normal; min-width: 0; overflow-wrap: break-word;
+    background: transparent; box-shadow: none; font-size: var(--fs-sm);
+  }
+  .ops-berth #berthBody .c-vsl { grid-area: vsl; }
+  .ops-berth #berthBody .c-vsl .port-cell b { font-size: var(--fs-base); }
+  .ops-berth #berthBody .c-st { grid-area: st; justify-self: end; align-self: start; text-align: right; }
+  .ops-berth #berthBody .c-st .st-badge { font-size: var(--fs-2xs); white-space: nowrap; }
+  .ops-berth #berthBody .c-st .st-code, .ops-berth #berthBody .c-st .st-sep { display: none; }
+  .ops-berth #berthBody .c-term { grid-area: term; }
+  .ops-berth #berthBody .c-berth { grid-area: berth; text-align: right; }
+  .ops-berth #berthBody .c-cct { grid-area: cct; }
+  .ops-berth #berthBody .c-etb { grid-area: etb; }
+  .ops-berth #berthBody .c-etd { grid-area: etd; }
+  .ops-berth #berthBody .c-car { grid-area: car; }
+  .ops-berth #berthBody .c-rt { grid-area: rt; }
+  .ops-berth #berthBody .c-dis { grid-area: dis; text-align: right; }
+  .ops-berth #berthBody .c-lod { grid-area: lod; text-align: right; }
+  .ops-berth #berthBody td[data-label]::before {
+    content: attr(data-label); display: block; margin-bottom: 1px;
+    font-size: var(--fs-2xs); font-weight: 800; letter-spacing: .04em; color: var(--muted); text-transform: uppercase;
+  }
+  .ops-berth #berthBody > tr.tree-hd > td { padding: 12px 14px; }
+  .ops-berth #berthBody > tr.sk-row > td { padding: 13px 14px; }
+  .ops-berth .ops-statbar { grid-template-columns: minmax(0, 1fr); padding: 12px 14px; }
+  .ops-berth .ops-stat-pick { min-height: 32px; }
+  .ops-berth #list .berth-toolbar .date-range { flex: 1 1 calc(50% - 6px); width: auto; min-width: 0; }
+  .ops-berth #list .berth-toolbar .date-range input { min-width: 0; width: 100%; }
+  .ops-berth #list .berth-toolbar #berthRangeBtn { flex: 1 1 auto; }
+  .ops-berth .ops-occ-bar { width: 38px; }
+}
+
+/* =========================================================
+   선박 스케줄 · 경로 분석 — 결과 요약 · 항로 카드 · 달력
+   ========================================================= */
+.ops-sum { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 8px; margin: 12px 0 12px; }
+.ops-sum-i {
+  padding: 10px 12px; border-radius: 12px; min-width: 0;
+  background: color-mix(in srgb, var(--brand-accent) 6%, var(--surface-2));
+  border: 1px solid color-mix(in srgb, var(--brand-accent-2) 14%, var(--border));
+}
+.ops-sum-i > span { display: block; font-size: var(--fs-xs); font-weight: 700; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ops-sum-i > b { display: block; margin-top: 2px; font-size: var(--fs-xl); font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ops-sum-i > b small { margin-left: 3px; font-size: var(--fs-sm); font-weight: 700; color: var(--muted); }
+.ops-sum-i.is-direct > b { color: var(--lv-low-txt); }
+.ops-sum-i.is-soon { border-color: color-mix(in srgb, var(--lv-busy) 40%, var(--border)); background: color-mix(in srgb, var(--lv-busy) 8%, var(--surface-2)); }
+.ops-sum-i.is-soon > b { color: var(--lv-busy-txt); }
+.ops-sum-i.is-past { border-color: color-mix(in srgb, var(--lv-congested) 40%, var(--border)); background: color-mix(in srgb, var(--lv-congested) 7%, var(--surface-2)); }
+.ops-sum-i.is-past > b { color: var(--lv-congested-txt); }
+
+/* 항로 카드 — 마감이 급한 카드는 왼쪽 띠로 먼저 눈에 띄게(배지는 그대로 있다) */
+.ops-page .sea-route { position: relative; transition: border-color .2s ease, box-shadow .2s ease, transform .2s var(--ops-ease); }
+.ops-page .sea-route:hover { border-color: color-mix(in srgb, var(--brand-accent-2) 42%, var(--border)); box-shadow: var(--ops-lift); }
+.ops-page .sea-route:has(.sea-badge-cutsoon) { box-shadow: inset 3px 0 0 var(--lv-busy); }
+.ops-page .sea-route:has(.sea-badge-cutpast) { box-shadow: inset 3px 0 0 var(--lv-congested); }
+.ops-page .sea-route:has(.sea-badge-cutsoon):hover { box-shadow: inset 3px 0 0 var(--lv-busy), var(--ops-lift); }
+.ops-page .sea-route:has(.sea-badge-cutpast):hover { box-shadow: inset 3px 0 0 var(--lv-congested), var(--ops-lift); }
+.ops-page .sea-arrow { display: inline-block; }
+
+/* 안내·오류 문구 상자 — 왼쪽 띠만 있던 것을 옅은 면으로 감싼다 */
+.ops-page .air-msg { padding: 12px 14px 12px 16px; border-radius: 0 12px 12px 0; background: color-mix(in srgb, var(--ink) 3%, transparent); }
+.ops-page .air-msg-fail { background: color-mix(in srgb, var(--lv-congested) 7%, transparent); }
+.ops-page .air-msg-nokey { background: color-mix(in srgb, var(--lv-busy) 7%, transparent); }
+
+/* 달력 */
+.ops-page .sea-calendar-day { position: relative; transition: background-color .18s ease, box-shadow .18s ease, transform .18s var(--ops-ease); }
+.ops-page .sea-calendar-day.no-items { background: color-mix(in srgb, var(--surface-2) 70%, var(--bg)); }
+.ops-page .sea-calendar-day.has-items:hover { transform: translateY(-2px); z-index: 1; box-shadow: var(--ops-lift); background: color-mix(in srgb, var(--brand-accent) 6%, var(--surface-2)); }
+.ops-page .sea-calendar-day.is-today { box-shadow: inset 0 0 0 2px var(--brand-accent-2); }
+.ops-page .sea-calendar-day.is-today.has-items:hover { box-shadow: inset 0 0 0 2px var(--brand-accent-2), var(--ops-lift); }
+.ops-page .sea-calendar-day-head { align-items: center; flex-wrap: wrap; row-gap: 2px; }
+.ops-cal-date { font-size: var(--fs-sm); font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.ops-page .no-items .ops-cal-date { color: var(--muted); font-weight: 700; }
+.ops-cal-wd { display: none; font-size: var(--fs-xs); font-weight: 700; color: var(--muted); }
+.ops-cal-today { font-style: normal; font-size: var(--fs-2xs); font-weight: 800; color: #fff; background: var(--brand-accent-2); border-radius: 999px; padding: 1px 7px; }
+.ops-page .sea-calendar-day-head small {
+  margin-left: auto; padding: 1px 7px; border-radius: 999px; font-weight: 800; font-variant-numeric: tabular-nums;
+  color: var(--series-1-txt); background: color-mix(in srgb, var(--series-1) 14%, transparent);
+}
+.ops-page .sea-calendar-weekdays span.is-weekend { color: var(--muted); }
+.ops-page .sea-calendar-day.is-weekend.no-items { background: color-mix(in srgb, var(--surface-2) 58%, var(--bg)); }
+.ops-page .sea-calendar-item {
+  margin-top: 6px; padding: 6px 8px; border: 1px solid var(--border); border-left: 3px solid var(--brand-accent-2);
+  border-radius: 8px; background: var(--surface); transition: border-color .15s ease, transform .15s var(--ops-ease);
+}
+.ops-page .sea-calendar-item.is-ts { border-left-color: var(--lv-busy); }
+.ops-page .sea-calendar-item:last-child { border-bottom: 1px solid var(--border); }
+.ops-page .sea-calendar-item:hover { border-color: color-mix(in srgb, var(--brand-accent-2) 45%, var(--border)); }
+.ops-cal-none { margin: 12px 0 0; padding: 14px; text-align: center; color: var(--muted); font-size: var(--fs-sm); border: 1px dashed var(--border); border-radius: var(--radius-sm); }
+
+/* 폰 폭: 7열 격자(가로 770px)를 버리고 출항이 있는 날만 세로로 쌓는다 — 옆으로 밀어 보던 달력 */
+@media (max-width: 640px) {
+  .ops-page .sea-calendar { overflow: visible; }
+  .ops-page .sea-calendar-grid { display: block; min-width: 0; border: 0; background: none; overflow: visible; }
+  .ops-page .sea-calendar-weekdays,
+  .ops-page .sea-calendar-day.is-empty,
+  .ops-page .sea-calendar-day.no-items { display: none; }
+  .ops-page .sea-calendar-day.has-items { min-height: 0; margin-bottom: 8px; border: 1px solid var(--border); border-radius: 12px; }
+  .ops-cal-wd { display: inline; }
+  .ops-sum { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* =========================================================
+   경로 분석 (route.html)
+   ========================================================= */
+.ops-swap {
+  flex: none; width: var(--ctl-h); height: var(--ctl-h); display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; border: 1px solid var(--border); background: var(--ops-chip-bg); color: var(--ink-2); cursor: pointer;
+  transition: border-color .18s ease, color .18s ease, transform .3s var(--ops-ease);
+}
+.ops-swap:hover { border-color: var(--brand-accent-2); color: var(--ink); }
+.ops-swap:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.ops-route .src-card { transition: border-color .2s ease, transform .2s var(--ops-ease); }
+.ops-route .pick-card { transition: border-color .2s ease, box-shadow .2s ease, transform .2s var(--ops-ease); }
+.ops-route .pick-card:hover { border-color: color-mix(in srgb, var(--brand-accent-2) 42%, var(--border)); box-shadow: var(--ops-lift); }
+
+/* =========================================================
+   움직임 — 설정이 '줄이기' 가 아닐 때만. (html.no-motion 은 style.css 가 전역으로 끈다)
+   ========================================================= */
+@media (prefers-reduced-motion: no-preference) {
+  /* KPI·요약 카드가 차례로 들어온다(등장 효과 .reveal 에 시차만 준다) */
+  .ops-page .kpi-grid > .reveal:nth-child(2) { transition-delay: .06s; }
+  .ops-page .kpi-grid > .reveal:nth-child(3) { transition-delay: .12s; }
+  .ops-page .kpi-grid > .reveal:nth-child(4) { transition-delay: .18s; }
+  .ops-page .kpi-grid > .reveal:nth-child(5) { transition-delay: .24s; }
+
+  /* 상태 분포 막대가 왼쪽에서 자란다(첫 그림에서만) */
+  .ops-statbar-track.is-anim i { animation: opsGrowX .9s var(--ops-ease) both; }
+  .ops-statbar-track.is-anim i:nth-child(2) { animation-delay: .08s; }
+  .ops-statbar-track.is-anim i:nth-child(3) { animation-delay: .16s; }
+  .ops-statbar-track.is-anim i:nth-child(4) { animation-delay: .24s; }
+  .ops-stat-pick:hover { transform: translateY(-1px); }
+
+  /* 터미널별 막대 — 표가 처음 화면에 들어올 때 한 번 */
+  .ops-anim .ops-occ-bar i, .ops-anim .ops-risk i { animation: opsGrowX .9s var(--ops-ease) both; }
+  .ops-anim tbody tr:nth-child(2) i { animation-delay: .04s; }
+  .ops-anim tbody tr:nth-child(3) i { animation-delay: .08s; }
+  .ops-anim tbody tr:nth-child(4) i { animation-delay: .12s; }
+  .ops-anim tbody tr:nth-child(5) i { animation-delay: .16s; }
+  .ops-anim tbody tr:nth-child(6) i { animation-delay: .2s; }
+  .ops-anim tbody tr:nth-child(7) i { animation-delay: .24s; }
+  .ops-anim tbody tr:nth-child(8) i { animation-delay: .28s; }
+  .ops-anim tbody tr:nth-child(n+9) i { animation-delay: .32s; }
+
+  /* 쪽 넘김·보기 전환 때 행이 살짝 올라온다 */
+  .ops-rows-in > tr { animation: opsRise .34s var(--ops-ease) both; --ops-rise: 6px; }
+  .ops-rows-in > tr:nth-child(2) { animation-delay: .02s; }
+  .ops-rows-in > tr:nth-child(3) { animation-delay: .04s; }
+  .ops-rows-in > tr:nth-child(4) { animation-delay: .06s; }
+  .ops-rows-in > tr:nth-child(5) { animation-delay: .08s; }
+  .ops-rows-in > tr:nth-child(6) { animation-delay: .1s; }
+  .ops-rows-in > tr:nth-child(7) { animation-delay: .12s; }
+  .ops-rows-in > tr:nth-child(n+8) { animation-delay: .14s; }
+  .ops-berth #berthBody > tr.tree-child { animation: opsFade .25s ease both; }
+
+  /* 탭 전환 — 새 패널이 부드럽게 들어온다 */
+  .ops-sched .view-panel:not([hidden]) { animation: opsRise .32s var(--ops-ease) both; --ops-rise: 8px; }
+
+  /* 결과가 도착하면 요약 → 카드 순서로 차례차례 */
+  .ops-sum-i { animation: opsRise .4s var(--ops-ease) both; --ops-rise: 8px; }
+  .ops-sum-i:nth-child(2) { animation-delay: .05s; }
+  .ops-sum-i:nth-child(3) { animation-delay: .1s; }
+  .ops-sum-i:nth-child(4) { animation-delay: .15s; }
+  .ops-sum-i:nth-child(5) { animation-delay: .2s; }
+  .ops-page .sea-route { animation: opsRise .42s var(--ops-ease) both; }
+  .ops-page .sea-route:nth-of-type(2) { animation-delay: .05s; }
+  .ops-page .sea-route:nth-of-type(3) { animation-delay: .1s; }
+  .ops-page .sea-route:nth-of-type(4) { animation-delay: .15s; }
+  .ops-page .sea-route:nth-of-type(n+5) { animation-delay: .2s; }
+  .ops-page .sea-route:hover { transform: translateY(-2px); }
+  .ops-page .sea-route:hover .sea-arrow { transform: translateX(3px); transition: transform .2s var(--ops-ease); }
+  .ops-page .sea-calendar-day.has-items { animation: opsFade .35s ease both; }
+  .ops-page .sea-calendar-item:hover { transform: translateX(2px); }
+  .ops-login, .ops-inline-msg, .ops-cal-none, .ops-empty { animation: opsRise .3s var(--ops-ease) both; --ops-rise: 6px; }
+  .ops-skel i { animation: opsPulse 1.4s ease-in-out 6; }
+
+  /* 경로: KPI 카드·선사 카드 */
+  .ops-route #simKpis > * { animation: opsRise .4s var(--ops-ease) both; --ops-rise: 8px; }
+  .ops-route #simKpis > *:nth-child(2) { animation-delay: .05s; }
+  .ops-route #simKpis > *:nth-child(3) { animation-delay: .1s; }
+  .ops-route #simKpis > *:nth-child(4) { animation-delay: .15s; }
+  .ops-route .pick-card:hover { transform: translateY(-2px); }
+  .ops-swap:hover { transform: rotate(180deg); }
+  .ops-swap.is-spun { animation: opsSpin .4s var(--ops-ease); }
+
+  .ops-page .ops-xls:hover:not(:disabled) { transform: translateY(-1px); }
+  .ops-berth .ctx-menu .cm-item:hover { transform: translateX(2px); }
+}

@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark" data-legal="terms">
+<head>
+  <meta charset="UTF-8">
+  <!-- CSP: 이 화면은 로컬 스크립트만 싣고 서버와 통신하지 않는다. 외부 원본은 Pretendard 폰트(jsDelivr)뿐이다. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self'; frame-src 'none'; form-action 'self';">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()">
+  <!-- 테마·언어 선반영: 저장된 값을 그리기 전에 적용해 페이지 이동 시 깜빡임을 없앤다. -->
+  <script>/* 클릭재킹 방어 — GitHub Pages 는 X-Frame-Options 헤더를 못 주므로 스크립트로 막는다. */
+  (function(){try{if(top!==self){top.location=self.location.href;}}catch(e){try{document.documentElement.style.display='none';}catch(_){}}})();</script>
+  <script>(function(){try{var t=localStorage.getItem('twl-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var L={ko:'ko',en:'en',zh:'zh-CN',ja:'ja',ru:'ru'},l=localStorage.getItem('twl-lang');if(L[l])document.documentElement.setAttribute('lang',L[l]);}catch(e){}})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f4f6fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0f1e" media="(prefers-color-scheme: dark)">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <title>이용약관 | PHAROS - 태웅로직스</title>
+  <meta name="description" content="태웅로직스 물류 정보 서비스 PHAROS 이용약관입니다.">
+  <link rel="canonical" href="https://pharos.e-tgl.com/terms.html">
+  <link rel="icon" href="assets/twl_logo.ico">
+  <link rel="apple-touch-icon" href="assets/og-image.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-26-polish">
+  <link rel="stylesheet" href="css/legal.css?v=2026-09-21-modal">
+  <link rel="stylesheet" href="css/pagenav.css?v=2026-09-21-modal">
+</head>
+<body class="legal-page">
+  <a class="skip-link" href="#main-content" data-i18n="ld.a11y.skip">본문으로 건너뛰기</a>
+
+  <!-- 공개 화면이다(로그인 불필요) — auth-gate.js 를 싣지 않는다. -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="태웅로직스 홈"></a>
+      <div class="header-actions legal-actions">
+        <!-- 가입 폼(login.html)은 이 화면을 target="_blank" 로 열어 입력 중이던 폼을 지킨다 —
+             그래서 새 탭에는 뒤로 갈 이력이 없고, 읽고 나면 나갈 길이 사라진다.
+             스크립트가 못 돌아도 나갈 길은 남아야 하므로 기본은 진짜 링크(홈)다 —
+             js/legal.js 가 온 길을 보고 '창 닫기' · '← 돌아가기' 로 바꿔 끼운다. -->
+        <a class="btn btn-ghost legal-back" href="index.html" data-legal-back
+           data-i18n="legal.back.home" title="이전 화면으로 돌아가기">← 홈으로</a>
+        <button class="icon-btn theme-toggle" type="button" aria-label="테마 전환"></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ★ 본문은 두 벌이다: 한국어(정본)와 영어(번역).
+       사이트 언어가 ko 면 한국어, 그 밖(en·zh·ja·ru)이면 영어를 보인다(js/legal.js).
+       스크립트가 없으면 한국어만 보인다 — 영어 쪽에 hidden 이 걸려 있다.
+       ★ 영어 본문에는 한글을 한 글자도 넣지 않는다. js/i18n.js 는 한글이 든 글자 마디를
+         화면 언어로 자동 치환하므로, 섞이면 번역문이 잡종이 된다. -->
+  <main id="main-content" tabindex="-1" class="legal-wrap">
+
+    <!-- ================= 한국어 (정본) ================= -->
+    <article class="legal-doc" data-doc="ko" lang="ko" aria-labelledby="ko-title">
+      <header class="legal-head">
+        <p class="legal-eyebrow" translate="no">PHAROS</p>
+        <h1 id="ko-title" tabindex="-1">이용약관</h1>
+        <p class="legal-meta">
+          <span><b>시행일</b> <time data-legal-date datetime="2026-09-19">2026-09-19</time></span>
+          <span><b>버전</b> <span data-legal-ver>1.0</span></span>
+        </p>
+        <p class="legal-prev">이전 버전: 없음(최초 제정). 개정하면 이전 버전을 <a href="#t-add">부칙</a>의 변경 이력에 남깁니다.</p>
+        <p class="legal-switch"><button type="button" class="legal-switch-btn" data-legal-set="en" lang="en">English</button></p>
+      </header>
+
+      <aside class="legal-summary" aria-labelledby="t-sum">
+        <h2 id="t-sum">꼭 확인할 내용</h2>
+        <ul>
+          <li>서비스의 화물·스케줄·선석 정보는 선사·터미널 등 외부 제공처의 정보를 모은 <strong>업무 참고용</strong>입니다. 중요한 결정 전에는 공식 자료로 확인하세요(제7조).</li>
+          <li>계정 공유, 자동화 도구를 이용한 대량 조회, 정보 재판매는 금지되며, 어기면 <strong>이용이 제한되거나 계약이 해지</strong>될 수 있습니다(제11조·제12조).</li>
+          <li>트레이싱 리포트는 <strong>업무 관계가 있는 수신자에게만</strong> 보내고, 수신 거부 요청은 바로 따라야 합니다(제10조).</li>
+          <li>회사는 외부 제공처의 오류 등으로 생긴 손해에 책임을 지지 않지만, <strong>회사의 고의·중대한 과실로 인한 책임은 제한하지 않습니다</strong>(제14조).</li>
+          <li>회원은 언제든지 탈퇴할 수 있습니다(제12조).</li>
+        </ul>
+      </aside>
+
+      <nav class="legal-toc" aria-labelledby="ko-toc">
+        <h2 id="ko-toc">목차</h2>
+        <ol>
+          <li><a href="#t1">제1조 목적</a></li>
+          <li><a href="#t2">제2조 정의</a></li>
+          <li><a href="#t3">제3조 약관의 게시와 변경</a></li>
+          <li><a href="#t4">제4조 이용계약의 성립</a></li>
+          <li><a href="#t5">제5조 계정 관리</a></li>
+          <li><a href="#t6">제6조 서비스의 내용</a></li>
+          <li><a href="#t7">제7조 정보의 출처와 정확성</a></li>
+          <li><a href="#t8">제8조 서비스의 변경과 중단</a></li>
+          <li><a href="#t9">제9조 자동 감시와 알림 메일</a></li>
+          <li><a href="#t10">제10조 트레이싱 리포트 발송자의 의무</a></li>
+          <li><a href="#t11">제11조 금지 행위</a></li>
+          <li><a href="#t12">제12조 계약 해지와 이용 제한</a></li>
+          <li><a href="#t13">제13조 통지</a></li>
+          <li><a href="#t14">제14조 책임의 제한</a></li>
+          <li><a href="#t15">제15조 지식재산권</a></li>
+          <li><a href="#t16">제16조 개인정보 보호</a></li>
+          <li><a href="#t17">제17조 준거법과 관할</a></li>
+          <li><a href="#t18">제18조 문의</a></li>
+          <li><a href="#t-add">부칙</a></li>
+        </ol>
+      </nav>
+
+      <section class="legal-art" id="t1">
+        <h2>제1조 (목적)</h2>
+        <p>이 약관은 태웅로직스(이하 “회사”)가 제공하는 물류 정보 서비스 PHAROS(https://pharos.e-tgl.com, 이하 “서비스”)의 이용 조건과 절차, 회사와 회원의 권리·의무 및 책임을 정합니다.</p>
+      </section>
+
+      <section class="legal-art" id="t2">
+        <h2>제2조 (정의)</h2>
+        <ol>
+          <li>“회원”이란 이 약관에 동의하고 회사의 승인을 받아 계정을 가진 사람을 말합니다.</li>
+          <li>“계정”이란 회원을 식별하는 업무용 이메일 주소(아이디)와 비밀번호를 말합니다.</li>
+          <li>“제공처”란 서비스가 정보를 가져오는 선사·항공사·터미널·공공기관 등 외부 정보원을 말합니다.</li>
+          <li>“자동 감시”란 회원이 등록한 B/L·AWB 번호를 정해진 기간 동안 자동으로 조회하고, 일정이나 상태가 바뀌면 알림 메일을 보내는 기능을 말합니다.</li>
+          <li>“트레이싱 리포트”란 회원이 화물 추적 정보를 자신이 지정한 수신자에게 메일로 보내는 기능을 말합니다.</li>
+          <li>“수신자”란 알림 메일이나 트레이싱 리포트를 받는 사람을 말합니다.</li>
+        </ol>
+      </section>
+
+      <section class="legal-art" id="t3">
+        <h2>제3조 (약관의 게시와 변경)</h2>
+        <p>① 회사는 이 약관을 서비스 화면에 게시합니다. 회원이 요청하면 사본을 이메일로 보내 드립니다.</p>
+        <p>② 회사는 관련 법령을 위반하지 않는 범위에서 약관을 변경할 수 있습니다. 변경하면 적용일, 변경 내용과 사유를 적용일 7일 전부터 서비스 화면에 공지합니다. 회원에게 불리한 변경은 적용일 30일 전부터 공지하고 회원의 이메일로도 알립니다.</p>
+        <p>③ 회사가 제2항에 따라 알리면서 “적용일까지 거부 의사를 밝히지 않으면 동의한 것으로 본다”는 뜻을 분명히 알렸는데도 회원이 적용일까지 거부 의사를 밝히지 않으면 변경 약관에 동의한 것으로 봅니다. 동의하지 않는 회원은 적용일 전까지 이용계약을 해지할 수 있습니다.</p>
+        <p>④ 회사와 회원이 이 약관과 다르게 따로 합의한 사항은 그 합의가 우선합니다. 이 약관에서 정하지 않은 사항은 관련 법령과 일반 관례를 따릅니다.</p>
+      </section>
+
+      <section class="legal-art" id="t4">
+        <h2>제4조 (이용계약의 성립)</h2>
+        <p>① 이용계약은 가입 신청자가 이 약관에 동의하고 업무용 이메일 인증을 거쳐 가입을 신청한 뒤 회사가 승인하면 성립합니다.</p>
+        <p>② 가입 신청은 회사가 정한 업무용 이메일 도메인(태웅로직스와 관계사·협력사)으로만 할 수 있습니다. 업무상 필요가 있으면 회사가 따로 계정을 발급할 수 있습니다.</p>
+        <p>③ 회사는 다음의 경우 승인을 거절하거나 미룰 수 있으며, 신청자가 문의하면 그 사유를 알려 드립니다.</p>
+        <ol>
+          <li>신청 정보가 사실과 다르거나 다른 사람의 정보를 쓴 경우</li>
+          <li>신청자의 소속이나 업무 관련성을 확인할 수 없는 경우</li>
+          <li>이 약관 위반으로 이용이 제한되었거나 계약이 해지된 적이 있는 경우</li>
+          <li>설비에 여유가 없거나 기술상 문제가 있는 경우(문제가 해소될 때까지 미룹니다)</li>
+        </ol>
+        <p>④ 회사는 현재 서비스를 무료로 제공합니다. 유료 서비스를 도입하려면 미리 알리고 회원의 별도 동의를 받습니다.</p>
+      </section>
+
+      <section class="legal-art" id="t5">
+        <h2>제5조 (계정 관리)</h2>
+        <p>① 회원은 자신의 계정을 직접 관리해야 하며, 다른 사람에게 알려 주거나 빌려주거나 함께 써서는 안 됩니다.</p>
+        <p>② 계정이 도용되었거나 도용이 의심되면 곧바로 비밀번호를 바꾸고 회사에 알려야 합니다.</p>
+        <p>③ 회원이 제1항·제2항을 지키지 않아 생긴 손해는 회원이 부담합니다. 다만 회사에 고의 또는 과실이 있는 경우에는 그렇지 않습니다.</p>
+        <p>④ 소속이 바뀌어 가입한 이메일을 더 쓸 수 없게 되면 회원은 회사에 알려야 합니다.</p>
+      </section>
+
+      <section class="legal-art" id="t6">
+        <h2>제6조 (서비스의 내용)</h2>
+        <p>① 회사는 다음 서비스를 제공합니다.</p>
+        <ol>
+          <li>선사·항공사 화물 추적 조회, 자동 감시와 변경 알림</li>
+          <li>선박 스케줄, 선박 위치, 선석 배정, 항만 혼잡, 운임 지수 등 물류 정보 조회</li>
+          <li>경로 분석, 적입계획(CLP) 등 업무 보조 도구</li>
+          <li>트레이싱 리포트(회사가 제공을 시작한 경우)</li>
+          <li>그 밖에 회사가 추가로 제공하는 기능</li>
+        </ol>
+        <p>② 기능별 이용 방법과 한도(조회 횟수, 등록 기간, 발송 수 등)는 서비스 화면에서 안내합니다.</p>
+      </section>
+
+      <section class="legal-art" id="t7">
+        <h2>제7조 (정보의 출처와 정확성)</h2>
+        <p>① 서비스의 화물 추적, 스케줄, 선석, 선박 위치 등 정보는 제공처가 공개하거나 제공하는 정보를 회사가 모아 보여 주는 것입니다.</p>
+        <p>② <strong class="legal-key">정보의 정확성과 최신성은 제공처에 달려 있으며, 제공처의 사정으로 늦거나 틀리거나 빠질 수 있습니다. 서비스 정보는 업무 참고용이므로, 선적·통관·운송 계약 등 중요한 결정 전에는 제공처나 운송인의 공식 자료로 확인하십시오.</strong></p>
+        <p>③ 회사는 알게 된 오류를 합리적인 기간 안에 바로잡도록 노력합니다.</p>
+      </section>
+
+      <section class="legal-art" id="t8">
+        <h2>제8조 (서비스의 변경과 중단)</h2>
+        <p>① 회사는 다음의 경우 서비스의 전부나 일부를 일시 중단할 수 있습니다.</p>
+        <ol>
+          <li>설비의 점검·교체 또는 장애 복구</li>
+          <li>제공처의 장애, 정보 제공 중단 또는 이용 조건 변경</li>
+          <li>천재지변, 전쟁, 정전, 통신 장애 등 불가항력</li>
+        </ol>
+        <p>② 회사는 중단하기 전에 그 사유와 기간을 서비스 화면에 공지합니다. 미리 알릴 수 없는 부득이한 사정이 있으면 사후에 알립니다.</p>
+        <p>③ 제공처의 조건이 바뀌어 특정 기능을 계속 제공할 수 없으면 회사는 그 기능을 바꾸거나 없앨 수 있으며, 제2항에 따라 알립니다. 서비스 전체를 종료하려면 30일 전부터 공지하고 회원의 이메일로도 알립니다.</p>
+      </section>
+
+      <section class="legal-art" id="t9">
+        <h2>제9조 (자동 감시와 알림 메일)</h2>
+        <p>① 자동 감시는 회원이 등록할 때 정한 기간 동안 운영되며, 기간이 끝나면 멈춥니다.</p>
+        <p>② 회원이 알림 받을 이메일로 본인 외의 주소를 입력하려면 그 사람이 알림 수신에 동의했거나 해당 화물 업무로 정당한 관계가 있어야 합니다. 그 사람이 원하지 않으면 회원은 곧바로 주소를 지우거나 알림을 꺼야 합니다.</p>
+      </section>
+
+      <section class="legal-art" id="t10">
+        <h2>제10조 (트레이싱 리포트 발송자의 의무)</h2>
+        <p>① <strong class="legal-key">트레이싱 리포트는 회원이 실제로 취급하는 화물에 대하여, 그 화물과 관련해 회원과 정당한 업무 관계가 있는 수신자(화주 등)에게만 보낼 수 있습니다.</strong></p>
+        <p>② 회원은 다음을 지켜야 합니다.</p>
+        <ol>
+          <li>광고·홍보 내용을 넣거나 수신자가 원하지 않는 메일을 대량으로 보내지 않을 것</li>
+          <li>발신자 이름과 회신 주소를 사실대로 적을 것</li>
+          <li><strong class="legal-key">수신자가 수신 거부나 발송 중단을 요청하면 곧바로 따르고, 그 수신자의 명시적 동의 없이 다시 등록하지 않을 것</strong></li>
+          <li>리포트에 적는 메모 등 자신이 입력한 내용에 책임을 질 것</li>
+        </ol>
+        <p>③ 모든 리포트에는 발송 경위와 수신 거부 방법이 표시되며, 회사는 수신 거부를 회원의 설정과 관계없이 처리합니다.</p>
+        <p>④ 회사는 스팸을 막기 위해 발송 건수와 수신자 수를 제한할 수 있고, 수신자의 신고가 있거나 제1항·제2항 위반이 확인되면 해당 리포트를 중단할 수 있습니다.</p>
+      </section>
+
+      <section class="legal-art" id="t11">
+        <h2>제11조 (금지 행위)</h2>
+        <p>회원은 다음 행위를 해서는 안 됩니다.</p>
+        <ol>
+          <li>회사가 제공하지 않은 프로그램(자동화 도구, 스크립트, 봇 등)으로 서비스를 대량 또는 반복 조회하거나 정보를 수집하는 행위</li>
+          <li>계정을 다른 사람에게 양도·대여하거나 여러 사람이 함께 쓰는 행위</li>
+          <li>서비스에서 얻은 정보를 회사의 동의 없이 판매·재배포하거나 제3자에게 상업적으로 제공하는 행위</li>
+          <li>요청 횟수 제한 등 보안·이용 제한 장치를 우회하거나 무력화하는 행위, 다른 회원의 계정이나 정보에 접근하려는 행위</li>
+          <li>가입이나 이용 과정에서 거짓 정보를 입력하거나 다른 사람을 사칭하는 행위</li>
+          <li>서비스나 제공처 설비의 운영을 방해하거나, 제공처의 이용 조건을 위반하게 만드는 행위</li>
+          <li>다른 사람의 저작권 등 권리나 개인정보를 침해하는 행위</li>
+        </ol>
+      </section>
+
+      <section class="legal-art" id="t12">
+        <h2>제12조 (계약 해지와 이용 제한)</h2>
+        <p>① 회원은 언제든지 제18조의 연락처로 이용계약 해지(탈퇴)를 요청할 수 있으며, 회사는 지체 없이 처리합니다. 해지 후 개인정보는 <a href="privacy.html">개인정보 처리방침</a>에 따라 처리합니다.</p>
+        <p>② <strong class="legal-key">회사는 회원이 다음 중 하나에 해당하면 이용을 일시 제한하거나 이용계약을 해지할 수 있습니다.</strong></p>
+        <ol>
+          <li>제5조 제1항, 제9조 제2항, 제10조 또는 제11조를 위반한 경우</li>
+          <li>가입 신청 정보가 거짓으로 밝혀진 경우</li>
+          <li>소속이 바뀌어 제4조 제2항의 가입 자격을 잃은 경우</li>
+          <li>계정 도용 등으로 회원이나 서비스에 피해가 생길 우려가 있는 경우</li>
+        </ol>
+        <p>③ 회사는 제2항의 조치를 하기 전에 그 사유를 회원의 이메일로 알리고, 7일 이상의 기간을 정해 소명할 기회를 드립니다. 다만 계정 도용이 의심되거나 대량 조회 등으로 서비스에 즉시 피해가 생기는 긴급한 경우에는 먼저 이용을 제한(자동 제한 포함)하고 그 뒤에 알립니다.</p>
+        <p>④ 회원은 이용 제한에 이의가 있으면 제18조의 연락처로 이의를 신청할 수 있습니다. 회사는 이를 검토해 결과를 알리고, 이의가 정당하면 곧바로 제한을 풉니다.</p>
+      </section>
+
+      <section class="legal-art" id="t13">
+        <h2>제13조 (통지)</h2>
+        <p>① 회사가 회원 개인에게 알릴 사항은 회원이 가입한 이메일로 보냅니다.</p>
+        <p>② 회원 전체에 알릴 사항은 7일 이상 서비스 화면에 공지하는 것으로 개별 통지를 대신할 수 있습니다. 다만 회원의 권리·의무에 중대한 영향을 주는 사항은 개별로 알립니다.</p>
+      </section>
+
+      <section class="legal-art" id="t14">
+        <h2>제14조 (책임의 제한)</h2>
+        <p>① <strong class="legal-key">서비스는 무료로 제공되는 업무 참고용 정보 서비스입니다. 회사는 다음 사유로 생긴 손해에 대해서는, 회사의 고의 또는 중대한 과실이 없는 한 책임을 지지 않습니다.</strong></p>
+        <ol>
+          <li>제공처 정보의 오류·지연·누락 또는 제공처 설비의 장애</li>
+          <li>천재지변 등 불가항력이나 통신망 장애</li>
+          <li>제8조에 따라 공지한 서비스 중단</li>
+          <li>계정 관리 소홀이나 약관 위반 등 회원에게 책임이 있는 사유</li>
+        </ol>
+        <p>② 회사는 회원이 서비스 정보를 바탕으로 내린 판단이나 제3자와의 거래로 생긴 손해에 대해서는, 회사의 고의 또는 중대한 과실이 없는 한 책임을 지지 않습니다.</p>
+        <p>③ <strong class="legal-key">이 약관의 어떤 조항도 회사의 고의 또는 중대한 과실로 인한 책임과 법률상 배제할 수 없는 책임을 면제하거나 제한하지 않습니다.</strong></p>
+        <p>④ 회원이 이 약관을 위반해 회사에 손해를 끼친 경우 회원은 관련 법령에 따라 그 손해를 배상해야 합니다.</p>
+      </section>
+
+      <section class="legal-art" id="t15">
+        <h2>제15조 (지식재산권)</h2>
+        <p>① 서비스의 화면 구성, 소프트웨어, 로고와 회사가 만든 지표·분석 결과에 대한 권리는 회사에 있습니다.</p>
+        <p>② 제공처에서 가져온 정보에 대한 권리는 각 제공처에 있으며, 그 정보를 이용할 때에는 제공처의 이용 조건도 함께 적용됩니다.</p>
+        <p>③ 회원은 서비스에서 얻은 정보를 자신의 업무 범위에서 이용할 수 있으며, 제11조 제3호에 어긋나게 이용해서는 안 됩니다.</p>
+        <p>④ 회원이 입력한 메모, 발신자 이름 등은 회원에게 권리가 있으며, 회사는 서비스 제공에 필요한 범위에서만 이를 이용합니다.</p>
+      </section>
+
+      <section class="legal-art" id="t16">
+        <h2>제16조 (개인정보 보호)</h2>
+        <p>회사는 회원의 개인정보를 「개인정보 보호법」과 회사의 <a href="privacy.html"><strong>개인정보 처리방침</strong></a>에 따라 보호합니다. 회사는 정당한 이유 없이 회원이 등록한 화물 정보 등 회원의 업무상 정보를 제3자에게 공개하지 않습니다.</p>
+      </section>
+
+      <section class="legal-art" id="t17">
+        <h2>제17조 (준거법과 관할)</h2>
+        <p>① 이 약관과 이용계약에는 대한민국 법을 적용합니다.</p>
+        <p>② 서비스 이용과 관련해 회사와 회원 사이에 분쟁이 생기면 먼저 성실히 협의합니다. 협의로 해결되지 않아 소송을 제기하는 경우 관할 법원은 「민사소송법」에 따라 정합니다.</p>
+      </section>
+
+      <section class="legal-art" id="t18">
+        <h2>제18조 (문의)</h2>
+        <p>서비스와 이 약관에 관한 문의는 태웅로직스(<a href="mailto:itt@twsc.co.kr">itt@twsc.co.kr</a>)로 해 주십시오.</p>
+      </section>
+
+      <section class="legal-art" id="t-add">
+        <h2>부칙</h2>
+        <p>① (시행일) 이 약관은 <time data-legal-date datetime="2026-09-19">2026-09-19</time>부터 시행합니다.</p>
+        <p>② (기존 회원) 시행일 전에 가입한 회원에게도 시행일부터 이 약관이 적용됩니다. 회사는 이를 서비스 화면으로 알리며, 동의하지 않는 회원은 언제든지 이용계약을 해지할 수 있습니다.</p>
+        <table class="legal-table">
+          <caption class="sr-only">변경 이력</caption>
+          <thead><tr><th scope="col">버전</th><th scope="col">시행일</th><th scope="col">내용</th></tr></thead>
+          <tbody><tr><td data-legal-ver>1.0</td><td><time data-legal-date datetime="2026-09-19">2026-09-19</time></td><td>최초 제정</td></tr></tbody>
+        </table>
+      </section>
+    </article>
+
+    <!-- ================= English (translation) ================= -->
+    <article class="legal-doc" data-doc="en" lang="en" aria-labelledby="en-title" hidden>
+      <header class="legal-head">
+        <p class="legal-eyebrow" translate="no">PHAROS</p>
+        <h1 id="en-title" tabindex="-1">Terms of Use</h1>
+        <p class="legal-meta">
+          <span><b>Effective</b> <time data-legal-date datetime="2026-09-19">2026-09-19</time></span>
+          <span><b>Version</b> <span data-legal-ver>1.0</span></span>
+        </p>
+        <p class="legal-note" role="note">This English text is a translation for convenience. The Korean version is the official text and prevails if the two differ.</p>
+        <p class="legal-prev">Previous versions: none (first edition). When these terms are amended, earlier versions will be listed in the change history under <a href="#en-t-add">Supplementary Provisions</a>.</p>
+        <p class="legal-switch"><button type="button" class="legal-switch-btn" data-legal-set="ko">View the Korean original</button></p>
+      </header>
+
+      <aside class="legal-summary" aria-labelledby="en-t-sum">
+        <h2 id="en-t-sum">Key points</h2>
+        <ul>
+          <li>Cargo, schedule and berth information in the Service is collected from carriers, terminals and other outside sources and is <strong>for business reference only</strong>. Check official records before important decisions (Article 7).</li>
+          <li>Sharing accounts, bulk queries with automated tools and reselling information are prohibited and may lead to <strong>suspension or termination</strong> (Articles 11 and 12).</li>
+          <li>Tracing reports may be sent <strong>only to recipients you have a business relationship with</strong>, and unsubscribe requests must be honoured at once (Article 10).</li>
+          <li>The Company is not liable for losses caused by errors of outside sources and similar causes, but <strong>its liability for intent or gross negligence is never limited</strong> (Article 14).</li>
+          <li>Members may withdraw at any time (Article 12).</li>
+        </ul>
+      </aside>
+
+      <nav class="legal-toc" aria-labelledby="en-toc">
+        <h2 id="en-toc">Contents</h2>
+        <ol>
+          <li><a href="#en-t1">Art. 1 Purpose</a></li>
+          <li><a href="#en-t2">Art. 2 Definitions</a></li>
+          <li><a href="#en-t3">Art. 3 Posting and amendment</a></li>
+          <li><a href="#en-t4">Art. 4 Formation of the agreement</a></li>
+          <li><a href="#en-t5">Art. 5 Account management</a></li>
+          <li><a href="#en-t6">Art. 6 Services</a></li>
+          <li><a href="#en-t7">Art. 7 Sources and accuracy</a></li>
+          <li><a href="#en-t8">Art. 8 Changes and interruptions</a></li>
+          <li><a href="#en-t9">Art. 9 Auto watch and alert emails</a></li>
+          <li><a href="#en-t10">Art. 10 Duties of tracing report senders</a></li>
+          <li><a href="#en-t11">Art. 11 Prohibited conduct</a></li>
+          <li><a href="#en-t12">Art. 12 Termination and restrictions</a></li>
+          <li><a href="#en-t13">Art. 13 Notices</a></li>
+          <li><a href="#en-t14">Art. 14 Limitation of liability</a></li>
+          <li><a href="#en-t15">Art. 15 Intellectual property</a></li>
+          <li><a href="#en-t16">Art. 16 Personal information</a></li>
+          <li><a href="#en-t17">Art. 17 Governing law and jurisdiction</a></li>
+          <li><a href="#en-t18">Art. 18 Contact</a></li>
+          <li><a href="#en-t-add">Supplementary Provisions</a></li>
+        </ol>
+      </nav>
+
+      <section class="legal-art" id="en-t1">
+        <h2>Article 1 (Purpose)</h2>
+        <p>These Terms set out the conditions and procedures for using PHAROS (https://pharos.e-tgl.com, the “Service”), a logistics information service provided by Taewoong Logistics (the “Company”), and the rights, duties and responsibilities of the Company and its Members.</p>
+      </section>
+
+      <section class="legal-art" id="en-t2">
+        <h2>Article 2 (Definitions)</h2>
+        <ol>
+          <li>“Member” means a person who has agreed to these Terms, been approved by the Company and holds an account.</li>
+          <li>“Account” means the work email address (login ID) and password that identify a Member.</li>
+          <li>“Source” means an outside provider of information used by the Service, such as a carrier, airline, terminal or public agency.</li>
+          <li>“Auto watch” means the function that automatically looks up the B/L or AWB numbers a Member registers for a set period and sends an alert email when the schedule or status changes.</li>
+          <li>“Tracing report” means the function that lets a Member email cargo tracking information to recipients the Member chooses.</li>
+          <li>“Recipient” means a person who receives an alert email or a tracing report.</li>
+        </ol>
+      </section>
+
+      <section class="legal-art" id="en-t3">
+        <h2>Article 3 (Posting and amendment)</h2>
+        <p>(1) The Company posts these Terms in the Service. On request, it will email a copy to the Member.</p>
+        <p>(2) The Company may amend these Terms within the limits of applicable law. It will post the effective date, the changes and the reasons in the Service at least 7 days in advance. Changes unfavourable to Members will be posted at least 30 days in advance and also sent to Members by email.</p>
+        <p>(3) If, when giving notice under paragraph (2), the Company clearly states that a Member who does not object by the effective date will be deemed to agree, and the Member does not object by that date, the Member is deemed to have agreed to the amended Terms. A Member who does not agree may terminate the agreement before the effective date.</p>
+        <p>(4) Where the Company and a Member have agreed separately on something that differs from these Terms, that agreement prevails. Matters not covered here follow applicable law and general practice.</p>
+      </section>
+
+      <section class="legal-art" id="en-t4">
+        <h2>Article 4 (Formation of the agreement)</h2>
+        <p>(1) The agreement is formed when an applicant agrees to these Terms, verifies a work email address, applies for membership and is approved by the Company.</p>
+        <p>(2) Applications can be made only with a work email domain designated by the Company (Taewoong Logistics and its affiliates and partners). Where there is a business need, the Company may issue an account separately.</p>
+        <p>(3) The Company may refuse or defer approval in the following cases and will explain the reason if the applicant asks:</p>
+        <ol>
+          <li>the application contains false information or uses another person's details;</li>
+          <li>the applicant's organisation or business need cannot be confirmed;</li>
+          <li>the applicant was previously restricted or terminated for breaching these Terms;</li>
+          <li>there is no spare capacity or there is a technical problem (approval is deferred until it is resolved).</li>
+        </ol>
+        <p>(4) The Company currently provides the Service free of charge. Before introducing any paid service, it will give advance notice and obtain the Member's separate consent.</p>
+      </section>
+
+      <section class="legal-art" id="en-t5">
+        <h2>Article 5 (Account management)</h2>
+        <p>(1) Members must manage their own accounts and must not disclose, lend or share them with others.</p>
+        <p>(2) If an account is or may have been compromised, the Member must change the password at once and notify the Company.</p>
+        <p>(3) Losses caused by a Member's failure to follow paragraphs (1) and (2) are borne by the Member, unless the Company acted intentionally or negligently.</p>
+        <p>(4) A Member who can no longer use the registered email because of a change of organisation must inform the Company.</p>
+      </section>
+
+      <section class="legal-art" id="en-t6">
+        <h2>Article 6 (Services)</h2>
+        <p>(1) The Company provides the following services:</p>
+        <ol>
+          <li>carrier and airline cargo tracking, auto watch and change alerts;</li>
+          <li>logistics information such as vessel schedules, vessel positions, berth plans, port congestion and freight rate indices;</li>
+          <li>work tools such as route analysis and container load planning (CLP);</li>
+          <li>tracing reports (once the Company starts offering them);</li>
+          <li>any other functions the Company adds.</li>
+        </ol>
+        <p>(2) How to use each function and its limits (number of queries, watch period, number of emails, and so on) are shown in the Service.</p>
+      </section>
+
+      <section class="legal-art" id="en-t7">
+        <h2>Article 7 (Sources and accuracy)</h2>
+        <p>(1) Cargo tracking, schedule, berth, vessel position and similar information in the Service is information published or provided by Sources and collected and displayed by the Company.</p>
+        <p>(2) <strong class="legal-key">The accuracy and timeliness of the information depend on the Sources, and it may be late, wrong or incomplete for reasons on the Sources' side. The information is for business reference only. Before important decisions such as shipping, customs clearance or transport contracts, check the official records of the Source or carrier.</strong></p>
+        <p>(3) The Company will try to correct errors it becomes aware of within a reasonable time.</p>
+      </section>
+
+      <section class="legal-art" id="en-t8">
+        <h2>Article 8 (Changes and interruptions)</h2>
+        <p>(1) The Company may suspend all or part of the Service temporarily in the following cases:</p>
+        <ol>
+          <li>inspection or replacement of equipment, or recovery from a failure;</li>
+          <li>a failure at a Source, or a Source stopping or changing the terms of its information;</li>
+          <li>force majeure such as natural disasters, war, power cuts or network failures.</li>
+        </ol>
+        <p>(2) The Company will post the reason and duration in the Service before a suspension. Where advance notice is impossible for unavoidable reasons, it will give notice afterwards.</p>
+        <p>(3) If a change in a Source's terms makes a function impossible to continue, the Company may change or remove that function and will give notice under paragraph (2). To end the whole Service, the Company will post a notice at least 30 days in advance and also inform Members by email.</p>
+      </section>
+
+      <section class="legal-art" id="en-t9">
+        <h2>Article 9 (Auto watch and alert emails)</h2>
+        <p>(1) An auto watch runs for the period the Member chose when registering it and stops when that period ends.</p>
+        <p>(2) A Member who enters someone else's address to receive alerts must have that person's consent or a legitimate business relationship with that person concerning the cargo. If that person does not want the alerts, the Member must remove the address or turn the alerts off at once.</p>
+      </section>
+
+      <section class="legal-art" id="en-t10">
+        <h2>Article 10 (Duties of tracing report senders)</h2>
+        <p>(1) <strong class="legal-key">A tracing report may be sent only about cargo the Member actually handles, and only to recipients (such as shippers) who have a legitimate business relationship with the Member concerning that cargo.</strong></p>
+        <p>(2) The Member must:</p>
+        <ol>
+          <li>not include advertising or promotion, and not send unwanted email in bulk;</li>
+          <li>give a truthful sender name and reply address;</li>
+          <li><strong class="legal-key">honour a recipient's unsubscribe or stop request at once, and not add that recipient again without the recipient's explicit consent;</strong></li>
+          <li>take responsibility for what the Member writes, such as notes in the report.</li>
+        </ol>
+        <p>(3) Every report states how it was sent and how to unsubscribe, and the Company processes unsubscribe requests regardless of the Member's settings.</p>
+        <p>(4) To prevent spam, the Company may limit the number of reports and recipients, and may stop a report after a recipient complaint or a confirmed breach of paragraph (1) or (2).</p>
+      </section>
+
+      <section class="legal-art" id="en-t11">
+        <h2>Article 11 (Prohibited conduct)</h2>
+        <p>Members must not:</p>
+        <ol>
+          <li>query the Service in bulk or repeatedly, or collect information from it, with programs the Company does not provide (automation tools, scripts, bots and the like);</li>
+          <li>transfer or lend an account, or let several people share one;</li>
+          <li>sell or redistribute information obtained from the Service, or provide it commercially to third parties, without the Company's consent;</li>
+          <li>bypass or disable rate limits or other security or usage controls, or try to access other Members' accounts or data;</li>
+          <li>enter false information or impersonate another person when applying or using the Service;</li>
+          <li>disrupt the operation of the Service or of a Source's systems, or cause a breach of a Source's terms;</li>
+          <li>infringe the copyright or other rights, or the personal information, of others.</li>
+        </ol>
+      </section>
+
+      <section class="legal-art" id="en-t12">
+        <h2>Article 12 (Termination and restrictions)</h2>
+        <p>(1) Members may ask to terminate the agreement (withdraw) at any time through the contact in Article 18, and the Company will process the request without delay. After termination, personal information is handled under the <a href="privacy.html">Privacy Policy</a>.</p>
+        <p>(2) <strong class="legal-key">The Company may temporarily restrict a Member's use or terminate the agreement if the Member:</strong></p>
+        <ol>
+          <li>breaches Article 5(1), Article 9(2), Article 10 or Article 11;</li>
+          <li>is found to have given false information when applying;</li>
+          <li>no longer meets the eligibility in Article 4(2) because of a change of organisation;</li>
+          <li>poses a risk of harm to Members or the Service, for example through a compromised account.</li>
+        </ol>
+        <p>(3) Before acting under paragraph (2), the Company will email the Member the reason and give at least 7 days to respond. In urgent cases, such as a suspected compromised account or bulk queries causing immediate harm to the Service, the Company may restrict use first (including automatic restriction) and notify the Member afterwards.</p>
+        <p>(4) A Member who disagrees with a restriction may object through the contact in Article 18. The Company will review the objection, inform the Member of the result and lift the restriction at once if the objection is justified.</p>
+      </section>
+
+      <section class="legal-art" id="en-t13">
+        <h2>Article 13 (Notices)</h2>
+        <p>(1) Notices to an individual Member are sent to the email address the Member registered.</p>
+        <p>(2) Notices to all Members may be given by posting in the Service for at least 7 days instead of individual notice, except for matters that significantly affect Members' rights or duties, which are notified individually.</p>
+      </section>
+
+      <section class="legal-art" id="en-t14">
+        <h2>Article 14 (Limitation of liability)</h2>
+        <p>(1) <strong class="legal-key">The Service is a free information service for business reference. Unless the Company acted intentionally or with gross negligence, it is not liable for losses caused by:</strong></p>
+        <ol>
+          <li>errors, delays or omissions in Source information, or failures of Source systems;</li>
+          <li>force majeure such as natural disasters, or network failures;</li>
+          <li>a suspension of the Service notified under Article 8;</li>
+          <li>causes attributable to the Member, such as careless account management or breach of these Terms.</li>
+        </ol>
+        <p>(2) Unless the Company acted intentionally or with gross negligence, it is not liable for losses arising from decisions a Member makes based on the Service's information or from the Member's dealings with third parties.</p>
+        <p>(3) <strong class="legal-key">Nothing in these Terms excludes or limits the Company's liability for intent or gross negligence, or any liability that cannot be excluded by law.</strong></p>
+        <p>(4) A Member who causes loss to the Company by breaching these Terms must compensate it in accordance with applicable law.</p>
+      </section>
+
+      <section class="legal-art" id="en-t15">
+        <h2>Article 15 (Intellectual property)</h2>
+        <p>(1) Rights in the Service's screens, software, logos and the indicators and analyses produced by the Company belong to the Company.</p>
+        <p>(2) Rights in information obtained from Sources belong to each Source, and the Source's terms also apply to its use.</p>
+        <p>(3) Members may use information from the Service within the scope of their own work, and must not use it in breach of Article 11(3).</p>
+        <p>(4) Rights in notes, sender names and other content entered by a Member belong to the Member, and the Company uses them only as needed to provide the Service.</p>
+      </section>
+
+      <section class="legal-art" id="en-t16">
+        <h2>Article 16 (Personal information)</h2>
+        <p>The Company protects Members' personal information in accordance with the Personal Information Protection Act and its <a href="privacy.html"><strong>Privacy Policy</strong></a>. Without proper cause, the Company does not disclose a Member's business information, such as the cargo the Member registers, to third parties.</p>
+      </section>
+
+      <section class="legal-art" id="en-t17">
+        <h2>Article 17 (Governing law and jurisdiction)</h2>
+        <p>(1) These Terms and the agreement are governed by the laws of the Republic of Korea.</p>
+        <p>(2) Any dispute between the Company and a Member about the Service will first be discussed in good faith. If a lawsuit is filed because the dispute cannot be settled, the competent court is determined under the Civil Procedure Act of Korea.</p>
+      </section>
+
+      <section class="legal-art" id="en-t18">
+        <h2>Article 18 (Contact)</h2>
+        <p>Questions about the Service or these Terms: Taewoong Logistics, <a href="mailto:itt@twsc.co.kr">itt@twsc.co.kr</a>.</p>
+      </section>
+
+      <section class="legal-art" id="en-t-add">
+        <h2>Supplementary Provisions</h2>
+        <p>(1) (Effective date) These Terms take effect on <time data-legal-date datetime="2026-09-19">2026-09-19</time>.</p>
+        <p>(2) (Existing Members) These Terms also apply, from the effective date, to Members who joined before it. The Company announces this in the Service, and a Member who does not agree may terminate the agreement at any time.</p>
+        <table class="legal-table">
+          <caption class="sr-only">Change history</caption>
+          <thead><tr><th scope="col">Version</th><th scope="col">Effective</th><th scope="col">Change</th></tr></thead>
+          <tbody><tr><td data-legal-ver>1.0</td><td><time data-legal-date datetime="2026-09-19">2026-09-19</time></td><td>First edition</td></tr></tbody>
+        </table>
+      </section>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="index.html" class="logo-slot" aria-label="태웅로직스"></a>
+        <p class="footer-note">
+          태웅로직스 | 문의: itt@twsc.co.kr<br>
+          © <span class="footer-year">2026</span> TAEWOONG LOGISTICS. All rights reserved.
+        </p>
+        <p class="footer-legal">
+          <a href="terms.html" aria-current="page" data-i18n="legal.link.terms">이용약관</a><span class="sep" aria-hidden="true">·</span><a href="privacy.html" class="footer-privacy"><strong data-i18n="legal.link.privacy">개인정보 처리방침</strong></a>
+        </p>
+      </div>
+      <nav class="footer-links" aria-label="푸터 메뉴">
+        <a href="insight.html">Port Insight</a>
+        <a href="berth.html">선석배정</a>
+        <a href="vessel.html">선박 위치</a>
+        <a href="cargo.html">화물 추적</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- ★ 순서가 의미를 가진다. legal.js 가 i18n.js 보다 먼저 돌아 첫 화면의 본문 언어를 정한다.
+       pagenav.js 는 legal.js 보다 앞이다 — legal.js 가 첫 그리기에서 목차를 레일로 넘길 때
+       TWPAGENAV 가 이미 서 있어야 한다. -->
+  <script defer src="js/common.js?v=2026-09-26-polish"></script>
+  <script defer src="js/pagenav.js?v=2026-09-21-modal"></script>
+  <script defer src="js/legal.js?v=2026-09-25-p11"></script>
+  <script defer src="js/i18n.js?v=2026-09-26-polish"></script>
+</body>
+</html>

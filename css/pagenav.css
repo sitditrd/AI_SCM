@@ -1,0 +1,395 @@
+/* =========================================================
+   PHAROS — 구역 이동 레일 · 맨 위로(TOP) 단추 (js/pagenav.js 와 한 벌)
+
+   왜 만들었나
+     한 화면에 카드·표·차트가 길게 이어지는데, **지금 어느 구역을 보고 있는지**와
+     **다른 구역으로 어떻게 건너뛰는지**가 화면 어디에도 없었다. 방법이 스크롤을
+     되감는 것뿐이라, 화면이 길수록 아래쪽 내용은 아예 안 읽힌다.
+     → 오른쪽 가장자리에 세로 레일을 띄워 현재 구역을 켜 주고(스크롤 스파이),
+       오른쪽 아래에 맨 위로 돌아가는 단추를 상주시킨다.
+
+   지키는 것
+     · 색·크기는 style.css 의 토큰만 쓴다 — 밝음/어두움 두 테마가 저절로 따라온다.
+       (6px 이하의 미세 여백만 스케일 밖의 광학 보정으로 둔다 — :root 토큰 주석의 예외와 같다.)
+     · 겹침 순서는 z-index 54 — 헤더(60)·우측 퀵패널(60/61)·사용법 투어(120)보다 아래이고
+       로그인 회원 안내(.legal-notice 55)보다도 아래다. 이 부품은 길잡이지 주인공이 아니다.
+     · 컨테이너는 pointer-events:none — 화면 오른쪽을 세로로 가로지르지만 본문 클릭을
+       한 픽셀도 가로막지 않는다. 자식(레일·단추)만 다시 auto 로 켠다.
+     · 레일은 **본문 기둥을 한 픽셀도 덮지 않는 폭에서만** 보인다. 기둥 폭이 화면마다
+       다르므로 기준 폭도 화면 종류마다 다르다(파일 끝 '레일을 띄우는 폭' 참조). 일반 화면은
+       좁아질수록 이름표를 줄이고 → 점만 남기고 → 그래도 안 되면 접는다. 레일이 접혀도
+       TOP 단추는 남긴다 — 단추는 화면 폭과 무관하게 언제나 있다.
+
+   DOM 계약 (js/pagenav.js 가 이 구조 그대로 만든다 — 한쪽만 고치면 둘 다 깨진다)
+     .pagenav > .pagenav-rail > ol > li > a.pn-dot > span.pn-label
+     .pagenav > .pagenav-top  > span.pn-arrow + span.pn-top-txt
+     현재 구역의 a 에 class 'is-on' 과 aria-current="true".
+     --pn-progress (0~100) 는 JS 가 채우는 '읽은 분량' — TOP 단추 바깥 고리에 쓴다.
+   ========================================================= */
+
+/* ---------- 껍데기 ---------- */
+.pagenav {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  /* 화면 여백과 기기 안전영역 중 큰 쪽 — 노치 있는 기기에서 단추가 모서리에 물리지 않게 한다. */
+  right: max(var(--gutter), env(safe-area-inset-right, 0px));
+  z-index: 54;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;   /* 레일은 남는 세로 공간 한가운데 — TOP 단추는 아래에 따로 앉는다 */
+  /* 위는 고정 헤더를 비켜서고, 아래는 TOP 단추(지름 52px)가 앉을 자리와 로그인 회원 안내 막대를
+     통째로 비워 둔다. 그래야 구역이 많아 레일이 길어져도 단추 위로 겹쳐 내려오지 않는다.
+     --legal-notice-h 는 안내가 떠 있을 때만 js/common.js 가 실제 높이로 채운다(없으면 0px). */
+  padding: calc(var(--header-h) + var(--sp-3)) 0
+           calc(var(--sp-4) + 52px + var(--sp-3) + var(--legal-notice-h, 0px) + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+}
+/* 껍데기는 클릭을 통과시키고, 실제로 누를 수 있는 것만 다시 켠다. */
+.pagenav-rail,
+.pagenav-top { pointer-events: auto; }
+
+/* ---------- 구역 이동 레일 ---------- */
+.pagenav-rail {
+  margin: 0;
+  /* 구역이 아주 많은 화면에서도 헤더 위로 넘치지 않게 한다. 넘치는 만큼만 안에서 굴린다.
+     스크롤막대는 숨긴다 — 레일은 읽는 것이 아니라 가리키는 것이라 막대가 보이면
+     본문 막대(창 맨 오른쪽, 겨우 24px 옆이다)와 헷갈린다. 넘침은 아래 끝흐림으로 알린다. */
+  max-height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+  /* ★ overscroll-behavior:contain 을 걸지 않는다.
+     걸어 두면 내용이 넘치지 않는데도 Chromium 이 레일을 스크롤 컨테이너로 잡고
+     부모(문서)로 가는 스크롤 체이닝까지 끊어, 커서가 레일 위에 있는 동안 휠이 통째로
+     먹통이 됐다 — terms.html 1440px 에서 레일 상자 182×494px(화면 높이의 55%)이
+     죽은 구역이었다(휠 400 → scrollY 0, 같은 화면 본문 위에서는 400. 실측).
+     레일은 길잡이지 스크롤 감옥이 아니다. 넘칠 때는 제 몫만 굴리고 나머지는 문서로 넘긴다. */
+
+  /* 넘침 신호 — 위아래 끝을 흐린다.
+     ★ 여백을 먼저 --sp-3 만큼 두고 **같은 길이만큼** 흐리는 것이 요점이다.
+       넘치지 않을 때: 끝에 놓인 것이 빈 여백이라 첫 점·끝 점은 그대로 또렷하다(헛신호 없음).
+       넘칠 때: 그 자리를 점이 채우고 있어 흐려진다 → '이 방향에 더 있다'.
+       끝까지 굴리면 그쪽 여백이 다시 드러나 흐림이 풀린다 → '여기가 끝이다'.
+     마스크를 모르는 브라우저에서는 그냥 흐림이 없다 — 레일의 뜻은 하나도 줄지 않는다. */
+  padding-block: var(--sp-3);
+  -webkit-mask: linear-gradient(to bottom, transparent 0, #000 var(--sp-3),
+                                #000 calc(100% - var(--sp-3)), transparent 100%);
+          mask: linear-gradient(to bottom, transparent 0, #000 var(--sp-3),
+                                #000 calc(100% - var(--sp-3)), transparent 100%);
+}
+.pagenav-rail::-webkit-scrollbar { width: 0; height: 0; }
+
+.pagenav-rail ol {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.pagenav-rail li { margin: 0; padding: 0; }
+/* 점을 잇는 세로선. 점 상자(14px)의 한가운데를 지나도록 오른쪽에서 6px 띄우고,
+   첫 점·끝 점의 한가운데(줄 높이 26px 의 절반)에서 시작하고 끝낸다.
+   점은 자기 배경으로 이 선을 덮어 구슬처럼 보인다. */
+.pagenav-rail ol::before {
+  content: '';
+  position: absolute;
+  right: 6px;
+  top: 13px;
+  bottom: 13px;
+  width: 2px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--ink) 16%, transparent);
+}
+
+/* ★ .pn-dot 은 style.css 에 이미 있는 이름이다 — 상태 파이프(.pipe-node)의 8px 상태 점이
+   `position:absolute; left:11px; top:16px; width:8px; height:8px` 에 글로우까지 두르고 있다
+   (status.html 에서 실제로 부딪힌다). 이름은 부품 계약이라 바꿀 수 없으므로 **우리 쪽 규칙을
+   전부 .pagenav 안으로 한정하고**, 저쪽에서 새어 들어오는 값은 여기서 되돌려 놓는다.
+   거꾸로도 안전해진다 — 우리 규칙이 파이프의 상태 점을 건드리지 않는다. */
+.pagenav .pn-dot {
+  position: static;
+  left: auto;
+  top: auto;
+  width: auto;
+  border-radius: 0;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-1);
+  /* 줄 높이를 고정한다 — 현재 구역의 이름표가 커져도 점의 한가운데가 안 움직여야
+     위 세로선과 어긋나지 않는다. */
+  height: 26px;
+  color: var(--muted);
+  text-decoration: none;
+}
+/* 점 자체. 상자 크기(14px)는 고정이고 눈에 보이는 크기만 transform 으로 바꾼다 —
+   상자를 키우면 점의 한가운데가 오른쪽으로 밀려 세로선에서 벗어난다. */
+.pagenav .pn-dot::after {
+  content: '';
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--muted);
+  transform: scale(.5);
+  transition: transform var(--motion-fast) var(--ease-out),
+              background var(--motion-fast) var(--ease-out),
+              box-shadow var(--motion-fast) var(--ease-out);
+}
+/* 이름표는 길 수 있다(러시아어는 한국어의 두 배를 넘는다) — 한 줄로 자르고 말줄임한다.
+   ★ 평소에도 알약 바탕을 깐다(예전엔 transparent 였다).
+     레일은 남는 세로 공간의 한가운데라 스크롤 0 에서 index 의 어두운 히어로 위에 앉는데,
+     거기서 --muted 글자는 밝은 테마 2.91~3.27:1 밖에 안 나왔다(실측). 11px/700 은
+     WCAG 의 '큰 글자'(굵은 글씨 18.66px 이상)가 아니라 본문 취급이라 4.5:1 이 필요하다.
+     뒤에 무엇이 오든 바탕이 --surface 로 고정되면 대비가 배경과 무관해진다 —
+       밝은: --muted #5c687c on --surface #ffffff = 5.64:1
+       어두운: --muted #8493ac on --surface #121a2c = 5.58:1
+     두 테마 모두 4.5:1 을 넘는다. 색을 --ink-2 로 올리는 쪽은 답이 못 된다 —
+     밝은 테마에서 더 어두워져 어두운 히어로 위에서는 오히려 2.38:1 로 떨어진다.
+     테두리·그림자는 여기 두지 않는다 — 가리키거나 현재 구역일 때만 얹혀 위계가 남는다. */
+.pagenav .pn-label {
+  max-width: min(20vw, 160px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 2px var(--sp-1);   /* 2px 은 알약 모양을 지키는 광학 보정이다 */
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  line-height: 1.4;
+  transition: color var(--motion-fast) var(--ease-out),
+              background var(--motion-fast) var(--ease-out),
+              border-color var(--motion-fast) var(--ease-out);
+}
+
+.pagenav .pn-dot:hover::after,
+.pagenav .pn-dot:focus-visible::after { background: var(--ink-2); transform: scale(.72); }
+.pagenav .pn-dot:hover .pn-label,
+.pagenav .pn-dot:focus-visible .pn-label {
+  color: var(--ink);
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: var(--shadow);
+}
+
+/* ★ 현재 구역 규칙은 hover 뒤에 둔다 — 명시도가 같아 순서로 이긴다.
+   현재 구역을 가리켰을 때 강조가 풀려 '어디였더라' 가 되면 안 된다. */
+.pagenav .pn-dot.is-on::after {
+  background: var(--brand-accent);
+  transform: scale(.86);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-accent) 18%, transparent);
+}
+.pagenav .pn-dot.is-on .pn-label {
+  color: var(--ink);
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: var(--shadow);
+  font-size: var(--fs-sm);
+}
+
+/* ---------- 맨 위로(TOP) 단추 ---------- */
+/* ★ 흐름에서 빼 컨테이너 바닥에 직접 못박는다. 예전엔 레일의 auto 여백이 단추를 아래로
+   밀어 주는 구조였는데, 레일이 접히는 좁은 화면(1199px 이하 — 즉 휴대폰·태블릿 전부)에서는
+   밀어 줄 것이 사라져 **단추가 헤더 바로 밑 오른쪽 위로 올라가 앉았다**(390px 에서 실측).
+   레일이 있든 없든 자리가 같아야 한다. */
+.pagenav-top {
+  position: absolute;
+  right: 0;
+  bottom: calc(var(--sp-4) + var(--legal-notice-h, 0px) + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;                   /* 화살표와 글자 사이 — 스케일 밖의 광학 보정 */
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: var(--ink-2);
+  line-height: 1;
+  transition: opacity var(--motion-fast) var(--ease-out),
+              transform var(--motion-fast) var(--ease-out),
+              color var(--motion-fast) var(--ease-out),
+              border-color var(--motion-fast) var(--ease-out),
+              visibility 0s;
+}
+.pagenav-top:hover {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--brand-accent) 45%, var(--border));
+}
+/* 동그란 단추라 기본 포커스 링(2px)이 고리와 붙어 보인다 — 한 칸 더 띄운다. */
+.pagenav-top:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 4px; }
+
+/* 위 화살표 — 정사각형의 두 변만 그려 45° 돌린 갈매기. 아이콘 파일을 늘리지 않는다. */
+.pagenav .pn-arrow {
+  width: 9px;
+  height: 9px;
+  margin-top: 2px;            /* 돌린 갈매기는 무게가 아래로 쏠린다 — 광학 보정 */
+  border-top: 2px solid currentColor;
+  border-left: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+/* 'TOP' 은 다섯 언어에서 모두 그대로 쓰는 낱말이라 번역하지 않는다(사전 키를 달지 않는다). */
+.pagenav .pn-top-txt {
+  font-size: var(--fs-2xs);
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+/* '읽은 분량' 고리 — 테두리 바깥에 진행률만큼 호를 그린다. 값은 JS 가 --pn-progress(0~100)로 넣는다.
+   같은 정보를 글자로도 주는 자리가 없으므로 **장식으로만 둔다** — aria 에는 올리지 않고,
+   이 고리가 없어도 단추의 뜻(맨 위로)은 하나도 줄지 않는다.
+   ★ 마스크를 모르는 브라우저에서는 가운데가 안 뚫려 색 원판이 단추 뒤로 비죽 나온다 —
+     그릴 수 있을 때만 만든다(없으면 그냥 고리가 없는 단추다). */
+@supports ((-webkit-mask: radial-gradient(#000, #000)) or (mask: radial-gradient(#000, #000))) {
+  .pagenav-top::before {
+    content: '';
+    position: absolute;
+    inset: -5px;
+    border-radius: 999px;
+    pointer-events: none;
+    background: conic-gradient(var(--brand-accent) calc(var(--pn-progress, 0) * 1%),
+                               color-mix(in srgb, var(--ink) 10%, transparent) 0);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+            mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+  }
+}
+
+/* 화면 위쪽에 있을 때는 단추를 감춘다. visibility 까지 꺼야 안 보이는 단추에 Tab 이 걸리지 않는다 —
+   사라지는 동안은 보이게 두려고 visibility 만 모션 길이만큼 늦춘다(전환 순서의 다섯째 값). */
+.pagenav-top.is-off {
+  opacity: 0;
+  transform: translateY(10px);
+  visibility: hidden;
+  transition-delay: 0s, 0s, 0s, 0s, var(--motion-fast);
+}
+
+/* ---------- 모션 · 겹침 · 인쇄 ---------- */
+/* 움직임을 줄여 달라고 한 사람에게는 즉시 나타나고 즉시 사라진다(늦춤도 함께 푼다). */
+@media (prefers-reduced-motion: reduce) {
+  .pagenav-top,
+  .pagenav .pn-dot::after,
+  .pagenav .pn-label { transition: none; }
+  .pagenav-top.is-off { transition-delay: 0s; }
+}
+/* html.no-motion 은 style.css 가 전역 !important 로 전환을 끄지만, 늦춤(delay)은 따로 푼다. */
+html.no-motion .pagenav-top.is-off { transition-delay: 0s; }
+
+/* '사용법 보기' 투어(js/guide.js 가 body 에 tg-on)가 도는 동안에는 감춘다 —
+   .legal-notice 와 같은 처방(css/style.css 끝부분). 투어 오버레이(z 120) 아래라 누를 수도 없고,
+   오른쪽에 있는 대상을 비출 때 스포트라이트 구멍 안에서 대상을 덮는다.
+   display 가 아니라 visibility 라 투어가 끝나면 그 자리에 그대로 돌아온다. */
+body.tg-on > .pagenav { visibility: hidden; }
+
+/* ★ 같은 처방을 '화면을 통째로 덮는 덮개' 전체로 넓힌다.
+   덮개가 떠 있어도 레일·TOP 은 z 54 라 덮개 뒤에 살아 있었고, Tab 이 거기로 들어가
+   **안 보이는 조작부에 초점이 앉았다**. display 가 아니라 visibility 라 덮개가 걷히면
+   그 자리에 그대로 돌아온다(레일이 다시 그려지지 않는다).
+   토글 방식은 실제 마크업을 확인하고 골랐다 —
+     · .ql-backdrop (z 60, cargo.html) : HTML 에 미리 있고 js/cargo.js 가 hidden 속성으로 켠다
+     · .sess-mask   (z 9000, js/auth.js·js/analytics-mail.js) : 열 때 만들고 닫을 때 지운다
+     · .reg-ov      (z 120) · .auth-login-ov (z 220) : 같은 '만들고 지우기'
+     · .legal-modal-ov (z 125, js/common.js 약관 팝업) : 한 번 만들고 hidden 속성으로 켠다
+   .cargo-guide-form 은 뺀다 — 이름만 .reg-ov 지 position:static 으로 본문에 끼워 넣는
+   견본 폼이라(css/cargo.css) 덮개가 아니다. 그것까지 잡으면 투어 중에 길잡이가 사라진다. */
+body:has(> .legal-modal-ov:not([hidden])) > .pagenav,
+body:has(> .ql-backdrop:not([hidden])) > .pagenav,
+body:has(> .reg-ov:not(.cargo-guide-form)) > .pagenav,
+body:has(> .auth-login-ov) > .pagenav,
+body:has(> .sess-mask) > .pagenav { visibility: hidden; }
+
+/* ---------- 레일을 띄우는 폭 ----------
+   레일은 본문 기둥을 덮으면 안 된다. 기둥의 오른끝과 레일의 왼끝을 폭으로 풀면 기준이 나온다.
+     레일 왼끝 = 100vw - 24(--gutter) - 레일폭,  레일폭 = 점 14 + 틈 8(--sp-1) + 이름표
+   ┌ 일반 화면 : 기둥은 .container(max-width 1200 · 중앙정렬 · 좌우 안쪽 여백 24).
+   │   글자가 시작되는 오른끝 = (100vw + 1200)/2 - 24
+   │   안 겹칠 조건 → 이름표 ≤ 50vw - 622px.  이름표 상한 108px 을 넣으면 100vw ≥ 1460px.
+   │   1280px 에서는 기둥 오른끝 1240 vs 레일 왼끝 1175 로 65px 을 덮었고(한국어 이름표),
+   │   이름표가 상한까지 늘어나는 러시아어에서는 114px 까지 벌어졌다 — 그래서 1460 이다.
+   └ 약관·처리방침(body.legal-page) : 기둥이 .legal-wrap(72ch + 좌우 24 = 실측 734px)뿐이다.
+       안 겹칠 조건 → 100vw ≥ 734 + 2×레일폭. 레일폭이 상한(182)이어도 1098px 이면 된다.
+       1200px 에서 기둥 오른끝 983 vs 레일 왼끝 994 로 이미 11px 이 남는다(1440px 에서는
+       1063 vs 1287 로 224px). 여기서까지 1460 을 요구하면 멀쩡히 되던 레일을 뺏는 꼴이라
+       지금대로 1200 에서 보인다. — 숫자가 둘인 이유가 이것이다: 기둥 폭이 다르다.
+   ※ 레일이 접히는 폭에서도 TOP 단추는 그대로 남는다(.pagenav-top 은 컨테이너 바닥에
+     absolute 로 못박혀 있어 레일 유무와 자리가 같다 — 390px 까지 실측 확인).
+
+   ★ 일반 화면 1234~1459px 은 레일을 **접지 않고 줄인다**(2026-09-21).
+     겹침을 막으려고 1460 아래를 통째로 접었더니 1280·1366·1440 — 사무실 노트북에서 가장 흔한
+     폭 — 에서 레일이 사라졌다. 1440px 한국어 이름표(가장 긴 '운영 규모' 69px)는 애초에 한 픽셀도
+     안 겹쳤는데 러시아어 최악값 때문에 같이 접힌 것이다. 요구사항은 '안 겹친다' 이지 '안 보인다' 가
+     아니므로, 1460 이상에서 이미 쓰는 '안 겹치는 최대' 규칙을 그대로 아래로 내린다.
+       · 1340~1459 : 이름표 ≤ 50vw - 622px (1460 이상과 같은 식). 1340 에서 48px(--sp-6)로,
+                     1440 에서 98px. 넘치는 이름표는 지금처럼 말줄임되고 title 로 전체를 본다.
+       · 1234~1339 : 이름표가 --sp-6 보다 좁아지면 글자 한두 개 + 말줄임이라 뜻이 안 남는다 —
+                     점만 남긴다. 이름표는 화면에서만 감추고(접근명은 그대로), 가리키거나
+                     키보드로 초점이 오면 그 줄만 펼쳐 보인다(툴팁처럼 잠깐 겹치는 것은 괜찮다 —
+                     늘 덮고 있는 것이 결함이었다).
+                     점만일 때 레일폭 = 점 14 + 현재 점 후광이 상자 밖으로 번지는 3
+                     → 100vw ≥ 1200 + 2×17 = 1234.
+       · 1233 이하 : 점 하나 들어갈 자리도 없다 — 접는다(TOP 단추는 남는다).
+     약관 화면은 위 규칙 그대로다(body:not(.legal-page) 로 가둔다). */
+@media (max-width: 1459px) {
+  .pagenav-rail { display: none; }
+}
+@media (min-width: 1200px) and (max-width: 1459px) {
+  .legal-page .pagenav-rail { display: block; }
+}
+@media (min-width: 1234px) and (max-width: 1459px) {
+  body:not(.legal-page) .pagenav-rail { display: block; }
+}
+/* 1200~1399 의 약관 화면은 기둥 오른쪽 여유가 가장 얇다 — 이름표를 더 짧게 잘라 둔다. */
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .pagenav .pn-label { max-width: 108px; }
+}
+/* 일반 화면의 이름표는 '안 겹치는 최대'로 자동으로 늘어난다 — 1340px 에서 48px 로 시작해
+   1564px 부터 본래 상한 160px 에 닿는다. 약관 화면은 기둥이 좁아 이 제한이 필요 없다.
+   ★ 선택자 명시도(0,3,1)가 위 약관용 108px 규칙(0,2,0)보다 높아 1340~1399 에서도 이 식이 이긴다. */
+@media (min-width: 1340px) {
+  body:not(.legal-page) .pagenav .pn-label { max-width: min(160px, calc(50vw - 622px)); }
+}
+/* 점만 남기는 폭 — 이름표는 display:none 이 아니라 '화면에서만' 감춘다.
+   display:none 으로 지우면 점(<a>)의 접근명이 비어 스크린리더가 '링크' 라고만 읽는다.
+   절대배치로 흐름에서 빼므로 점 줄의 폭은 점 상자(14px)뿐이 된다(틈 --sp-1 도 안 생긴다). */
+@media (min-width: 1234px) and (max-width: 1339px) {
+  body:not(.legal-page) .pagenav .pn-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  /* 가리키거나 초점이 오면 그 줄만 펼친다 — 레일은 오른쪽 정렬이라 이름표는 왼쪽(본문 쪽)으로
+     자라고, 점 자리는 그대로라 커서가 점 위에 머문 채 깜빡이지 않는다. 폭은 기본 상한을 따른다. */
+  body:not(.legal-page) .pagenav .pn-dot:hover .pn-label,
+  body:not(.legal-page) .pagenav .pn-dot:focus-visible .pn-label {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 2px var(--sp-1);
+    border: 1px solid var(--border);
+    clip-path: none;
+  }
+}
+
+/* 종이에는 떠 있는 길잡이가 남을 자리가 없다. */
+@media print {
+  .pagenav { display: none !important; }
+}
+
+/* 끝자락 여백(js/pagenav.js fitTail) — 레일이 보일 때만 높이가 생긴다. 보이지 않는 빈 칸이라 인쇄에서는 뺀다. */
+.pn-tail { display: block; width: 100%; pointer-events: none; }
+@media print { .pn-tail { display: none !important; } }
