@@ -1,0 +1,1019 @@
+/* Cargo workspace overrides are isolated from the shared page layouts. */
+/* 예전엔 이 파일만 글자 크기를 30·25·21·16·14·13·12px 로 직접 적어, style.css 의 타이포
+   계단을 손대도 화물 화면만 옛 크기로 남았다(같은 위계인데 화면마다 1~2px 씩 달랐다).
+   값이 같은 자리를 전부 --fs-* 토큰으로 옮겼다 — 지금 렌더 크기는 그대로다.
+   ※ 입력칸의 16px 두 곳만 예외로 남긴다(각 줄의 주석 참조). */
+.cargo-page .container { max-width: 1480px; }
+.cargo-page .dash-hero { padding: calc(var(--header-h) + 28px) 0 0; }
+.cargo-page .dash-hero h1 { font-size: var(--fs-4xl); line-height: 1.25; letter-spacing: 0; }
+.cargo-page .dash-hero .dash-sub { margin-top: 8px; }
+.cargo-page .dash-hero [data-i18n-html="cargo.hero.note"] { margin-top: 10px !important; }
+.cargo-nav { display: flex; gap: 28px; margin-top: 20px; border-bottom: 1px solid var(--border); }
+.cargo-nav a { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 8px 2px; color: #eaf1fb; font-weight: 650; text-align: center; border-bottom: 2px solid transparent; }
+.cargo-nav a:hover, .cargo-nav a:focus-visible { color: var(--ops-cyan); border-bottom-color: var(--ops-cyan); }
+.cargo-nav [hidden] { display: none; }
+.cargo-count { font-size: var(--fs-sm); font-variant-numeric: tabular-nums; color: #c2d4ec; }
+/* 건수는 쪼개지 않는다 — 휴대폰 규칙(.cargo-nav a 의 overflow-wrap:anywhere)이 건수 칸에도 먹어, 러시아어 360~430 폭에서
+   감시목록 건수 '26' 이 '2' 와 '6' 두 줄로 갈렸다. 모자라면 앞의 글자가 줄을 바꾼다. */
+.cargo-nav .cargo-count { white-space: nowrap; overflow-wrap: normal; flex-shrink: 0; }
+.cargo-page .dash-section { padding: 28px 0; scroll-margin-top: calc(var(--header-h) + 16px); }
+.cargo-page .dash-head { margin-bottom: 14px; align-items: baseline; }
+.cargo-page .dash-head h2 { font-size: var(--fs-2xl); letter-spacing: 0; }
+.cargo-page .dash-head .hint { line-height: 1.6; }
+.cargo-search { padding: 0 0 16px; }
+.cargo-search > label { display: block; margin-bottom: 8px; font-size: var(--fs-base); font-weight: 700; }
+.cargo-search-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(112px, auto); gap: 12px; }
+/* 16 은 디자인 값이 아니라 iOS 가 입력 포커스 때 화면을 확대하지 않는 임계값이라
+   토큰으로 바꾸지 않는다(style.css 의 '모바일 입력 확대 방지' 주석과 같은 이유).
+   id 선택자라 그 전역 규칙보다 명시도가 높아, 이 화면에서는 이 값이 실제로 그 역할을 한다. */
+.cargo-search-row #blNo { width: 100%; max-width: none; min-width: 0; min-height: 48px; font-size: 16px; border-radius: 8px; padding: 10px 14px; }
+.cargo-search-row #traceBtn { min-height: 48px; height: auto; min-width: 112px; border-radius: 8px; justify-content: center; white-space: normal; }
+.cargo-search-row #blNo[aria-invalid="true"] { border-color: var(--up); }
+.cargo-input-status { min-height: 20px; margin: 8px 0 0; color: var(--muted); font-size: var(--fs-md); line-height: 1.55; }
+.cargo-input-status.is-error { color: var(--up); }
+/* 구역별 사용법 견본(2026-09-28) — 조회 전이라 비어 있는 자리에 투어가 그 단계 동안만 끼우는 누를 수 없는 모형
+   (js/cargo.js guideSample). 맨 위 '안내 예시' 줄은 카드 테두리에 붙지 않게 조금 들여 쓴다(예전 견본은 테두리에 붙어 보였다). */
+.cg-guide-sample { display: grid; gap: var(--sp-2); margin: 0 0 var(--sp-3); }
+.cg-guide-note { margin: 0; padding: 0 var(--sp-1); color: var(--muted); font-size: var(--fs-xs); font-weight: 700; }
+.cargo-guide-form { position: static; z-index: auto; padding: 0 0 var(--sp-3); background: none; backdrop-filter: none; justify-content: flex-start; }
+.cargo-guide-form .reg-card { max-height: none; overflow: visible; }
+.cargo-guide-form .cg-guide-note { margin: 0 0 var(--sp-2); padding: 0; }
+.cargo-guide-form h3 small { display: block; margin-top: var(--sp-1); overflow-wrap: anywhere; }
+/* 결과·감시목록 카드 안(머리 바로 밑)에 끼우는 등록 창 견본 — 카드 안쪽 여백에 맞춘다 */
+.trk-card > .cargo-guide-form { padding: var(--sp-3) var(--sp-4) 0; }
+/* '(선택)' 꼬리표가 좁은 견본에서 '(선 / 택)' 으로 쪼개졌다 — 실제 창처럼 한 덩어리로 둔다. */
+.cargo-guide-form .reg-opt { white-space: nowrap; }
+/* 선택 막대에 예시 건수를 보일 때 붙는 '안내 예시' 줄(감시목록 사용법 마지막 단계) */
+.wf-bulkbar .cg-bar-note { padding: 0; flex: 0 0 100%; }
+@media (max-width: 480px) {
+  /* 휴대폰 — 카드 안쪽 여백 탓에 견본 창이 실제 창(화면 폭 − 40px)보다 60px 가까이 좁아, 알림 이메일 칸에 'name@' 까지만
+     보이고 단추가 세 줄로 쌓였다(390·360 실측 — 실제 창은 '취소'·'등록 후 TRACING REPORT' 한 줄, 그 아래 '등록').
+     카드 여백을 거의 걷어 실제 창 폭에 맞춘다. */
+  .trk-card > .cargo-guide-form { padding: var(--sp-2) var(--sp-0) 0; }
+  /* '다시 로그인' 견본(로그인 만료·로그인 확인 지연 두 장)은 360×740 에서 562px 라 말풍선이 들어갈 자리가 없어, 말풍선이 아래 카드와
+     본문이 가리키는 '다시 조회' 단추를 덮었다. 휴대폰에서는 두 장의 설명 줄을 빼고 제목과 단추만 보인다 — 무엇을 누르는지는
+     말풍선 본문이 말한다(견본만의 모양이고 실제 상태 카드는 그대로다). */
+  #cgGuideLogin .cg-state-bd, #cgGuideLogin .cg-state-sub { display: none; }
+}
+/* 공식 조회 채널 서랍의 해상/항공 탭 — 고른 탭의 바탕을 되살린다. 공용 규칙 '.ql-scope .scope-tab{background:none}' 이
+   '.scope-tab.active' 와 명시도가 같고 뒤에 있어 고른 탭의 바탕을 지웠고, 글자만 흰색으로 남아 밝은 테마에서 고른 '해상' 이
+   보이지 않았다(투어 1단계가 비추는 바로 그 탭). 고른 탭 위에 마우스를 올려도 글자가 바탕에 묻히지 않게 한다. */
+.ql-scope .scope-tab.active,
+.ql-scope .scope-tab.active:hover { color: #fff; background: var(--brand-accent); }
+/* 공식 조회 채널 서랍 — 제목과 사용법 칩을 한 줄에, 설명은 다음 줄 */
+.ql-drawer-head > div:first-child { display: flex; flex-wrap: wrap; align-items: center; gap: 4px var(--sp-2); min-width: 0; }
+.ql-drawer-head > div:first-child > h2 { margin-bottom: 0; }
+.ql-drawer-head > div:first-child > .hint { flex: 0 0 100%; }
+/* 칩을 숨길 때(리포트 창은 지금 열린 탭의 칩만 보인다) — .tg-launch 의 display 가 [hidden] 을 이기지 않게 */
+.tg-host > .tg-launch[hidden] { display: none; }
+.cargo-page .cargo-console { display: block; }
+.cargo-page #ccEmpty { min-height: 100px; padding: 20px; border: 1px dashed var(--border); border-radius: 8px; background: none; }
+.cargo-page #ccEmpty h2 { margin: 0; color: var(--muted); font-size: var(--fs-lg); font-weight: 500; letter-spacing: 0; }
+.cargo-page .trk-card { border-radius: 8px; box-shadow: none; }
+.cargo-page .cc-main { min-width: 0; }
+.cargo-support { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; margin-top: 16px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.cargo-watch-summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; font-size: var(--fs-md); }
+.cargo-watch-summary > span:first-child { font-weight: 700; }
+.cargo-watch-summary #watchSummary { color: var(--muted); }
+.cargo-watch-summary b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.cargo-watch-summary a, .cargo-channel-link { color: var(--ops-cyan); font-size: var(--fs-md); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
+.cargo-channel-link { appearance: none; border: 0; background: none; padding: 8px 0; cursor: pointer; font-family: inherit; text-align: left; }
+.cargo-carriers { border-bottom: 1px solid var(--border); }
+.cargo-carriers > summary { cursor: pointer; padding: 14px 0; font-size: var(--fs-md); font-weight: 650; color: var(--ink-2); }
+.cargo-carriers .carrier-list { padding: 4px 0 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 32px; }
+.cargo-carriers .cl-group { margin: 0; }
+.cargo-carriers .cl-note { grid-column: 1 / -1; margin: 0; }
+.cargo-page .wf-toolbar { display: grid; grid-template-columns: minmax(180px, 1.4fr) repeat(2, minmax(120px, 1fr)) minmax(150px, 1fr); }
+.cargo-page .wf-toolbar > .focus-search { width: 100%; max-width: none !important; min-width: 0; }
+.cargo-page .wf-toolbar > .trk-spacer { display: none; }
+.cargo-page .wf-toolbar .chip-row { align-self: center; grid-column: span 2; }
+.cargo-page .wf-toolbar #wf_bulk { justify-self: end; }
+.cargo-page .wf-toolbar #wf_sort { justify-self: end; grid-column: 3; grid-row: 2; }
+.cargo-page .wf-toolbar #wf_bulk { grid-column: 4; grid-row: 2; }
+.cargo-page .wf-toolbar #wf_reset { justify-self: start; }
+.cargo-page .wf-toolbar .f-chip { min-height: 36px; }
+.cargo-page .wf-number { display: inline-flex; align-items: center; gap: 6px; appearance: none; background: none; border: 0; color: var(--ops-cyan); padding: 7px 0; font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; text-align: left; }
+.cargo-page .wf-number:disabled { cursor: wait; opacity: .65; }
+.cargo-page #watchOut .trk-tbl { min-width: 1060px; }
+.cargo-page #watchOut .trk-tbl-wrap { max-height: 650px; overscroll-behavior-x: contain; }
+.cargo-page #watchOut .trk-tbl th { position: sticky; top: 0; z-index: 2; background: var(--surface-2); }
+.cargo-page .wf-result-count { padding: 8px 18px; color: var(--muted); font-size: var(--fs-sm); border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+.cargo-page .wf-retry { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 18px 0; }
+.cargo-page .wf-pager { min-height: 44px; flex-wrap: wrap; gap: 12px; }
+.cargo-page .wf-pager button { min-height: 40px; }
+.cargo-page #feed .trk-tbl-wrap { max-height: 440px; overflow: auto; }
+.cargo-page :is(.wf-toolbar,.cargo-nav,.cargo-support,.cargo-search) :is(button,a,input,select):focus-visible,
+.cargo-page .wf-number:focus-visible,
+.cargo-page .cargo-carriers > summary:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
+:root[data-theme="light"] .cargo-page .cargo-watch-summary a,
+:root[data-theme="light"] .cargo-page .cargo-channel-link,
+:root[data-theme="light"] .cargo-page .wf-number { color: var(--brand-primary); }
+@media (max-width: 740px) {
+  .cargo-page .dash-hero { padding-top: calc(var(--header-h) + 20px); }
+  .cargo-page .dash-hero h1 { font-size: var(--fs-3xl); }
+  .cargo-nav { gap: 0; }
+  .cargo-nav a { flex: 1; min-width: 0; padding: 8px 4px; font-size: var(--fs-md); overflow-wrap: anywhere; }
+  .cargo-page .dash-section { padding-bottom: 24px; }
+  .cargo-page .dash-head { flex-wrap: wrap; gap: 6px; }
+  .cargo-page .dash-head .hint { flex-basis: 100%; }
+  .cargo-search-row { grid-template-columns: minmax(0, 1fr) minmax(76px, auto); gap: 8px; }
+  .cargo-search-row #traceBtn { min-width: 76px; max-width: 140px; padding: 10px 14px; }
+  .cargo-support { gap: 6px; }
+  .cargo-watch-summary { width: 100%; }
+  .cargo-carriers .carrier-list { grid-template-columns: 1fr; }
+  .cargo-page .wf-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cargo-page .wf-toolbar #wf_q,
+  .cargo-page .wf-toolbar #wf_route,
+  .cargo-page .wf-toolbar .chip-row { grid-column: 1 / -1; }
+  .cargo-page .wf-toolbar #wf_reset { grid-column: 1 / -1; justify-self: start; }
+  .cargo-page .wf-toolbar #wf_sort,
+  .cargo-page .wf-toolbar #wf_bulk { grid-column: auto; grid-row: auto; }
+  /* 여기 16 도 iOS 확대 임계값 — 계단 값이 아니므로 토큰으로 바꾸지 않는다 */
+  .cargo-page .wf-toolbar .focus-search { min-height: 44px; font-size: 16px; }
+  .cargo-page .wf-toolbar .chip-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cargo-page .wf-toolbar .f-chip { white-space: normal; min-height: 40px; border-radius: 6px; }
+  .cargo-page #watchOut .trk-tbl-wrap { max-height: 520px; }
+  .cargo-page .wf-toolbar #wf_bulk { white-space: normal; max-width: 100%; text-align: center; height: auto; min-height: 44px; }
+  .cargo-page .trk-head { gap: 8px; }
+  .cargo-page .trk-head .trk-asof { flex-basis: 100%; margin: 0; }
+}
+@media (max-width: 400px) {
+  .cargo-page .site-header .logo-slot { flex: 1 1 0; min-width: 0; max-width: calc(100% - 56px); }
+  .cargo-page .site-header .logo-text { min-width: 0; }
+  .cargo-page .site-header .logo-text .l1 { font-size: var(--fs-md); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cargo-page { scroll-behavior: auto; }
+}
+
+/* =========================================================
+   TRACING REPORT (js/cargo-report.js) — 화주에게 화물 추적 보고 메일
+   ★ 새 색을 만들지 않는다. 표면·경계·강조·상태색은 전부 기존 토큰이라 다크/라이트가 같이 따라온다.
+   ★ 360px 에서 가로로 넘치지 않는다 — 긴 주소·B/L 은 overflow-wrap 으로 접고, 표는 좁으면 카드로 쌓는다.
+   ========================================================= */
+.trk-rpt-btn { color: var(--accent-2-txt); }
+.wf-acts { display: inline-flex; align-items: center; gap: 6px; }
+.wf-bulkbar .wf-rpt svg { flex: none; }
+.rpt-card { max-width: 640px; scroll-padding-bottom: 88px; }   /* 바닥 버튼 줄 높이 폴백 — 실제 값은 js(fitPad)가 잰다 */
+.rpt-card h3 { margin-bottom: var(--sp-2); overflow-wrap: anywhere; }
+.rpt-card .focus-search { width: 100%; max-width: none; min-width: 0; }
+.rpt-card textarea.focus-search { height: auto; min-height: 64px; padding: 8px 12px; line-height: 1.5; resize: vertical; font-family: inherit; }
+.rpt-card .reg-l { margin-top: var(--sp-3); }
+.rpt-card p.reg-l { margin-bottom: 6px; }
+.rpt-warn { color: var(--lv-busy-txt); }
+.rpt-addr { overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+
+/* 탭 — 서랍의 scope 탭과 같은 규약(roving tabindex). 손가락 폭에서도 44px 을 넘게 둔다. */
+.rpt-tabs { display: flex; gap: var(--sp-3); margin: 0 0 var(--sp-1); border-bottom: 1px solid var(--border); }
+/* 탭 줄 — 끝에 탭마다 하나씩인 사용법 칩 자리(#rptGuideHost). 밑줄은 줄 전체가 맡는다. */
+.rpt-tabbar { display: flex; align-items: flex-end; gap: var(--sp-2); margin: 0 0 var(--sp-1); border-bottom: 1px solid var(--border); }
+.rpt-tabbar > .rpt-tabs { flex: 1 1 auto; min-width: 0; margin: 0; border-bottom: 0; }
+.rpt-tabbar > .tg-host { flex: none; align-self: center; margin-left: auto; }
+.rpt-tabs [role="tab"] {
+  appearance: none; background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  min-height: 44px; padding: 8px 2px; font: inherit; font-size: var(--fs-md); font-weight: 700; color: var(--muted); cursor: pointer;
+}
+.rpt-tabs [role="tab"][aria-selected="true"] { color: var(--ink); border-bottom-color: var(--brand-accent-2); }
+.rpt-tabs [role="tab"]:focus-visible,
+.rpt-card .rpt-x:focus-visible,
+.rpt-card .f-chip:focus-visible,
+.rpt-card .reg-seg button:focus-visible,
+.rpt-check input:focus-visible,
+#rptPaneSent:focus-visible,
+.rpt-list-wrap:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+/* 대상 화물 칩 — 50건까지 들어오므로 높이를 묶고 안에서 스크롤한다. */
+.rpt-bls { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; max-height: 132px; overflow-y: auto; overscroll-behavior: contain; }
+.rpt-bl {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-height: var(--ctl-h-sm);
+  padding: 0 2px 0 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface-2);
+  font-size: var(--fs-sm); font-weight: 700;
+}
+.rpt-bl-no { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.rpt-bl small { color: var(--muted); font-weight: 500; }
+.rpt-x {
+  appearance: none; border: 0; background: none; color: var(--muted); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; flex: none;
+}
+.rpt-x:hover:not(:disabled) { color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.rpt-x:disabled { opacity: .35; cursor: default; }
+
+/* 보낼 항목 — 필터 칩(.f-chip)을 쓰되, 여기서는 '선택' 이라 꺼진 칩도 읽혀야 한다.
+   필터 칩의 흐림(opacity .45)은 이 자리에서 글자를 못 읽게 만든다 — 흐리지 않고 체크 표시로 가른다
+   (색만으로 상태를 말하지 않는다). */
+.rpt-cols { border: 0; margin: 0; padding: 0; min-width: 0; }
+.rpt-cols legend { padding: 0; }
+.rpt-cols .reg-hint { margin-top: 0; }
+.rpt-cols .chip-row { margin: var(--sp-1) 0 0; gap: 6px; }
+.rpt-cols .f-chip {
+  height: auto; min-height: var(--ctl-h-sm); padding: 4px 12px 4px 10px; gap: 6px;
+  font-weight: 700; white-space: normal; text-align: left; line-height: 1.35; cursor: pointer;
+}
+.rpt-cols .f-chip::before {
+  content: ''; flex: none; width: 9px; height: 5px; margin-top: -3px;
+  border-left: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg);
+}
+.rpt-cols .f-chip.off { opacity: 1; color: var(--muted); border-style: dashed; }
+.rpt-cols .f-chip.off::before { visibility: hidden; }
+.rpt-cols .f-chip[disabled] { cursor: default; }
+.rpt-cols-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 4px var(--sp-2); margin-top: var(--sp-1); }
+.rpt-cols-foot .reg-hint { margin: 0; }
+
+/* 받는 사람 — 나눠 읽은 결과를 칩으로 되돌려 보여 준다(무엇이 몇 명으로 읽혔는지 보내기 전에 보인다). */
+.rpt-to-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.rpt-to-list:empty { display: none; }
+.rpt-to-list li {
+  max-width: 100%; padding: 3px 10px; border: 1px solid var(--border); border-radius: 999px;
+  background: var(--surface-2); font-size: var(--fs-sm); overflow-wrap: anywhere;
+}
+.rpt-to-list li.is-bad { border: 1px dashed var(--lv-congested); color: var(--lv-congested-txt); }
+/* 받는 사람 오류 표시 — 글자 '!' 대신 Tabler alert-circle 14(글자색을 따르는 마스크 · 준거 D7) */
+.rpt-to-list li.is-bad::before {
+  content: ''; display: inline-block; width: 14px; height: 14px; margin-right: 6px; vertical-align: -2px; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.15' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0'/%3E%3Cpath d='M12 8v4'/%3E%3Cpath d='M12 16h.01'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.15' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0'/%3E%3Cpath d='M12 8v4'/%3E%3Cpath d='M12 16h.01'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+#rptToErr:empty { display: none; }
+/* 칸별 오류 — 색만으로 말하지 않는다(굵은 글자 + 앞의 '!' 표시). 틀린 칸은 테두리도 같은 색. */
+.rpt-ferr { margin: 4px 0 0; color: var(--lv-congested-txt); font-weight: 700; overflow-wrap: anywhere; }
+.rpt-ferr::before { content: '! '; font-weight: 800; }
+.rpt-ferr[hidden] { display: none; }
+#rptToErr { color: var(--lv-congested-txt); font-weight: 700; }
+.rpt-card .focus-search[aria-invalid="true"] { border-color: var(--lv-congested); }
+
+.rpt-row2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--sp-3); }
+.rpt-note-foot { display: flex; justify-content: space-between; gap: var(--sp-2); }
+.rpt-cnt { flex: none; font-variant-numeric: tabular-nums; }
+.rpt-check { display: flex; align-items: flex-start; gap: 8px; margin: var(--sp-3) 0 0; font-size: var(--fs-sm); font-weight: 700; color: var(--ink-2); cursor: pointer; }
+.rpt-check input { width: 18px; height: 18px; margin: 1px 0 0; flex: none; accent-color: var(--brand-accent); cursor: pointer; }
+.rpt-card .reg-seg button { min-height: 36px; }
+
+.rpt-quota {
+  display: flex; flex-wrap: wrap; gap: 4px var(--sp-3); margin-top: var(--sp-3); padding: 8px 12px;
+  border-radius: var(--radius-sm); background: var(--surface-2); font-size: var(--fs-sm); color: var(--ink-2);
+}
+.rpt-quota b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.rpt-quota .rpt-io { color: var(--lv-busy-txt); }
+.rpt-banner {
+  margin: var(--sp-1) 0 var(--sp-2); padding: 10px 12px; border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--lv-congested) 45%, transparent);
+  background: color-mix(in srgb, var(--lv-congested) 9%, transparent);
+  color: var(--lv-congested-txt); font-size: var(--fs-sm); font-weight: 700; line-height: 1.5;
+}
+.rpt-banner.is-info {
+  border-color: color-mix(in srgb, var(--brand-accent) 40%, transparent);
+  background: color-mix(in srgb, var(--brand-accent) 8%, transparent); color: var(--accent-2-txt);
+}
+
+/* 미리보기 — 메일은 흰 종이로 온다. 다크 테마에서도 받은 편지함처럼 흰 바탕으로 보여 준다. */
+.rpt-pv-meta { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px var(--sp-2); margin: 0 0 var(--sp-2); font-size: var(--fs-sm); }
+.rpt-pv-meta dt { color: var(--muted); font-weight: 700; }
+.rpt-pv-meta dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+.rpt-preview iframe { display: block; width: 100%; min-height: 420px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: #fff; }
+
+.rpt-msg:empty { min-height: 0; margin-top: 0; }
+/* 결과를 화면 안으로 굴릴 때(revealMsg) 버튼 줄 뒤로 숨지 않게 하는 여백은 카드의 scroll-padding-bottom 이 맡는다
+   (포커스 이동도 같은 값을 따른다). 여기서는 글자와 버튼 줄 사이 숨 쉴 틈만 둔다. */
+.rpt-card .rpt-msg, .rpt-card .rpt-ferr, .rpt-card #rptToErr { scroll-margin-bottom: 4px; }
+.rpt-msg p { margin: 0 0 4px; }
+.rpt-res .reg-hint, .rpt-list-inline { overflow-wrap: anywhere; }
+.rpt-addrs { list-style: none; margin: 2px 0 8px; padding: 0; display: grid; gap: 2px; font-size: var(--fs-sm); }
+.rpt-addrs small { color: var(--muted); }
+.rpt-addrs.is-bad .rpt-addr { color: var(--lv-congested-txt); }
+
+/* 버튼 줄은 긴 양식 아래에 묻히지 않게 카드 바닥에 붙인다 — 스크롤해도 '발송' 이 늘 보인다. */
+.rpt-card .rpt-btns {
+  position: sticky; bottom: calc(-1 * var(--card-pad)); z-index: 1;
+  margin: var(--sp-3) calc(-1 * var(--card-pad)) calc(-1 * var(--card-pad));
+  padding: var(--sp-2) var(--card-pad) var(--card-pad);
+  background: var(--surface); border-top: 1px solid var(--border);
+}
+
+/* 보낸 리포트 표 */
+.rpt-list-wrap { margin-top: var(--sp-1); }
+table.rpt-list td { white-space: normal; vertical-align: top; }
+table.rpt-list td.dt { white-space: nowrap; }
+.rpt-sub { display: block; margin-top: 2px; color: var(--muted); font-size: var(--fs-xs); overflow-wrap: anywhere; }
+.rpt-rc { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.rpt-rc small { color: var(--muted); }
+.rpt-rc .rs-failed small { color: var(--lv-congested-txt); }
+.rpt-rc .rs-unsubscribed small { color: var(--lv-busy-txt); }
+.rpt-acts { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.rpt-empty { margin: var(--sp-2) 0; }
+/* 보낸 리포트 목록이 빌 때도 가운데(형님 지시 09-29 D6 — 조회 대기·결과 없음은 가운데) */
+.rpt-empty { padding: var(--sp-4) 0; text-align: center; }
+
+@media (max-width: 600px) {
+  .rpt-row2 { grid-template-columns: minmax(0, 1fr); }
+  /* 좁으면 표를 카드로 쌓는다 — 가로 스크롤 표는 손가락으로 읽기 어렵다. 머리글은 칸마다 앞에 붙인다. */
+  table.rpt-list thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  table.rpt-list, table.rpt-list tbody, table.rpt-list tr, table.rpt-list td { display: block; width: 100%; }
+  table.rpt-list tr { padding: 6px 0; border-bottom: 1px solid var(--border); }
+  table.rpt-list tbody tr:last-child { border-bottom: 0; }
+  table.rpt-list td { display: flex; gap: var(--sp-1); padding: 4px 12px; border: 0; }
+  table.rpt-list td::before { content: attr(data-th); flex: 0 0 6.5em; color: var(--muted); font-size: var(--fs-xs); font-weight: 700; padding-top: 2px; }
+  table.rpt-list td.rpt-acts-td::before { content: none; }
+  table.rpt-list .rpt-cv { flex: 1 1 auto; min-width: 0; }
+  .rpt-acts { justify-content: flex-start; }
+}
+@media (max-width: 480px) {
+  /* 좁은 폰에서는 바깥 여백을 줄여 입력칸 폭을 번다(360px 기준 272 → 312px). */
+  #rptOv { padding: 8px; }
+  #rptOv .rpt-card { --card-pad: var(--sp-3); scroll-padding-bottom: 128px; }   /* 버튼이 두 줄로 접힌다 */
+}
+@media (max-height: 520px) {
+  .rpt-preview iframe { min-height: 260px; }
+}
+/* 예전엔 OS·브라우저 설정으로만 이 킬스위치가 켜졌다. 사이트 안에서 직접 끌 수단이
+   없어, 설정을 못 바꾸는 공용 PC 에서는 방법이 아예 없었다.
+   같은 규칙을 클래스로도 발동하게 넓힌다 — <html class="no-motion"> (토글 UI 는 별도).
+   미디어쿼리는 선택자로 열 수 없어 한 벌 더 두는 방법밖에 없다 — 위와 1:1 로 같게 유지할 것. */
+html.no-motion .cargo-page { scroll-behavior: auto; }
+
+/* =========================================================
+   화물 추적 다듬기 (2026-09-26) — 한눈 요약 · 진행 레일 · 상태 카드 · 토스트 · 스켈레톤
+   ★ 색은 style.css 토큰에서 뽑은 이 화면 전용 의미 토큰(--cg-*)만 쓴다. 다크가 기본(:root),
+     라이트는 :root[data-theme='light'] 에서 덮는다 — 두 테마를 늘 같이 본다.
+   ★ 움직임은 transform·opacity 만, 한 번만 돈다(데이터 위에서 끝없이 도는 것은 없다).
+     OS 설정(prefers-reduced-motion)과 사이트 토글(html.no-motion) 둘 다에서 꺼진다 —
+     애니메이션은 전부 아래 '움직임' 블록 한 곳에서만 켠다.
+   ========================================================= */
+:root {
+  --cg-ok: var(--lv-low);            --cg-ok-txt: var(--lv-low-txt);
+  --cg-warn: var(--lv-busy);         --cg-warn-txt: var(--lv-busy-txt);
+  --cg-risk: var(--lv-congested);    --cg-risk-txt: var(--lv-congested-txt);
+  --cg-info: var(--brand-accent);    --cg-info-txt: var(--accent-2-txt);
+  --cg-neutral: var(--muted);
+  --cg-tile-bg: color-mix(in srgb, var(--surface-2) 55%, transparent);
+  --cg-tile-line: var(--border);
+  --cg-rail-track: color-mix(in srgb, var(--ink) 14%, transparent);
+  --cg-rail-a: var(--brand-accent);
+  --cg-rail-b: var(--ops-cyan);
+  --cg-rail-glow: color-mix(in srgb, var(--ops-cyan) 45%, transparent);
+  --cg-skel-a: color-mix(in srgb, var(--ink) 7%, transparent);
+  --cg-skel-b: color-mix(in srgb, var(--ink) 14%, transparent);
+  --cg-toast-bg: #0f1a2e;
+  --cg-toast-ink: #eaf1fb;
+  --cg-toast-line: rgba(233, 238, 248, .14);
+  --cg-row-hover: color-mix(in srgb, var(--brand-accent) 7%, transparent);
+  --cg-row-edge: var(--ops-cyan);
+  --cg-danger: var(--lv-congested-txt);
+  --cg-enter-y: 6px;
+  --cg-move-txt: var(--accent-2-txt);
+}
+:root[data-theme='light'] {
+  --cg-tile-bg: color-mix(in srgb, var(--surface-2) 70%, #fff);
+  --cg-rail-track: color-mix(in srgb, var(--ink) 12%, transparent);
+  --cg-rail-b: var(--brand-accent-2);
+  --cg-rail-glow: color-mix(in srgb, var(--brand-accent) 30%, transparent);
+  --cg-skel-a: color-mix(in srgb, var(--ink) 6%, transparent);
+  --cg-skel-b: color-mix(in srgb, var(--ink) 11%, transparent);
+  --cg-toast-bg: #101828;
+  --cg-toast-ink: #f4f6fa;
+  --cg-toast-line: rgba(255, 255, 255, .12);
+  --cg-row-hover: color-mix(in srgb, var(--brand-accent) 6%, transparent);
+  --cg-row-edge: var(--brand-accent);
+  --cg-move-txt: color-mix(in srgb, var(--brand-accent) 62%, var(--ink));
+}
+
+/* ── 빈 상태 '조회 대기' — 무엇을 넣으면 되는지까지 말한다 ──
+   형님 지시(09-27 · 09-28 · 09-29 "가운데 정렬 — 몇 번을 말했냐"): 아이콘·제목·설명 두 단락을 모두 상자 가운데 한 기둥에 세운다.
+   · 아이콘은 Tabler search 24(선 1.5), 뒤에 바탕 도형을 깔지 않는다(준거 D7).
+   · 설명은 폭을 440px 로 묶어 한 줄이 상자 끝까지 늘어나지 않게 하고, 줄 길이를 고르게(text-wrap: balance) 나눈다.
+   · 세로 간격: 아이콘 → 제목 8 · 제목 → 설명 4 · 설명 → 번호 형식 8. 상자는 예전처럼 왼쪽 칸 높이까지 늘어난다(08-19 오와열).
+   · 값은 디자인 시스템(Figma 'PHAROS 디자인 시스템 2026-09' · C:/w/overnight/ds 의 '빈 상태 상자')과 같다. */
+.cargo-page #ccEmpty {
+  display: flex; flex-direction: column; flex-wrap: nowrap; align-items: center; justify-content: center;
+  gap: 0; text-align: center; padding: var(--sp-5) var(--sp-4);
+}
+.cargo-page .cc-empty-ic {
+  flex: none; display: flex; align-items: center; justify-content: center; width: auto; height: auto;
+  margin: 0 0 var(--sp-1); border-radius: 0; background: none; color: var(--muted); opacity: 1; font-size: inherit;
+}
+.cargo-page .cc-empty-tx { flex: 0 1 auto; min-width: 0; max-width: 440px; margin-inline: auto; }
+.cargo-page #ccEmpty h2 { margin: 0; color: var(--ink); font-size: var(--fs-lg); font-weight: 700; line-height: 1.4; }
+.cargo-page .cc-empty-tx p {
+  margin: 4px 0 0; color: var(--ink-2); font-size: var(--fs-md); font-weight: 400; line-height: 1.6; text-wrap: balance;
+}
+.cargo-page .cc-empty-tx .cc-empty-fmt { margin-top: var(--sp-1); color: var(--muted); font-size: var(--fs-sm); line-height: 1.55; }
+html[lang="ko"] .cargo-page .cc-empty-tx { word-break: keep-all; overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  .cargo-page #ccEmpty { padding: var(--sp-4) var(--sp-3); }
+}
+
+/* ── 결과 카드: 머리선 정렬 — 구역 제목(tk-sh)이 .trk-sec 안에서 여백을 두 번 먹어 본문보다 24px 안쪽에 섰다 ── */
+.cargo-page .trk-card .trk-sec > .tk-sh { padding-left: 0; padding-right: 0; }
+/* 좁은 화면에서 영문 부제(TERMINAL CROSS-CHECK · 선명)가 길면 한글 제목이 '국내 터 / 미널' 로 쪼개졌다 — 제목은 붙여 두고 부제는 다음 줄로 넘긴다(자르지 않는다 — 선명이 부제에 있다). */
+.cargo-page .tk-sh b { flex: none; white-space: nowrap; }
+.cargo-page .tk-sh { flex-wrap: wrap; row-gap: 2px; }
+.cargo-page .tk-sh span { min-width: 0; overflow-wrap: anywhere; }
+
+/* ── 한눈 요약 ── */
+.cargo-page .cg-glance {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: var(--sp-2) var(--sp-4) 0; border: 1px solid var(--cg-tile-line); border-radius: var(--radius-sm);
+  background: var(--cg-tile-bg); overflow: hidden;
+}
+.cargo-page .cg-tile { min-width: 0; padding: var(--sp-2) var(--sp-3) var(--sp-3); border-left: 1px solid var(--cg-tile-line); display: flex; flex-direction: column; gap: 6px; }
+.cargo-page .cg-tile:first-child { border-left: 0; }
+.cargo-page .cg-k { font-size: var(--fs-xs); font-weight: 700; color: var(--muted); letter-spacing: .04em; }
+.cargo-page .cg-v { font-size: var(--fs-xl); font-weight: 800; color: var(--ink); line-height: 1.25; overflow-wrap: anywhere; }
+.cargo-page .cg-v .trk-badge { font-size: var(--fs-md); padding: 7px 14px; }
+.cargo-page .cg-v .trk-badge:is(.is-wait, .is-move, .is-done) { padding-left: 11px; }
+.cargo-page .cg-v .tk-eta { font-size: var(--fs-2xl); }
+.cargo-page .cg-s { font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.55; overflow-wrap: anywhere; }
+.cargo-page .cg-s > .cg-step, .cargo-page .cg-s > .tk-route, .cargo-page .cg-s > .cg-np { display: block; }
+.cargo-page .cg-s b { color: var(--ink); }
+.cargo-page .cg-num { font-variant-numeric: tabular-nums; }
+.cargo-page .cg-step { font-weight: 700; color: var(--cg-info-txt); font-variant-numeric: tabular-nums; }
+.cargo-page .cg-tile .tk-route { font-size: var(--fs-sm); }
+.cargo-page .cg-np { color: var(--muted); }
+.cargo-page .cg-np b { color: var(--ink-2); }
+.cargo-page .cg-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex-direction: row; }
+.cargo-page .cg-chips .tk-eta-k { font-size: var(--fs-2xs); }
+.cargo-page .cg-drift:empty { display: none; }
+.cargo-page .cg-chip {
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 999px;
+  font-size: var(--fs-xs); font-weight: 700; line-height: 1.3; white-space: nowrap; border: 1px solid transparent;
+}
+.cargo-page .cg-chip.is-warn { color: var(--cg-warn-txt); background: color-mix(in srgb, var(--cg-warn) 14%, transparent); border-color: color-mix(in srgb, var(--cg-warn) 38%, transparent); }
+.cargo-page .cg-chip.is-ok { color: var(--cg-ok-txt); background: color-mix(in srgb, var(--cg-ok) 12%, transparent); border-color: color-mix(in srgb, var(--cg-ok) 34%, transparent); }
+.cargo-page .cg-chip.is-warn::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* ── 진행 레일 ── */
+.cargo-page .cg-rail-wrap { position: relative; margin: var(--sp-3) var(--sp-4) var(--sp-1); }
+.cargo-page .cg-rail-track {
+  position: absolute; top: 8px; height: 4px; border-radius: 2px; background: var(--cg-rail-track);
+  left: calc(100% / var(--n) / 2); right: calc(100% / var(--n) / 2); overflow: hidden;
+}
+.cargo-page .cg-rail-fill {
+  position: absolute; inset: 0; border-radius: inherit; transform-origin: left center;
+  transform: scaleX(var(--p)); background: var(--cg-rail-a);   /* 단색 — 지나온 단계 점과 같은 색(그라데이션 채움 금지 · 차트 설계서 2.3) */
+}
+.cargo-page .cg-rail { position: relative; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); }
+.cargo-page .cg-rail li { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; text-align: center; }
+.cargo-page .cg-dot {
+  position: relative; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--surface); border: 2px solid var(--cg-rail-track);
+}
+.cargo-page .cg-rail li.is-done .cg-dot { background: var(--cg-rail-a); border-color: var(--cg-rail-a); }
+.cargo-page .cg-rail li.is-done .cg-dot::before {
+  content: ''; width: 7px; height: 4px; margin-top: -2px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: rotate(-45deg);
+}
+.cargo-page .cg-rail li.is-cur .cg-dot { background: var(--surface); border-color: var(--cg-rail-b); box-shadow: 0 0 0 4px var(--cg-rail-glow); }
+.cargo-page .cg-rail li.is-cur .cg-dot::before { width: 8px; height: 8px; margin: 0; border: 0; border-radius: 50%; background: var(--cg-rail-b); transform: none; }
+.cargo-page .cg-rail li.is-exp .cg-dot { border-style: dashed; border-color: var(--cg-info); }
+.cargo-page .cg-rail li.is-skip .cg-dot { width: 10px; height: 10px; margin: 5px 0; border-color: var(--cg-rail-track); background: var(--cg-rail-track); }
+.cargo-page .cg-rl { font-size: var(--fs-xs); color: var(--muted); line-height: 1.3; overflow-wrap: anywhere; padding: 0 2px; }
+.cargo-page .cg-rail li.is-done .cg-rl { color: var(--ink-2); }
+.cargo-page .cg-rail li.is-cur .cg-rl { color: var(--ink); font-weight: 800; }
+.cargo-page .cg-rail li.is-skip .cg-rl { opacity: .6; }
+.cargo-page .cg-rail-cap { display: none; margin: var(--sp-1) 0 0; font-size: var(--fs-sm); color: var(--ink-2); }
+.cargo-page .cg-rail-cap b { color: var(--ink); }
+
+/* 경로 지도만 남은 격자 — 요약 칸은 위 한눈 요약으로 옮겼다 */
+.cargo-page .tk-grid.cg-map { grid-template-columns: minmax(0, 1fr); border-top: 1px solid var(--border); margin-top: var(--sp-2); }
+.cargo-page .tk-grid.cg-map .vc-wrap svg { max-width: 1080px; margin: 0 auto; }
+
+/* ── 국내 터미널 — 출항·도착 표지와 한 줄 설명 ── */
+.cargo-page .tml-hint { margin: 0 0 var(--sp-1); font-size: var(--fs-sm); color: var(--muted); }
+.cargo-page .tml-card { position: relative; border-left-width: 3px; }
+.cargo-page .tml-card.is-pol { border-left-color: var(--cg-rail-b); }
+/* 도착 터미널 — 초록(정상 상태색)이 아니라 진행 단계의 끝(--chart-stage-3). 게이트 표의 도착지 띠와 같은 색이다 */
+.cargo-page .tml-card.is-pod { border-left-color: var(--chart-stage-3); }
+.cargo-page .tml-card .t-side { display: inline-block; margin-bottom: 4px; font-size: var(--fs-2xs); font-weight: 800; letter-spacing: .06em; color: var(--muted); text-transform: uppercase; }
+.cargo-page .tml-card.is-pol .t-side { color: var(--cg-info-txt); }
+.cargo-page .tml-card.is-pod .t-side { color: var(--chart-stage-3); }
+
+/* ── 접어 둔 줄 · 긴 이력 ── */
+.cargo-page .cg-more-row { display: flex; justify-content: center; padding: var(--sp-1) 0 var(--sp-0); }
+.cargo-page .cg-empty-res { padding-top: var(--sp-3); }
+.cargo-page .cg-empty-res .sc-sub { margin: 0 0 var(--sp-2); }
+.cargo-page .cg-empty-acts { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
+/* 결과 없음·목록 빈 자리·불러오기 실패도 '조회 대기'와 같은 규칙 — 글과 다음 행동 단추가 자리 가운데(형님 지시 09-29 D6).
+   조회 결과 카드의 '컨테이너 정보가 없습니다' + 선사 공식 페이지 단추 · 감시목록 0건 · 변경이력 0건 · 감시목록/변경이력 불러오기 실패 */
+.cargo-page .cg-empty-res { padding: var(--sp-4) var(--sp-3); text-align: center; }
+.cargo-page .cg-empty-acts { justify-content: center; }
+.cargo-page .cg-empty-line { max-width: 680px; margin: 0 auto; padding: var(--sp-3) 0; text-align: center; text-wrap: balance; }
+.cargo-page .wf-retry { flex-direction: column; justify-content: center; text-align: center; gap: var(--sp-2); }
+.cargo-page .wf-retry > p { max-width: 680px; margin: 0; text-wrap: balance; }
+html[lang="ko"] .cargo-page :is(.cg-empty-res, .cg-empty-line, .wf-retry) { word-break: keep-all; overflow-wrap: anywhere; }
+.cargo-page .trk-evlist li.cg-ev-more { padding-left: 16px; }
+.cargo-page .trk-evlist li.cg-ev-more::before { display: none; }
+.cargo-page .trk-evlist li[tabindex="-1"]:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: 4px; }
+.cargo-page .trk-more summary { border-radius: 6px; }
+.cargo-page .trk-more summary:hover { color: var(--ink); }
+.cargo-page .trk-more summary:focus-visible,
+.cargo-page .cg-state :is(a, button):focus-visible,
+.cargo-page .cg-more:focus-visible,
+.cargo-page .cg-tile:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
+.cargo-page .gs-line { border-radius: 8px; }
+.cargo-page .gs-line:hover { background: var(--cg-row-hover); }
+
+/* ── 조회 중 뼈대 · 늦어짐 안내 ── */
+.cargo-page .cg-skel .cg-sk-body { padding: var(--sp-3) var(--sp-4) var(--sp-4); display: grid; gap: var(--sp-2); }
+.cargo-page .cg-sk-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-2); }
+.cargo-page .cg-sk-row i, .cargo-page .cg-sk-bar, .cargo-page .cg-sk-line {
+  position: relative; overflow: hidden; display: block; border-radius: 8px; background: var(--cg-skel-a);
+}
+.cargo-page .cg-sk-row i { height: 64px; }
+.cargo-page .cg-sk-bar { height: 12px; border-radius: 6px; }
+.cargo-page .cg-sk-line { height: 14px; width: 72%; }
+.cargo-page .cg-sk-line.is-short { width: 44%; }
+.cargo-page .cg-sk-row i::after, .cargo-page .cg-sk-bar::after, .cargo-page .cg-sk-line::after {
+  content: ''; position: absolute; inset: 0; transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, var(--cg-skel-b), transparent);
+}
+.cargo-page .cg-slow {
+  margin: 0 var(--sp-4) var(--sp-3); padding: 10px 12px; border-radius: var(--radius-sm); font-size: var(--fs-sm); line-height: 1.55;
+  color: var(--cg-warn-txt); background: color-mix(in srgb, var(--cg-warn) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cg-warn) 34%, transparent);
+}
+.cargo-page .cg-slow a { color: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.cargo-page .cg-slow[hidden] { display: none; }
+
+/* ── 상태 카드(오류 · 로그인 만료 · 공식 페이지 안내) — 무엇이 · 왜 · 다음 행동(오른쪽 위) ── */
+.cargo-page .cg-state { padding: var(--sp-3) var(--sp-4); }
+.cargo-page .cg-state-hd {
+  display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; grid-template-areas: 'ic tx acts' '. bd bd';
+  column-gap: var(--sp-2); align-items: start;
+}
+.cargo-page .cg-state-ic { grid-area: ic; }
+.cargo-page .cg-state-tx { grid-area: tx; }
+.cargo-page .cg-state-bd { grid-area: bd; }
+.cargo-page .cg-state-acts { grid-area: acts; }
+/* 아이콘은 Tabler 24 선 1.5 — 뒤에 바탕 원을 깔지 않고 톤 색은 선에만(준거 D7). 제목 첫 줄 가운데 높이에 맞춘다. */
+.cargo-page .cg-state-ic {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin-top: 1px;
+  color: var(--cg-info-txt); background: none;
+}
+.cargo-page .cg-state.is-err .cg-state-ic { color: var(--cg-risk-txt); }
+.cargo-page .cg-state.is-warn .cg-state-ic { color: var(--cg-warn-txt); }
+.cargo-page .cg-state.is-login .cg-state-ic { color: var(--cg-warn-txt); }
+.cargo-page .cg-state.is-err { border-left: 3px solid var(--cg-risk); }
+.cargo-page .cg-state.is-login, .cargo-page .cg-state.is-warn { border-left: 3px solid var(--cg-warn); }
+.cargo-page .cg-state.is-info { border-left: 3px solid var(--cg-info); }
+.cargo-page .cg-state-tx { min-width: 0; }
+.cargo-page .cg-state-tx h3 { margin: 2px 0 0; font-size: var(--fs-lg); line-height: 1.35; overflow-wrap: anywhere; }
+.cargo-page .cg-state-tx h3 small { font-weight: 500; color: var(--muted); font-size: var(--fs-md); }
+.cargo-page .cg-state-sub { margin: 2px 0 0; font-size: var(--fs-md); font-weight: 700; color: var(--ink-2); }
+.cargo-page .cg-state-acts { display: flex; flex-wrap: wrap; gap: var(--sp-1); justify-content: flex-end; align-items: center; }
+.cargo-page .cg-state-bd { padding: var(--sp-1) 0 0; min-width: 0; }
+.cargo-page .cg-state-bd .sc-sub { margin: 0 0 4px; }
+.cargo-page .cg-watch-login .cg-state-tx .sc-sub { margin-top: 4px; }
+.cargo-page .cg-inline-login { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-2); }
+.cargo-page .reg-msg .cg-relogin { margin-left: 6px; vertical-align: middle; }
+
+/* ── 토스트 ── */
+.cg-toast-host {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); z-index: 125;
+  transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px;
+  width: max-content; max-width: calc(100vw - 32px); pointer-events: none;
+}
+.cg-toast {
+  display: inline-flex; align-items: center; gap: 10px; max-width: 100%; padding: 10px 16px 10px 12px; border-radius: 12px;
+  background: var(--cg-toast-bg); color: var(--cg-toast-ink); border: 1px solid var(--cg-toast-line);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .28); font-size: var(--fs-md); font-weight: 600; line-height: 1.45; pointer-events: auto;
+}
+.cg-toast-t { min-width: 0; overflow-wrap: anywhere; }
+/* 토스트 아이콘 — 성공 check · 오류 alert-circle(Tabler 16), 바탕 원 없이 짙은 토스트 위에서 읽히는 밝은 톤 선만(준거 D7) */
+.cg-toast-ic {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px;
+  background: none; color: color-mix(in srgb, var(--lv-low) 72%, #fff);
+}
+.cg-toast.is-err .cg-toast-ic { color: color-mix(in srgb, var(--lv-congested) 62%, #fff); }
+.cg-toast.is-out { opacity: 0; }
+
+/* ── 감시목록 ── */
+/* 상태 배지 글자 명암 — 진행 단계 배지(is-wait·is-move·is-done)는 이제 잉크 글자다(style.css). 파랑 글자가 남은 것은
+   안내 배지(is-info, 관리자 · 전체 조회)뿐이라 대비용 토큰(-txt)은 그쪽에만 건다(2026-09-26 실측: 원색 파랑 글자 다크 3.7 · 라이트 2.7).
+   끝난 감시(종료)는 진행 단계의 회색 끝(--chart-stage-done) — 점만 회색 단계색, 글자·칠은 예전 중립 그대로. */
+.cargo-page .trk-badge.is-info { color: var(--cg-move-txt); }
+.cargo-page .trk-badge.cg-off { --stg: var(--chart-stage-done); color: var(--ink-2); background: color-mix(in srgb, var(--cg-neutral) 14%, transparent); border-color: color-mix(in srgb, var(--cg-neutral) 30%, transparent); }
+/* 감시목록 표 안에서는 단계 점을 빼고 예전 여백으로 둔다 — 점 폭(약 10px)만큼 '상태' 칸이 넓어져 표가 더 옆으로 밀리고
+   오른쪽 고정 칸 밑에 깔리는 글자가 늘었다(grid_audit 전후 비교). 표에서는 칠과 글자('감시 중'·'종료')가 뜻을 말한다. */
+.cargo-page #watchOut .trk-tbl .trk-badge::before { content: none; }
+.cargo-page #watchOut .trk-tbl .trk-badge:is(.is-wait, .is-move, .is-done) { padding-left: 12px; }
+.cargo-page .btn.cg-danger { color: var(--cg-danger); border-color: color-mix(in srgb, var(--cg-risk) 55%, transparent); }
+.cargo-page .wf-acts .cg-danger { margin-left: 6px; }
+.cargo-page .wf-bulkbar .cg-sep { margin-left: var(--sp-2); position: relative; }
+.cargo-page .wf-bulkbar .cg-sep::before { content: ''; position: absolute; left: calc(-1 * var(--sp-1) - 1px); top: 4px; bottom: 4px; width: 1px; background: var(--border); }
+.cargo-page #watchOut .trk-tbl tbody tr:not(.wf-drow):hover td { background: var(--cg-row-hover); }
+.cargo-page #watchOut .trk-tbl tbody tr:not(.wf-drow):hover td:first-child { box-shadow: inset 3px 0 0 var(--cg-row-edge); }
+.cargo-page #watchOut .trk-head .cg-head-btn { min-height: var(--ctl-h); height: auto; padding: 6px var(--sp-3); font-size: var(--fs-md); }
+.cargo-page .wf-toolbar #wf_sort { grid-column: 4; grid-row: 2; justify-self: stretch; }
+/* 행 단추(리포트·해제)는 표 오른쪽 끝이라 1280~1440 노트북에서 가로로 굴려야 보였다 — 오른쪽에 붙여 둔다.
+   펼친 이력 줄(colspan)과 빈 줄은 한 칸짜리라 붙이지 않는다. 붙은 칸은 불투명해야 밑 글자가 비치지 않는다. */
+/* ★ 넓은 화면에서만 붙인다 — 폰에서는 붙은 칸이 B/L 번호 칸을 덮어 번호를 못 읽게 만들었다(390px 실측).
+   폰은 표를 옆으로 굴려 보는 것이 자연스럽다. */
+@media (min-width: 900px) {
+  .cargo-page #watchOut .trk-tbl thead th:last-child,
+  .cargo-page #watchOut .trk-tbl tbody tr:not(.wf-drow) > td:last-child:not([colspan]) {
+    position: sticky; right: 0; background: var(--surface); box-shadow: -10px 0 12px -12px rgba(0, 0, 0, .45);
+  }
+  .cargo-page #watchOut .trk-tbl thead th:last-child { z-index: 3; background: var(--surface-2); }
+  .cargo-page #watchOut .trk-tbl tbody tr:not(.wf-drow):hover > td:last-child:not([colspan]) {
+    background: linear-gradient(var(--cg-row-hover), var(--cg-row-hover)), var(--surface);
+  }
+}
+
+/* ── 좁은 화면 ── */
+@media (max-width: 900px) {
+  .cargo-page .cg-glance { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cargo-page .cg-tile:nth-child(3) { border-left: 0; }
+  .cargo-page .cg-tile:nth-child(n+3) { border-top: 1px solid var(--cg-tile-line); }
+}
+@media (max-width: 740px) {
+  .cargo-page .wf-toolbar #wf_sort { grid-column: 1 / -1; grid-row: auto; }
+  .cargo-page #watchOut .trk-head .cg-head-btn { margin-left: auto; }
+}
+@media (max-width: 640px) {
+  .cargo-page .cg-glance { margin: var(--sp-2) var(--sp-3) 0; }
+  /* 폰 두 칸 요약 — 단계 점이 붙은 '현재 상태' 배지가 긴 언어(영어 'In transshipment')에서 칸을 넘지 않게 표 배지 크기로 */
+  .cargo-page .cg-v .trk-badge { font-size: var(--fs-sm); }
+  .cargo-page .cg-tile { padding: var(--sp-2); }
+  .cargo-page .cg-v { font-size: var(--fs-lg); }
+  .cargo-page .cg-v .tk-eta { font-size: var(--fs-xl); }
+  .cargo-page .cg-rail-wrap { margin: var(--sp-3) var(--sp-3) var(--sp-1); }
+  .cargo-page .cg-rl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .cargo-page .cg-rail-cap { display: block; }
+  .cargo-page .cg-dot { width: 16px; height: 16px; }
+  .cargo-page .cg-rail-track { top: 6px; }
+  .cargo-page .cg-rail li.is-skip .cg-dot { width: 8px; height: 8px; margin: 4px 0; }
+  .cargo-page .cg-state { padding: var(--sp-3); }
+  .cargo-page .cg-state-hd { grid-template-columns: 24px minmax(0, 1fr); grid-template-areas: 'ic tx' 'bd bd' 'acts acts'; }
+  .cargo-page .cg-state-acts { justify-content: stretch; margin-top: var(--sp-2); }
+  .cargo-page .cg-state-acts .btn { flex: 1 1 140px; }
+  .cargo-page .cg-sk-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cargo-page .cg-result > .trk-head .trk-watch-btn { flex: 1 1 calc(50% - 8px); justify-content: center; }
+  .cargo-page .cg-result > .trk-head .trk-spacer { display: none; }
+  .cargo-page .cg-result > .trk-head > .cg-vessel { flex-basis: 100%; order: 5; }
+  .cargo-page .cg-result > .trk-head > .trk-watch-btn { order: 6; }
+}
+@media (max-width: 380px) {
+  .cargo-page .cg-glance { grid-template-columns: minmax(0, 1fr); }
+  .cargo-page .cg-tile { border-left: 0; }
+  .cargo-page .cg-tile:nth-child(n+2) { border-top: 1px solid var(--cg-tile-line); }
+}
+
+/* ── 움직임 — 여기서만 켠다(한 번만 · transform/opacity 만) ── */
+@media (prefers-reduced-motion: no-preference) {
+  :root:not(.no-motion) .cargo-page .cg-enter { animation: cg-rise .32s var(--ease-out) both; }
+  :root:not(.no-motion) .cargo-page .cg-enter .cg-tile { animation: cg-rise .36s var(--ease-out) both; }
+  :root:not(.no-motion) .cargo-page .cg-enter .cg-tile:nth-child(2) { animation-delay: 40ms; }
+  :root:not(.no-motion) .cargo-page .cg-enter .cg-tile:nth-child(3) { animation-delay: 80ms; }
+  :root:not(.no-motion) .cargo-page .cg-enter .cg-tile:nth-child(4) { animation-delay: 120ms; }
+  :root:not(.no-motion) .cargo-page .cg-enter .cg-rail-fill { animation: cg-fill .9s var(--ease-out) .15s both; }
+  :root:not(.no-motion) .cargo-page .cg-enter .cg-rail li { animation: cg-pop .3s var(--ease-out) both; animation-delay: calc(120ms + var(--i) * 45ms); }
+  :root:not(.no-motion) .cargo-page .cg-enter .cg-rail li.is-cur .cg-dot::after {
+    content: ''; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid var(--cg-rail-b);
+    opacity: 0; animation: cg-ping 1.4s var(--ease-out) 1s 2;
+  }
+  :root:not(.no-motion) .cargo-page .cg-appear { animation: cg-rise .26s var(--ease-out) both; }
+  :root:not(.no-motion) .cargo-page .trk-more[open] > .trk-evlist { animation: cg-rise .24s var(--ease-out) both; }
+  :root:not(.no-motion) .cargo-page .cg-sk-row i::after,
+  :root:not(.no-motion) .cargo-page .cg-sk-bar::after,
+  :root:not(.no-motion) .cargo-page .cg-sk-line::after { animation: cg-shimmer 1.3s ease-in-out 8; }
+  :root:not(.no-motion) .cargo-page .cg-slow:not([hidden]) { animation: cg-rise .26s var(--ease-out) both; }
+  :root:not(.no-motion) .cg-toast { animation: cg-toast-in .26s var(--ease-out) both; }
+  :root:not(.no-motion) .cg-toast.is-out { animation: none; transition: opacity .2s ease, transform .2s ease; transform: translateY(6px); }
+}
+@keyframes cg-rise { from { opacity: 0; transform: translateY(var(--cg-enter-y)); } to { opacity: 1; transform: none; } }
+@keyframes cg-pop { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
+@keyframes cg-fill { from { transform: scaleX(0); } }
+@keyframes cg-ping { 0% { opacity: .55; transform: scale(.9); } 100% { opacity: 0; transform: scale(1.7); } }
+@keyframes cg-shimmer { to { transform: translateX(100%); } }
+@keyframes cg-toast-in { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
+
+/* =========================================================
+   2026-09-28 되돌림(fix/dr-cargo-dash) 뒤에도 남기는 것 — 겉모양은 09-28 배포 전(ce846ff) 그대로 두고,
+   그 사이에 들어온 수정 가운데 모양이 아닌 것(문구·버그·접근성·형님 직접 지시)만 여기 모았다.
+   ========================================================= */
+/* 머리 안내 두 줄(문구 정리) — '공식 페이지 / 연결 0사' 처럼 이름과 수가 갈리지 않게 갈래 사이에서만 줄을 바꾼다 */
+.cargo-page .dash-hero .cargo-hero-note .nw { white-space: nowrap; }
+/* 조회 대기 상자 정렬은 위 '빈 상태' 묶음 하나가 정한다(09-29 가운데 한 기둥). 예전 가로 배치(아이콘 왼쪽) 덮어쓰기는 걷었다. */
+/* 한국어는 어절 단위로 줄을 바꾼다 — 390 에서 번호 안내가 '직 / 접', 서랍 설명이 '컨테이 / 너' 처럼 낱말 가운데서 끊겼다 */
+.cargo-input-status { overflow-wrap: anywhere; }
+html[lang="ko"] .cargo-page :is(.cargo-input-status, .ql-drawer .hint, .ql-drawer .card > p, .ql-drawer .notice) { word-break: keep-all; overflow-wrap: anywhere; }
+/* 머리 탭 — 지금 있는 구역 표시(js/cargo.js syncNavCurrent · aria-current). 호버 밑줄과 같은 시안 밑줄. */
+.cargo-nav a.active, .cargo-nav a[aria-current] { color: #fff; border-bottom-color: var(--ops-cyan); }
+/* 머리띠는 두 테마 모두 짙은 남색 — 밝은 테마에서도 호버 글자가 남색 위에서 보이게(대비) */
+.cargo-nav a:hover, .cargo-nav a:focus-visible { color: color-mix(in srgb, var(--ops-cyan) 48%, #eaf1fb); }
+/* '감시목록' 이름표가 곧 그 구역 링크(문구 정리) — 예전 이름표처럼 굵게 */
+.cargo-watch-summary > a:first-child { font-weight: 700; }
+/* TRACING REPORT 단추 — 390 에서 'TRACING / REPORT' 두 줄로 접히던 것, 밝은 테마 대비(4.18 → AA) */
+.trk-rpt-btn { white-space: nowrap; }
+:root[data-theme="light"] .trk-rpt-btn { color: color-mix(in srgb, var(--brand-accent-2) 62%, var(--ink)); }
+:root[data-theme="light"] .cargo-page .trk-watch-btn.is-on { color: color-mix(in srgb, var(--lv-low) 56%, var(--ink)); }
+/* 일괄 등록 창 — 번호 목록·알림 이메일 칸이 공통 입력칸 max-width 340px 에 걸려 창 오른쪽이 비었다 */
+.cargo-page :is(#bulkTxt, #bulkMail) { max-width: none; }
+.cargo-page #bulkRpt { white-space: nowrap; }
+@media (max-width: 480px) {
+  .cargo-page .reg-btns > :is(#bulkCancel, #bulkRpt, #bulkOk) { flex: 1 1 100%; }
+  .cargo-page #bulkRpt { white-space: normal; }
+}
+/* 리포트 창 — legend 위 여백이 fieldset 안에서 먹지 않아 '보낼 항목' 이 위 칩 줄에 6px 로 붙었다 */
+.rpt-cols { margin: var(--sp-3) 0 0; }
+.rpt-cols legend { margin-top: 0; }
+/* 발송 결과 초록 글자 — 밝은 테마 흰 창에서 3.35:1 이던 것(글자용 토큰) */
+.rpt-card .reg-ok { color: var(--lv-low-txt); }
+/* 보낸 리포트 — 640px 창의 8칸 표가 찌그러져 '자동 끄기'·'중지' 가 한 자씩 세로로 쌓이고 B/L·주소가 글자 단위로 끊겼다.
+   예전 폰(600px 이하) 전용 카드형(항목명 · 값)을 모든 폭에서 쓴다(모양은 예전 폰 카드 그대로). */
+table.rpt-list thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+table.rpt-list, table.rpt-list tbody, table.rpt-list tr, table.rpt-list td { display: block; width: 100%; }
+table.rpt-list tr { padding: 6px 0; border-bottom: 1px solid var(--border); }
+table.rpt-list tbody tr:last-child { border-bottom: 0; }
+table.rpt-list td { display: flex; gap: var(--sp-1); padding: 4px 12px; border: 0; white-space: normal; }
+table.rpt-list td::before { content: attr(data-th); flex: 0 0 6.5em; color: var(--muted); font-size: var(--fs-xs); font-weight: 700; padding-top: 2px; }
+table.rpt-list td.rpt-acts-td::before { content: none; }
+table.rpt-list td.rpt-acts-td:has(.rpt-acts:empty) { display: none; }
+table.rpt-list .rpt-cv { flex: 1 1 auto; min-width: 0; }
+.rpt-acts { justify-content: flex-start; }
+.rpt-acts .btn, .rpt-rc small { white-space: nowrap; }
+/* 한눈 요약의 일시는 한 덩어리 — '… · 26-' / '09-27 10:00' 처럼 날짜 가운데서 끊기지 않게 */
+.cargo-page .cg-tile.is-where .cg-s .cg-num,
+.cargo-page .cg-np .cg-num,
+.cargo-page .cg-nw { white-space: nowrap; }
+/* 폰 세로 항로 목록 — 실적 시각·지금 배 이름의 원색 파랑이 밝은 테마 3.6:1 이던 것(글자만, 점·선 색은 그대로) */
+.cargo-page .vc-vert li small.act,
+.cargo-page .vc-vert li.ship { color: var(--accent-2-txt); }
+/* 감시목록 — 펼친 변경 이력 줄(tr.wf-drow)은 표 전체 폭 한 칸이라, 표를 옆으로 민 채 펼치면 그래프·단추가 상자 밖에 놓였다.
+   표가 넘칠 때만(.is-scrollx, js/cargo.js wfWatchScroll) 이력 상자를 표 상자의 보이는 폭(--wf-vw)으로 왼쪽에 붙인다. */
+.cargo-page #watchOut tr.wf-drow .wf-dbox { white-space: normal; min-width: 0; }
+.cargo-page #watchOut .trk-tbl-wrap.is-scrollx tr.wf-drow .wf-dbox {
+  position: sticky; left: 0; box-sizing: border-box; width: var(--wf-vw, 100%); max-width: var(--wf-vw, none);
+}
+/* 추이 그림의 제목 줄 — 그림 밖 글줄(js/cargo.js driftSvg). 예전 그림 안 제목(.d-title)과 같은 크기·굵기. */
+.cargo-page .sc-drift-t { margin: 0 0 2px; font-size: var(--fs-xs); font-weight: 700; line-height: 1.5; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+/* 선택 막대 '선택 N건' 숫자 — 어두운 바탕 3.4:1 이던 원색 파랑(글자용 토큰) */
+.cargo-page .wf-selcnt b { color: var(--accent-2-txt); }
+/* 카드 머리 안내 줄 — 마지막 한 낱말('메일')만 다음 줄로 떨어지지 않게 */
+.cargo-page .trk-head .trk-asof { text-wrap: pretty; }
+html[lang="ko"] .cargo-page .trk-head .trk-asof { word-break: keep-all; overflow-wrap: anywhere; }
+/* 오른쪽에 붙은 행 단추 칸의 그림자는 표가 실제로 넘칠 때만(넘치지 않으면 제자리라 덮는 것이 없다) */
+@media (min-width: 900px) {
+  .cargo-page #watchOut .trk-tbl thead th:last-child,
+  .cargo-page #watchOut .trk-tbl tbody tr:not(.wf-drow) > td:last-child:not([colspan]) { box-shadow: none; }
+  .cargo-page #watchOut .trk-tbl-wrap.is-scrollx .trk-tbl thead th:last-child,
+  .cargo-page #watchOut .trk-tbl-wrap.is-scrollx .trk-tbl tbody tr:not(.wf-drow) > td:last-child:not([colspan]) {
+    box-shadow: -10px 0 12px -12px rgba(0, 0, 0, .45);
+  }
+}
+/* 게이트 이벤트 첫 칸 — 컨테이너 번호가 'TSTU000001 / 0' 처럼 두 줄로 갈리지 않게(표·격자는 글자를 가로로 넉넉히 — 형님 지시).
+   번호는 한 덩어리로 둔다. 옆의 규격('40 HQ')도 이제 접지 않는다 — 첫 칸 폭이 내용에 맞춰진다(아래 '표·격자 칸은 한 줄'). */
+.cargo-page .gs-c0 b { white-space: nowrap; flex: none; }
+
+/* ── 아이콘(준거 D7 · 2026-09-29) — 공개 세트 한 벌(Tabler 선형) ──
+   새 창 링크 끝 external-link 14 는 글자 가운데 높이에, 철도 구간 준비 패널의 기관차(train 24)는 바탕 판·맥동 링 없이 선만. */
+.cargo-page svg.cg-ext { display: inline-block; vertical-align: -2px; flex: none; }
+/* is-live(철도 구간처럼 열린 패널) — 공통 .prep-panel.is-live .prep-badge(선택자 0,3,0)가 위 규칙(0,2,0)을 이겨 그라데이션 판과
+   0 14px 32px 빛번짐이 기차 뒤에 남았다(심사 09-29, 다크에서 뚜렷). 같은 무게로 함께 걷는다 — css/ops.css 의 같은 규칙과 같은 방식. */
+.cargo-page .prep-badge,
+.cargo-page .prep-panel.is-live .prep-badge { width: auto; height: auto; margin: 0 auto var(--sp-2); border: 0; border-radius: 0; background: none; box-shadow: none; }
+.cargo-page .prep-badge::after { display: none; }
+.cargo-page .prep-badge svg { width: 24px; height: 24px; }
+/* 감시 알림 종(토글 단추) — 아이콘 뒤 둥근 네모 판·색 바탕을 걷는다(준거 D4 '둥근 네모 안의 아이콘' 금지 · D7 '아이콘 뒤 바탕 도형 금지').
+   켜짐은 초록 선 bell, 꺼짐은 회색 bell-off, 추적 종료는 흐린 bell-off(모양과 색 두 가지로 말한다). 누르는 자리 28×28 과
+   마우스 올림의 옅은 바탕·초점 테두리는 그대로 — 단추임은 그대로 알린다. */
+.cargo-page .wf-bell, .cargo-page .wf-bell.on, .cargo-page .wf-bell.dead { border-color: transparent; background: none; }
+.cargo-page .wf-bell.on { color: var(--lv-low-txt); }
+.cargo-page .wf-bell:not(.dead):hover { border-color: transparent; background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.cargo-page .wf-bell:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+/* =========================================================
+   표·격자 칸은 한 줄(2026-09-29 형님 지시 — 감시목록 '등록' 칸 주소가 'badge.kim / @example…' 두 줄로 접혀 행이 밀리고
+   오른쪽 붙은 단추 칸에 가렸다. "플랫폼 전반적으로 그런 부분이 없게").
+   번호·코드·이메일·일시·상태·짧은 이름은 접지 않는다. 표가 상자보다 넓으면 표 상자 안에서 가로로 굴린다(페이지는 넘치지 않는다).
+   잰 도구: C:/w/grid_audit/audit.cjs(글자 줄 수 · 고정 칸 가림 · 잘림).
+   ========================================================= */
+/* 감시목록 등록자 — 주소는 한 덩어리(js/cargo.js wfOwner 가 예전의 <wbr> 대신 이 상자로 싼다). 보통 주소(30자 안팎)는 다 보이는
+   상한 240px 을 두고, 그보다 긴 주소만 말줄임한다 — 전체 값은 title(마우스)·DOM 글자(화면낭독기)로 그대로 있다.
+   inline-block 에 overflow 를 주면 기준선이 상자 바닥으로 내려가 줄 높이가 커지므로 위에 붙인다(행 높이는 옆 칸과 같다). */
+.cargo-page #watchOut .wf-own { display: inline-block; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: top; }
+/* 감시목록은 14칸(관리자)이라 칸 좌우 여백 12px 이 합쳐 336px 이다. 10px 로 줄여 56px 을 돌려준다 — 흔한 길이의 주소·구간은
+   1440 에서도 가로로 굴리지 않고 한 줄로 다 보이고, 넘치는 경우에도 붙은 칸 밑으로 들어가는 폭이 그만큼 준다. 글자·행 높이는 그대로다. */
+.cargo-page #watchOut .trk-tbl th, .cargo-page #watchOut .trk-tbl td { padding-left: 10px; padding-right: 10px; }
+/* 오른쪽에 붙은 행 단추 칸 — 표가 넘쳐 굴릴 때(.is-scrollx) 밑으로 지나가는 칸과 한눈에 갈리도록 그림자에 세로 경계선을 더한다.
+   (칸 테두리는 border-collapse 표에서 붙은 칸을 따라 움직이지 않아 안쪽 그림자 1px 로 긋는다.) */
+@media (min-width: 900px) {
+  .cargo-page #watchOut .trk-tbl-wrap.is-scrollx .trk-tbl thead th:last-child,
+  .cargo-page #watchOut .trk-tbl-wrap.is-scrollx .trk-tbl tbody tr:not(.wf-drow) > td:last-child:not([colspan]) {
+    box-shadow: inset 1px 0 0 var(--border), -10px 0 12px -12px rgba(0, 0, 0, .45);
+  }
+  /* 붙은 칸 바로 앞 칸(최근 수집)은 끝까지 굴렸을 때 글자가 경계 그림자에 닿지 않게 오른쪽 여백을 조금 더 둔다.
+     넘칠 때만 주면 표 폭이 바뀌어 넘침 판정(js/cargo.js wfWatchScroll)이 다시 돌므로 늘 준다 — 넘치지 않을 때는 표가 상자 폭에 맞춰 늘어나 차이가 안 보인다. */
+  .cargo-page #watchOut .trk-tbl thead th:nth-last-child(2),
+  .cargo-page #watchOut .trk-tbl tbody tr:not(.wf-drow) > td:nth-last-child(2) { padding-right: var(--sp-3); }
+  /* 굴리기 전 첫 화면 — 붙은 칸 앞에 반쪽만 보이던 칸 자리를 붙은 칸의 바탕으로 덮고(가리개 폭 --wf-cut, js/cargo.js wfStickCut)
+     경계선·그림자를 가리개 왼끝으로 옮긴다. 글자가 칸 경계에서 끊기지 않고, 깔린 칸은 통째로 굴리면 드러난다. */
+  .cargo-page #watchOut .trk-tbl-wrap.is-scrollx.at-start.has-cut .trk-tbl thead th:last-child,
+  .cargo-page #watchOut .trk-tbl-wrap.is-scrollx.at-start.has-cut .trk-tbl tbody tr:not(.wf-drow) > td:last-child:not([colspan]) { box-shadow: none; }
+  .cargo-page #watchOut .trk-tbl-wrap.is-scrollx.at-start.has-cut .trk-tbl thead th:last-child::before,
+  .cargo-page #watchOut .trk-tbl-wrap.is-scrollx.at-start.has-cut .trk-tbl tbody tr:not(.wf-drow) > td:last-child:not([colspan])::before {
+    content: ''; position: absolute; top: 0; bottom: 0; right: 100%; width: var(--wf-cut, 0px); background: inherit;
+    box-shadow: inset 1px 0 0 var(--border), -10px 0 12px -12px rgba(0, 0, 0, .45);
+  }
+  /* 키보드로 칸을 옮기면 브라우저가 그 칸이 보이게 굴린다 — 붙은 칸 폭만큼 여백을 두어 붙은 칸 밑에 숨지 않게 한다. */
+  .cargo-page #watchOut .trk-tbl-wrap.is-scrollx { scroll-padding-inline-end: var(--wf-stick, 0px); }
+}
+/* 게이트 이벤트 격자 — 줄마다 따로 된 격자라 첫 칸을 158px 로 못박아 두었고, 번호 옆 규격 '40 HQ' 가 '40 / HQ' 로,
+   러시아어 1280 에서 단계 이름 'Получение порожнего' 가 두 줄로 접혔다. 바깥 상자(.gs-wrap)가 열을 정하고 줄들은 그 열을
+   그대로 물려받는다(subgrid) — 첫 칸은 가장 긴 번호·규격에, 단계 칸은 가장 긴 이름에 맞춰 넓어지고 남는 폭은 예전처럼 고르게 나눈다.
+   모든 줄이 같은 열을 쓰니 오와 열은 그대로다. 합이 상자보다 넓으면 원래 있던 .gs-scroll 이 가로로 굴린다. */
+.cargo-page .gs-wrap { display: grid; grid-template-columns: max-content repeat(9, minmax(max-content, 1fr)); }
+.cargo-page .gs-r { grid-column: 1 / -1; grid-template-columns: subgrid; }
+.cargo-page .gs-c0, .cargo-page .gs-labels .gs-lb { white-space: nowrap; }
+/* 한눈 요약의 '다음 기항' 줄 — 러시아어 1280 에서 'Следующий порт ROTTERDAM' / '26-10-19 10:00' 로 접혔다(9px 모자람).
+   넓은 화면(네 칸 한 줄)에서는 이 줄을 접지 않고, 모자라면 그 칸만 필요한 만큼 넓어진다(나머지 세 칸이 그만큼 고르게 좁아진다 —
+   다른 칸은 글자가 접힐 수 있어 최소 폭이 작다). 좁은 화면(두 칸·한 칸)은 예전처럼 접힌다(가로 넘침 방지). */
+@media (min-width: 1200px) {
+  .cargo-page .cg-glance { grid-template-columns: repeat(4, minmax(min-content, 1fr)); }
+  .cargo-page .cg-np { white-space: nowrap; }
+}
+/* 국내 터미널 카드 — 러시아어에서 340px 상한에 걸려 '26-09-23' / '20:00' 처럼 일시가 가운데서 끊기고 'Причал / 1' 로 선석 번호가
+   이름과 갈렸다. 넓은 화면에서는 머리·일시·반입마감 줄을 접지 않고, 카드가 그 줄 길이만큼은 넓어지게 한다(한국어·영어는 340px 안에
+   들어가 폭이 그대로다). 폰에서는 화면을 넘지 않게 예전처럼 접는다. */
+@media (min-width: 900px) {
+  .cargo-page .tml-card { min-width: min-content; }
+  .cargo-page .tml-card :is(.t-hd, .t-bd, .t-cct) { white-space: nowrap; }
+}
+
+/* =========================================================
+   감시목록 가로 굴림 신호(2026-09-29 표 후속 — '반쯤 가려진 글자 없이, 굴림 신호는 분명하게').
+   표가 상자보다 넓을 때(1440·1280 노트북, 긴 언어) 오른쪽 붙은 칸(리포트·해제) 경계의 그림자가 -12px 번짐이라 행마다 2px 남짓 —
+   다크에서는 거의 안 보여, 가려진 '최근 수집'·'등록자' 열이 있다는 것을 알기 어려웠다(가리개 덕에 반쪽 글자는 이미 없다).
+   ① 경계 그림자를 칸 높이 전체의 띠(14px 그라데이션)로 그린다 — 행 사이가 끊기지 않고 두 테마 모두 보인다.
+      굴리기 전 가리개가 있으면(.has-cut) 가리개 왼끝에, 없으면 붙은 칸 왼끝에 선다. 끝까지 굴리면(.at-end) 가려진 열이 없으니 걷는다.
+   ② 붙은 칸 머리(빈 칸)에 굴림 단추(js/cargo.js wfWatchScroll) — 가려진 열 쪽을 가리키고, 누르면 그쪽 끝까지 민다.
+      종 단추와 같은 28×28 · 바탕 도형 없이 선 아이콘(준거 D7), 색은 표의 링크 색(B/L 번호)과 같다. 위아래 음수 여백으로 머리 줄 높이는 그대로다.
+   예전 경계선(안쪽 1px)과 가리개는 그대로다. 표 폭·행 높이는 바뀌지 않는다(겉칠뿐).
+   ========================================================= */
+.cargo-page { --wf-edge: rgba(0, 0, 0, .5); }
+:root[data-theme='light'] .cargo-page { --wf-edge: rgba(13, 37, 71, .16); }
+.cargo-page #watchOut .wf-act-th { text-align: center; }
+.cargo-page .wf-scroll {
+  display: inline-grid; place-items: center; width: 28px; height: 28px; margin: -8px 0; padding: 0; vertical-align: middle;
+  border: 1px solid transparent; border-radius: 6px; background: none; color: var(--ops-cyan); cursor: pointer;
+}
+.cargo-page .wf-scroll[hidden] { display: none; }
+.cargo-page .wf-scroll:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.cargo-page .wf-scroll:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+:root[data-theme='light'] .cargo-page .wf-scroll { color: var(--brand-primary); }
+@media (min-width: 900px) {
+  /* 예전 바깥 그림자(-10px 0 12px -12px)는 띠가 맡는다 — 안쪽 경계선만 남긴다 */
+  .cargo-page #watchOut .trk-tbl-wrap.is-scrollx .trk-tbl thead th:last-child,
+  .cargo-page #watchOut .trk-tbl-wrap.is-scrollx .trk-tbl tbody tr:not(.wf-drow) > td:last-child:not([colspan]) {
+    box-shadow: inset 1px 0 0 var(--border);
+  }
+  .cargo-page #watchOut .trk-tbl-wrap.is-scrollx.at-start.has-cut .trk-tbl thead th:last-child::before,
+  .cargo-page #watchOut .trk-tbl-wrap.is-scrollx.at-start.has-cut .trk-tbl tbody tr:not(.wf-drow) > td:last-child:not([colspan])::before {
+    box-shadow: inset 1px 0 0 var(--border);
+  }
+  .cargo-page #watchOut .trk-tbl-wrap.is-scrollx:not(.at-end) .trk-tbl thead th:last-child::after,
+  .cargo-page #watchOut .trk-tbl-wrap.is-scrollx:not(.at-end) .trk-tbl tbody tr:not(.wf-drow) > td:last-child:not([colspan])::after {
+    content: ''; position: absolute; top: 0; bottom: -1px; right: 100%; width: 14px; pointer-events: none;
+    background: linear-gradient(to left, var(--wf-edge), transparent);
+  }
+  .cargo-page #watchOut .trk-tbl-wrap.is-scrollx.at-start.has-cut .trk-tbl thead th:last-child::after,
+  .cargo-page #watchOut .trk-tbl-wrap.is-scrollx.at-start.has-cut .trk-tbl tbody tr:not(.wf-drow) > td:last-child:not([colspan])::after {
+    right: calc(100% + var(--wf-cut, 0px));
+  }
+}
+
+/* 내륙 운송 가시성 → 철도 회랑 이전 안내(2026-10-02) — 한 줄. 대륙횡단철도 컨테이너 등록·위치는 rail.html#cargo */
+.cargo-page .cg-railnote {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin: 0; padding: 14px 18px;
+  border: 1px solid color-mix(in srgb, var(--ink) 9%, transparent); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--ink-2); font-size: var(--fs-base); line-height: 1.5;
+}
+.cargo-page .cg-railnote-ic { display: inline-flex; color: var(--muted); }
+.cargo-page .cg-railnote-a { margin-left: auto; font-weight: 700; color: var(--accent-2-txt); text-decoration: none; white-space: nowrap; }
+.cargo-page .cg-railnote-a:hover { text-decoration: underline; }
+.cargo-page .trk-rail-go { font-weight: 700; color: var(--accent-2-txt); text-decoration: none; white-space: nowrap; }
+.cargo-page .trk-rail-go:hover { text-decoration: underline; }
+html[lang="ko"] .cargo-page .cg-railnote { word-break: keep-all; }
+/* ── 화물 추적 고도화(2026-10-03 · 갈래 CARGO_TRACE) ─────────────────────────────────────────────
+   새 칸·줄은 기존 겉모양(ce846ff 기준)의 말투를 그대로 쓴다 — 한눈 요약의 이름표(cg-k), 칩(f-chip), 보조 글(muted).
+   새 색은 만들지 않는다. 경과일·근거 줄은 색으로 판정하지 않는다(프리타임을 모른다 — 숫자만 굵게). */
+/* ETA 근거 · 경과일 — 한눈 요약 바로 아래 한 줄씩(이름표 + 조각들). 조각은 줄 끝에서만 접히고 조각 안에서는 끊기지 않는다. */
+.cargo-page .cg-basis {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--sp-3);
+  margin: var(--sp-2) var(--sp-4) 0; padding: 0 2px; font-size: var(--fs-sm); line-height: 1.6; color: var(--ink-2);
+}
+.cargo-page .cg-basis + .cg-basis { margin-top: 2px; }
+.cargo-page .cg-basis-k { flex: none; font-size: var(--fs-xs); font-weight: 700; color: var(--muted); letter-spacing: .04em; min-width: 64px; }
+.cargo-page .cg-basis .cg-el { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 0 4px; min-width: 0; }
+.cargo-page .cg-basis .cg-el[hidden] { display: none; }
+.cargo-page .cg-basis b { color: var(--ink); font-weight: 700; }
+.cargo-page .cg-basis small, .cargo-page .cg-basis .cg-prov { font-size: var(--fs-xs); color: var(--muted); }
+.cargo-page .cg-basis .cg-el[data-tip] { cursor: help; text-decoration: underline dotted color-mix(in srgb, var(--muted) 60%, transparent); text-underline-offset: 3px; }
+.cargo-page .cg-basis-note { font-size: var(--fs-xs); color: var(--muted); margin-left: auto; }
+/* 경로 그림 — 항구 LOCODE(옅게) · 구간 손잡이(보이지 않음, 툴팁용) · 국내항 신호 두 줄 */
+.cargo-page .vc-loc { fill: var(--muted); font-weight: 600; }
+.cargo-page .vc-vert .vc-loc { color: var(--muted); font-weight: 600; font-size: var(--fs-sm); }
+.cargo-page .vc-hit { fill: none; stroke: transparent; stroke-width: 18; pointer-events: stroke; cursor: help; }
+.cargo-page .vc-sig-t { font-size: var(--fs-xs); font-weight: 700; fill: var(--ink-2); font-variant-numeric: tabular-nums; }
+.cargo-page .vc-sig-b { font-size: var(--fs-2xs); fill: var(--muted); }
+.cargo-page .vc-vert li { flex-wrap: wrap; }
+.cargo-page .vc-vert .vc-tsm { color: var(--muted); font-weight: 700; }
+.cargo-page .vc-vert .vc-sig { flex-basis: 100%; }
+.cargo-page .vc-vert .vc-sig:empty { display: none; }
+.cargo-page .vc-vert .vc-sig small { color: var(--ink-2); font-weight: 600; }
+@media (max-width: 640px) {
+  .cargo-page .cg-basis { margin: var(--sp-2) var(--sp-3) 0; }
+  .cargo-page .cg-basis-k { flex-basis: 100%; }
+  .cargo-page .cg-basis-note { margin-left: 0; }
+}
+
+/* 감시목록 — 구분 · 참조 메모 · 다음 자동 조회 · 조건 칩 · 내보내기 */
+.cargo-page #watchOut .wf-trade { white-space: nowrap; }
+.cargo-page #watchOut .wf-state { white-space: nowrap; }
+.cargo-page #watchOut .wf-el { display: block; font-size: var(--fs-xs); line-height: 1.35; color: var(--ink-2); font-variant-numeric: tabular-nums; cursor: help; white-space: normal; }
+.cargo-page #watchOut .wf-el > span { white-space: nowrap; }
+.cargo-page #watchOut .wf-state .wf-bell { margin-left: 6px; vertical-align: middle; }
+/* 남은기간 — 상태 칸 둘째 줄(보이는 이름표 '남은 60일'). 첫 줄은 배지와 알림 종 */
+.cargo-page #watchOut .wf-left { display: block; margin-top: 2px; font-size: var(--fs-xs); line-height: 1.35; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.cargo-page #watchOut .wf-left .wf-pollerr { margin-left: 0; }
+.cargo-page #watchOut .wf-left > span + .wf-pollerr { margin-left: 6px; }
+.cargo-page #watchOut td.wf-state { padding-top: 6px; padding-bottom: 6px; }
+.cargo-page #watchOut .wf-route-t { display: inline-block; max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: top; }
+.cargo-page #watchOut .wf-trade[title] { cursor: help; }
+/* 참조 메모 — B/L 칸 둘째 줄(따로 칸을 두지 않는다 · 2026-10-03 검수). 번호 폭 안에서 말줄임, 전체는 툴팁. 굵기·색은 보조 글 */
+/* 번호 단추는 위아래 여백을 줄이고(누르는 높이 24px 은 지킨다) 둘째 줄을 바로 붙인다 — 행 높이를 최근 수집 칸(두 줄)과 비슷하게 */
+.cargo-page #watchOut td.cn { padding-top: 6px; padding-bottom: 6px; }
+.cargo-page #watchOut td.cn .wf-number { padding: 2px 0; min-height: 24px; }
+.cargo-page #watchOut .wf-memo-line { display: block; line-height: 1.3; min-height: 22px; }
+.cargo-page #watchOut .wf-memo-line .wf-memo-edit { margin: 0 0 0 -6px; }
+.cargo-page #watchOut .wf-memo-line .wf-memo-edit:not(.has-memo) { width: 24px; height: 22px; margin-left: -4px; }
+.cargo-page #watchOut .wf-memo { display: inline-block; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; color: var(--ink-2); font-weight: 400; font-size: var(--fs-xs); }
+.cargo-page .wf-memo-edit {
+  display: inline-grid; place-items: center; width: 28px; height: 28px; margin: -6px 0 -6px 4px; padding: 0; vertical-align: middle;
+  border: 1px solid transparent; border-radius: 6px; background: none; color: var(--muted); cursor: pointer;
+}
+.cargo-page .wf-memo-edit:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.cargo-page .wf-memo-edit.has-memo { width: auto; max-width: 166px; height: auto; min-height: 22px; margin: 0 0 0 -6px; padding: 1px 6px; display: inline-flex; color: var(--ink-2); font: inherit; font-weight: 400; text-align: left; }
+.cargo-page .wf-memo-edit.has-memo .wf-memo { max-width: 150px; }
+.cargo-page .wf-memo-edit:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+/* 신뢰 표시 칸 — 첫 줄 최근 수집(+ 수집 실패), 둘째 줄 다음 자동 조회. 칸 폭을 줄여 1440 첫 화면에 들어오게 한다 */
+.cargo-page #watchOut .wf-next { display: block; color: var(--muted); font-size: var(--fs-xs); line-height: 1.35; cursor: help; }
+.cargo-page #watchOut .wf-next .cg-prov { font-size: inherit; }
+/* ETA 칸 둘째 줄 — 최초 대비 누적 ETA 변화. 윗줄의 .wf-next 와 같은 크기·줄간이라 행이 더 높아지지 않는다.
+   색은 추이 그래프와 **같은 토큰**을 쓴다 — 악화(지연) --chart-worse-txt(빨강) · 개선(앞당김)
+   --chart-better-txt(파랑). 등락에 초록은 쓰지 않는다(차트 설계서 1.3). 같은 뜻을 두 색 어휘로
+   부르지 않으려고 lv-* (혼잡도·주의) 계열은 쓰지 않는다 — 그쪽 'stable' 은 노란 주의색이다.
+   변경이 있었는데 날짜가 같은 건은 중립(muted)으로 둔다. */
+/* ★ 줄간·여백을 바짝 좁힌 이유: 둘째 줄이 붙어 이 칸이 표에서 가장 높은 칸이 되면 **행 전체가
+   높아진다**(이력 칸에 뒀던 1차 시안 1440 실측 59 → 62, 20행이면 60px 밀림).
+   행을 늘리지 않는 것이 먼저다 — 둘째 줄 글자는 보조 정보라 줄간을 좁혀도 읽힌다.
+   ★ 칩이 이 칸에 있는 이유는 ① 가리키는 값(ETA) 바로 아래가 제 자리이고 ② 날짜 폭이 이미 넓어
+   칩이 칸을 넓히지 않기 때문이다(이력 칸에 두면 그 칸이 66px 넓어져 1440 에서 표가 가로로 굴렀다). */
+/* ★ nowrap 을 쓰지 않는다: '-3일 앞당김' 을 한 덩어리로 묶으면 이 칸의 **최소폭**이 날짜(48px)보다
+   커져(60px) 1440 최악 자료에서 표가 13px 가로로 굴렀다(실측). 줄바꿈을 허용하면 최소폭이 낱말
+   하나('앞당김' 33px)로 내려가 칸을 밀지 않고, 실제 1440 에서는 칸이 117px 라 그대로 한 줄로 나온다
+   — 칸이 아주 좁은 경우에만 두 줄이 되는데, 그때는 표를 가로로 굴리는 것보다 낫다. */
+.cargo-page #watchOut .wf-drift { display: block; margin-top: -2px; color: var(--muted); font-size: var(--fs-xs); line-height: 1.1; }
+.cargo-page #watchOut .wf-drift.is-late { color: var(--chart-worse-txt); }
+.cargo-page #watchOut .wf-drift.is-early { color: var(--chart-better-txt); }
+.cargo-page .cg-wf-chip { display: inline-flex; align-items: center; gap: 6px; }
+.cargo-page .cg-wf-chip svg { flex: none; opacity: .75; }
+.cargo-page .cg-exp { position: relative; display: inline-flex; }
+.cargo-page .cg-exp-btn { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.cargo-page .cg-exp-menu {
+  position: absolute; top: calc(100% + 4px); right: 0; z-index: 6; min-width: 190px; padding: 4px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); box-shadow: var(--shadow);
+  display: flex; flex-direction: column;
+}
+.cargo-page .cg-exp-menu[hidden] { display: none; }
+.cargo-page .cg-exp-menu button {
+  appearance: none; border: 0; background: none; color: var(--ink); font: inherit; font-size: var(--fs-sm); text-align: left;
+  padding: 9px 12px; border-radius: 6px; cursor: pointer; white-space: nowrap;
+}
+.cargo-page .cg-exp-menu button:hover, .cargo-page .cg-exp-menu button:focus-visible { background: color-mix(in srgb, var(--brand-accent) 12%, transparent); }
+.cargo-page .cg-exp-menu button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.cargo-page #feedOut .cg-exp-btn:focus-visible, .cargo-page #fd_more:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
+/* 감시목록 도구줄 — 구분 칸을 첫 줄에, 내보내기를 둘째 줄 정렬 칸 앞에 둔다(넓은 화면) */
+@media (min-width: 741px) {
+  .cargo-page .wf-toolbar { grid-template-columns: minmax(180px, 1.4fr) repeat(3, minmax(110px, 1fr)) minmax(150px, 1fr); }
+  .cargo-page .wf-toolbar #wf_sort { grid-column: 5; grid-row: 2; }
+  .cargo-page .wf-toolbar .cg-exp { grid-column: 4; grid-row: 2; justify-self: end; align-self: center; }
+  .cargo-page .wf-toolbar #wf_reset { grid-column: 3; grid-row: 2; }
+}
+@media (max-width: 740px) {
+  .cargo-page .wf-toolbar .cg-exp { grid-column: 1 / -1; justify-self: start; }
+  .cargo-page .wf-toolbar #wf_trade { grid-column: 1 / -1; }   /* 구간 검색이 한 줄을 다 쓰므로 홀로 반쪽에 남지 않게 */
+  .cargo-page .wf-toolbar .chip-row .cg-wf-chip { grid-column: 1 / -1; }
+  .cargo-page .cg-exp-menu { right: auto; left: 0; }
+}
+/* 변경이력 — 더 보기 줄 · 도구줄 끝 내보내기 */
+.cargo-page .cg-fd-more { gap: var(--sp-2); align-items: center; flex-wrap: wrap; padding: var(--sp-2) 0 var(--sp-1); }
+.cargo-page #feedOut .berth-toolbar .cg-exp { margin-left: auto; }
+/* 참조 메모 칸(등록 창·메모 창) — 태그 칩과 글자 수 */
+.reg-card .cg-memo-in { width: 100%; min-width: 0; }
+.reg-card .cg-memo-row { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); margin-top: 6px; flex-wrap: wrap; }
+.reg-card .cg-memo-tags { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.reg-card .cg-memo-tag { min-height: 30px; font-size: var(--fs-xs); }
+.reg-card .cg-memo-cnt { font-size: var(--fs-xs); color: var(--muted); font-variant-numeric: tabular-nums; margin-left: auto; }
+/* 공문 언어(인쇄 전에 고른다) — 이력 펼침의 도구줄, 단추 앞 */
+.cargo-page .sc-tools { align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.cargo-page .cg-nt-lang { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-xs); color: var(--muted); white-space: nowrap; }
+.cargo-page .cg-nt-lang select { min-height: 32px; height: 32px; padding: 0 28px 0 10px; font-size: var(--fs-sm); width: auto; }

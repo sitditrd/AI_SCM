@@ -1,0 +1,1465 @@
+/* =========================================================
+   PHAROS 운영 화면 — 선석배정(berth) · 선박 스케줄(schedule) · 경로 분석(route)
+   css/style.css 위에 얹는 이 세 화면 전용 층이다(2026-09-26).
+   ─────────────────────────────────────────────────────────
+   원칙
+   · 색·간격·서체는 style.css 토큰을 쓴다. 새 토큰은 아래 :root 에서 라이트·다크를 같이 정한다.
+   · 이 파일은 .ops-page(세 화면의 body) 아래에서만 동작한다 — 공용 부품을 다른 화면까지 바꾸지 않는다.
+   · 움직임은 transform·opacity 만 쓴다. 전부 prefers-reduced-motion: no-preference 안에 두고,
+     사이트 토글 html.no-motion 은 style.css 끝의 전역 규칙(animation·transition 강제 해제)이 끈다.
+     애니메이션만 끄면 사라지는 요소가 없도록, 시작 상태는 keyframes 의 from 에만 둔다.
+   · 데이터 위에서 끝없이 도는 움직임은 두지 않는다(불러오는 동안의 뼈대도 횟수를 정해 멈춘다).
+   ========================================================= */
+
+/* ---------- 토큰 ---------- */
+:root {
+  /* 선석 진행 단계 — style.css 진행 단계 토큰(--st-*)의 별칭. 예정 파랑 · 접안 노랑 · 작업중 초록 · 출항 회색.
+     상태 칩 점 · 분포 막대 · 범례 · 표 배지 점 · KPI 점이 모두 이 네 값을 쓴다(한 벌). 배지·범례는 늘 글자를 같이 쓴다. */
+  --ops-planned: var(--st-planned);
+  --ops-waiting: var(--st-arrived);
+  --ops-working: var(--st-working);
+  --ops-departed: var(--st-departed);
+  --ops-late: var(--lv-congested);
+  --ops-ease: cubic-bezier(.2, .7, .2, 1);
+  --ops-rise: 14px;
+}
+:root[data-theme='light'] {
+  --ops-zebra: color-mix(in srgb, var(--ink) 2.6%, transparent);
+  --ops-hover: color-mix(in srgb, var(--brand-accent) 7%, transparent);
+  --ops-track: color-mix(in srgb, var(--ink) 8%, transparent);
+  --ops-chip-bg: color-mix(in srgb, var(--brand-accent) 6%, var(--surface));
+  --ops-skel: color-mix(in srgb, var(--ink) 7%, transparent);
+  --ops-lift: 0 12px 28px rgba(16, 24, 40, .12);
+}
+:root[data-theme='dark'] {
+  --ops-zebra: color-mix(in srgb, #ffffff 2.4%, transparent);
+  --ops-hover: color-mix(in srgb, var(--brand-accent-2) 9%, transparent);
+  --ops-track: color-mix(in srgb, #ffffff 9%, transparent);
+  --ops-chip-bg: color-mix(in srgb, var(--brand-accent) 10%, var(--surface));
+  --ops-skel: color-mix(in srgb, #ffffff 8%, transparent);
+  --ops-lift: 0 14px 34px rgba(0, 0, 0, .45);
+}
+
+/* ---------- 움직임 정의 ---------- */
+@keyframes opsRise { from { opacity: 0; transform: translateY(var(--ops-rise)); } }
+@keyframes opsFade { from { opacity: 0; } }
+@keyframes opsGrowX { from { transform: scaleX(0); } }
+@keyframes opsPulse { 50% { opacity: .45; } }
+@keyframes opsSpin { from { transform: rotate(-180deg); } }
+
+/* =========================================================
+   표 — 줄무늬 · 행 강조 · 머리글 고정
+   ========================================================= */
+.ops-page table.tw tbody tr:nth-child(even):not(.sk-row):not(.tree-hd):not(.ops-empty-row) > td { background-color: var(--ops-zebra); }
+.ops-page table.tw tbody tr:not(.sk-row):not(.ops-empty-row):hover > td { background-color: var(--ops-hover); }
+.ops-page table.tw tbody tr:not(.sk-row):not(.ops-empty-row):hover > td:first-child { box-shadow: inset 3px 0 0 var(--brand-accent-2); }
+/* 반입마감 임박 — 줄무늬보다 앞선다. 왼쪽 띠로 한 번 더 말한다(색만으로 전하지 않는다: ⚠ 는 칸 안에 그대로 있다). */
+.ops-page table.tw tbody tr.row-cct-soon > td { background-color: color-mix(in srgb, var(--lv-stable) 9%, transparent); }
+.ops-page table.tw tbody tr.row-cct-soon:hover > td { background-color: color-mix(in srgb, var(--lv-stable) 15%, transparent); }
+.ops-page table.tw tbody tr.row-cct-soon > td:first-child { box-shadow: inset 3px 0 0 var(--lv-stable); }
+.ops-page table.tw tbody tr[data-ri]:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.ops-page table.tw td.num, .ops-page table.tw th.num { font-variant-numeric: tabular-nums; }
+/* 숫자·시각 칸 머리글 — 값(td.num)과 같은 오른쪽 끝에 선다. style.css 의 table.tw th{text-align:left}(0,1,2)가
+   th.num{text-align:right}(0,1,1)을 이겨 머리글만 왼쪽에 남아 머리글과 값이 좌우로 어긋났다(버그 수정 · 유지). */
+.ops-page table.tw th.num { text-align: right; }
+.ops-page table.tw th.num .air-sort { justify-content: flex-end; }
+
+/* 작은 글자 대비 보정(12px 이하 칩·건수) — 원색 대신 잉크를 섞은 글자색(두 테마에서 4.5:1 이상 · 접근성 · 유지) */
+/* 선석 진행 단계 배지 — 글자·칠은 style.css .st-*(선박 화면과 같은 규칙). 앞 점은 상태 칩 점 · 분포 막대 조각과 같은 단계 토큰
+   그대로다(아래 .lv-dot 기본값 currentColor 를 단계마다 덮는다 — 글자색을 따르면 칩 점과 다른 색이 된다). */
+.ops-page .st-badge.st-planned .lv-dot { background: var(--ops-planned); }
+.ops-page .st-badge.st-arrived .lv-dot { background: var(--ops-waiting); }
+.ops-page .st-badge.st-working .lv-dot { background: var(--ops-working); }
+.ops-page .st-badge.st-departed .lv-dot { background: var(--ops-departed); }
+.ops-page .tree-cnt { color: color-mix(in srgb, var(--brand-accent-2) 60%, var(--ink)); }
+.ops-page .tree-caret { color: color-mix(in srgb, var(--brand-accent-2) 60%, var(--ink)); }
+.ops-page .sea-badge-day { color: color-mix(in srgb, var(--series-1) 64%, var(--ink)); }
+.ops-page .sea-badge-direct { color: var(--ink-2); }   /* 속성 배지 — 중립(style.css .sea-badge-direct 와 같은 규칙) */
+.ops-page .sea-badge-ts,
+.ops-page .sea-badge-cutsoon { color: color-mix(in srgb, var(--lv-busy) 48%, var(--ink)); }
+.ops-page .sea-badge-cutpast { color: color-mix(in srgb, var(--lv-congested) 60%, var(--ink)); }
+.ops-page .cct-soon-txt { color: color-mix(in srgb, var(--lv-busy) 48%, var(--ink)); }
+
+/* 머리글 고정 — 표가 칸 안에 다 들어갈 때만(js 가 .ops-fit 을 단다). 넘치는 표는 가로 스크롤이
+   우선이라 그대로 둔다. overflow:clip 은 스크롤 칸을 만들지 않아 sticky 가 화면 기준으로 붙는다. */
+.ops-page .tbl-card { overflow: clip; }
+.ops-page .tbl-scroll.ops-fit { overflow-x: clip; }
+.ops-page .tbl-scroll.ops-fit > table.tw > thead { position: sticky; top: var(--header-h); z-index: 4; }
+.ops-page .tbl-scroll.ops-fit > table.tw > thead th { box-shadow: inset 0 -1px 0 var(--grid); }
+
+/* 상태 배지 — 점이 상태색을 한 번 더 싣는다(글자는 이미 대비를 맞춘 -txt 값).
+   표 안에서는 inline-block 으로 둔다: inline-flex 의 gap 이 표의 열 너비 계산(최소 내용 폭)에서 빠지는
+   경우가 있어, 언어를 바꾼 뒤 'DEPARTED · Departed' 가 칸 밖으로 10px 넘쳐 카드 가장자리에서 잘렸다. */
+.ops-page .st-badge .lv-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; display: inline-block; flex: none; }
+.ops-page table.tw .st-badge { display: inline-block; white-space: nowrap; line-height: 1.4; }
+.ops-page table.tw .st-badge .lv-dot { margin-right: 6px; vertical-align: 1px; }
+/* 선석배정 표의 상태 칸은 폭이 고정(13%)이고 넘치면 말줄임이다(style.css). 한국어 밖의 언어에서는
+   'DEPARTED · Departed' 처럼 같은 뜻이 두 번 적혀 정작 그 언어 낱말이 '…' 로 잘렸다 —
+   영문 코드는 한국어 화면에서만 곁들인다(퀵뷰 메뉴의 배지는 그대로 둘 다 적는다). */
+html:not([lang='ko']) .ops-berth #berthTable .st-code,
+html:not([lang='ko']) .ops-berth #berthTable .st-sep { display: none; }
+.ops-page .st-working .lv-dot { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ops-working) 22%, transparent); }
+
+/* 빈 결과 */
+.ops-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 34px 16px; color: var(--muted); text-align: center; white-space: normal; }
+.ops-empty b { color: var(--ink-2); font-weight: 700; font-size: var(--fs-base); }
+.ops-empty-ic {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: color-mix(in srgb, var(--brand-accent-2) 14%, transparent);
+  position: relative;
+}
+.ops-empty-ic::before {
+  content: ''; position: absolute; inset: 11px; background: var(--brand-accent-2);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M20 20l-4.6-4.6'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M20 20l-4.6-4.6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.ops-empty .ops-reset { margin-top: 2px; }
+
+/* ---------- 결과 없음 상자 — 가운데 한 기둥(D6 · 형님 09-27·09-28 '조회 대기·결과 없음은 가운데') ----------
+   아이콘 · 제목 · 설명을 모두 상자 가운데 한 축에 세운다 — 화물추적 조회 대기 상자와 같은 모양(점선 틀 · Tabler search 24 ·
+   아이콘 뒤 바탕 없음 · 제목 16/700 · 설명 폭 440px). 대상: 선박 스케줄·항로의 '결과 없음'(.air-msg-empty), 항로 배편 0건,
+   선사 필터 뒤 0건(.cf-empty · 선사 카드 .cf-pick-none), 대체 항만·검증 분포 없음, 인천항 입출항 0건(.ops-state). 실패·키 없음·한도(.air-msg-fail·nokey·quota)는
+   '결과 없음' 과 뜻이 달라 예전 왼쪽 띠 안내 그대로 둔다. 전 판 조회 실패는 같은 가운데 상자에 경고 아이콘(.ops-state.is-fail). */
+.ops-page .air-msg.air-msg-empty,
+.ops-page .ops-state,
+.ops-page p.cf-empty,
+.ops-page p.cf-pick-none {
+  display: block;
+  margin: 4px 0 10px; padding: 24px 20px; border: 1px dashed var(--border); border-radius: var(--radius-sm);
+  background: none; text-align: center; color: var(--ink-2); line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere;
+}
+.ops-page .air-msg.air-msg-empty::before,
+.ops-page .ops-state::before,
+.ops-page p.cf-empty::before,
+.ops-page p.cf-pick-none::before {
+  content: ''; display: block; width: 24px; height: 24px; margin: 0 auto 8px; background: var(--muted);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2010a7%207%200%201%200%2014%200a7%207%200%201%200%20-14%200%22%2F%3E%3Cpath%20d%3D%22M21%2021l-6%20-6%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2010a7%207%200%201%200%2014%200a7%207%200%201%200%20-14%200%22%2F%3E%3Cpath%20d%3D%22M21%2021l-6%20-6%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+}
+/* 조회 실패(전 선사) — 같은 가운데 상자, 아이콘만 경고 삼각형(Tabler alert-triangle 24) */
+.ops-page .ops-state.is-fail::before {
+  background: var(--lv-busy-txt);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%209v4%22%2F%3E%3Cpath%20d%3D%22M10.363%203.591l-8.106%2013.534a1.914%201.914%200%200%200%201.636%202.871h16.214a1.914%201.914%200%200%200%201.636%20-2.87l-8.106%20-13.536a1.914%201.914%200%200%200%20-3.274%200%22%2F%3E%3Cpath%20d%3D%22M12%2016h.01%22%2F%3E%3C%2Fsvg%3E");
+          mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%209v4%22%2F%3E%3Cpath%20d%3D%22M10.363%203.591l-8.106%2013.534a1.914%201.914%200%200%200%201.636%202.871h16.214a1.914%201.914%200%200%200%201.636%20-2.87l-8.106%20-13.536a1.914%201.914%200%200%200%20-3.274%200%22%2F%3E%3Cpath%20d%3D%22M12%2016h.01%22%2F%3E%3C%2Fsvg%3E");
+}
+.ops-page .air-msg.air-msg-empty .air-msg-h,
+.ops-page .ops-state > b { display: block; font-size: var(--fs-lg); font-weight: 700; line-height: 1.4; color: var(--ink); text-wrap: balance; }
+.ops-page .air-msg.air-msg-empty .air-msg-b,
+.ops-page .ops-state > p { margin: 6px auto 0; max-width: 440px; font-size: var(--fs-md); line-height: 1.6; color: var(--ink-2); text-wrap: pretty; }
+.ops-page p.cf-empty, .ops-page p.cf-pick-none { font-size: var(--fs-md); }
+.ops-page p.cf-empty { max-width: none; }
+.ops-page p.cf-empty .cf-off-btn { margin: 0 0 0 6px; }
+/* 결과 없음 상자 둘이 이어지면(항공 출발·도착 한쪽씩) 사이를 띄운다 */
+.ops-page .air-msg.air-msg-empty + .air-msg { margin-top: 12px; }
+/* 폰 폭 — 결과 카드 안에 결과 없음 카드가 한 겹 더 있어(카드 두 겹 + 점선 틀) 설명이 150px 폭으로 여섯 줄이 됐다.
+   안쪽 카드는 테두리·여백을 걷어 점선 틀이 바깥 카드에 바로 서게 하고, 틀 안 여백도 줄인다. */
+@media (max-width: 640px) {
+  .ops-page .card .card:has(> .air-msg.air-msg-empty:only-child) { padding: 0; border: 0; background: none; box-shadow: none; }
+  .ops-page .air-msg.air-msg-empty, .ops-page .ops-state, .ops-page p.cf-empty, .ops-page p.cf-pick-none { padding: 18px 12px; }
+}
+/* '2주 뒤로 다시 조회'(2026-09-29) — 배편 없음 상자(선박 스케줄 .air-msg-empty · 항로 .ops-state) 안, 설명 아래 가운데.
+   단추 한 줄 + 옮겨 갈 기간 한 줄. 단추는 보조 조작이라 외곽선 단추(btn-ghost)를 조작부 높이로 쓴다. */
+.ops-page .sea-later { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 12px; }
+.ops-page .sea-later-btn { min-height: var(--ctl-h); padding: 0 var(--sp-3); font-size: var(--fs-md); }
+.ops-page .sea-later-hint { display: block; max-width: 440px; font-size: var(--fs-sm); line-height: 1.5; color: var(--muted); text-wrap: pretty; }
+.ops-page .sea-later-d { white-space: nowrap; }
+.ops-page .schedule-official { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0 14px; padding-top: 10px; border-top: 1px solid var(--border); }
+.ops-page .schedule-official > span { color: var(--muted); font-size: var(--fs-sm); font-weight: 700; margin-right: 4px; }
+.ops-page .schedule-official-link { display: inline-flex; align-items: center; max-width: 100%; min-height: 36px; padding: 0 12px; font-size: var(--fs-sm); text-decoration: none; white-space: normal; }
+.ops-page .air-msg .schedule-official-link { margin-top: 12px; }
+
+/* ---------- 상태 상자 아이콘 — Tabler 선형 한 벌, 아이콘 뒤 바탕 도형 없음(D7 · D4) ----------
+   예전: 준비 중·선박·항만 패널은 86px 둥근 네모 배지(그라데이션 · 빛번짐 그림자 · 맥동 링) 안의 48 격자 그림,
+   빈 결과는 44px 파란 원 안의 돋보기, 로그인 만료는 38px 둥근 네모 안의 자물쇠였다.
+   지금: 그림만 24px(선 1.5) 로, 색은 보조 글자색(로그인 만료는 경고 글자색). 가운데 정렬·문구·단추는 그대로다. */
+.ops-page .prep-badge,
+.ops-page .prep-panel.is-live .prep-badge {
+  width: auto; height: auto; margin: 0 auto 12px; border: 0; border-radius: 0; background: none; box-shadow: none; color: var(--muted);
+}
+.ops-page .prep-badge::after { content: none; animation: none; }
+.ops-page .prep-badge svg { width: 24px; height: 24px; }
+.ops-page .ops-empty-ic { width: 24px; height: 24px; border-radius: 0; background: none; }
+.ops-page .ops-empty-ic::before {
+  inset: 0; background: var(--muted);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2010a7%207%200%201%200%2014%200a7%207%200%201%200%20-14%200%22%2F%3E%3Cpath%20d%3D%22M21%2021l-6%20-6%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2010a7%207%200%201%200%2014%200a7%207%200%201%200%20-14%200%22%2F%3E%3Cpath%20d%3D%22M21%2021l-6%20-6%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+}
+.ops-page .ops-empty b { font-size: var(--fs-lg); color: var(--ink); }
+.ops-page .ops-login-ic,
+.ops-page .ops-login.is-retry .ops-login-ic { width: 24px; height: 24px; margin-top: 1px; border-radius: 0; background: none; }
+.ops-page .ops-login-ic::before {
+  inset: 0;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%2013a2%202%200%200%201%202%20-2h10a2%202%200%200%201%202%202v6a2%202%200%200%201%20-2%202h-10a2%202%200%200%201%20-2%20-2v-6%22%2F%3E%3Cpath%20d%3D%22M11%2016a1%201%200%201%200%202%200a1%201%200%200%200%20-2%200%22%2F%3E%3Cpath%20d%3D%22M8%2011v-4a4%204%200%201%201%208%200v4%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%2013a2%202%200%200%201%202%20-2h10a2%202%200%200%201%202%202v6a2%202%200%200%201%20-2%202h-10a2%202%200%200%201%20-2%20-2v-6%22%2F%3E%3Cpath%20d%3D%22M11%2016a1%201%200%201%200%202%200a1%201%200%200%200%20-2%200%22%2F%3E%3Cpath%20d%3D%22M8%2011v-4a4%204%200%201%201%208%200v4%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+}
+
+/* ---------- 선석 목록 칸 폭 — 머리글 접힘 없애기(D5 · 2026-09-29) ----------
+   '양하 (VAN)' · '적하 (VAN)' 머리글만 두 줄로 접혀 머리 줄이 높았다 — 칸(5.5% = 63px, 글자 자리 47px)이 머리글(약 70px)보다
+   좁았다(예전 운영판 ce846ff 도 같다). 글자를 자르지 않고 칸을 넓힌다: 양하·적하 5.5 → 8%, 여유가 큰 상태 13 → 10%
+   (가장 긴 러시아어 상태 배지 85px 도 들어간다), 선명 16.5 → 15.5%. 합계 100% · 표 폭(본문 1150px)은 그대로다.
+   오른쪽 정렬 머리글은 왼쪽 여백만 4px 로 줄여 글자 자리를 넓힌다(값과 맞는 오른쪽 끝선은 그대로). 폰 폭은 카드형이라 무관하다.
+   ★ 칸 폭 자체는 아래 '칸 글자는 한 줄' 이 언어별로 다시 정한다(2026-09-29 2차). */
+.ops-berth #berthTable > thead > tr:first-child > th.num { padding-left: 4px; }
+
+/* ---------- 러시아어 표 머리글 — 문장형 표기(2026-09-29 2차 · 칸 글자 한 줄) ----------
+   키릴 대문자(굵기 800 · 자간 0.05em)는 폭이 넓어 머리글이 열 폭을 정해 버린다. 머리글을 한 줄로 두자 선석 목록·터미널별 요약·
+   항공 정기편 '전체' 보기가 본문 폭을 100~450px 넘어 끝 칸(상태·접안지연 확률·시즌)이 가로 굴림 뒤로 숨었다. 러시아어에서만
+   대문자 변환을 끄고 자간을 줄여(약 10% 좁아진다) 세 화면의 표가 다시 본문 폭 안에 든다. 글자 굵기·크기·색은 그대로다. */
+html[lang='ru'] .ops-page table.tw th { text-transform: none; letter-spacing: 0.01em; }
+/* 항공 '전체' 보기(러시아어) — 편명 칸(편명 + 공동운항 칩)까지 한 줄로 두면 16px 모자라 칸 좌우 여백을 8 → 6px 로 */
+html[lang='ru'] .ops-page table.tw.air-tbl-all th, html[lang='ru'] .ops-page table.tw.air-tbl-all td { padding-left: 6px; padding-right: 6px; }
+
+/* ---------- 선석 목록 — 칸 글자는 한 줄(형님 09-29 '등록' 칸 지적 · 전 화면 표 칸 한 줄) ----------
+   머리글도 값도 줄을 바꾸지 않는다 — style.css 의 '머리글만 두 줄 허용(#berthTable thead th)' 을 이 화면에서 끈다.
+   영어·러시아어 머리글('CARGO CUT-OFF (CCT)' · 'ЗАКРЫТИЕ ПРИЁМА (CCT)')이 두세 줄로 접혀 머리 줄이 높았다.
+   칸 폭은 언어마다 머리글과 값의 실제 폭(Pretendard 실측, 본문 표 폭 1150px)으로 다시 나눈다. 합계는 늘 100%.
+   · 한국어: 터미널 11 → 14% — 가장 긴 이름('부산항터미널 신선대·감만 (BPT)')까지 말줄임 없이 보인다. 그 폭은
+     항로·출항·양하·적하에서 조금씩 가져온다(모두 머리글·값보다 넓게 남는다). 선명(15.5%)·선사(7%)·상태(10%)는 그대로.
+   · 중국어·일본어: 머리글이 짧아 남는 폭을 터미널 이름에 준다.
+   · 영어: 머리글 자리부터 채우고 남는 폭을 터미널·선명에 준다. 칸 좌우 여백을 8 → 6px 로 줄여 글자 자리를 번다.
+   · 러시아어: 대문자 머리글만 더해도 1150px 을 넘었다 — 머리글을 문장형 표기로 바꿔(위 '러시아어 표 머리글') 폭을 줄이고
+     영어처럼 머리글 자리부터 채운다. 가로 굴림으로 넘기면 끝 칸 '상태' 가 화면 밖으로 숨는다(사용법 보기·폭 시험이 막는 일).
+   긴 터미널 이름·선명은 말줄임(…)으로 끝나고 전체 값은 칸에 마우스를 올리면 보인다(js/berth.js title).
+   폰 폭(≤640px)은 카드형이라 첫 머리 줄이 숨고 칸 폭을 쓰지 않는다 — 표 최소 폭만 넓은 화면에 둔다. */
+.ops-berth #berthTable > thead > tr:first-child > th { white-space: nowrap; }
+.ops-berth #berthTable > thead > tr:first-child > th:nth-child(1)  { width: 14%; }   /* 터미널 */
+.ops-berth #berthTable > thead > tr:first-child > th:nth-child(2)  { width: 5.5%; }  /* 선석 */
+.ops-berth #berthTable > thead > tr:first-child > th:nth-child(3)  { width: 15.5%; } /* 선명 / 모선항차 */
+.ops-berth #berthTable > thead > tr:first-child > th:nth-child(4)  { width: 7%; }    /* 선사 */
+.ops-berth #berthTable > thead > tr:first-child > th:nth-child(5)  { width: 7%; }    /* 항로 */
+.ops-berth #berthTable > thead > tr:first-child > th:nth-child(6)  { width: 9.5%; }  /* 반입마감 */
+.ops-berth #berthTable > thead > tr:first-child > th:nth-child(7)  { width: 9%; }    /* 접안 */
+.ops-berth #berthTable > thead > tr:first-child > th:nth-child(8)  { width: 8.5%; }  /* 출항 */
+.ops-berth #berthTable > thead > tr:first-child > th:nth-child(9),
+.ops-berth #berthTable > thead > tr:first-child > th:nth-child(10) { width: 7%; }    /* 양하 · 적하 */
+.ops-berth #berthTable > thead > tr:first-child > th:nth-child(11) { width: 10%; }   /* 상태 */
+:is(html[lang='zh-CN'], html[lang='ja']) .ops-berth #berthTable > thead > tr:first-child > th:nth-child(1) { width: 19%; }
+:is(html[lang='zh-CN'], html[lang='ja']) .ops-berth #berthTable > thead > tr:first-child > th:nth-child(2) { width: 5%; }
+:is(html[lang='zh-CN'], html[lang='ja']) .ops-berth #berthTable > thead > tr:first-child > th:nth-child(3) { width: 14%; }
+:is(html[lang='zh-CN'], html[lang='ja']) .ops-berth #berthTable > thead > tr:first-child > th:nth-child(5) { width: 5.5%; }
+:is(html[lang='zh-CN'], html[lang='ja']) .ops-berth #berthTable > thead > tr:first-child > th:nth-child(6) { width: 10%; }
+:is(html[lang='zh-CN'], html[lang='ja']) .ops-berth #berthTable > thead > tr:first-child > th:nth-child(7),
+:is(html[lang='zh-CN'], html[lang='ja']) .ops-berth #berthTable > thead > tr:first-child > th:nth-child(8) { width: 8%; }
+:is(html[lang='zh-CN'], html[lang='ja']) .ops-berth #berthTable > thead > tr:first-child > th:nth-child(9),
+:is(html[lang='zh-CN'], html[lang='ja']) .ops-berth #berthTable > thead > tr:first-child > th:nth-child(10) { width: 7.5%; }
+:is(html[lang='zh-CN'], html[lang='ja']) .ops-berth #berthTable > thead > tr:first-child > th:nth-child(11) { width: 8.5%; }
+html[lang='en'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(1)  { width: 8.8%; }
+html[lang='en'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(2)  { width: 5%; }
+html[lang='en'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(3)  { width: 12.5%; }
+html[lang='en'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(4)  { width: 6.1%; }
+html[lang='en'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(5)  { width: 5.1%; }
+html[lang='en'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(6)  { width: 14.2%; }
+html[lang='en'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(7)  { width: 10.3%; }
+html[lang='en'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(8)  { width: 11.2%; }
+html[lang='en'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(9)  { width: 11.3%; }
+html[lang='en'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(10) { width: 7.7%; }
+html[lang='en'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(11) { width: 7.8%; }
+html[lang='ru'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(1)  { width: 7.7%; }
+html[lang='ru'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(2)  { width: 5.4%; }
+html[lang='ru'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(3)  { width: 11.8%; }
+html[lang='ru'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(4)  { width: 7.8%; }
+html[lang='ru'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(5)  { width: 4.8%; }
+html[lang='ru'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(6)  { width: 14.2%; }
+html[lang='ru'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(7)  { width: 10.6%; }
+html[lang='ru'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(8)  { width: 7.8%; }
+html[lang='ru'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(9)  { width: 9.55%; }
+html[lang='ru'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(10) { width: 9.45%; }
+html[lang='ru'] .ops-berth #berthTable > thead > tr:first-child > th:nth-child(11) { width: 10.9%; }
+/* 터미널별 요약 · 인천항 입출항 — 칸 한 줄, 가로 굴림 줄이기(2026-09-29 2차).
+   영어·러시아어는 머리글('BERTHING DELAY 6H+ PROBABILITY' · 'ПОРТ НАЗНАЧЕНИЯ / СЛЕДУЮЩИЙ ПОРТ')과 영문 터미널 이름이 길어
+   표가 본문 폭을 160~450px 넘었고, 끝 칸(이적 합계·접안지연 확률 · 대리점)이 가로 굴림 뒤로 숨었다.
+   · 칸 좌우 여백을 선석 목록 표와 같은 8px 로(영어·러시아어만 — 한국어는 이미 넉넉하다).
+   · 터미널 이름(요약 — 영어·러시아어만)·선박명·목적항·대리점(입출항)처럼 길이가 들쭉날쭉한 이름은 한 줄 + 말줄임(…) + title 로 폭을 묶는다.
+   · 접안지연 확률 칸의 긴 설명('기본모델 · 이 터미널은 실제 접안시각을 제공하지 않습니다')도 한 줄로 묶고 전체 문장은 title.
+   러시아어는 위 '문장형 머리글' 과 함께 본문 폭 안에 든다. */
+:is(html[lang='en'], html[lang='ru']) .ops-berth :is(#byterminal, #icOut) table.tw > * > tr > :is(th, td) { padding-left: 8px; padding-right: 8px; }
+.ops-berth #byterminal .port-cell small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:is(html[lang='en'], html[lang='ru']) .ops-berth #byterminal .port-cell small { max-width: 200px; }
+html[lang='ru'] .ops-berth #byterminal .port-cell small { max-width: 160px; }
+.ops-berth #byterminal .ops-risk-note { display: inline-block; max-width: 24em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+:is(html[lang='en'], html[lang='ru']) .ops-berth #byterminal .ops-risk-note { max-width: 14em; }
+.ops-berth .ops-cut { display: inline-block; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+.ops-berth .ops-cut.is-wide { max-width: 200px; }
+
+/* 영어·러시아어 칸 좌우 여백 6px 과 표 최소 폭(= 머리글이 말줄임 없이 다 들어가는 폭, 언어별)은 넓은 화면에만 — 폰 카드형은 그대로.
+   화면이 좁아 본문(1150px)이 표 최소 폭보다 좁아지면 표 상자 안에서 굴린다. */
+@media (min-width: 641px) {
+  :is(html[lang='en'], html[lang='ru']) .ops-berth #berthTable th,
+  :is(html[lang='en'], html[lang='ru']) .ops-berth #berthTable td { padding-left: 6px; padding-right: 6px; }
+  .ops-berth #berthTable { min-width: 1090px; }
+  html[lang='en'] .ops-berth #berthTable { min-width: 1150px; }
+  html[lang='ru'] .ops-berth #berthTable { min-width: 1150px; }
+}
+
+/* ---------- 선석 — 글자 기호·이모지 대신 Tabler 한 벌(D7) ----------
+   즐겨찾기 ★☆ → star-filled · star 14, 상태 칩 ×/+ → x · plus 12, 반입마감 임박 ⚠ → alert-triangle 14,
+   쪽 넘김 ‹ › → chevron 14, 트리 ▸ → chevron-right 14(열리면 아래로 돈다), Excel 📥 → download 14,
+   빠른 메뉴 🗺 🔎 🧭 📦 📋 📥 → map-pin · world · route · package · copy · download 16(바깥 사이트 줄 끝 external-link 14),
+   내보내기 ⏳ ✓ ✗ → loader-2(돈다) · check · x. 색은 옆 글자색을 따른다(켜진 별만 --fav-txt). */
+.ops-berth .tab-star .tw-ic { display: block; }
+.ops-berth .f-chip.fav-chip .star { display: inline-flex; margin-right: 4px; }
+.ops-berth #statusChips .f-chip .x { display: inline-flex; margin-left: 0; }
+/* x·plus 12 는 그림 좌우에 3px 빈자리를 품고 있어(24 격자의 6~18) 예전 글자 '×'(9px)보다 칩마다 약 6px 넓어졌고, 그만큼 옆 검색 칸이
+   240 → 218px 로 줄어 자리표시가 '항차 검' 에서 잘렸다(09-29 심사). 앞 여백을 빼고 칩 오른쪽 안쪽 여백을 그 빈자리만큼(3px) 줄여
+   칩 폭을 예전만큼 되돌린다 — 글자에서 x 선까지 11px, x 선에서 칩 테두리까지 12px 로 왼쪽 점 쪽 여백과 같다. */
+.ops-berth #statusChips .f-chip { padding-right: calc(var(--sp-2) - 3px); }
+.ops-berth .fav-hint .tw-ic { margin: 0 1px; color: var(--ink-2); }
+.ops-berth .cct-soon-txt .tw-ic { margin-left: 2px; }
+.ops-berth .pg-btn { gap: 4px; }
+.ops-berth .tree-caret { display: inline-flex; vertical-align: -2px; }
+.ops-berth #gridXlsBtn { display: inline-flex; align-items: center; gap: 6px; }
+.ops-berth .ctx-menu .cm-item { display: flex; align-items: center; gap: 8px; }
+.ops-berth .ctx-menu .cm-item > .tw-ic { color: var(--muted); }
+.ops-berth .ctx-menu .cm-item:hover > .tw-ic { color: var(--ink-2); }
+.ops-berth .ctx-menu .cm-item .cm-ext { display: inline-flex; margin-left: auto; color: var(--muted); }
+
+/* 불러오는 중 — 결과 모양의 뼈대. 정해진 횟수만 숨쉬고 멈춘다. */
+.ops-skel { display: grid; gap: 10px; margin-top: 12px; }
+.ops-skel i { display: block; height: 72px; border-radius: 12px; background: var(--ops-skel); }
+.ops-skel.is-table i { height: 18px; border-radius: 6px; }
+.ops-skel i:nth-child(2) { width: 92%; }
+.ops-skel i:nth-child(3) { width: 78%; }
+
+/* 로그인 만료(401) 안내 */
+.ops-login {
+  display: flex; gap: 14px; align-items: flex-start; padding: 16px 18px; margin: 4px 0;
+  border-radius: 14px; border: 1px solid color-mix(in srgb, var(--lv-busy) 38%, var(--border));
+  background: color-mix(in srgb, var(--lv-busy) 8%, var(--surface));
+}
+.ops-login b { display: block; font-size: var(--fs-base); font-weight: 800; color: var(--ink); }
+.ops-login p { margin: 4px 0 12px; color: var(--ink-2); font-size: var(--fs-sm); line-height: 1.6; }
+.ops-login.is-retry { border-color: color-mix(in srgb, var(--series-1) 38%, var(--border)); background: color-mix(in srgb, var(--series-1) 7%, var(--surface)); }
+.ops-login.is-retry p { margin-bottom: 0; }
+.ops-login-ic { flex: none; width: 38px; height: 38px; border-radius: 11px; position: relative; background: color-mix(in srgb, var(--lv-busy) 18%, transparent); }
+.ops-login.is-retry .ops-login-ic { background: color-mix(in srgb, var(--series-1) 16%, transparent); }
+.ops-login-ic::before {
+  content: ''; position: absolute; inset: 9px; background: var(--lv-busy-txt);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4.5' y='10.5' width='15' height='10' rx='2.5'/%3E%3Cpath d='M8 10.5V7.5a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4.5' y='10.5' width='15' height='10' rx='2.5'/%3E%3Cpath d='M8 10.5V7.5a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.ops-login.is-retry .ops-login-ic::before { background: var(--series-1-txt); }
+.ops-login .ops-relogin { min-height: var(--ctl-h); display: inline-flex; align-items: center; padding: 0 var(--sp-3); font-size: var(--fs-sm); }
+
+/* 누른 자리 바로 아래의 이유 한 줄 */
+.ops-inline-msg {
+  margin: calc(var(--sp-1) * -1) 0 var(--sp-3); padding: 8px 12px; border-radius: 10px;
+  font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.55;
+  border-left: 3px solid var(--series-1); background: color-mix(in srgb, var(--series-1) 8%, transparent);
+}
+.ops-inline-msg.is-warn { border-left-color: var(--lv-stable); background: color-mix(in srgb, var(--lv-stable) 10%, transparent); }
+.ops-inline-msg.is-err { border-left-color: var(--lv-congested); background: color-mix(in srgb, var(--lv-congested) 9%, transparent); color: var(--ink); }
+.ops-page .ops-warn { border-left: 3px solid var(--lv-stable); padding: 6px 12px; background: color-mix(in srgb, var(--lv-stable) 9%, transparent); border-radius: 0 10px 10px 0; }
+
+/* 내보내기 버튼 — 흰 테두리 유령 버튼 대신 도구줄 톤에 맞춘 보조 버튼 + 내려받기 기호 */
+.ops-page .ops-xls {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  min-height: var(--ctl-h); height: auto; padding: 0 14px; opacity: 1;
+  border: 1px solid color-mix(in srgb, var(--brand-accent-2) 40%, var(--border)); border-radius: var(--radius-sm);
+  background: var(--ops-chip-bg); color: var(--ink-2); font-size: var(--fs-sm); font-weight: 700;
+  transition: border-color .18s ease, color .18s ease, background-color .18s ease, transform .18s var(--ops-ease);
+}
+.ops-page .ops-xls::before {
+  content: ''; width: 14px; height: 14px; flex: none; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 20h14'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 20h14'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.ops-page .ops-xls:hover:not(:disabled) { border-color: var(--brand-accent-2); color: var(--ink); }
+.ops-page .ops-xls:disabled { cursor: progress; }
+.ops-page .ops-xls[data-ops-flash] { color: var(--ink); border-color: var(--brand-accent-2); }
+/* 도구줄: 보기 전환·항목은 왼쪽, 내보내기는 오른쪽 끝 — 결과를 받은 뒤 가는 곳이다 */
+.ops-page .schedule-tools .ops-xls { margin-left: auto; }
+.ops-page .schedule-tools { row-gap: 10px; }
+.ops-page .schedule-columns[open] summary { border-color: var(--brand-accent-2); color: var(--ink); }
+
+/* =========================================================
+   선석배정 (berth.html)
+   ========================================================= */
+/* KPI 카드 — 상태의 뜻을 이름표 앞 점으로(윗줄 장식은 style.css 가 2026.3a 에 걷어냈다 — 되살리지 않는다) */
+.ops-berth .ops-kpi-working .k::before,
+.ops-berth .ops-kpi-cct .k::before,
+.ops-berth .ops-kpi-etd .k::before { content: ''; width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.ops-berth .ops-kpi-working .k::before { background: var(--ops-working); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ops-working) 20%, transparent); }
+.ops-berth .ops-kpi-cct .k::before { background: var(--lv-busy); box-shadow: 0 0 0 3px color-mix(in srgb, var(--lv-busy) 20%, transparent); }
+.ops-berth .ops-kpi-etd .k::before { background: var(--series-1); box-shadow: 0 0 0 3px color-mix(in srgb, var(--series-1) 20%, transparent); }
+.ops-berth .ops-kpi-cct { background-image: radial-gradient(260px 120px at 100% 0%, color-mix(in srgb, var(--lv-busy) 9%, transparent), transparent 70%); }
+.ops-berth .ops-kpi-working { background-image: radial-gradient(260px 120px at 100% 0%, color-mix(in srgb, var(--ops-working) 8%, transparent), transparent 70%); }
+
+/* 상태 분포 막대 */
+.ops-statbar {
+  margin-top: var(--sp-3); padding: 14px 18px;
+  display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px 18px;
+  border-radius: var(--radius); border: 1px solid color-mix(in srgb, var(--brand-accent-2) 16%, var(--border));
+  background: color-mix(in srgb, var(--surface) 72%, transparent); box-shadow: var(--shadow);
+}
+.ops-statbar-head { display: flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.ops-statbar-head b { font-size: var(--fs-md); font-weight: 800; color: var(--ink); }
+.ops-statbar-head small { color: var(--muted); font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
+/* 조각 사이 2px 틈은 카드 바탕이 비쳐 보이게 둔다(트랙 색이 틈을 메우면 조각 경계가 흐려진다) */
+.ops-statbar-track { display: flex; gap: 2px; height: 10px; border-radius: 999px; overflow: hidden; background: transparent; }
+.ops-statbar-track i { display: block; height: 100%; min-width: 4px; transform-origin: left center; }
+.ops-seg-planned { background: var(--ops-planned); }
+.ops-seg-arrived { background: var(--ops-waiting); }
+.ops-seg-working { background: var(--ops-working); }
+.ops-seg-departed { background: var(--ops-departed); }
+.ops-statbar-legend { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.ops-stat-pick {
+  display: inline-flex; align-items: center; gap: 6px; min-height: var(--ctl-h-sm); padding: 0 11px;
+  border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--ink-2);
+  font: inherit; font-size: var(--fs-sm); font-weight: 700; cursor: pointer; white-space: nowrap;
+  transition: border-color .18s ease, background-color .18s ease, transform .18s var(--ops-ease);
+}
+.ops-stat-pick b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.ops-stat-pick small { color: var(--muted); font-variant-numeric: tabular-nums; }
+.ops-stat-pick:hover { border-color: var(--brand-accent-2); }
+.ops-stat-pick[aria-pressed='true'] { border-color: var(--brand-accent-2); background: color-mix(in srgb, var(--brand-accent-2) 15%, transparent); }
+.ops-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+
+/* 목록 도구줄 — 입력칸 바닥선에 버튼을 맞춘다(날짜칸만 이름표가 위에 있어 들쭉날쭉했다) */
+.ops-berth #list .berth-toolbar { align-items: flex-end; }
+.ops-berth #list .berth-toolbar .date-range input { min-width: 142px; transition: border-color .18s ease, box-shadow .18s ease; }
+.ops-berth #list .berth-toolbar.ops-range-on .date-range input {
+  border-color: color-mix(in srgb, var(--brand-accent-2) 65%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-accent-2) 16%, transparent);
+}
+.ops-berth #list .berth-toolbar #matchLabel { align-self: center; font-variant-numeric: tabular-nums; }
+.ops-range-reset { height: var(--ctl-h); gap: 6px; }
+.ops-range-reset::before { content: '\21BA'; font-weight: 800; }
+#berthRangeBtn[aria-busy='true'] { cursor: progress; }
+
+/* 터미널별 요약 — 접안·작업중 비율과 접안지연 확률을 막대로 */
+.ops-occ { display: inline-flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.ops-occ-bar { display: inline-block; width: 56px; height: 6px; border-radius: 999px; background: var(--ops-track); overflow: hidden; }
+.ops-occ-bar i, .ops-risk i { display: block; width: 100%; height: 100%; border-radius: inherit; transform-origin: left center; }
+/* 점유(접안·작업중 비율)는 상태가 아니라 크기다 — 원활 초록 그라데이션을 걷고 계열 1 단색으로(2026-09-29 차트 체계).
+   많을수록 초록이 길어져 '많을수록 좋다' 로 읽혔다. 위험 미터(.ops-risk)는 진짜 상태라 상태색을 그대로 둔다. */
+.ops-occ-bar i { background: var(--chart-cat-1); }
+.ops-risk { display: block; width: 96px; height: 4px; margin: 6px 0 0 auto; border-radius: 999px; background: var(--ops-track); overflow: hidden; }
+.ops-risk.is-high i { background: var(--lv-congested); }
+.ops-risk.is-mid i { background: var(--lv-busy); }
+.ops-risk.is-low i { background: var(--lv-low); }
+.ops-risk.is-model i { background: color-mix(in srgb, var(--muted) 55%, transparent); }
+
+/* 출처 줄 — 표·카드 격자 아래 한 줄(계산 방식 · 기준 시각 · 표본). 글자는 muted(세 바탕 5.07:1 이상) */
+.ops-page .ops-src { margin: 10px 0 0; line-height: 1.55; }
+
+/* 퀵뷰 메뉴 — 항목 호버에 방향감 */
+.ops-berth .ctx-menu .cm-item { transition: background-color .15s ease, transform .15s var(--ops-ease); }
+
+/* ---------- 폰 폭: 선석배정 표를 카드로 쌓는다 ----------
+   가로 스크롤 끝에 숨던 '상태' 가 선명 옆으로 올라오고, 시각 셋이 한 줄에 나란히 선다.
+   머리글 첫 줄은 화면에서만 숨긴다(보조기술은 그대로 읽는다). 컬럼 필터 줄은 두 칸 격자로 편다. */
+@media (max-width: 640px) {
+  .ops-berth #berthTable { display: block; min-width: 0; }
+  .ops-berth #berthTable > thead { display: block; position: static; }
+  .ops-berth #berthTable > thead > tr:first-child {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+  .ops-berth #berthTable .colf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px 12px; background: color-mix(in srgb, var(--brand-accent) 5%, var(--surface-2)); }
+  /* ★ 칸 폭은 격자가 정한다 — 표 머리 열 너비(style.css #berthTable th:nth-child(n) { width: n% })가 그대로 남아
+     칸이 8~25px 로 줄고 넘친 입력칸이 잘려, 글자가 한두 자만 보였다(390px 실측 · 2026-09-28). */
+  .ops-berth #berthTable .colf-row > th { display: block; width: auto; min-width: 0; overflow: visible; padding: 0; background: none; box-shadow: none; border: 0; }
+  .ops-berth #berthTable .colf-row > th:empty { display: none; }
+  .ops-berth #berthBody { display: block; }
+  .ops-berth #berthBody > tr { display: block; }
+  .ops-berth #berthBody > tr > td { display: block; }
+  .ops-berth #berthBody > tr[data-ri] {
+    display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 8px 8px;
+    grid-template-areas:
+      "vsl vsl vsl vsl vsl vsl vsl st st st st st"
+      "term term term term term term term berth berth berth berth berth"
+      "cct cct cct cct etb etb etb etb etd etd etd etd"
+      "car car car rt rt rt dis dis dis lod lod lod";
+    padding: 14px 14px 12px; border-bottom: 1px solid var(--grid); position: relative;
+  }
+  .ops-berth #berthBody > tr[data-ri]:nth-child(even) { background-color: var(--ops-zebra); }
+  .ops-berth #berthBody > tr.row-cct-soon { background-color: color-mix(in srgb, var(--lv-stable) 9%, transparent); box-shadow: inset 3px 0 0 var(--lv-stable); }
+  .ops-berth #berthBody > tr[data-ri] > td {
+    padding: 0; border: 0; white-space: normal; min-width: 0; overflow-wrap: break-word;
+    background: transparent; box-shadow: none; font-size: var(--fs-sm);
+  }
+  .ops-berth #berthBody .c-vsl { grid-area: vsl; }
+  .ops-berth #berthBody .c-vsl .port-cell b { font-size: var(--fs-base); }
+  .ops-berth #berthBody .c-st { grid-area: st; justify-self: end; align-self: start; text-align: right; }
+  .ops-berth #berthBody .c-st .st-badge { font-size: var(--fs-2xs); white-space: nowrap; }
+  .ops-berth #berthBody .c-st .st-code, .ops-berth #berthBody .c-st .st-sep { display: none; }
+  .ops-berth #berthBody .c-term { grid-area: term; }
+  .ops-berth #berthBody .c-berth { grid-area: berth; text-align: right; }
+  .ops-berth #berthBody .c-cct { grid-area: cct; }
+  .ops-berth #berthBody .c-etb { grid-area: etb; }
+  .ops-berth #berthBody .c-etd { grid-area: etd; }
+  .ops-berth #berthBody .c-car { grid-area: car; }
+  .ops-berth #berthBody .c-rt { grid-area: rt; }
+  .ops-berth #berthBody .c-dis { grid-area: dis; text-align: right; }
+  .ops-berth #berthBody .c-lod { grid-area: lod; text-align: right; }
+  .ops-berth #berthBody td[data-label]::before {
+    content: attr(data-label); display: block; margin-bottom: 1px;
+    font-size: var(--fs-2xs); font-weight: 800; letter-spacing: .04em; color: var(--muted); text-transform: uppercase;
+  }
+  .ops-berth #berthBody > tr.tree-hd > td { padding: 12px 14px; }
+  .ops-berth #berthBody > tr.sk-row > td { padding: 13px 14px; }
+  .ops-berth .ops-statbar { grid-template-columns: minmax(0, 1fr); padding: 12px 14px; }
+  .ops-berth .ops-stat-pick { min-height: 32px; }
+  .ops-berth #list .berth-toolbar .date-range { flex: 1 1 calc(50% - 6px); width: auto; min-width: 0; }
+  .ops-berth #list .berth-toolbar .date-range input { min-width: 0; width: 100%; }
+  .ops-berth #list .berth-toolbar #berthRangeBtn { flex: 1 1 auto; }
+  .ops-berth .ops-occ-bar { width: 38px; }
+}
+
+/* =========================================================
+   선박 스케줄 · 경로 분석 — 결과 요약 · 항로 카드 · 달력
+   ========================================================= */
+.ops-sum { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 8px; margin: 12px 0 12px; }
+.ops-sum-i {
+  padding: 10px 12px; border-radius: 12px; min-width: 0;
+  background: color-mix(in srgb, var(--brand-accent) 6%, var(--surface-2));
+  border: 1px solid color-mix(in srgb, var(--brand-accent-2) 14%, var(--border));
+}
+.ops-sum-i > span { display: block; font-size: var(--fs-xs); font-weight: 700; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ops-sum-i > b { display: block; margin-top: 2px; font-size: var(--fs-xl); font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ops-sum-i > b small { margin-left: 3px; font-size: var(--fs-sm); font-weight: 700; color: var(--muted); }
+/* 직항 수 — 속성의 개수라 상태 초록을 쓰지 않는다(잉크 그대로) */
+.ops-sum-i.is-soon { border-color: color-mix(in srgb, var(--lv-busy) 40%, var(--border)); background: color-mix(in srgb, var(--lv-busy) 8%, var(--surface-2)); }
+.ops-sum-i.is-soon > b { color: var(--lv-busy-txt); }
+.ops-sum-i.is-past { border-color: color-mix(in srgb, var(--lv-congested) 40%, var(--border)); background: color-mix(in srgb, var(--lv-congested) 7%, var(--surface-2)); }
+.ops-sum-i.is-past > b { color: var(--lv-congested-txt); }
+
+/* 항로 카드 — 마감이 급한 카드는 왼쪽 띠로 먼저 눈에 띄게(배지는 그대로 있다) */
+.ops-page .sea-route { position: relative; transition: border-color .2s ease, box-shadow .2s ease, transform .2s var(--ops-ease); }
+.ops-page .sea-route:hover { border-color: color-mix(in srgb, var(--brand-accent-2) 42%, var(--border)); }
+.ops-page .sea-route:has(.sea-badge-cutsoon) { box-shadow: inset 3px 0 0 var(--lv-busy); }
+.ops-page .sea-route:has(.sea-badge-cutpast) { box-shadow: inset 3px 0 0 var(--lv-congested); }
+.ops-page .sea-route:has(.sea-badge-cutsoon):hover { box-shadow: inset 3px 0 0 var(--lv-busy); }
+.ops-page .sea-route:has(.sea-badge-cutpast):hover { box-shadow: inset 3px 0 0 var(--lv-congested); }
+.ops-page .sea-arrow { display: inline-block; }
+
+/* 안내·오류 문구 상자 — 왼쪽 띠만 있던 것을 옅은 면으로 감싼다 */
+.ops-page .air-msg { padding: 12px 14px 12px 16px; border-radius: 0 12px 12px 0; background: color-mix(in srgb, var(--ink) 3%, transparent); }
+.ops-page .air-msg-fail { background: color-mix(in srgb, var(--lv-congested) 7%, transparent); }
+.ops-page .air-msg-nokey { background: color-mix(in srgb, var(--lv-busy) 7%, transparent); }
+
+/* =========================================================
+   출항 달력 (js/schedule-export.js TWOPS.calendar — 항로 화면 · 선박 스케줄 항로 탭) · 2026-09-29 D10
+   모양은 예전 운영판(ce846ff) 달력이다 — 한 격자(1px 선 · 바깥 모서리 10px) · 흰 요일 줄 · 옅은 칸 ·
+   칸 머리 날짜와 편수(아랫선 한 줄) · 오늘 칸 파란 테두리 · 둥근 카드(8px)와 왼쪽 3px 막대.
+   첨부(선사 PDF)에서는 얼라이언스 색 구분과 범례만 가져왔다. 남색 요일 띠 · 달 제목 · 사각 틴트 블록은 쓰지 않는다.
+   · 얼라이언스 색은 절제한다 — 카드 왼쪽 막대(3px)가 색을 말하고, 바탕은 그 색을 아주 옅게(라이트 8% · 다크 12%) 섞은 칠이다.
+     색은 새로 만들지 않고 디자인 시스템(2026-09 · 범주색)에서 가져온다: 프리미어 인디고 · 오션 로즈 · 제미나이 틸 ·
+     비얼라이언스 잉크 회색(무리가 아니므로 칠 없음 — 카드 면 그대로). 막대/칠 대비 3:1 이상(라이트 최저 3.1).
+     글자에는 계열색을 쓰지 않는다(잉크 토큰만). 범례 네모가 막대와 같은 색이다.
+   · 선사 색(선사 필터)은 카드 둘째 줄 이름 앞 속 빈 고리로만 — 칠한 네모·막대(얼라이언스)와 모양으로 가른다.
+   · 편수·오늘은 알약 없이 글자로 둔다(알약 남발 금지 D4). 칠하는 것은 조치가 필요한 '마감 임박' 하나뿐.
+   · hover 들썩임 · 그림자 · 등장 애니메이션 없음(D4 올라가는 hover 금지).
+   · 대비(WCAG): 칸·카드 위 글자 모두 4.5:1 이상, 막대/카드 바탕 3:1 이상 — tests/calendar_alliance_e2e.cjs 가 잰다.
+   ========================================================= */
+/* 테마 3상태 — 사이트는 html 에 data-theme 를 늘 찍지만, 속성이 빠진 상태(시스템 설정)에서도 달력이 읽히게
+   기본(:root)은 라이트, OS 다크면 다크, 명시 dark 는 다크로 둔다. 값은 사이트 라이트·다크 토큰(surface·surface-2·ink…)과 같다. */
+:root {
+  --al-pa-bar: #6d7cff;     --al-pa-tint: #f3f4ff;
+  --al-oa-bar: #d8648b;     --al-oa-tint: #fcf3f6;
+  --al-gemini-bar: #039b92; --al-gemini-tint: #ebf7f6;
+  --al-none-bar: #5c687c;   --al-none-tint: #ffffff;
+  --cal-line: #e1e5ec; --cal-head: #ffffff; --cal-head-tx: #46536a; --cal-head-we: #5c687c;
+  --cal-cell: #f0f3f8; --cal-cell-no: #f3f5f9; --cal-weekend: #eef1f6; --cal-off: #e9edf3;
+  --cal-card-line: #dde2ea; --cal-today: #3987e5; --cal-today-tx: #2f6bb6; --cal-more: #2f6bb6;
+  --cal-soon-tx: #7a4b40; --cal-soon-bg: #fbe6c8; --cal-past-tx: #832d33;
+  --cal-ink: #101828; --cal-ink-2: #46536a; --cal-muted: #5c687c;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --al-pa-bar: #6d7cff;     --al-pa-tint: #1d2645;
+    --al-oa-bar: #e0678f;     --al-oa-tint: #2b2338;
+    --al-gemini-bar: #00b8a9; --al-gemini-tint: #102d3b;
+    --al-none-bar: #8493ac;   --al-none-tint: #121a2c;
+    --cal-line: #26334d; --cal-head: #121a2c; --cal-head-tx: #b9c4d8; --cal-head-we: #8493ac;
+    --cal-cell: #182238; --cal-cell-no: #141c30; --cal-weekend: #131b2e; --cal-off: #0f1627;
+    --cal-card-line: #2a3650; --cal-today: #3987e5; --cal-today-tx: #65a1ea; --cal-more: #7caeec;
+    --cal-soon-tx: #eabbac; --cal-soon-bg: #4a3417; --cal-past-tx: #de9da3;
+    --cal-ink: #e9eef8; --cal-ink-2: #b9c4d8; --cal-muted: #8493ac;
+  }
+}
+:root[data-theme='dark'] {
+  --al-pa-bar: #6d7cff;     --al-pa-tint: #1d2645;
+  --al-oa-bar: #e0678f;     --al-oa-tint: #2b2338;
+  --al-gemini-bar: #00b8a9; --al-gemini-tint: #102d3b;
+  --al-none-bar: #8493ac;   --al-none-tint: #121a2c;
+  --cal-line: #26334d; --cal-head: #121a2c; --cal-head-tx: #b9c4d8; --cal-head-we: #8493ac;
+  --cal-cell: #182238; --cal-cell-no: #141c30; --cal-weekend: #131b2e; --cal-off: #0f1627;
+  --cal-card-line: #2a3650; --cal-today: #3987e5; --cal-today-tx: #65a1ea; --cal-more: #7caeec;
+  --cal-soon-tx: #eabbac; --cal-soon-bg: #4a3417; --cal-past-tx: #de9da3;
+  --cal-ink: #e9eef8; --cal-ink-2: #b9c4d8; --cal-muted: #8493ac;
+}
+.al-pa     { --al-bar: var(--al-pa-bar);     --al-tint: var(--al-pa-tint); }
+.al-oa     { --al-bar: var(--al-oa-bar);     --al-tint: var(--al-oa-tint); }
+.al-gemini { --al-bar: var(--al-gemini-bar); --al-tint: var(--al-gemini-tint); }
+.al-none   { --al-bar: var(--al-none-bar);   --al-tint: var(--al-none-tint); }
+.sea-calendar { color: var(--cal-ink); }
+/* data-theme 가 없을 때만 — 달력이 제 바탕을 깐다(페이지 바탕 토큰이 없는 자리) */
+:root:not([data-theme]) .sea-calendar { padding: 12px; background: var(--cal-head); }
+
+/* 머리: 범례 한 줄 · 기준 · 구간(모든 카드가 같고 화면 머리에 없을 때만) */
+.sea-calendar .ops-cal-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 20px; margin: 0 0 12px; }
+.sea-calendar .ops-cal-legend, .sea-calendar .ops-cal-plg { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; padding: 0; list-style: none; font-size: var(--fs-sm); color: var(--cal-ink); }
+.sea-calendar .ops-cal-legend li, .sea-calendar .ops-cal-plg li { display: inline-flex; align-items: baseline; gap: 6px; min-width: 0; }
+.sea-calendar .ops-cal-sw { width: 10px; height: 10px; flex: none; align-self: center; border-radius: 2px; background: var(--al-bar); }
+.sea-calendar .ops-cal-lg-n { font-weight: 700; }
+.sea-calendar .ops-cal-lg-k { color: var(--cal-ink-2); font-weight: 600; font-variant-numeric: tabular-nums; }
+.sea-calendar .ops-cal-lg-c { color: var(--cal-muted); font-size: var(--fs-xs); overflow-wrap: anywhere; }
+.sea-calendar .ops-cal-basis, .sea-calendar .ops-cal-lane { margin: 0; font-size: var(--fs-xs); color: var(--cal-muted); }
+
+/* 격자 — 예전 달력 그대로: 1px 선(격자 바탕색) · 바깥 테두리 · 모서리 10px */
+.sea-calendar .sea-calendar-grid { gap: 1px; overflow: hidden; border: 1px solid var(--cal-line); border-radius: var(--radius-sm, 10px); background: var(--cal-line); }
+/* 요일 줄 — 흰 바탕(카드 면) · 가운데 · 주말은 옅게 */
+.sea-calendar .sea-calendar-weekdays { background: var(--cal-head); }
+.sea-calendar .sea-calendar-weekdays span { display: flex; align-items: center; justify-content: center; min-height: 34px; padding: 6px 8px;
+  font-size: var(--fs-xs); font-weight: 800; color: var(--cal-head-tx); }
+.sea-calendar .sea-calendar-weekdays span.is-weekend { color: var(--cal-head-we); }
+/* 인쇄 전용 달 줄 — 화면에서는 없다 */
+.sea-calendar .ops-cal-mrow { display: none; }
+
+/* 날 칸 — 배편 있는 날 · 없는 날 · 주말 · 기간 밖(한 단계 짙게) */
+.sea-calendar .sea-calendar-day { position: relative; min-width: 0; min-height: 120px; padding: 10px; background: var(--cal-cell); }
+.sea-calendar .sea-calendar-day.no-items { background: var(--cal-cell-no); }
+.sea-calendar .sea-calendar-day.no-items.is-weekend { background: var(--cal-weekend); }
+.sea-calendar .sea-calendar-day.is-empty { background: var(--cal-off); }
+/* 오늘 — 예전처럼 칸 둘레 2px 파란 테두리 + 날짜 옆 '오늘' 글자(알약 없이) */
+.sea-calendar .sea-calendar-day.is-today { box-shadow: inset 0 0 0 2px var(--cal-today); }
+/* 칸 머리 — 왼쪽(날짜 · 오늘 · 주차)은 좁으면 줄을 바꾸고, 오른쪽 편수는 늘 오른쪽 위. 아랫선 한 줄로 카드와 가른다 */
+.sea-calendar .sea-calendar-day-head { display: flex; align-items: baseline; justify-content: flex-start; gap: 6px; min-height: 22px;
+  margin: 0 0 4px; padding: 0 0 7px; border-bottom: 1px solid var(--cal-line); font-weight: 400; color: var(--cal-ink); }
+.sea-calendar .sea-calendar-day.is-empty .sea-calendar-day-head { border-bottom: 0; }
+.sea-calendar .ops-cal-hl { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; min-width: 0; }
+.sea-calendar .ops-cal-hr { display: flex; flex: none; align-items: baseline; margin-left: auto; }
+.sea-calendar .ops-cal-date { display: inline-flex; align-items: baseline; margin: 0; white-space: nowrap; }
+.sea-calendar .ops-cal-dn { font-size: var(--fs-md); font-weight: 800; line-height: 1.3; color: var(--cal-ink); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.sea-calendar .no-items .ops-cal-dn { color: var(--cal-muted); font-weight: 700; }
+.sea-calendar .ops-cal-ld { display: none; }
+.sea-calendar .ops-cal-today { font-style: normal; font-size: var(--fs-xs); font-weight: 800; color: var(--cal-today-tx); white-space: nowrap; }
+.sea-calendar .ops-cal-wk { font-size: var(--fs-2xs); font-weight: 600; line-height: 1.3; color: var(--cal-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sea-calendar .ops-cal-wk.is-m { display: none; }
+.sea-calendar .ops-cal-n { margin: 0; font-size: var(--fs-xs); font-weight: 700; color: var(--cal-ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* 카드(배편) — 예전 카드: 옅은 면 · 1px 테두리 · 왼쪽 3px 막대 · 모서리 8px. 막대와 면 색 = 얼라이언스 */
+.sea-calendar .sea-calendar-item.ops-cal-ev { margin: 6px 0 0; padding: 6px 8px; border: 1px solid var(--cal-card-line); border-left: 3px solid var(--al-bar);
+  border-radius: 8px; background: var(--al-tint); box-shadow: none; transition: none;
+  font-size: var(--fs-xs); line-height: 1.45; color: var(--cal-ink-2); overflow-wrap: anywhere; }
+.sea-calendar .ops-cal-v { display: block; font-size: var(--fs-sm); font-weight: 700; line-height: 1.35; color: var(--cal-ink); }
+.sea-calendar .ops-cal-l2, .sea-calendar .ops-cal-l3, .sea-calendar .ops-cal-l4, .sea-calendar .ops-cal-st { display: block; font-variant-numeric: tabular-nums; }
+/* 조각 — '·' 는 뒤 조각에 붙어 함께 줄을 바꾼다(줄 끝에 '·' 가 홀로 남지 않는다) */
+.sea-calendar .ops-cal-l3 > span, .sea-calendar .ops-cal-p { white-space: nowrap; }
+.sea-calendar .ops-cal-c { color: var(--cal-ink-2); font-weight: 700; }
+/* 선사 점 — 달력 카드 안에서만 속 빈 고리(칠한 네모·막대 = 얼라이언스와 모양으로 가른다). 색은 선사 필터 칩과 같다. */
+.sea-calendar .ops-cal-c .cf-cdot { width: 9px; height: 9px; box-sizing: border-box; margin-right: 4px; vertical-align: 0;
+  background: none; border: 2px solid var(--cf-c0); box-shadow: none; }
+.sea-calendar .ops-cal-c .cf-c1 { border-color: var(--cf-c1); } .sea-calendar .ops-cal-c .cf-c2 { border-color: var(--cf-c2); }
+.sea-calendar .ops-cal-c .cf-c3 { border-color: var(--cf-c3); } .sea-calendar .ops-cal-c .cf-c4 { border-color: var(--cf-c4); }
+.sea-calendar .ops-cal-c .cf-c5 { border-color: var(--cf-c5); } .sea-calendar .ops-cal-c .cf-c6 { border-color: var(--cf-c6); }
+.sea-calendar .ops-cal-c .cf-c7 { border-color: var(--cf-c7); } .sea-calendar .ops-cal-c .cf-c8 { border-color: var(--cf-c8); }
+/* 상태 줄 — 환적 · 마감. 칠하는 것은 '마감 임박' 하나(모서리 4px), 나머지는 글자만 */
+.sea-calendar .ops-cal-st { margin-top: 1px; font-size: var(--fs-xs); font-weight: 700; }
+.sea-calendar .ops-cal-ts { display: inline; padding: 0; margin: 0; color: var(--cal-ink-2); }
+.sea-calendar .ops-cal-cut { display: inline; white-space: nowrap; }
+.sea-calendar .ops-cal-cut.is-past { color: var(--cal-past-tx); }
+.sea-calendar .ops-cal-cut.is-soon { padding: 0 5px; border-radius: 4px; color: var(--cal-soon-tx); background: var(--cal-soon-bg); }
+.sea-calendar .ops-cal-rest.is-folded { display: none; }
+/* '외 n편 더 보기' — 달력의 유일한 조작부. 네이티브 단추 · 최소 높이 24 · hover 는 밑줄만 · 초점 링은 전역 규칙 */
+.sea-calendar .ops-cal-more { display: block; width: 100%; min-height: 24px; margin-top: 4px; padding: 2px 8px; border: 0; border-radius: 6px; background: none;
+  text-align: left; font: inherit; font-size: var(--fs-xs); font-weight: 700; color: var(--cal-more); cursor: pointer; }
+.sea-calendar .ops-cal-more:hover { text-decoration: underline; text-underline-offset: 2px; }
+.sea-calendar .ops-cal-more:focus-visible { outline: 2px solid var(--focus-ring, #3987e5); outline-offset: -2px; }
+/* 출항일 미정 — 예전처럼 옅은 상자 하나에 머리(제목 · 편수)와 카드 */
+.sea-calendar .sea-calendar-unknown { margin-top: 12px; padding: 10px; border: 1px solid var(--cal-line); border-radius: var(--radius-sm, 10px); background: var(--cal-cell); }
+.sea-calendar .ops-cal-tbd-h { margin: 0; font-size: var(--fs-md); font-weight: 800; color: var(--cal-ink); }
+.sea-calendar .sea-calendar-unknown .ops-cal-n { margin-left: auto; }
+.sea-calendar .ops-cal-tbd { display: flex; flex-wrap: wrap; gap: 8px; }
+.sea-calendar .ops-cal-tbd .sea-calendar-item.ops-cal-ev { width: min(100%, 260px); margin: 0; }
+/* 배편 없음 — 예전 점선 상자 가운데 한 줄(D6 결과 없음 가운데) */
+.sea-calendar .ops-cal-none { margin: 12px 0 0; padding: 14px; border: 1px dashed var(--cal-card-line); border-radius: var(--radius-sm, 10px);
+  text-align: center; font-size: var(--fs-sm); line-height: 1.55; color: var(--cal-muted); word-break: keep-all; overflow-wrap: anywhere; }
+
+/* 폰 폭: 7열 격자(가로 770px)를 버리고 출항이 있는 날만 날짜별 상자로 쌓는다 — 예전 폰 달력(모서리 12px 상자).
+   머리는 '9월 29일 (화)' · 오늘 · 그 주 첫 출항일에만 주차, 오른쪽 편수. 카드는 접지 않는다(단추 숨김). */
+@media (max-width: 640px) {
+  .sea-calendar { overflow: visible; }
+  .sea-calendar .sea-calendar-grid { display: block; min-width: 0; border: 0; border-radius: 0; background: none; overflow: visible; }
+  .sea-calendar .sea-calendar-weekdays,
+  .sea-calendar .sea-calendar-day.is-empty,
+  .sea-calendar .sea-calendar-day.no-items { display: none; }
+  .sea-calendar .sea-calendar-day.has-items { min-height: 0; margin-bottom: 8px; padding: 12px; border: 1px solid var(--cal-line); border-radius: 12px; background: var(--cal-cell); }
+  .sea-calendar .sea-calendar-day-head { flex-wrap: wrap; }
+  .sea-calendar .ops-cal-dn { display: none; }
+  .sea-calendar .ops-cal-ld { display: inline; font-size: var(--fs-base); font-weight: 800; color: var(--cal-ink); }
+  .sea-calendar .ops-cal-wk { display: none; }
+  .sea-calendar .ops-cal-wk.is-m { display: inline; }
+  .sea-calendar .sea-calendar-item.ops-cal-ev { padding: 7px 10px; font-size: var(--fs-sm); }
+  .sea-calendar .ops-cal-v { font-size: var(--fs-base); }
+  .sea-calendar .ops-cal-st { font-size: var(--fs-sm); }
+  .sea-calendar .ops-cal-rest.is-folded { display: block; }
+  .sea-calendar .ops-cal-more { display: none; }
+  .ops-sum { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* 인쇄 — 테마와 관계없이 흰 종이에 라이트 색으로(배경색까지 찍는다). 접힌 카드는 모두 펼치고 단추는 뺀다.
+   둘째 달이 시작되는 주 앞에 달 이름 + 범례 사본 줄을 찍는다 — 다음 쪽으로 넘어간 달에도 색의 뜻이 남는다. */
+@media print {
+  .sea-calendar { -webkit-print-color-adjust: exact; print-color-adjust: exact; overflow: visible; padding: 0;
+    --al-pa-bar: #6d7cff; --al-pa-tint: #f3f4ff; --al-oa-bar: #d8648b; --al-oa-tint: #fcf3f6;
+    --al-gemini-bar: #039b92; --al-gemini-tint: #ebf7f6; --al-none-bar: #5c687c; --al-none-tint: #ffffff;
+    --cal-line: #e1e5ec; --cal-head: #ffffff; --cal-head-tx: #46536a; --cal-head-we: #5c687c;
+    --cal-cell: #ffffff; --cal-cell-no: #ffffff; --cal-weekend: #f8f9fc; --cal-off: #f0f3f8;
+    --cal-card-line: #dde2ea; --cal-today: #3987e5; --cal-today-tx: #2f6bb6; --cal-more: #2f6bb6;
+    --cal-soon-tx: #7a4b40; --cal-soon-bg: #fbe6c8; --cal-past-tx: #832d33;
+    --cal-ink: #101828; --cal-ink-2: #46536a; --cal-muted: #5c687c;
+    --ink: #101828; --ink-2: #46536a; --muted: #5c687c; --surface: #ffffff; --surface-2: #f0f3f8; --grid: #e5e8f0; --border: rgba(16, 24, 40, 0.1);
+    color: var(--cal-ink); background: #ffffff; }
+  .sea-calendar .sea-calendar-grid { min-width: 0; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .sea-calendar .ops-cal-mrow { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; grid-column: 1 / -1; padding: 10px 4px 6px; background: #ffffff; }
+  .sea-calendar .ops-cal-mrow .ops-cal-mt { font-size: var(--fs-base); font-weight: 800; color: var(--cal-ink); }
+  .sea-calendar .ops-cal-rest.is-folded { display: block; }
+  .sea-calendar .ops-cal-more { display: none; }
+  .sea-calendar .sea-calendar-day { break-inside: avoid; }
+}
+
+/* ---------- 머스크 공개 운항 정보(2026-09-28) ----------
+   터미널 마감 펼침은 .schedule-columns 의 summary 모양을 그대로 쓴다(새 장식·아이콘·색 강조 없음).
+   ★ 카드(.card)는 backdrop-filter 로 쌓임 맥락을 만든다 — 펼침은 흐름 안에 두고 z-index·팝오버를 쓰지 않는다.
+   남은 시간 칩은 카드 배지(.sea-badge-cutsoon)와 클래스를 나눈다: 카드의 :has(.sea-badge-cutsoon) 띠가
+   위험물처럼 배지에 넣지 않는 마감 때문에 켜지면 안 된다. 색은 같은 토큰, 글자('임박'·'지남')도 함께 둔다. */
+.ops-page .sea-dl { margin-top: 10px; }
+.ops-page .sea-dl-body { padding-top: 8px; }
+/* table.tw 의 최소 560px 를 푼다 — 세 칸짜리 작은 표라 카드 폭에 맞춘다(폰에서 칸 밖으로 밀리지 않게). */
+.ops-page .sea-dl-tbl { width: 100%; min-width: 0; }
+.ops-page .sea-dl-tbl th, .ops-page .sea-dl-tbl td { font-size: var(--fs-sm); white-space: normal; overflow-wrap: anywhere; }
+.ops-page .sea-dl-tbl td.num { white-space: nowrap; }
+.ops-page .sea-dl-term th { text-align: left; font-weight: 800; color: var(--ink); }
+.ops-page .sea-dl-tag { display: inline-block; margin-left: 4px; font-size: var(--fs-2xs); font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+.ops-page .sea-dl-tag.is-dim { color: var(--muted); font-weight: 600; }
+.ops-page .sea-dl-soon { color: var(--lv-busy-txt); background: color-mix(in srgb, var(--lv-busy) 22%, transparent); }
+/* '마감 지남' 글자 — 위험 옅은 칠(18%) 위라 -txt(65%) 로는 다크 카드(surface-2)에서 4.33:1 이었다. 잉크를 한 단 더 섞는다
+   (55% → 라이트 7.1 · 다크 5.2 이상, 2026-09-29). 칠과 '마감 지남' 글자는 그대로다. */
+.ops-page .sea-dl-past { color: color-mix(in srgb, var(--lv-congested) 55%, var(--ink)); background: color-mix(in srgb, var(--lv-congested) 18%, transparent); }
+.ops-page .sea-dl-note { margin: 8px 0 0; font-size: var(--fs-xs); color: var(--muted); line-height: 1.55; }
+.ops-page .sea-dl-msg { margin: 4px 0 0; font-size: var(--fs-sm); color: var(--ink-2); font-weight: 700; line-height: 1.55; }
+.ops-page .sea-dl-src { margin-top: 8px; }
+.ops-page .sea-dl-retry { margin-top: 8px; min-height: var(--ctl-h); padding: 0 var(--sp-3); font-size: var(--fs-sm); }
+.ops-page .sea-allcalls { margin-left: 4px; font-size: var(--fs-xs); font-weight: 700; white-space: nowrap; }
+.ops-page .sea-voy-info { font-size: var(--fs-sm); word-break: keep-all; }
+.ops-page .sea-voy-cut { display: inline-block; margin-top: 2px; white-space: normal; }
+.ops-page .sea-port-hint { margin: 8px 0 0; }
+.ops-page .sea-loc-pick { justify-content: flex-start; }
+/* 마감 줄 맨 앞의 머스크 마감(구간 조회보다 이른 값) — 굵기만 올린다(색은 줄의 경고색을 그대로 따른다). */
+.ops-page .sea-cut-mae { font-weight: 800; }
+/* 항로 화면 '이 구간 배편' 표의 가장 이른 마감 칸 — 머스크 마감 조회 단추·상태·둘째 값. 칸이 숫자 칸(한 줄)이라
+   단추는 작게, 상태 문장만 줄을 바꿔 칸 폭을 넓히지 않는다. */
+.ops-route .route-dl-btn { margin-top: 4px; min-height: 30px; padding: 0 10px; font-size: var(--fs-xs); white-space: nowrap; }
+.ops-route .route-dl-msg { display: inline-block; max-width: 24ch; margin-top: 4px; font-size: var(--fs-xs); color: var(--ink-2); white-space: normal; text-align: left; }
+.ops-route .route-cut-2 { white-space: nowrap; }
+.ops-route .pick-cut .sea-badge { margin-left: 4px; }
+/* 선사 카드 — 값은 한 줄(2026-09-29 2차 · 형님 '등록' 칸 지적의 전 화면 적용).
+   '다음 출항 마감' 값(시각 · 마감 이름)과 소요일·다음 출항이 좁은 카드에서 두세 줄로 접혔다(영어·러시아어는 이름표가 길어 값 칸이 99px).
+   값 칸은 줄을 바꾸지 않고, 판정 배지('마감 지남')는 시각 아래 제 줄(js/route.js nextCut 의 <br>)에 선다. 한 줄이 칸보다 길면
+   말줄임(…)이고 전체 마감은 title. 한국어는 예전처럼 한 줄에 네 장, 이름표가 긴 언어는 카드 폭을 넓혀(최소 300px) 한 줄에 세 장. */
+.ops-route .pick-kv dd { min-width: 0; white-space: nowrap; }
+.ops-route .pick-cut .pick-cut-l { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+.ops-route .pick-cut br + .sea-badge { margin: 3px 0 0; }
+html:not([lang='ko']) .ops-route .pick-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+/* '이 구간 배편' 표의 마감 판정 배지(머스크 마감 기능) — 표 행 높이를 ce846ff 와 같게 두려고 칸 안에서는 위아래 여백만 줄인다
+   (배지 모양·색은 그대로. 예전 행 높이 46.6px → 배지가 붙으며 48.4px 로 늘었다). */
+.ops-route table.tw td .sea-badge { padding-top: 1px; padding-bottom: 1px; vertical-align: 1px; }
+/* 받아 온 뒤의 덧줄(2026-09-28 재검토) — '그 밖의 머스크 마감 (N)' 칸 안 펼침, 시간대 없음 안내, 첫 구간이 내륙인 배편 표시.
+   칸이 한 줄 숫자 칸이라 펼침은 폭을 묶고 줄을 바꿔 칸을 넓히지 않는다(숫자 칸에서는 오른쪽에 붙인다). */
+.ops-route .route-dl-more { margin-top: 4px; max-width: 30ch; font-size: var(--fs-xs); text-align: left; white-space: normal; }
+.ops-route td.num .route-dl-more { margin-left: auto; }
+.ops-route .route-dl-more > summary { padding: 2px 0; color: var(--ink-2); font-weight: 600; cursor: pointer; }
+.ops-route .route-dl-more ul { margin: 4px 0 0; padding-left: 16px; }
+.ops-route .route-dl-more li { margin: 2px 0; }
+/* 내륙 첫 구간 표시 '(육상 → 해상)' 는 모선 이름 아래 제 줄에 둔다 — 칸이 줄바꿈 없는 칸이라 같은 줄에 붙이면 모선 칸이
+   이 글자만큼 넓어져, 1280·1440 폭에서도 표가 칸을 넘어 끝 칸(가장 이른 마감·조회 단추·배지)이 가로 스크롤 뒤로 밀렸고
+   폰 폭에서는 모선 칸 아래 마감 글이 보이는 폭 오른쪽에서 잘렸다(2026-09-28 재확인). */
+.ops-route .route-pre { display: block; white-space: nowrap; }
+/* 폰 폭: 가장 이른 마감 칸을 모선 칸 아래로 옮긴다(js/route.js cutUnder) — 가로 스크롤 끝 칸의 조회 단추를 찾기 어려웠다. */
+.ops-route .route-cut-m { margin-top: 6px; max-width: 30ch; white-space: normal; }
+.ops-route .route-cut-m .route-cut-2 { white-space: normal; }
+.ops-route .route-cut-m .route-dl-more { margin-left: 0; }
+/* 폰 폭: 카드가 두 겹이라 표 칸이 200px 안팎이다 — 세 칸을 나란히 두면 러시아어에서 표가 칸을 넘쳤다(390 실측).
+   한 마감을 한 덩어리로 쌓는다: 종류(꼬리표) 한 줄, 그 아래 현지 시각과 남은 시간. 머리글은 화면에서만 감추고
+   보조기술은 그대로 읽는다(선석배정 폰 카드와 같은 방식). 시각에는 '현지', 칩에는 '임박'·'지남' 글자가 있어 뜻이 남는다. */
+@media (max-width: 640px) {
+  .ops-page .sea-dl-tbl, .ops-page .sea-dl-tbl tbody, .ops-page .sea-dl-tbl tr { display: block; width: 100%; }
+  /* 머리글 고정(.tbl-scroll.ops-fit > table.tw > thead { position: sticky })보다 앞서야 자리를 비운다. */
+  .ops-page .sea-dl .tbl-scroll > table.tw.sea-dl-tbl > thead {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+  .ops-page .sea-dl-tbl tbody tr { padding: 8px 2px; border-bottom: 1px solid var(--grid); }
+  .ops-page .sea-dl-tbl tbody td, .ops-page .sea-dl-tbl tbody th { display: block; padding: 0; border: 0; white-space: normal; }
+  .ops-page .sea-dl-tbl tbody td.num, .ops-page .sea-dl-tbl tbody td:last-child { display: inline-block; margin: 4px 10px 0 0; vertical-align: middle; }
+  .ops-page .sea-dl-tbl tr.sea-dl-term th { padding: 4px 0 0; }
+  /* 줄무늬·호버 띠는 칸 단위라 쌓은 뒤에는 조각나 보인다 — 줄 구분선만 남긴다. */
+  .ops-page .sea-dl .sea-dl-tbl.tw tbody tr:nth-child(n):not(.sk-row):not(.tree-hd):not(.ops-empty-row) > td { background-color: transparent; box-shadow: none; }
+}
+
+/* =========================================================
+   경로 분석 (route.html)
+   ========================================================= */
+.ops-swap {
+  flex: none; width: var(--ctl-h); height: var(--ctl-h); display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; border: 1px solid var(--border); background: var(--ops-chip-bg); color: var(--ink-2); cursor: pointer;
+  transition: border-color .18s ease, color .18s ease, transform .3s var(--ops-ease);
+}
+.ops-swap:hover { border-color: var(--brand-accent-2); color: var(--ink); }
+.ops-swap:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.ops-route .src-card { transition: border-color .2s ease, transform .2s var(--ops-ease); }
+.ops-route .pick-card { transition: border-color .2s ease, box-shadow .2s ease, transform .2s var(--ops-ease); }
+.ops-route .pick-card:hover { border-color: color-mix(in srgb, var(--brand-accent-2) 42%, var(--border)); }
+
+/* =========================================================
+   잘림·겹침 고침과 접근성 보정 (2026-09-28 · 겉모양 되돌림 뒤에도 유지)
+   ========================================================= */
+/* 선석 — 폰 폭 항만 칩 줄: 즐겨찾기 안내(.fav-hint)는 ≤560px 에서 숨는데(style.css) 그 앞 1px 구분선만 홀로 남았다 */
+@media (max-width: 560px) {
+  .ops-berth #portChips .chip-div:has(+ .fav-hint),
+  .ops-berth #portChips .chip-div:last-child { display: none; }
+}
+/* 선석 — 컬럼 필터 '선사' 선택 상자: 트리 그리드에서 칸이 좁아 '선사 전체' 가 '선사 ?' 로 잘렸다 */
+.ops-berth #berthTable .colf-row #cfCarrier { min-width: 96px; }
+/* 선석 — 인천항 조회 줄: 호출부호 안내문('호출부호 (예: D5OI9) — 선택')이 잘리지 않을 폭 */
+.ops-berth #incheonship .berth-toolbar > #icCall { max-width: none !important; flex: 0 1 260px; }
+/* 선석 — 상태 칩 해제 표시(×·+): 60% 투명도라 밝은 테마 흰 바탕 위 2.91:1 로 비텍스트 기준(3:1)에 못 미쳤다.
+   불투명 보조 글자색(--muted)으로 둔다 — 대비 약 5.6:1(라이트)·5:1 이상(다크)으로 기준을 넘으면서, 칩 이름(--ink-2 굵게)보다 한 단 조용하다(09-29 심사) */
+.ops-berth #statusChips .f-chip .x { opacity: 1; color: var(--muted); }
+/* 선석 — 상태 필터 칩: 흰 바탕 칩 넷이 나란히 있어 어느 단계가 켜졌는지 눈에 띄지 않았다(09-29 형님 지적).
+   켜진 칩은 그 단계 색을 옅게 칠하고 테두리에 단계 색을 섞는다(표 배지와 같은 색 · 칠과 점으로 구분),
+   앞 점은 10 → 12px 로 한 단계 키운다. 꺼진 칩은 예전처럼 흰 바탕 + 흐림(.off). 색은 모두 --ops-* 한 벌. */
+.ops-berth #statusChips .f-chip[data-st='PLANNED']  { --chip-st: var(--ops-planned); }
+.ops-berth #statusChips .f-chip[data-st='ARRIVED']  { --chip-st: var(--ops-waiting); }
+.ops-berth #statusChips .f-chip[data-st='WORKING']  { --chip-st: var(--ops-working); }
+.ops-berth #statusChips .f-chip[data-st='DEPARTED'] { --chip-st: var(--ops-departed); }
+.ops-berth #statusChips .f-chip .sw { width: 12px; height: 12px; }
+.ops-berth #statusChips .f-chip:not(.off) {
+  background: color-mix(in srgb, var(--chip-st) 14%, var(--surface));
+  border-color: color-mix(in srgb, var(--chip-st) 55%, var(--border));
+  color: var(--ink);
+}
+.ops-berth #statusChips .f-chip:not(.off):hover { border-color: var(--brand-accent-2); color: var(--brand-accent-2); }
+/* 선석 — 머리 줄 '내장 샘플 데이터' 배지: 남색 머리 띠 위 원색 파랑 10px 는 대비가 2.6~2.9:1 이었다 */
+.ops-berth .live-status .src-badge {
+  display: inline-flex; align-items: center; margin: 0; line-height: 1.2;
+  font-size: var(--fs-xs); font-weight: 700; color: #dbe7f7;
+  background: rgba(158, 197, 244, 0.14); border-color: rgba(158, 197, 244, 0.34);
+}
+
+/* 스케줄 — 항로 탭 출발·도착항 입력: 고유폭(약 250px)에 멈춰 안내문이 '(예: KRPUS' 에서 잘렸다. 남는 폭을 나눠 갖는다.
+   가로로 늘어설 때만(>560px) — 좁은 폭에서는 폼이 세로로 쌓여(style.css) 기준폭이 높이로 작동하므로 걸지 않는다. */
+@media (min-width: 561px) {
+  .ops-sched #seaPanelRoute .sched-form > .sched-ac { flex: 1 1 calc(50% - 150px); min-width: 0; }
+  .ops-sched #seaPanelRoute .sched-form > .sched-ac input { width: 100%; }
+  .ops-sched #seaPanelVessel .sched-form > label:has(> input[type='text']),
+  .ops-sched #seaPanelPort .sched-form > label:has(> input[type='text']) { flex: 1 1 220px; min-width: 0; }
+  .ops-sched #seaPanelVessel .sched-form > label > input[type='text'],
+  .ops-sched #seaPanelPort .sched-form > label > input[type='text'] { width: 100%; }
+}
+/* 스케줄 — 항공 편명·공항코드 거르개: 줄에 밀려 줄어들며 안내문이 잘렸다. 줄지 않는 폭을 준다(묶음 안 칸은 schedule.html) */
+.ops-sched .air-toolbar > input[type='search'].focus-search { max-width: none !important; flex: 0 0 190px; min-width: 0; padding-inline: 10px; }
+.ops-sched .air-toolbar > .air-select { max-width: 200px; }
+/* 스케줄 — 항만 탭 결과·안내와 아래 '다른 항만 정보' 사이 간격(예전 3px 로 붙었다) */
+.ops-sched #seaHmmPortOut:not(:empty) { margin-bottom: var(--sp-3); }
+/* 폰 폭 — 거르개 입력칸이 제 고유폭(화면 절반)에 멈춰 안내문이 더 잘렸다 */
+@media (max-width: 640px) {
+  .ops-sched .air-toolbar > input[type='search'].focus-search { flex: 1 1 100%; }
+  .ops-berth #incheonship .berth-toolbar > #icCall { flex: 1 1 100%; }
+  /* 날짜 두 칸 — 390 폭에서 칸이 140px 로 줄어 '2026-09-2' 까지만 보였다. 값 전체가 들어가는 기준폭(150px) */
+  .ops-berth #incheonship .berth-toolbar > input[type='date'] { flex: 1 1 150px; max-width: none !important; min-width: 0; padding-inline: 8px; }
+  .ops-berth #incheonship .berth-toolbar > #icBtn { flex: 1 1 100%; }
+}
+
+/* 항로 — 탄소배출·검증 대조 결과가 입력줄 구분선에 붙어 있었다(0~1px) */
+.ops-route #co2Out:not(:empty),
+.ops-route #mrvOut:not(:empty) { margin-top: var(--sp-3); }
+/* 항로 — '검증 실측 대조' 두 카드 사이 간격(예전 0px) */
+.ops-route #co2verify .card + .card { margin-top: var(--sp-3); }
+/* 항로 — 선박 조회 입력칸은 남는 폭을 크게 가진다(예전 인라인 flex:2 1 260px). 세로로 쌓이는 좁은 폭에서는
+   기준폭이 높이로 작동해 입력칸과 '조회' 단추 사이에 214px 빈칸이 생겼다 — 그때는 내용 높이만 */
+@media (min-width: 561px) {
+  .ops-route .sched-form > label.ops-grow { flex: 2 1 260px; }
+}
+/* 항로 — 검증 대조표(항목명 · 값 두 칸). 항목명은 한 줄, 값은 줄바꿈(예전 nowrap 이라 표가 카드 밖으로 넓어졌다). */
+.ops-route table.tw.mrv-kv th[scope='row'] { text-align: left; white-space: nowrap; vertical-align: top; }
+.ops-route table.tw.mrv-kv td { white-space: normal; }
+/* 좁은 폭: 항목명 위 · 값 아래로 쌓는다. 표 최소폭 560px 에 밀려 항목명 칸이 48px 로 줄어
+   '대/조/모/집/단' 처럼 한 글자씩 세로로 쌓이고 값 칸은 오른쪽이 잘렸다. */
+@media (max-width: 560px) {
+  .ops-route #co2VerifyOut table.tw.mrv-kv { min-width: 0; }
+  .ops-route #co2VerifyOut table.tw.mrv-kv,
+  .ops-route #co2VerifyOut table.tw.mrv-kv > tbody,
+  .ops-route #co2VerifyOut table.tw.mrv-kv tr,
+  .ops-route #co2VerifyOut table.tw.mrv-kv th[scope='row'],
+  .ops-route #co2VerifyOut table.tw.mrv-kv td { display: block; width: auto; }
+  .ops-route #co2VerifyOut table.tw.mrv-kv tr { padding: 10px 2px; border-bottom: 1px solid var(--grid); }
+  .ops-route #co2VerifyOut table.tw.mrv-kv tr:last-child { border-bottom: 0; }
+  .ops-route #co2VerifyOut table.tw.mrv-kv th[scope='row'] {
+    padding: 0 0 2px; border: 0; background: none; white-space: normal !important;
+    font-size: var(--fs-sm); color: var(--muted); word-break: keep-all;
+  }
+  .ops-route #co2VerifyOut table.tw.mrv-kv td { padding: 0; border: 0; background: none !important; word-break: keep-all; overflow-wrap: anywhere; }
+}
+
+/* 경로 지도 — 한국어 화면의 바다·해협·운하·항만 이름(js/route.js mapLabels). 영문 이름 겹 대신 우리 말로 얹는다.
+   바탕 해도는 두 테마 모두 예전 그대로 밝은 해도라, 이름도 한 벌(짙은 글자 + 흰 테두리)로 둔다. */
+.ops-map-lbl { background: none; border: 0; }
+.ops-map-lbl > span {
+  position: absolute; transform: translate(-50%, -50%); white-space: nowrap; pointer-events: none;
+  font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0; line-height: 1.2;
+  color: #34557e; text-shadow: 0 0 2px rgba(255, 255, 255, .95), 0 0 1px rgba(255, 255, 255, .95);
+}
+.ops-map-lbl.is-ocean > span { font-size: var(--fs-md); font-weight: 700; color: #2d4d78; }
+.ops-map-lbl.is-sea > span { font-size: var(--fs-sm); }
+.ops-map-lbl.is-port > span { transform: translate(-5px, -50%); padding-left: 10px; color: #253247; font-weight: 600; }
+.ops-map-lbl.is-port > span::before {
+  content: ''; position: absolute; left: 1px; top: 50%; width: 6px; height: 6px; margin-top: -3px;
+  border-radius: 50%; background: #56657a; box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .9);
+}
+
+/* =========================================================
+   움직임 — 설정이 '줄이기' 가 아닐 때만. (html.no-motion 은 style.css 가 전역으로 끈다)
+   ========================================================= */
+@media (prefers-reduced-motion: no-preference) {
+  /* KPI·요약 카드가 차례로 들어온다(등장 효과 .reveal 에 시차만 준다) */
+  .ops-page .kpi-grid > .reveal:nth-child(2) { transition-delay: .06s; }
+  .ops-page .kpi-grid > .reveal:nth-child(3) { transition-delay: .12s; }
+  .ops-page .kpi-grid > .reveal:nth-child(4) { transition-delay: .18s; }
+  .ops-page .kpi-grid > .reveal:nth-child(5) { transition-delay: .24s; }
+
+  /* 상태 분포 막대가 왼쪽에서 자란다(첫 그림에서만) */
+  .ops-statbar-track.is-anim i { animation: opsGrowX .9s var(--ops-ease) both; }
+  .ops-statbar-track.is-anim i:nth-child(2) { animation-delay: .08s; }
+  .ops-statbar-track.is-anim i:nth-child(3) { animation-delay: .16s; }
+  .ops-statbar-track.is-anim i:nth-child(4) { animation-delay: .24s; }
+
+  /* 터미널별 막대 — 표가 처음 화면에 들어올 때 한 번 */
+  .ops-anim .ops-occ-bar i, .ops-anim .ops-risk i { animation: opsGrowX .9s var(--ops-ease) both; }
+  .ops-anim tbody tr:nth-child(2) i { animation-delay: .04s; }
+  .ops-anim tbody tr:nth-child(3) i { animation-delay: .08s; }
+  .ops-anim tbody tr:nth-child(4) i { animation-delay: .12s; }
+  .ops-anim tbody tr:nth-child(5) i { animation-delay: .16s; }
+  .ops-anim tbody tr:nth-child(6) i { animation-delay: .2s; }
+  .ops-anim tbody tr:nth-child(7) i { animation-delay: .24s; }
+  .ops-anim tbody tr:nth-child(8) i { animation-delay: .28s; }
+  .ops-anim tbody tr:nth-child(n+9) i { animation-delay: .32s; }
+
+  /* 쪽 넘김·보기 전환 때 행이 살짝 올라온다 */
+  .ops-rows-in > tr { animation: opsRise .34s var(--ops-ease) both; --ops-rise: 6px; }
+  .ops-rows-in > tr:nth-child(2) { animation-delay: .02s; }
+  .ops-rows-in > tr:nth-child(3) { animation-delay: .04s; }
+  .ops-rows-in > tr:nth-child(4) { animation-delay: .06s; }
+  .ops-rows-in > tr:nth-child(5) { animation-delay: .08s; }
+  .ops-rows-in > tr:nth-child(6) { animation-delay: .1s; }
+  .ops-rows-in > tr:nth-child(7) { animation-delay: .12s; }
+  .ops-rows-in > tr:nth-child(n+8) { animation-delay: .14s; }
+  .ops-berth #berthBody > tr.tree-child { animation: opsFade .25s ease both; }
+
+  /* 탭 전환 — 새 패널이 부드럽게 들어온다 */
+  .ops-sched .view-panel:not([hidden]) { animation: opsRise .32s var(--ops-ease) both; --ops-rise: 8px; }
+
+  /* 결과가 도착하면 요약 → 카드 순서로 차례차례 */
+  .ops-sum-i { animation: opsRise .4s var(--ops-ease) both; --ops-rise: 8px; }
+  .ops-sum-i:nth-child(2) { animation-delay: .05s; }
+  .ops-sum-i:nth-child(3) { animation-delay: .1s; }
+  .ops-sum-i:nth-child(4) { animation-delay: .15s; }
+  .ops-sum-i:nth-child(5) { animation-delay: .2s; }
+  .ops-page .sea-route { animation: opsRise .42s var(--ops-ease) both; }
+  .ops-page .sea-route:nth-of-type(2) { animation-delay: .05s; }
+  .ops-page .sea-route:nth-of-type(3) { animation-delay: .1s; }
+  .ops-page .sea-route:nth-of-type(4) { animation-delay: .15s; }
+  .ops-page .sea-route:nth-of-type(n+5) { animation-delay: .2s; }
+  /* hover 들썩임(카드 올라감·화살표 밀림·떠오르는 그림자)은 두지 않는다 — 준거 D4(2026-09-29). 테두리 색만 바뀐다. */
+  .ops-login, .ops-inline-msg, .ops-cal-none, .ops-empty { animation: opsRise .3s var(--ops-ease) both; --ops-rise: 6px; }
+  .ops-skel i { animation: opsPulse 1.4s ease-in-out 6; }
+
+  /* 경로: KPI 카드·선사 카드 */
+  .ops-route #simKpis > * { animation: opsRise .4s var(--ops-ease) both; --ops-rise: 8px; }
+  .ops-route #simKpis > *:nth-child(2) { animation-delay: .05s; }
+  .ops-route #simKpis > *:nth-child(3) { animation-delay: .1s; }
+  .ops-route #simKpis > *:nth-child(4) { animation-delay: .15s; }
+  .ops-swap:hover { transform: rotate(180deg); }
+  .ops-swap.is-spun { animation: opsSpin .4s var(--ops-ease); }
+
+}
+
+/* =========================================================
+   선사 필터 (js/carrier-filter.js · route.html #routeCarrierFilter) — 2026-09-27
+   받은 결과를 화면에서만 거른다. 끌어다 놓기·다중 선택 콤보·키보드·자주 쓰는 조합이 같은 선택 하나를 쓴다.
+   · 장식을 두지 않는다 — 알약 배지·그라데이션·빛번짐·그림자 과장·이모지·영문 대문자 소제목 없음.
+     상태는 작은 글자로 적고, 강조색은 --brand-accent-2 하나만 쓴다.
+   · 선사 색은 점 하나로만 싣는다(칩·콤보·달력 카드·목록·선사 카드). 달력 카드의 바탕·왼쪽 막대는 얼라이언스 색이다
+     (2026-09-28, 위 '출항 달력' 절) — 점(동그라미)과 막대(네모)로 모양을 갈라 두 뜻이 섞이지 않게 한다. 환적은 글자 칩.
+     점 옆에는 늘 선사 이름이 있으므로 라이트 테마에서 3:1 에 못 미치는 세 색(3·4·5번)도 완화 규칙을 충족한다.
+     점 테두리(잉크 22%)로 한 번 더 보강한다.
+   · 글자에는 계열색을 쓰지 않는다 — 잉크 토큰만.
+   ========================================================= */
+:root { --cf-c0: color-mix(in srgb, var(--muted) 70%, transparent); }
+:root[data-theme='light'] {
+  --cf-c1: #2a78d6; --cf-c2: #eb6834; --cf-c3: #1baf7a; --cf-c4: #eda100;
+  --cf-c5: #e87ba4; --cf-c6: #008300; --cf-c7: #4a3aa7; --cf-c8: #e34948;
+}
+:root[data-theme='dark'] {
+  --cf-c1: #3987e5; --cf-c2: #d95926; --cf-c3: #199e70; --cf-c4: #c98500;
+  --cf-c5: #d55181; --cf-c6: #008300; --cf-c7: #9085e9; --cf-c8: #e66767;
+}
+.cf-cdot { display: inline-block; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--cf-c0);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 22%, transparent); }
+.cf-c1 { background: var(--cf-c1); } .cf-c2 { background: var(--cf-c2); } .cf-c3 { background: var(--cf-c3); } .cf-c4 { background: var(--cf-c4); }
+.cf-c5 { background: var(--cf-c5); } .cf-c6 { background: var(--cf-c6); } .cf-c7 { background: var(--cf-c7); } .cf-c8 { background: var(--cf-c8); }
+/* 결과 칸의 점 — 이름 앞 */
+.ops-page table.tw td .cf-cdot, .ops-page .pick-name .cf-cdot, .ops-page .pick-chip .cf-cdot { margin-right: 6px; vertical-align: 1px; }
+.ops-page .pick-chip.is-picked { border-color: var(--brand-accent-2); color: var(--ink); }
+.cf-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+
+/* ---------- 틀 ----------
+   두 칸 격자 — '표시할 선사' · '전체 선사' 제목이 같은 왼쪽 칸에 줄 맞춰 선다(subgrid). 나머지 줄은 두 칸을 다 쓴다. */
+.cf { --ops-rise: 6px; --cf-row: 32px; --cf-zone-h: calc(var(--cf-row) * 2 + 12px); display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px 12px; padding: var(--sp-3) 0; border-bottom: 1px solid var(--border); min-width: 0; }
+.cf > * { grid-column: 1 / -1; }
+.cf[hidden] { display: none; }
+.cf-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); min-width: 0; }
+.cf-combo { position: relative; min-width: 0; max-width: 100%; width: min(17rem, 100%); }
+.cf-combo-btn, .cf-switch, .cf-pool-tgl {
+  display: inline-flex; align-items: center; gap: 8px; min-height: var(--ctl-h); max-width: 100%; padding: 0 12px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: transparent; color: var(--ink-2);
+  font: inherit; font-size: var(--fs-sm); font-weight: 700; cursor: pointer; text-align: left; white-space: nowrap;
+}
+/* 콤보 단추는 폭을 고정한다 — '선사: 전체' → '선사: Maersk 외 2곳' 으로 바뀌어도 옆 단추가 밀리지 않게.
+   넘치는 요약은 말줄임(고른 선사는 바로 아래 '표시할 선사' 칸에 다 보인다. 접근명은 글 전체다). */
+.cf-combo-btn { background: var(--ops-chip-bg); width: 100%; justify-content: space-between; }
+.cf-combo-btn:hover, .cf-switch:hover:not(:disabled), .cf-pool-tgl:hover { border-color: var(--brand-accent-2); color: var(--ink); }
+.cf-combo-btn[aria-expanded='true'], .cf-pool-tgl[aria-expanded='true'] { border-color: var(--brand-accent-2); color: var(--ink); }
+.cf-combo-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cf-combo-txt .cf-name { color: inherit; }
+.cf-chev { flex: none; }
+.cf-combo-btn[aria-expanded='true'] .cf-chev, .cf-pool-tgl[aria-expanded='true'] .cf-chev { transform: rotate(180deg); }
+.cf-switch { padding-left: 8px; }
+.cf-switch[hidden], .cf-pool-tgl[hidden] { display: none; }
+.cf-sw-track { position: relative; flex: none; width: 28px; height: 16px; border-radius: 8px; background: var(--ops-track);
+  box-shadow: inset 0 0 0 1px var(--border); }
+.cf-sw-track i { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--surface);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 25%, transparent); }
+.cf-switch[aria-checked='true'] .cf-sw-track { background: var(--brand-accent-2); box-shadow: none; }
+.cf-switch[aria-checked='true'] .cf-sw-track i { transform: translateX(12px); }
+/* 고른 선사가 없을 때 — 자리만 지키는 비활성 스위치(글자는 읽히게 두고 손잡이 칸만 흐리게) */
+.cf-switch:disabled { cursor: default; color: var(--muted); }
+.cf-switch:disabled .cf-sw-track { opacity: .5; }
+/* 켜짐·꺼짐 두 글자를 한 칸에 겹쳐 폭을 고정한다 */
+.cf-sw-st { display: inline-grid; color: var(--muted); }
+.cf-sw-st > span { grid-area: 1 / 1; }
+.cf-switch[aria-checked='true'] .cf-sw-off, .cf-switch[aria-checked='false'] .cf-sw-on { visibility: hidden; }
+
+/* ---------- 다중 선택 콤보 ----------
+   .card 의 backdrop-filter 가 쌓임 맥락을 만들어 z-index 만으로는 뒤 카드 위로 못 나온다 —
+   목록이 열려 있는 동안만 그 카드를 올린다(style.css .port-ac 와 같은 처방). */
+.ops-page .card:has(.cf-pop:not([hidden])) { position: relative; z-index: 40; }
+/* 격자 칸을 minmax(0,1fr) 로 묶는다 — 기본(auto) 칸은 내용 폭만큼 늘어, 긴 선사 이름·긴 상태 글(러시아어)이면
+   검색칸 오른쪽·'선택 n / 전체 m'·각 줄 건수가 팝업 밖으로 밀려 가로 스크롤이 생겼다. */
+.cf-pop {
+  position: absolute; z-index: 6; top: calc(100% + 6px); left: 0; width: min(320px, calc(100vw - 32px)); max-height: 60vh; overflow: auto;
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; align-content: start; padding: 10px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); box-shadow: var(--shadow);
+}
+.cf-pop > * { min-width: 0; }
+.cf-pop[hidden] { display: none; }
+.cf-search, .cf-pool-q, .cf-set-in {
+  height: var(--ctl-h); min-width: 0; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface-2); color: var(--ink); font: inherit; font-size: var(--fs-sm);
+}
+.cf-search { width: 100%; }
+.cf-search:focus, .cf-pool-q:focus, .cf-set-in:focus { border-color: var(--brand-accent-2); outline: none; box-shadow: var(--focus-halo); }
+.cf-pop-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.cf-act, .cf-set-save, .cf-set-ok, .cf-set-cancel, .cf-note-btn, .cf-off-btn, .route-more-btn {
+  display: inline-flex; align-items: center; min-height: var(--ctl-h-sm); padding: 0 10px;
+  border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--ink-2);
+  font: inherit; font-size: var(--fs-xs); font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+.cf-act:hover, .cf-set-save:hover, .cf-set-ok:hover, .cf-set-cancel:hover, .cf-note-btn:hover, .cf-off-btn:hover, .route-more-btn:hover { border-color: var(--brand-accent-2); color: var(--ink); }
+.cf-count { margin-left: auto; color: var(--muted); font-size: var(--fs-xs); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cf-opts { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; min-width: 0; }
+.cf-opts li { min-width: 0; }
+.cf-opts li[hidden] { display: none; }
+.cf-opt { display: flex; align-items: center; gap: 8px; min-height: 32px; padding: 4px 6px; border-radius: 8px; cursor: pointer; color: var(--ink-2); font-size: var(--fs-sm); min-width: 0; }
+.cf-opt:hover { background: var(--ops-hover); }
+.cf-opt input { flex: none; margin: 0; accent-color: var(--brand-accent); }
+.cf-opt-dot { display: inline-flex; flex: none; width: 8px; }
+/* 이름이 먼저 줄어든다(말줄임). 상태 글은 최대 폭까지만 쓰고 넘치면 말줄임 — 온전한 글은 title 로 */
+.cf-opt .cf-name { flex: 1 1 auto; font-weight: 700; }
+.cf-opt small { flex: 0 0 auto; max-width: 55%; min-width: 0; overflow: hidden; text-overflow: ellipsis;
+  color: var(--muted); font-size: var(--fs-xs); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cf-nomatch { margin: 0; padding: 8px 6px; color: var(--muted); font-size: var(--fs-sm); }
+.cf-nomatch[hidden] { display: none; }
+
+/* ---------- 표시할 선사(놓을 칸) ---------- */
+.cf-zone-wrap, .cf-pool-wrap { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 6px 12px; min-width: 0; }
+@supports (grid-template-columns: subgrid) {
+  .cf-zone-wrap, .cf-pool-wrap { grid-template-columns: subgrid; }
+}
+.cf-zone-k, .cf-pool-k { color: var(--ink-2); font-size: var(--fs-sm); font-weight: 800; white-space: nowrap; }
+.cf-zone-k { padding-top: 9px; }
+.cf-pool-k { line-height: 1.5; }
+/* 빈 칸 안내와 칩 목록을 같은 칸에 겹쳐 둔다 — 칩이 생기면 안내는 보이지만 않게(자리는 그대로) 한다.
+   ★ 칸 높이는 고정이다(2026-09-28) — 예전엔 칩이 줄을 바꿀 때마다 칸이 커져 아래 '전체 선사' 칩이 36~46px
+     밀렸고, 연달아 누르던 사람이 엉뚱한 선사를 넣거나 이미 고른 선사를 도로 뺐다(폰은 30곳이면 칸이 1,444px).
+     데스크톱은 두 줄 높이(--cf-zone-h)를 미리 잡고 넘치면 칸 안에서 세로로 구르고, 폰은 한 줄 가로 스크롤이다.
+     새 칩은 js 가 칸 안에서만 굴려 보인다(페이지는 굴리지 않는다). 칩 한 줄 높이 --cf-row = 칩 30px + 테두리 2px.
+   · 왼쪽 안쪽 여백을 넉넉히(11px) 둔다 — 맨 앞 자리 삽입 막대가 칸 테두리와 겹쳐 묻히지 않게, 막대는 이 여백
+     한가운데에 선다(js insIndex). 칸 목록 자체의 3px 여백은 칩 초점 링이 스크롤 칸에 잘리지 않게 두는 자리다. */
+.cf-zone-box { position: relative; display: grid; min-width: 0; padding: 2px 2px 2px 11px; border: 1px dashed color-mix(in srgb, var(--ink) 22%, transparent); border-radius: var(--radius-sm); }
+.cf-zone-box.is-armed { border-color: color-mix(in srgb, var(--brand-accent-2) 60%, var(--border)); }
+/* 놓을 칸 강조 — 테두리는 옅게(막대는 진한 강조색 그대로) 해서 맨 앞 자리 막대와 테두리를 눈으로 가른다 */
+.cf-zone-box.is-over { border-style: solid; border-color: color-mix(in srgb, var(--brand-accent-2) 45%, var(--border)); background: color-mix(in srgb, var(--brand-accent-2) 8%, transparent); }
+.cf-zone, .cf-zone-empty { grid-area: 1 / 1; }
+.cf-zone { position: relative; list-style: none; margin: 0; padding: 3px; display: flex; flex-wrap: wrap; align-self: center; align-content: flex-start; gap: 6px; min-width: 0;
+  height: var(--cf-zone-h); overflow-x: hidden; overflow-y: auto; scrollbar-width: thin; scrollbar-gutter: stable; }
+.cf-zone:empty { display: none; }
+.cf-zone-empty { display: flex; align-items: center; min-height: var(--cf-zone-h); margin: 0; padding: 0 6px; color: var(--muted); font-size: var(--fs-sm); line-height: 1.5; }
+.cf-zone-empty.is-under { visibility: hidden; }
+/* 삽입 자리 — 칩보다 위아래로 6px 씩 길고, 위·아래 끝에 서로 마주 보는 삼각 표지를 단다 */
+.cf-ins { position: absolute; z-index: 1; width: 2px; border-radius: 1px; background: var(--brand-accent-2); pointer-events: none; }
+.cf-ins[hidden] { display: none; }
+.cf-ins-a, .cf-ins-b { position: absolute; left: -5px; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; }
+.cf-ins-a { top: 0; border-top: 7px solid var(--brand-accent-2); }
+.cf-ins-b { bottom: 0; border-bottom: 7px solid var(--brand-accent-2); }
+
+/* ---------- 칩 ---------- */
+.cf-chip { display: inline-flex; align-items: center; min-width: 0; max-width: 100%; border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--brand-accent-2) 35%, var(--border)); background: var(--ops-chip-bg); color: var(--ink-2); }
+.cf-chip-main, .cf-pchip {
+  display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; min-height: 30px; padding: 0 10px 0 2px;
+  border: 0; border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: var(--fs-sm); font-weight: 700;
+  cursor: grab; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; text-align: left;
+}
+.cf-chip-main { padding-right: 4px; }
+.cf-pchip { border: 1px solid var(--border); background: var(--ops-chip-bg); color: var(--ink-2); cursor: pointer; }
+.cf-pchip:hover { border-color: color-mix(in srgb, var(--brand-accent-2) 55%, var(--border)); }
+.cf-pchip[aria-pressed='true'] { border-color: var(--brand-accent-2); background: color-mix(in srgb, var(--brand-accent-2) 15%, var(--surface)); }
+/* 점 칸·체크 칸은 늘 자리를 잡고, 고른 칩에서만 보인다 — 누를 때 칩 폭이 변하지 않는다 */
+.cf-pdot { display: inline-flex; align-items: center; flex: none; width: 8px; }
+.cf-check { display: inline-flex; flex: none; color: var(--brand-accent-2); visibility: hidden; }
+.cf-pchip[aria-pressed='true'] .cf-check { visibility: visible; }
+.cf-grip { display: inline-flex; align-items: center; justify-content: center; flex: none; align-self: stretch; width: 18px;
+  color: var(--muted); cursor: grab; touch-action: none; }
+.cf-chip-x, .cf-set-x { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 26px; height: 26px; margin-right: 2px;
+  padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; }
+.cf-chip-x:hover, .cf-set-x:hover { color: var(--ink); background: var(--ops-hover); }
+.cf-n { color: var(--muted); font-size: var(--fs-xs); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cf-st, .cf-new { color: var(--muted); font-size: var(--fs-xs); font-weight: 600; white-space: nowrap; }
+/* 0편 · 조회 못함 · 목록에 없음 — 흐리게(글자로도 적는다) */
+.cf-pchip.is-zero .cf-name, .cf-pchip.is-fail .cf-name, .cf-chip.is-zero .cf-name, .cf-chip.is-fail .cf-name, .cf-chip.is-gone .cf-name { color: var(--muted); }
+.cf-chip.is-gone { border-style: dashed; }
+/* 고르면 조회(일부러 한꺼번에 부르지 않은 선사, 2026-09-29) — 점선 테두리로 '아직 부르지 않음' 을 가른다. 이름은 흐리게 하지 않는다(고를 수 있다) */
+.cf-pchip.is-idle, .cf-chip.is-idle { border-style: dashed; }
+.cf-chip.is-src, .cf-pchip.is-src { opacity: .45; }
+.cf-chip.is-grab { border-color: var(--brand-accent-2); box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-accent-2) 35%, transparent); }
+.cf button:focus-visible, .cf input:focus-visible, .cf-off-btn:focus-visible, .route-more-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+/* ---------- 전체 선사(풀) ---------- */
+.cf-pool-wrap[hidden], .cf-pool-q[hidden] { display: none; }
+.cf-pool-main { display: grid; gap: 10px; min-width: 0; }
+.cf-pool-q { width: min(280px, 100%); }
+.cf-pool-body { display: grid; gap: 10px; min-width: 0; }
+.cf-grp { display: grid; gap: 6px; min-width: 0; }
+.cf-grp-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.cf-grp-k { margin: 0; color: var(--muted); font-size: var(--fs-xs); font-weight: 700; }
+.cf-more { min-height: 24px; padding: 0 2px; border: 0; background: none; color: var(--ink-2); font: inherit; font-size: var(--fs-xs); font-weight: 700;
+  text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.cf-pchips { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.cf-pchips[hidden] { display: none; }
+
+/* ---------- 자주 쓰는 조합 ---------- */
+.cf-sets { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
+.cf-sets[hidden] { display: none; }
+.cf-sets-k { margin-right: 2px; color: var(--ink-2); font-size: var(--fs-sm); font-weight: 800; white-space: nowrap; }
+.cf-sets-list { display: contents; }
+.cf-set { display: inline-flex; align-items: center; min-width: 0; max-width: 100%; border: 1px solid var(--border); border-radius: 999px; background: var(--ops-chip-bg); }
+.cf-set.is-on { border-color: var(--brand-accent-2); background: color-mix(in srgb, var(--brand-accent-2) 15%, var(--surface)); }
+.cf-set-main { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; min-height: 28px; padding: 0 4px 0 12px;
+  border: 0; border-radius: 999px; background: none; color: var(--ink-2); font: inherit; font-size: var(--fs-sm); font-weight: 700; cursor: pointer; }
+.cf-set-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink);
+  font: inherit; padding: 0; border: 0; border-radius: 0; background: none; }   /* <code> — 번역기가 건드리지 않게 고른 태그일 뿐 코드 서체가 아니다 */
+.cf-set-main small { color: var(--muted); font-size: var(--fs-xs); white-space: nowrap; }
+.cf-set-x { width: 24px; height: 24px; }
+.cf-set-save { border-style: dashed; }
+.cf-set-save[hidden] { display: none; }
+.cf-set-form { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.cf-set-form[hidden] { display: none; }
+.cf-set-in { width: 160px; height: 30px; }
+.cf-set-ok { border-color: color-mix(in srgb, var(--brand-accent-2) 55%, var(--border)); color: var(--ink); }
+
+/* ---------- 안내 · 도움말 · 결과 머리 상태 줄 ---------- */
+.cf-note { display: grid; gap: 4px; }
+.cf-note[hidden] { display: none; }
+.cf-note p { margin: 0; padding: 6px 10px; border-left: 3px solid var(--series-1); border-radius: 0 8px 8px 0; line-height: 1.6;
+  background: color-mix(in srgb, var(--series-1) 7%, transparent); color: var(--ink-2); font-size: var(--fs-sm); }
+.cf-note p.is-warn { border-left-color: var(--lv-stable); background: color-mix(in srgb, var(--lv-stable) 9%, transparent); }
+.cf-note .cf-name { display: inline; }
+.cf-help { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+/* 칩에 키보드 초점이 있을 때만 눈에도 보인다(스크린리더는 aria-describedby 로 늘 읽는다).
+   사용법 보기의 키보드 단계도 이 줄을 잠깐 보인다(js/carrier-filter.js guideShowHelp 가 .cf-help-shown 을 붙였다 뗀다). */
+.cf:has(.cf-chip-main:focus-visible, .cf-pchip:focus-visible, .cf-set-main:focus-visible) .cf-help,
+.cf.cf-help-shown .cf-help { position: static; width: auto; height: auto; margin: 0; overflow: visible; clip: auto; clip-path: none; white-space: normal;
+  color: var(--muted); font-size: var(--fs-xs); line-height: 1.7; }
+.cf-help kbd { padding: 0 4px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface-2); color: var(--ink-2);
+  font-family: ui-monospace, Consolas, monospace; font-size: .95em; }
+.ops-page .cf-status { margin: 0 0 10px; padding: 8px 12px; border-left: 3px solid var(--brand-accent-2); border-radius: 0 10px 10px 0; line-height: 1.6;
+  background: color-mix(in srgb, var(--brand-accent-2) 8%, transparent); color: var(--ink-2); }
+.ops-page .cf-status.is-off { border-left-color: color-mix(in srgb, var(--ink) 25%, transparent); background: color-mix(in srgb, var(--ink) 3%, transparent); }
+.ops-page .cf-empty { margin: 4px 0 10px; color: var(--ink-2); line-height: 1.6; }
+.cf-off-btn { margin-left: 4px; background: var(--surface); color: var(--ink); }
+.ops-page .cf-calorder, .ops-page .cf-pick-note { margin: 8px 0 0; }
+.ops-page .cf-pick-note { margin: 0 0 8px; }
+.ops-page .route-more { margin: 8px 0 0; }
+
+/* ---------- 끄는 동안 ---------- */
+/* 복제본은 포인터 오른쪽 아래(js: +14,+16)에 뜬다 — 삽입 막대를 덮지 않게. 긴 이름은 줄여 작게 둔다. */
+.cf-ghost { position: fixed; left: 0; top: 0; z-index: 1000; pointer-events: none; display: inline-flex; align-items: center; gap: 6px;
+  max-width: min(280px, calc(100vw - 32px)); min-height: 30px; padding: 0 12px 0 6px; border: 1px solid var(--brand-accent-2); border-radius: 999px; background: var(--surface); color: var(--ink);
+  font-size: var(--fs-sm); font-weight: 700; white-space: nowrap; box-shadow: var(--ops-lift); will-change: transform; }
+.cf-ghost-st { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--brand-accent-2); color: #fff; font-size: 12px; font-weight: 800; line-height: 1; }
+.cf-ghost.is-del { border-color: var(--lv-congested); }
+.cf-ghost.is-del .cf-ghost-st { background: var(--lv-congested); }
+.cf-ghost.is-none { opacity: .6; }
+.cf-ghost.is-none .cf-ghost-st { display: none; }
+.cf-ghost-t { color: var(--lv-congested-txt); font-size: var(--fs-xs); }
+.cf-ghost-t:empty { display: none; }
+body.cf-dragging, body.cf-dragging * { cursor: grabbing !important; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+
+/* ---------- 손가락 — 누름 영역 ---------- */
+@media (pointer: coarse) {
+  .cf { --cf-row: 42px; }
+  .cf-chip-main, .cf-pchip { min-height: 40px; }
+  .cf-grip { width: 28px; }
+  .cf-chip-x, .cf-set-x { width: 32px; height: 32px; }
+  .cf-set-main, .cf-set-save, .cf-act, .cf-note-btn, .cf-off-btn, .route-more-btn, .cf-more { min-height: 36px; }
+  .cf-opt { min-height: 40px; }
+}
+/* ---------- 폰 폭 ---------- */
+@media (max-width: 640px) {
+  .cf { grid-template-columns: minmax(0, 1fr); }
+  .cf-combo { flex: 1 1 100%; }
+  .cf-combo-btn { width: 100%; min-width: 0; justify-content: space-between; }
+  .cf-pop { left: 0; right: 0; width: auto; }
+  .cf-switch, .cf-pool-tgl { flex: 1 1 auto; justify-content: center; }   /* 한 줄에 둘 — 긴 번역(러시아어)이면 줄을 바꾼다 */
+  .cf-zone-wrap, .cf-pool-wrap { grid-template-columns: minmax(0, 1fr); }
+  .cf-zone-k { padding-top: 0; }
+  /* 폰 — 표시할 선사는 한 줄 가로 스크롤(높이 고정). 칩은 줄지 않고(긴 이름은 칩 안에서 말줄임) 옆으로 늘어선다.
+     칩 몸통을 옆으로 밀면 칸이 구르고, 손잡이를 끌면 넣기·순서·빼기다. */
+  .cf { --cf-zone-h: calc(var(--cf-row) + 6px + var(--cf-sb, 0px)); }
+  .cf-zone { flex-wrap: nowrap; align-items: flex-start; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-gutter: auto; }
+  .cf-zone > li { flex: none; max-width: 78%; }
+  /* 칸 칩을 줄여 한 줄에 둘 이상 보이게 — 틈·안쪽 여백·손잡이 폭(24px)을 줄이고 × 는 누름 폭(32px)을 지킨 채 겹쳐 붙인다 */
+  .cf-zone .cf-chip-main { gap: 3px; padding: 0; }
+  .cf-zone .cf-grip { width: 24px; }
+  .cf-zone .cf-chip-x { margin: 0 0 0 -4px; }
+  .cf-set-in { width: 100%; flex: 1 1 140px; }
+}
+/* 좁은 창을 마우스로 쓸 때(굵은 포인터가 아님) — 가로 스크롤 막대가 칸 안 높이를 먹으므로 그만큼 미리 잡는다 */
+@media (max-width: 640px) and (pointer: fine) { .cf { --cf-sb: 12px; } }
+/* 다중 선택 목록이 열려 있는 동안 '맨 위로' 단추를 감춘다 — 폰에서 목록 오른쪽 아래(건수·테두리)를 덮었다.
+   visibility 로만 감추므로 목록을 닫으면 그 자리에 그대로 돌아온다(js 가 html.cf-pop-open 을 붙이고 뗀다). */
+html.cf-pop-open .pagenav .pagenav-top { visibility: hidden; opacity: 0; transition: none; }
+/* ---------- 움직임 — 줄이기 설정이 아닐 때만(html.no-motion 은 style.css 전역 규칙이 끈다) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .cf .cf-chip.is-new { animation: opsRise .25s var(--ops-ease) both; }
+  .cf-pop:not([hidden]) { animation: opsFade .15s ease both; }
+  .cf-zone-box { transition: border-color .18s ease, background-color .18s ease; }
+  .cf-chev, .cf-sw-track i { transition: transform .18s var(--ops-ease); }
+  .cf-sw-track { transition: background-color .18s ease; }
+}
+/* ---------- 사용법 보기 견본 (2026-09-28) ----------
+   조회 전이라 비어 있는 자리에 투어가 잠깐 끼우는 안내 예시(누를 수 없음 · inert). 둘레를 점선으로 두어 진짜 결과와
+   섞여 보이지 않게 한다 — css/dash.css 의 .dv-guide-sample 과 같은 모양이다(이 화면들은 dash.css 를 싣지 않는다).
+   js/route.js mrvSampleShow 가 선박 조회 결과 칸 뒤에 넣고, 투어가 끝나면 지운다. */
+.ops-guide-sample { margin: 12px 0 0; padding: var(--sp-2); border: 1px dashed var(--border); border-radius: 14px; }
+.ops-guide-sample .ops-gs-note { margin: 0 0 var(--sp-1); font-size: var(--fs-xs); font-weight: 700; color: var(--muted); }
+/* 사용법 보기 — 휴대폰에서 세로로 쌓인 숫자 카드를 두 장씩 잠깐 묶는 틀(js/berth.js·route.js pairUp).
+   투어는 요소 하나만 비추므로 '앞 두 장 · 뒤 두 장' 을 한 요소로 만든다. 부모 격자(.kpi-grid·.src-grid)와 같은
+   간격의 한 줄 격자라 쌓인 모습이 그대로이고, 투어가 그 단계를 떠나면 카드를 도로 꺼내고 틀을 지운다. */
+.ops-guide-pair { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); min-width: 0; }
+
+/* ---------- 항로·선박 스케줄 — 글자 기호 대신 Tabler 한 벌(D7) ----------
+   Excel 단추 앞 표시: 내려받기 download 14(평소) · 도는 loader-2(내보내는 중 — 단추가 잠긴 동안) · check(완료) · x(못 함).
+   사전 문구 앞의 ✓ ✗ 는 js/schedule-export.js flash() 가 떼고 data-ops-flash="ok|no" 로 상태를 넘긴다.
+   기간 되돌리기 ↺ 글자 → arrow-back-up 14, 정렬 ▲▼ → chevron 14, 마감 이상 ★ → alert-triangle 14, 출발→도착 → arrow-narrow-right 16. */
+.ops-page .ops-xls::before {
+  -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222.15%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%2017v2a2%202%200%200%200%202%202h12a2%202%200%200%200%202%20-2v-2%22%2F%3E%3Cpath%20d%3D%22M7%2011l5%205l5%20-5%22%2F%3E%3Cpath%20d%3D%22M12%204l0%2012%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222.15%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%2017v2a2%202%200%200%200%202%202h12a2%202%200%200%200%202%20-2v-2%22%2F%3E%3Cpath%20d%3D%22M7%2011l5%205l5%20-5%22%2F%3E%3Cpath%20d%3D%22M12%204l0%2012%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+}
+.ops-page .ops-xls:disabled:not([data-ops-flash])::before { animation: opsXlsSpin .9s linear infinite;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222.15%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%203a9%209%200%201%200%209%209%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222.15%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%203a9%209%200%201%200%209%209%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+}
+@keyframes opsXlsSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ops-page .ops-xls:disabled:not([data-ops-flash])::before { animation-duration: 2.4s; } }
+.ops-page .ops-xls[data-ops-flash="ok"]::before {
+  -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222.15%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%2012l5%205l10%20-10%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222.15%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%2012l5%205l10%20-10%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+}
+.ops-page .ops-xls[data-ops-flash="no"]::before {
+  -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222.15%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M18%206l-12%2012%22%2F%3E%3Cpath%20d%3D%22M6%206l12%2012%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222.15%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M18%206l-12%2012%22%2F%3E%3Cpath%20d%3D%22M6%206l12%2012%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+}
+.ops-range-reset::before { content: ''; width: 14px; height: 14px; flex: none; background: currentColor; font-weight: 400;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222.15%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M9%2014l-4%20-4l4%20-4%22%2F%3E%3Cpath%20d%3D%22M5%2010h11a4%204%200%201%201%200%208h-1%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222.15%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M9%2014l-4%20-4l4%20-4%22%2F%3E%3Cpath%20d%3D%22M5%2010h11a4%204%200%201%201%200%208h-1%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+}
+.ops-page .air-sort-dir { display: inline-flex; vertical-align: -2px; }
+.ops-page .sea-cut-odd .tw-ic { margin-right: 3px; vertical-align: -2px; }
+.ops-page .sea-arrow { display: inline-flex; align-items: center; }
+.ops-page .air-step .tw-ic { display: block; }
+/* 아이콘만 있는 날짜 단추 — 그림 20 에 좌우 6px(예전 ‹ › 글자 단추와 같은 약 32px 폭 · 한 줄 도구줄이 밀리지 않게) */
+.ops-page .air-step:has(> .tw-ic) { padding: 0 6px; min-width: 32px; justify-content: center; }
+
+/* =========================================================
+   칸 글자는 한 줄 — 숫자 카드 이름표 · 항공 정기편 '전체' 보기 · 머스크 마감표 · 기항 마감 요약(2026-09-29 2차)
+   형님 지시(09-29 '등록' 칸): 표·그리드·카드형 목록의 글자가 접혀 아래로 밀리면 안 된다. 긴 언어(러시아어·영어)에서
+   접히던 자리를 한 줄로 두고, 모자란 폭은 칸·카드 폭을 글자에 맞춰 늘리거나(격자 최소 폭 = 글자 폭) 표 상자 안 가로 굴림으로 받는다.
+   ========================================================= */
+/* 선석 '금일 운영 스냅샷' 숫자 카드 — 러시아어 이름표('Приближается закрытие приёма')가 두 줄로 접혔다. 이름표를 한 줄로 두고
+   카드의 최소 폭을 그 글자 폭으로 잡아, 네 칸 격자가 긴 이름표 칸을 먼저 넓히고 남는 폭을 나머지에 나눈다(한국어는 그대로 1.25:1:1:1).
+   네 칸이 한 줄에 서는 넓은 화면에서만 — 두 칸·한 칸으로 쌓이는 좁은 화면은 예전 그대로다. */
+@media (min-width: 1025px) {
+  .ops-berth #summary .kpi .k { white-space: nowrap; }
+  .ops-berth #summary .kpi-grid > .kpi { min-width: min-content; }
+}
+/* 항로 시뮬레이터 숫자 카드 — 러시아어 이름표('Доверительный интервал P10~P90 ?')가 두 줄로 접혔다. 네 장이 한 줄에 서는
+   폭(본문 1150px)에서는 칸마다 최소 폭을 이름표 폭으로 잡는다(합이 본문 폭 안에 든다 — 러시아어 실측 1118px). 뒤에 붙는
+   물동량 카드(.sc-full)는 예전처럼 전폭이다. 카드가 넷보다 적은 상태 안내는 예전 격자 그대로다. */
+@media (min-width: 1200px) {
+  .ops-route #simKpis:has(> .src-card:nth-child(4)) { grid-template-columns: repeat(4, minmax(min-content, 1fr)); }
+  .ops-route #simKpis:has(> .src-card:nth-child(4)) .sc-top b { white-space: nowrap; }
+}
+/* 항공 정기편 — 편명 칸(편명 + 공동운항 칩)·운항 기간·'전체' 보기 머리글이 긴 언어에서 두 줄로 접혔다(style.css 가 줄바꿈을
+   허용했다). 한 줄로 둔다 — 러시아어 '전체' 보기도 문장형 머리글·칸 여백 6px 로 카드 폭 안에 들어 '시즌' 칸이 숨지 않는다. */
+.ops-page table.tw td.air-flt,
+.ops-page table.tw.air-tbl-all td.air-per,
+.ops-page table.tw.air-tbl-all th { white-space: nowrap; }
+/* 머스크 마감표(스케줄 카드 펼침) — 넓은 화면에서는 칸을 한 줄로(마감 종류·현지 시각·남은 시간 · 터미널 이름 줄).
+   폰 폭(≤640px)은 위의 쌓는 모양(한 마감 = 한 덩어리)이 그대로 줄바꿈을 맡는다. */
+@media (min-width: 641px) {
+  .ops-page .sea-dl-tbl th, .ops-page .sea-dl-tbl td { white-space: nowrap; overflow-wrap: normal; }
+  /* 머스크 기항 일정 표 — 기항지 칸 아래 마감 요약(서류·반입·VGM)도 한 줄 */
+  .ops-page .sea-voy-cut { white-space: nowrap; }
+}
+
+/* ===== 항만 검색 입력·배편 결과 공용 부품 (2026-10-02 · 선박 스케줄 항로 탭 · 항로 분석) ===== */
+/* 스케줄 항로 탭 — 출발·바꾸기(⇄)·도착 한 줄. 두 칸이 폭을 나눠 갖고, 바꾸기는 칸 밑선에 맞춘다.
+   ★ flex-basis 는 한 줄(가로 flex)일 때만 — 좁은 폭에서 묶음이 세로로 쌓이면(인라인 @560) 주축이 높이라 200px 가 '칸 높이' 로 먹어
+     출발·도착 칸이 각각 200px 로 부풀었다(사용법 말풍선이 칸을 덮음). 세로일 때는 내용 높이로 둔다. */
+.ops-sched #seaOdPair > .sched-ac input { width: 100%; }
+.sched-swap { align-self: flex-end; margin-bottom: 1px; }
+@media (min-width: 561px) {
+  .ops-sched #seaOdPair > .sched-ac { flex: 1 1 200px; min-width: 0; }
+}
+@media (max-width: 560px) {
+  .ops-sched #seaOdPair > .sched-swap { align-self: center; margin: 2px 0; }
+}
+
+/* 항로 분석 — berth-toolbar 안의 검색 입력(옛 select 자리) */
+.ops-route .berth-toolbar .pac-field { flex: 1 1 200px; min-width: 0; max-width: 240px; }
+.ops-route .berth-toolbar .pac-field input { width: 100%; }
+@media (max-width: 640px) { .ops-route .berth-toolbar .pac-field { max-width: none; flex-basis: 100%; } }
+
+/* 흰 테두리 알약 제거(디자인 규칙) — '2주 뒤로 다시 조회'·공식 스케줄 링크는 채운 보조 단추로. */
+.ops-page .sea-later-btn.btn-ghost,
+.ops-page .schedule-official-link.btn-ghost {
+  border: 0; opacity: 1; border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--brand-accent) 14%, transparent); color: var(--ink);
+}
+.ops-page .sea-later-btn.btn-ghost:hover,
+.ops-page .schedule-official-link.btn-ghost:hover {
+  background: color-mix(in srgb, var(--brand-accent) 22%, transparent); color: var(--ink); transform: none; opacity: 1;
+}
+
+/* 결과 머리 — 선사·구간(왼쪽) · 갱신 시각·다시 조회(오른쪽) */
+.sail-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px var(--sp-2); }
+.sail-head .air-h { margin: 0; }
+.sail-stamp { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-xs); color: var(--muted); }
+.sail-stamp.is-stale .sail-stamp-t { color: var(--lv-busy-txt); }
+.sail-requery {
+  display: inline-flex; align-items: center; gap: 4px; border: 0; cursor: pointer; font: inherit;
+  font-size: var(--fs-xs); font-weight: 700; color: var(--brand-accent-2);
+  background: color-mix(in srgb, var(--brand-accent) 10%, transparent); border-radius: var(--radius-sm); padding: 3px 9px;
+}
+.sail-requery .tw-ic { width: 16px; height: 16px; }
+.sail-requery:hover { background: color-mix(in srgb, var(--brand-accent) 18%, transparent); color: var(--ink); }
+.sail-requery:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+/* 갱신 늦음 안내 문단 — 머리(.sail-head flex) 안에서 오른쪽에 끼지 않고 머리 아래 한 줄을 다 쓴다 */
+.sail-stale { margin: 4px 0 0; color: var(--lv-busy-txt); flex-basis: 100%; }
+.sail-window { margin: 8px 0 0; }
+
+/* 도구 줄 — 정렬(.seg 재사용)·직항만 */
+.sail-tools { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+.sail-sort { height: var(--ctl-h); }
+.sail-direct {
+  display: inline-flex; align-items: center; gap: 5px; height: var(--ctl-h); padding: 0 var(--sp-3);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--ops-chip-bg);
+  color: var(--ink-2); font: inherit; font-size: var(--fs-sm); font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+.sail-direct .tw-ic { width: 16px; height: 16px; }
+.sail-direct:hover { color: var(--ink); border-color: var(--brand-accent-2); }
+.sail-direct.is-on { background: color-mix(in srgb, var(--brand-accent) 14%, transparent); border-color: color-mix(in srgb, var(--brand-accent-2) 42%, var(--border)); color: var(--ink); }
+.sail-direct:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.sail-filt, .sail-sortnote { margin: 8px 0 0; }
+
+/* 카드 첫 줄 — 모선·항차·서비스(예전엔 '마감 정보 없음' 이 카드에서 가장 굵었다) */
+.sea-vsl { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; margin-bottom: 6px; }
+.sea-vsl > b { font-size: var(--fs-lg); font-weight: 700; color: var(--ink); }
+.sea-vsl-voy { font-size: var(--fs-sm); color: var(--muted); font-weight: 700; }
+.sea-vsl-svc { font-size: var(--fs-xs); color: var(--muted); }
+.sail-etd.is-near { color: var(--lv-busy-txt); background: color-mix(in srgb, var(--lv-busy) 16%, transparent); }
+.sail-etd.is-past { color: var(--muted); background: color-mix(in srgb, var(--ink) 8%, transparent); }
+
+/* 환적 구간 타임라인 — 출발 ●— 구간 —○ 환적항 —● 도착 */
+.sail-tl-box { margin: 10px 0 2px; }
+.sail-tl { list-style: none; margin: 0; padding: 0; display: flex; align-items: stretch; flex-wrap: wrap; gap: 0; }
+.sail-tl-n { display: flex; flex-direction: column; gap: 1px; flex: 0 0 auto; max-width: 42%; }
+.sail-tl-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--brand-accent); margin-bottom: 3px; }
+.sail-tl-n.is-ts .sail-tl-dot { background: var(--surface); border: 2px solid var(--lv-busy); }
+.sail-tl-t { font-size: var(--fs-xs); color: var(--ink-2); }
+.sail-tl-t small { color: var(--muted); }
+.sail-tl-p { font-size: var(--fs-xs); color: var(--ink); white-space: nowrap; }
+.sail-tl-p code { font-family: ui-monospace, Consolas, monospace; font-size: var(--fs-2xs); color: var(--muted); margin-left: 3px; }
+.sail-tl-w { font-size: var(--fs-2xs); color: var(--lv-busy-txt); }
+.sail-tl-s { flex: 1 1 40px; min-width: 40px; display: flex; flex-direction: column; justify-content: center; padding: 0 6px; }
+.sail-tl-v { font-size: var(--fs-2xs); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+.sail-tl-line { height: 2px; background: color-mix(in srgb, var(--brand-accent) 70%, transparent); border-radius: 2px; margin: 3px 0; }
+.sail-tl-s.is-rail .sail-tl-line, .sail-tl-s.is-barge .sail-tl-line, .sail-tl-s.is-road .sail-tl-line, .sail-tl-s.is-etc .sail-tl-line { background: none; border-top: 2px dashed var(--muted); height: 0; }
+.sail-tl-d { font-size: var(--fs-2xs); color: var(--muted); text-align: center; }
+@media (max-width: 640px) {
+  .sail-tl { flex-direction: column; align-items: stretch; border-left: 2px solid var(--grid); padding-left: 10px; gap: 2px; }
+  .sail-tl-n { max-width: none; flex-direction: row; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; }
+  .sail-tl-s { flex: none; flex-direction: row; gap: 6px; padding: 1px 0; }
+  .sail-tl-line { display: none; }
+}
+
+/* 배편 없음 — 가까운 항만으로 바꿔 보기 */
+.sail-near-box { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--grid); text-align: left; }
+.sail-near-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 6px; }
+.sail-near-h { font-size: var(--fs-sm); font-weight: 700; color: var(--ink-2); margin-right: 2px; }
+.sail-near { display: inline-flex; align-items: baseline; gap: 5px; border: 1px solid var(--border); background: var(--ops-chip-bg); border-radius: var(--radius-sm); padding: 4px 9px; font: inherit; font-size: var(--fs-sm); color: var(--ink); cursor: pointer; }
+.sail-near:hover { border-color: var(--brand-accent-2); }
+.sail-near code { font-family: ui-monospace, Consolas, monospace; font-size: var(--fs-xs); color: var(--muted); }
+.sail-near small { color: var(--muted); font-size: var(--fs-xs); }
+.sail-near-note { margin: 2px 0 0; font-size: var(--fs-xs); color: var(--muted); }
+
+/* 표 보기 — 칸은 한 줄(nowrap), 좁으면 옆으로 민다(table.tw.tbl-scroll 규약) */
+.sail-tbl th, .sail-tbl td { white-space: nowrap; }
+.sail-none .sail-requery { margin-top: 8px; }
+
+/* 내보내기 묶음 — 항목 고르기(펼침)와 Excel 단추를 붙여 둔다. 오른쪽으로 밀어 두되 둘이 갈라지지 않게(열린 목록이 단추를 덮지 않게). */
+.sched-export { display: inline-flex; align-items: center; gap: var(--sp-2); margin-left: auto; }
+@media (max-width: 640px) {
+  .sched-export { width: 100%; flex-direction: column; align-items: stretch; margin-left: 0; }
+  .sched-export > .schedule-columns summary, .sched-export > .ops-xls { width: 100%; justify-content: center; }
+}
+
+/* 모바일 — 바닥 오른쪽에 고정된 'AI 도우미' 단추가 배편 결과 맨 아래 카드·미니표·환적 타임라인을 덮지 않게
+   결과 영역 아래에 스크롤 여백을 둔다(마지막 칸을 단추 위로 밀어 올릴 수 있게). 데스크톱은 폭이 넓어 손해가 없어 손대지 않는다.
+   단추 자체는 공용 부품이라 두고(다른 화면 영향 없음), 이 두 결과 영역에만 여백을 준다(2026-10-02). */
+@media (max-width: 640px) {
+  .ops-sched #seaOut:not(:empty),
+  .ops-route #schedOut:not(:empty) { padding-bottom: 76px; }
+}

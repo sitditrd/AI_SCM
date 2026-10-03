@@ -1,0 +1,64 @@
+# TWL Control Tower — 크롤러 정책
+#
+# 화면(HTML)은 검색엔진에 열어 둔다. 다만 **수집·가공한 데이터를 통째로 긁어
+# 학습·재배포하는 봇**은 명시적으로 거부한다. 이 선언을 지키는 것은 예의 바른 봇뿐이고
+# 악의적 수집을 막지는 못한다 — 실제 방어는 데이터 계층(RLS)과 엣지함수 상한이 한다.
+# 그래도 적어 둔다: 명시적 거부가 있어야 무단 수집에 대해 말할 근거가 생긴다.
+
+# ── 데이터 학습·수집 목적 크롤러 거부 ──────────────────────────────
+User-agent: GPTBot
+Disallow: /
+User-agent: OAI-SearchBot
+Disallow: /
+User-agent: ChatGPT-User
+Disallow: /
+User-agent: ClaudeBot
+Disallow: /
+User-agent: Claude-Web
+Disallow: /
+User-agent: anthropic-ai
+Disallow: /
+User-agent: CCBot
+Disallow: /
+User-agent: Google-Extended
+Disallow: /
+User-agent: Applebot-Extended
+Disallow: /
+User-agent: PerplexityBot
+Disallow: /
+User-agent: Bytespider
+Disallow: /
+User-agent: Amazonbot
+Disallow: /
+User-agent: meta-externalagent
+Disallow: /
+User-agent: FacebookBot
+Disallow: /
+User-agent: Diffbot
+Disallow: /
+User-agent: omgili
+Disallow: /
+User-agent: Timpibot
+Disallow: /
+
+# ── SEO 지표 수집기 거부(우리 지표를 팔러 오는 쪽) ─────────────────
+User-agent: AhrefsBot
+Disallow: /
+User-agent: SemrushBot
+Disallow: /
+User-agent: MJ12bot
+Disallow: /
+User-agent: DotBot
+Disallow: /
+User-agent: DataForSeoBot
+Disallow: /
+
+# ── 그 외 ─────────────────────────────────────────────────────────
+# 검색 노출은 허용한다. 다만 관리자·통계 화면은 색인 대상이 아니다.
+User-agent: *
+Disallow: /admin.html
+Disallow: /analytics.html
+Disallow: /login.html
+Allow: /
+
+Sitemap: https://pharos.e-tgl.com/sitemap.xml

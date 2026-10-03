@@ -1,0 +1,7 @@
+/* 문서 간 전환(View Transitions, MPA) opt-in 한 줄 — 2026-09-29
+   인라인 스타일을 막은 화면(CSP style-src 'self': error.html · report-stop.html)이 <head> 첫 스타일시트로 싣는다.
+   크롬은 새 화면의 <body> 가 들어오는 순간 그때까지 적용된 스타일로 opt-in 을 판정한다 — css/style.css(400KB 안팎)의 같은 규칙만
+   믿으면 큰 CSS 를 받는 동안 들어오는 전환을 끊고 페이지 오류(Transition was aborted … opt-in disabled)를 낸다.
+   ★ 이 파일만으로는 모자라다 — 뒤에 defer 없는 같은 사이트 스크립트가 와서 파서를 세워야 한다
+     (error.html: js/vt-hold.js · report-stop.html: js/report-stop.js). 규칙은 css/style.css 와 같다 — 동작 줄이기면 켜지 않는다. */
+@media (prefers-reduced-motion: no-preference) { @view-transition { navigation: auto; } }
