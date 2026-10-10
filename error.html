@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self' data:; base-uri 'none'; form-action 'self'; frame-src 'none';">
+  
+  <meta name="theme-color" content="#f4f6fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0f1e" media="(prefers-color-scheme: dark)">
+  
+  <link rel="stylesheet" href="css/vt.css?v=2026-10-11-rel41">
+  <script src="js/vt-hold.js?v=2026-10-11-rel41"></script>
+  
+  <title>접근 오류 | PHAROS - 태웅로직스</title>
+  <link rel="stylesheet" href="css/style.css?v=2026-10-11-rel41">
+  <link rel="icon" href="assets/twl_logo.ico">
+  
+  <script defer src="js/access-error.js?v=2026-10-11-rel41"></script>
+  <script defer src="js/pharos-gate.js?v=2026-10-11-rel41"></script>
+</head>
+<body class="access-page">
+  
+  <div class="gate-scene" aria-hidden="true"><canvas id="gateSea"></canvas></div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a id="accessLogo" href="index.html" class="logo-slot" aria-label="태웅로직스 홈">
+        <img class="logo-sym" src="assets/twl_symbol.png" alt="" width="28" height="27">
+        <span class="logo-text" aria-label="Taewoong Logistics">
+          <span class="l1"><b>TAEWOONG</b> LOGISTICS</span>
+          <span class="l2">PHAROS</span>
+        </span>
+      </a>
+      <div class="header-actions">
+        <a id="accessHomeTop" class="btn btn-ghost" href="index.html">홈으로</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" class="gate-main" tabindex="-1">
+    <section class="gate-copy" aria-labelledby="accessTitle">
+      <h1 id="accessTitle">로그인하면 이어서 보실 수 있습니다</h1>
+      
+      <p class="gate-eyebrow gate-status" id="accessKicker">로그인 안내</p>
+      <p class="gate-lead" id="accessBody">승인된 계정으로 로그인해 주십시오. 로그인하면 원래 보시려던 화면으로 바로 이동합니다.</p>
+
+      
+      <div class="gate-dest" id="accessDest" hidden>
+        <span class="k" id="accessDestK">요청하신 화면</span>
+        <b id="accessDestName"></b>
+      </div>
+
+      <nav class="gate-actions" id="accessNav" aria-label="이동">
+        <a id="accessLogin" class="btn btn-primary gate-cta" href="login.html"><span id="accessLoginText">로그인</span> <span class="gate-cta-arw" aria-hidden="true"><svg class="tw-ic tw-ic-16" data-ic="arrow-right" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12l14 0"/><path d="M13 18l6 -6"/><path d="M13 6l6 6"/></svg></span></a>
+        <a id="accessHome" class="gate-link" href="index.html">홈으로</a>
+      </nav>
+
+      <p class="gate-note" id="accessNote">계정이 없으시면 로그인 화면에서 회원가입을 신청하실 수 있습니다. 승인 후 이용하실 수 있습니다.</p>
+    </section>
+  </main>
+</body>
+</html>

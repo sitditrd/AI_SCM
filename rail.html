@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark" data-auth-state="pending">
+<head>
+  <meta charset="UTF-8">
+  
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src 'self' https://kvmyiualdodcvreoqfin.supabase.co; frame-src 'none'; form-action 'self';">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()">
+  <script>/* 클릭재킹 방어 — GitHub Pages 는 X-Frame-Options 헤더를 못 주므로 스크립트로 막는다.
+     우리 사이트가 iframe 에 박히면(top!==self) 최상위로 튕겨낸다. */
+  (function(){try{if(top!==self){top.location=self.location.href;}}catch(e){try{document.documentElement.style.display='none';}catch(_){}}})();</script>
+  <script>(function(){try{var t=localStorage.getItem('twl-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var L={ko:'ko',en:'en',zh:'zh-CN',ja:'ja',ru:'ru'},l=localStorage.getItem('twl-lang');if(L[l])document.documentElement.setAttribute('lang',L[l]);}catch(e){}})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <style>@media (prefers-reduced-motion: no-preference) { @view-transition { navigation: auto; } }</style>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="preconnect" href="https://kvmyiualdodcvreoqfin.supabase.co">
+  <link rel="preconnect" href="https://server.arcgisonline.com" crossorigin>
+  <title data-i18n="pg.title.rail">철도 회랑 | PHAROS - 태웅로직스</title>
+  <meta name="description" content="내가 등록한 대륙횡단철도 컨테이너(TKRU·RZDU)의 최근 위치를 TSR·TCR·TMR·TMGR 회랑 지도와 표로 봅니다.">
+  
+  <meta name="theme-color" content="#f4f6fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0f1e" media="(prefers-color-scheme: dark)">
+  
+  <meta name="robots" content="noindex, follow">
+  <link rel="canonical" href="https://pharos.e-tgl.com/cargo.html?mode=rail">
+  <link rel="apple-touch-icon" href="assets/og-image.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TWL Control Tower">
+  <meta property="og:title" content="철도 회랑 · 대륙횡단철도 화물 관제 | TWL Control Tower">
+  <meta property="og:description" content="내가 등록한 대륙횡단철도 컨테이너(TKRU·RZDU)의 최근 위치를 TSR·TCR·TMR·TMGR 회랑 지도와 표로 봅니다.">
+  <meta property="og:url" content="https://pharos.e-tgl.com/rail.html">
+  <meta property="og:image" content="https://pharos.e-tgl.com/assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="철도 회랑 · 대륙횡단철도 화물 관제 | TWL Control Tower">
+  <meta name="twitter:description" content="내가 등록한 대륙횡단철도 컨테이너(TKRU·RZDU)의 최근 위치를 TSR·TCR·TMR·TMGR 회랑 지도와 표로 봅니다.">
+  <meta name="twitter:image" content="https://pharos.e-tgl.com/assets/og-image.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha384-c6Rcwz4e4CITMbu/NBmnNS8yN2sC3cUElMEMfP3vqqKFp7GOYaaBBCqmaWBjmkjb" crossorigin="anonymous">
+  <link rel="stylesheet" href="css/style.css?v=2026-10-11-rel41">
+  <link rel="stylesheet" href="css/chart.css?v=2026-10-11-rel41">
+  <link rel="stylesheet" href="css/dash.css?v=2026-10-11-rel41">
+  <link rel="stylesheet" href="css/pagenav.css?v=2026-10-11-rel41">
+  <link rel="stylesheet" href="css/rail.css?v=2026-10-11-rel41">
+  <link rel="icon" href="assets/twl_logo.ico">
+  <style>html[data-auth-state="pending"] body { visibility: hidden; pointer-events: none; }</style>
+  <noscript><meta http-equiv="refresh" content="0;url=error.html?reason=javascript-required"></noscript>
+  <script defer src="js/icons.js?v=2026-10-11-rel41"></script>
+  <script defer src="js/auth-gate.js?v=2026-10-11-rel41"></script>
+</head>
+<body class="hero-page rail-page">
+  <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+
+  
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="태웅로직스 홈"></a>
+      <button class="nav-burger" aria-label="메뉴 열기" aria-expanded="false">
+        <svg class="tw-ic tw-ic-20" data-ic="menu-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 6l16 0"/><path d="M4 12l16 0"/><path d="M4 18l16 0"/></svg>
+      </button>
+      <nav class="site-nav" aria-label="주요 메뉴">
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+      </div>
+    </div>
+  </header>
+
+  
+  <section id="main-content" tabindex="-1" class="dash-hero">
+    <div class="container">
+      <div class="dash-title-row">
+        <div>
+          <h1 data-i18n-html="rail.hero.title">철도 회랑 <span class="h1-desc">대륙횡단철도 화물 관제</span></h1>
+          <p class="dash-sub" data-i18n="rail.hero.sub">내가 등록한 TKRU·RZDU 컨테이너의 최근 위치를 네 회랑 지도와 표로 봅니다</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  
+  <section class="dash-section rl-sec rl-top" id="register" data-pagenav="컨테이너 등록" data-pagenav-i18n="nav.i.railTop">
+    <div class="container">
+      <div class="dash-head">
+        <h2 data-i18n="rail.top.h">컨테이너 조회 · 등록</h2>
+      </div>
+      
+      <form class="rl-top-form" id="railTopForm" novalidate autocomplete="off" aria-labelledby="railTopL" onsubmit="return false">
+        <label class="rl-top-lb" for="railTopNo" id="railTopL" data-i18n="rail.top.label">컨테이너 번호 (TKRU·RZDU)</label>
+        <div class="rl-top-row">
+          <textarea id="railTopNo" class="rl-in rl-in-no rl-top-in" rows="1" placeholder="예) TKRU0000000" data-i18n-ph="rail.top.ph"
+            spellcheck="false" autocapitalize="characters" autocomplete="off" aria-describedby="railTopHelp railTopMsg" maxlength="4000"></textarea>
+          <button type="submit" class="btn btn-primary rl-top-go" id="railTopGo" disabled data-i18n="rail.top.btn">조회 · 등록</button>
+        </div>
+        <p class="rl-top-help" id="railTopHelp" data-i18n="rail.top.help">번호를 넣으면 형식과 체크디지트를 바로 검사해 감시에 올립니다. 여러 개는 줄바꿈이나 쉼표로 구분해 붙여 넣으면 먼저 검사표로 보여 줍니다(한 번에 100개까지).</p>
+        <div class="rl-reg-msg rl-top-msg" id="railTopMsg" aria-live="polite"></div>
+      </form>
+      <div class="rl-top-gate" id="railTopGate" hidden></div>
+    </div>
+  </section>
+
+  
+  <section class="dash-section rl-sec rl-console" id="control" data-pagenav="관제 지도" data-pagenav-i18n="nav.i.railControl">
+    <div class="container rl-console-in">
+      <div class="dash-head rl-map-head">
+        <h2 data-i18n="rail.map.h">회랑 지도</h2>
+      </div>
+      <div class="rl-stage" id="railMapCard">
+        <div id="railMap" class="rl-map" role="application" aria-label="철도 회랑 지도" data-i18n-aria="rail.map.aria"></div>
+        <div class="map-fallback" data-i18n="rail.map.fallback">지도 라이브러리를 불러오지 못했습니다. 아래 표에서 같은 내용을 확인하십시오.</div>
+        
+        <div class="rl-ovl rl-ovl-seg">
+          <div class="seg rl-seg" id="railSeg" role="group" data-i18n-aria="rail.seg.aria" aria-label="회랑 고르기">
+            <button type="button" class="seg-btn active" data-c="ALL" aria-pressed="true" data-i18n="rail.seg.all">전체</button>
+            <button type="button" class="seg-btn" data-c="TSR" aria-pressed="false">TSR</button>
+            <button type="button" class="seg-btn" data-c="TCR" aria-pressed="false">TCR</button>
+            <button type="button" class="seg-btn" data-c="TMR" aria-pressed="false">TMR</button>
+            <button type="button" class="seg-btn" data-c="TMGR" aria-pressed="false">TMGR</button>
+          </div>
+        </div>
+        <ul class="rl-ovl rl-legend" id="railLegend" aria-label="지도 범례" data-i18n-aria="rail.legend.aria"></ul>
+      </div>
+      <p class="sr-only" id="railMapLive" aria-live="polite" aria-atomic="true"></p>
+
+      
+      
+      <div class="rl-cargo" id="railcargo" tabindex="-1" data-pagenav="내 철도 화물" data-pagenav-i18n="nav.i.railCargo">
+        <div class="dash-head rl-cargo-head">
+          <h2 data-i18n="rail.my.h">내 철도 화물</h2>
+          <span class="rl-sched" id="railSched"></span>
+        </div>
+        <div class="rl-desk" id="railDesk">
+          <div class="rl-skel-host" id="railSkel"></div>
+          <div class="rl-tools" id="railTools" hidden></div>
+          <form class="rl-reg" id="railReg" novalidate autocomplete="off" aria-labelledby="railRegH" onsubmit="return false">
+            <h3 class="rl-reg-h" id="railRegH" data-i18n="rail.reg.h">철도 컨테이너 등록</h3>
+            <div class="rl-reg-row">
+              <div class="rl-fld rl-fld-no">
+                <label for="railRegNo" data-i18n="rail.reg.label">컨테이너 번호</label>
+                <textarea id="railRegNo" class="rl-in rl-in-no" rows="1" spellcheck="false" autocapitalize="characters" autocomplete="off" aria-describedby="railRegHelp railRegMsg" maxlength="4000"></textarea>
+              </div>
+              <div class="rl-fld rl-fld-term">
+                <span class="rl-lbl" id="railRegTermL" data-i18n="rail.reg.term">추적 기간</span>
+                <div class="seg rl-term" id="railRegTerm" role="group" aria-labelledby="railRegTermL">
+                  <button type="button" class="seg-btn active" data-m="3" aria-pressed="true" data-i18n="rail.reg.m3">3개월</button>
+                  <button type="button" class="seg-btn" data-m="6" aria-pressed="false" data-i18n="rail.reg.m6">6개월</button>
+                </div>
+              </div>
+              <div class="rl-fld rl-fld-memo">
+                <label for="railRegMemo" data-i18n="rail.reg.memo">메모(선택)</label>
+                <input id="railRegMemo" class="rl-in" type="text" maxlength="200" spellcheck="false" autocomplete="off">
+              </div>
+              <div class="rl-fld rl-fld-go">
+                <button type="submit" class="btn btn-primary rl-reg-go" id="railRegGo" disabled data-i18n="rail.reg.btn">등록</button>
+              </div>
+            </div>
+            <p class="rl-reg-help" id="railRegHelp" data-i18n="rail.reg.help">TransContainer(TKRU·RZDU) 컨테이너 번호 11자리. 여러 개는 줄바꿈이나 쉼표로 구분해 붙여 넣습니다(한 번에 100개까지).</p>
+            <div class="rl-reg-msg" id="railRegMsg" aria-live="polite"></div>
+          </form>
+          <div class="rl-list" id="railList" aria-live="polite"></div>
+          <div class="rl-feed" id="railfeed" hidden></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  
+  <aside class="rl-peek" id="railPeek" hidden tabindex="-1" role="dialog" aria-modal="false" aria-labelledby="railPeekH"></aside>
+
+  
+  <section class="dash-section rl-sec" id="corridors" data-pagenav="회랑 기준" data-pagenav-i18n="nav.i.railCorr">
+    <div class="container">
+      <div class="dash-head">
+        <h2 data-i18n="rail.corr.h">회랑 기준</h2>
+      </div>
+      <div class="tbl-card rl-tcard">
+        <div class="tbl-scroll">
+          <table class="tw rl-ref-tbl" id="railCorrTbl">
+            <thead>
+              <tr>
+                <th scope="col" data-i18n="rail.corr.c.corr">회랑</th>
+                <th scope="col" class="num" data-i18n="rail.corr.c.dist">거리</th>
+                <th scope="col" class="num" data-i18n="rail.corr.c.transit">통상 운송일</th>
+                <th scope="col" data-i18n="rail.corr.c.gauge">궤간</th>
+                <th scope="col" data-i18n="rail.corr.c.gx">궤간 변경 국경</th>
+                <th scope="col" class="rl-col-x" data-i18n="rail.corr.c.route">경로</th>
+              </tr>
+            </thead>
+            <tbody id="railCorrBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  
+  <section class="dash-section rl-sec" id="border" data-pagenav="국경 지점" data-pagenav-i18n="nav.i.railBorder">
+    <div class="container">
+      <div class="dash-head">
+        <h2 data-i18n="rail.bd.h">국경 지점</h2>
+      </div>
+      <div class="tbl-card rl-tcard">
+        <div class="tbl-scroll">
+          <table class="tw rl-bd-tbl" id="railBorderTbl">
+            <thead>
+              <tr id="railBorderHead">
+                <th scope="col" data-i18n="rail.bd.c.name">국경 지점</th>
+                <th scope="col" data-i18n="rail.bd.c.pair">국가</th>
+                <th scope="col" data-i18n="rail.bd.c.corr">회랑</th>
+                <th scope="col" data-i18n="rail.bd.c.gauge2">궤간</th>
+                <th scope="col" class="num" data-i18n="rail.bd.c.annual2">연간 통과 열차</th>
+              </tr>
+            </thead>
+            <tbody id="railBorderBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  
+  <section class="dash-section rl-sec" id="sources" data-pagenav="데이터 출처" data-pagenav-i18n="nav.i.railSrc">
+    <div class="container">
+      <div class="dash-head">
+        <h2 data-i18n="rail.src.h">데이터 출처</h2>
+      </div>
+      <div class="tbl-card rl-tcard">
+        <div class="tbl-scroll">
+          <table class="tw rl-src-tbl" id="railSrcTbl">
+            <thead>
+              <tr>
+                <th scope="col" class="rl-col-n">#</th>
+                <th scope="col" data-i18n="rail.src.c.org">기관 · 자료</th>
+                <th scope="col" data-i18n="rail.src.c.use">쓰인 곳</th>
+                <th scope="col" data-i18n="rail.src.c.asof">기준</th>
+                <th scope="col" data-i18n="rail.src.c.terms">이용 조건</th>
+              </tr>
+            </thead>
+            <tbody id="railSources"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="index.html" class="logo-slot" aria-label="태웅로직스"></a>
+        <p class="footer-note">
+          태웅로직스 | 문의: itt@twsc.co.kr<br>
+          시각 표기 KST · 지표 산출 기준: 데이터 현황·상세기술서 참조 · 포털 v1.5 (2026-07-28 개정)<br>
+          © <span class="footer-year">2026</span> TAEWOONG LOGISTICS. 모든 권리 보유.
+        </p>
+        <p class="footer-legal">
+          <a href="terms.html" data-i18n="legal.link.terms">이용약관</a><span class="sep" aria-hidden="true">·</span><a href="privacy.html" class="footer-privacy"><strong data-i18n="legal.link.privacy">개인정보 처리방침</strong></a>
+        </p>
+      </div>
+      <nav class="footer-links" aria-label="푸터 메뉴">
+        <a href="insight.html">Port Insight</a>
+        <a href="berth.html">선석배정</a>
+        <a href="status.html">데이터 현황</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha384-NElt3Op+9NBMCYaef5HxeJmU4Xeard/Lku8ek6hoPTvYkQPh3zLIrJP7KiRocsxO" crossorigin="anonymous"></script>
+  <script defer src="js/basemap.js?v=2026-10-11-rel41"></script>
+  <script defer src="js/common.js?v=2026-10-11-rel41"></script>
+  <script defer src="js/menu.js?v=2026-10-11-rel41"></script>
+  <script defer src="js/i18n.js?v=2026-10-11-rel41"></script>
+  <script defer src="js/auth.js?v=2026-10-11-rel41"></script>
+  <script defer src="js/track.js?v=2026-10-11-rel41"></script>
+  <script defer src="js/guide.js?v=2026-10-11-rel41"></script>
+  <script defer src="js/dash-ui.js?v=2026-10-11-rel41"></script>
+  <script defer src="js/rail.js?v=2026-10-11-rel41"></script>
+  <script defer src="js/pagenav.js?v=2026-10-11-rel41"></script>
+</body>
+</html>

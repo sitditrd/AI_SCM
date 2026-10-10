@@ -1,0 +1,23 @@
+{
+  "version": "2026-10-07",
+  "about": "Verified representative railway-station coordinates for cargo maps. Not container GPS or surveyed terminal entrance positions. Exact aliases only; never match a whole city to a specific station.",
+  "license": "OpenStreetMap contributors, ODbL 1.0",
+  "licenseUrl": "https://www.openstreetmap.org/copyright",
+  "locations": [
+    {
+      "id": "ESR:720000",
+      "name": "CHUKURSAJ",
+      "kind": "rail",
+      "country": "UZ",
+      "lat": 41.3755561,
+      "lng": 69.2454829,
+      "aliases": ["CHUKURSAJ", "CHUKURSAY", "CHUQURSOY", "CHUKURSAY (SHUMILOV)", "720000", "ESR:720000", "\u0427\u0443\u043a\u0443\u0440\u0441\u0430\u0439", "\u0427\u0443\u043a\u0443\u0440\u0441\u0430\u0439 (\u0428\u0443\u043c\u0438\u043b\u043e\u0432)"],
+      "checked": "2026-10-07",
+      "sources": [
+        {"url": "https://www.openstreetmap.org/node/2203073383", "use": "Station node coordinates, railway classification and ESR station code 720000."},
+        {"url": "https://railway.uz/ru/informatsionnaya_sluzhba/novosti/35303/", "use": "Uzbekistan Railways confirms Chukursay station belongs to the Tashkent regional railway hub."},
+        {"url": "https://railway.uz/upload/iblock/4ee/l6nn3k1aisl2rsfmm1tr2bigbcy3s829.pdf", "use": "Uzbekistan Railways identifies Chukursay as station code 720000."}
+      ]
+    }
+  ]
+}
