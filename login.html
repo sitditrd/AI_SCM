@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://kvmyiualdodcvreoqfin.supabase.co; frame-src 'none'; form-action 'self';">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()">
+  
+  <script>(function(){try{if(top!==self){top.location=self.location.href}}catch(e){try{document.documentElement.style.display="none"}catch(_){}}})();</script>
+  <script>(function(){try{var t=localStorage.getItem("twl-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);var L={ko:"ko",en:"en",zh:"zh-CN",ja:"ja",ru:"ru"},l=localStorage.getItem("twl-lang");if(L[l])document.documentElement.setAttribute("lang",L[l])}catch(e){}})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <style>@media (prefers-reduced-motion: no-preference) { @view-transition { navigation: auto; } }</style>
+  
+  <meta name="theme-color" content="#f4f6fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0f1e" media="(prefers-color-scheme: dark)">
+  
+  <link rel="preconnect" href="https://api.open-meteo.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="preconnect" href="https://kvmyiualdodcvreoqfin.supabase.co">
+  <link rel="preconnect" href="https://marine-api.open-meteo.com">
+  <link rel="preconnect" href="https://server.arcgisonline.com" crossorigin>
+  <link rel="preconnect" href="https://www.vesselfinder.com">
+  <title data-i18n="pg.title.login">로그인 | PHAROS - 태웅로직스</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="assets/twl_logo.ico">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css?v=rel61">
+  <link rel="stylesheet" href="css/auth.css?v=rel61">
+  
+  <link rel="stylesheet" href="css/legal.css?v=rel61">
+  <link rel="stylesheet" href="css/pagenav.css?v=rel61">
+  
+  <style>
+    
+    .auth-form .field-err { display: block; margin: 0; font-size: var(--fs-sm); font-weight: 600; color: var(--up); }
+    .auth-form .field-err:empty { display: none; }
+    
+    .auth-form input[aria-invalid="true"] { border-color: var(--up); }
+  </style>
+</head>
+<body class="auth-page">
+  <a class="skip-link" href="#main-content" data-i18n="ld.a11y.skip">본문으로 건너뛰기</a>
+  <header class="site-header scrolled">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="태웅로직스 홈">
+        <span class="logo-text"><b class="l1">TWL</b> <span class="l2">Control Tower</span></span>
+      </a>
+      <div class="header-actions" style="margin-left:auto">
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1" class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <img class="ab-sym" src="assets/twl_symbol.png" alt="" width="28" height="27">
+        
+        <div><h1 translate="no">PHAROS</h1><span data-i18n="login.brand.sub">태웅로직스 물류 관제</span></div>
+      </div>
+
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab active" data-tab="login" type="button" role="tab" aria-selected="true" aria-controls="f-login" data-i18n="auth.tab.login">로그인</button>
+        <button class="auth-tab" data-tab="signup" type="button" role="tab" aria-selected="false" aria-controls="f-signup" tabindex="-1" data-i18n="auth.tab.signup">회원가입</button>
+        <button class="auth-tab" data-tab="reset" type="button" role="tab" aria-selected="false" aria-controls="f-reset" tabindex="-1" data-i18n="auth.tab.reset">비밀번호 찾기</button>
+      </div>
+
+      <div id="msg" class="auth-msg" role="status" aria-live="polite" hidden></div>
+
+      
+      
+      <form id="f-login" class="auth-form" onsubmit="return false" novalidate>
+        <label><span data-i18n="auth.email">이메일</span> <input id="li-email" type="email" name="login" autocomplete="username" placeholder="예: hong@company.co.kr" data-i18n-ph="auth.email.ph" required aria-describedby="err-li-email"><small class="field-err" id="err-li-email"></small></label>
+        <label><span data-i18n="auth.password">비밀번호</span> <input id="li-pw" type="password" name="password" autocomplete="current-password" required aria-describedby="err-li-pw"><small class="field-err" id="err-li-pw"></small></label>
+        <label class="auth-keep"><input type="checkbox" id="tabOnly">
+          <span><span data-i18n="auth.tabonly.t">이 브라우저를 닫으면 로그아웃</span>
+            <small class="auth-keep-sub" data-i18n="auth.tabonly.s">공용 PC·공유 단말에서는 켜 두십시오.</small></span></label>
+        <button class="btn btn-primary btn-block" type="submit" data-i18n="auth.tab.login">로그인</button>
+        <p class="auth-hint" data-i18n="auth.hint.login">승인된 계정만 로그인할 수 있습니다. 관리자 승인 후 이용하십시오.</p>
+      </form>
+
+      
+      <form id="f-signup" class="auth-form" onsubmit="return false" novalidate hidden>
+        <label><span data-i18n="auth.email">이메일</span> <span class="req">*</span>
+          <span class="with-btn">
+            <input id="su-email" type="email" name="login" autocomplete="username" placeholder="예: hong@company.co.kr" data-i18n-ph="auth.email.ph" required aria-describedby="err-su-email">
+            <button type="button" class="btn btn-ghost btn-sm" data-send="signup" data-i18n="auth.getcode">인증코드 받기</button>
+          </span>
+          <small class="field-err" id="err-su-email"></small>
+        </label>
+        <label><span data-i18n="auth.code">인증코드</span> <span class="req">*</span> <input id="su-code" type="text" name="code" inputmode="numeric" autocomplete="one-time-code" spellcheck="false" autocapitalize="off" pattern="[0-9]{6}" maxlength="6" placeholder="메일로 받은 6자리" data-i18n-ph="auth.codeHint" required aria-describedby="err-su-code"><small class="field-err" id="err-su-code"></small></label>
+        
+        <label><span data-i18n="auth.namedept">이름/부서</span> <input id="su-name" type="text" name="name" autocomplete="name" placeholder="예: 홍길동 / 영업1팀" data-i18n-ph="auth.namedept.ph"></label>
+        <label><span data-i18n="auth.password">비밀번호</span> <span class="req">*</span> <input id="su-pw" type="password" name="password" autocomplete="new-password" required aria-describedby="err-su-pw"><small class="field-err" id="err-su-pw"></small></label>
+        
+        <div class="pw-meter" id="pw-signup" role="status" aria-live="polite" hidden>
+          <div class="pw-bar" role="progressbar" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" aria-label="비밀번호 강도" data-i18n-aria="auth.pw.meterAria"><span></span></div>
+          <div class="pw-label"></div>
+          <ul class="pw-checks">
+            <li data-k="len" data-i18n="auth.pw.len">8자 이상</li><li data-k="upper" data-i18n="auth.pw.upper">대문자</li><li data-k="lower" data-i18n="auth.pw.lower">소문자</li><li data-k="digit" data-i18n="auth.pw.digit">숫자</li><li data-k="special" data-i18n="auth.pw.special">특수문자</li>
+          </ul>
+        </div>
+        <label><span data-i18n="auth.password2">비밀번호 확인</span> <span class="req">*</span> <input id="su-pw2" type="password" name="password2" autocomplete="new-password" required aria-describedby="err-su-pw2"><small class="field-err" id="err-su-pw2"></small></label>
+        
+        <div class="auth-consent">
+          <label class="auth-keep auth-consent-check"><input type="checkbox" id="su-agree" name="agree" required aria-describedby="err-su-agree">
+            <span><span data-i18n="legal.consent.label">[필수] 이용약관에 동의하며, 개인정보 처리방침을 확인했습니다.</span>
+              <small class="auth-keep-sub" data-i18n="legal.consent.key">서비스 정보는 업무 참고용입니다. 약관을 어기면 이용이 제한될 수 있으며, 회사의 책임은 고의·중대한 과실이 없는 한 제한됩니다.</small></span></label>
+          <p class="auth-consent-links"><a href="terms.html" data-legal-modal="terms" target="_blank" rel="noopener"><span data-i18n="legal.link.terms">이용약관</span><span class="sr-only" data-i18n="legal.newTab">(새 창)</span></a><span aria-hidden="true">·</span><a href="privacy.html" data-legal-modal="privacy" target="_blank" rel="noopener"><strong data-i18n="legal.link.privacy">개인정보 처리방침</strong><span class="sr-only" data-i18n="legal.newTab">(새 창)</span></a></p>
+          <small class="field-err" id="err-su-agree"></small>
+        </div>
+        
+        <div class="auth-consent auth-consent-ot">
+          <label class="auth-keep auth-consent-check"><input type="checkbox" id="su-agree-ot" name="agreeOt" required aria-describedby="err-su-agree-ot">
+            <span><span data-i18n="consent.ot.label">[필수] 개인정보 국외 이전에 동의합니다(일본)</span></span></label>
+          <details class="consent-ot-more">
+            <summary data-i18n="consent.ot.more">자세히</summary>
+            <table class="consent-ot-tbl">
+              <caption data-i18n="consent.ot.caption">개인정보 국외 이전 고지</caption>
+              <tbody>
+                <tr><th scope="row"><span class="consent-no" aria-hidden="true">①</span> <span data-i18n="consent.ot.k1">이전되는 개인정보 항목</span></th><td data-i18n="consent.ot.v1">성명, 회사 이메일 주소, 소속, 접속 일시·접속지 정보·단말 정보, 이용 화면 및 동작</td></tr>
+                <tr><th scope="row"><span class="consent-no" aria-hidden="true">②</span> <span data-i18n="consent.ot.k2">이전되는 국가·시기·방법</span></th><td data-i18n="consent.ot.v2">일본 · 계정 생성 및 서비스 이용 시점 · 보안 접속(HTTPS)을 통한 전송</td></tr>
+                <tr><th scope="row"><span class="consent-no" aria-hidden="true">③</span> <span data-i18n="consent.ot.k3">이전받는 자</span></th><td data-i18n="consent.ot.v3">자료 처리 서비스 운영사 Supabase Pte. Ltd.(싱가포르) · 연락처: privacy@supabase.com</td></tr>
+                <tr><th scope="row"><span class="consent-no" aria-hidden="true">④</span> <span data-i18n="consent.ot.k4">이용 목적 및 보유·이용 기간</span></th><td data-i18n="consent.ot.v4">계정 인증, 이용 기록 적재 · 수집일로부터 1년(운영 목적 종료 시 조기 삭제)</td></tr>
+                <tr><th scope="row"><span class="consent-no" aria-hidden="true">⑤</span> <span data-i18n="consent.ot.k5">거부 방법·절차 및 거부의 효과</span></th><td data-i18n="consent.ot.v5">동의하지 않으면 이전하지 않는다. 다만 계정 발급이 이루어지지 않아 서비스 이용이 제한된다.</td></tr>
+              </tbody>
+            </table>
+            <p class="consent-note consent-lang-note" data-i18n="consent.ot.langNote">고지 내용은 한국어 원문이 기준입니다.</p>
+          </details>
+          <small class="field-err" id="err-su-agree-ot"></small>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit" data-i18n="auth.btn.signup">가입 신청</button>
+        <p class="auth-hint" data-i18n-html="auth.hint.signup">가입 신청 후 <b>관리자 승인</b>이 완료되면 로그인할 수 있습니다.</p>
+      </form>
+
+      
+      <form id="f-reset" class="auth-form" onsubmit="return false" novalidate hidden>
+        <label><span data-i18n="auth.email">이메일</span> <span class="req">*</span>
+          <span class="with-btn">
+            <input id="rs-email" type="email" name="login" autocomplete="username" placeholder="예: hong@company.co.kr" data-i18n-ph="auth.email.ph" required aria-describedby="err-rs-email">
+            <button type="button" class="btn btn-ghost btn-sm" data-send="reset" data-i18n="auth.getcode">인증코드 받기</button>
+          </span>
+          <small class="field-err" id="err-rs-email"></small>
+        </label>
+        <label><span data-i18n="auth.code">인증코드</span> <span class="req">*</span> <input id="rs-code" type="text" name="code" inputmode="numeric" autocomplete="one-time-code" spellcheck="false" autocapitalize="off" pattern="[0-9]{6}" maxlength="6" placeholder="메일로 받은 6자리" data-i18n-ph="auth.codeHint" required aria-describedby="err-rs-code"><small class="field-err" id="err-rs-code"></small></label>
+        <label><span data-i18n="auth.password.new">새 비밀번호</span> <span class="req">*</span> <input id="rs-pw" type="password" name="password" autocomplete="new-password" required aria-describedby="err-rs-pw"><small class="field-err" id="err-rs-pw"></small></label>
+        
+        <div class="pw-meter" id="pw-reset" role="status" aria-live="polite" hidden>
+          <div class="pw-bar" role="progressbar" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" aria-label="비밀번호 강도" data-i18n-aria="auth.pw.meterAria"><span></span></div>
+          <div class="pw-label"></div>
+          <ul class="pw-checks">
+            <li data-k="len" data-i18n="auth.pw.len">8자 이상</li><li data-k="upper" data-i18n="auth.pw.upper">대문자</li><li data-k="lower" data-i18n="auth.pw.lower">소문자</li><li data-k="digit" data-i18n="auth.pw.digit">숫자</li><li data-k="special" data-i18n="auth.pw.special">특수문자</li>
+          </ul>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit" data-i18n="auth.btn.reset">비밀번호 재설정</button>
+      </form>
+    </div>
+    <p class="auth-foot"><a href="index.html" data-i18n="auth.home">홈으로</a></p>
+    <p class="footer-legal">
+      <a href="terms.html" data-i18n="legal.link.terms">이용약관</a><span class="sep" aria-hidden="true">·</span><a href="privacy.html" class="footer-privacy"><strong data-i18n="legal.link.privacy">개인정보 처리방침</strong></a>
+    </p>
+  </main>
+
+
+  <script src="js/icons.js?v=rel61"></script>
+  <script src="js/common.js?v=rel61"></script>
+  <script src="js/i18n.js?v=rel61"></script>
+  <script src="js/auth.js?v=rel61"></script>
+  <script src="js/pagenav.js?v=rel61"></script>
+  <script>(function(){var A=window.TWAUTH;function t(k,ko){return window.TWI18N&&window.TWI18N.t?window.TWI18N.t(k,ko):ko}var msg=document.getElementById("msg");function show(text,kind){msg.hidden=false;msg.textContent=text;msg.className="auth-msg "+(kind||"")}function clearMsg(){msg.hidden=true}function domainDeniedMsg(){return t("auth.msg.domainDeniedShort","허용되지 않는 도메인입니다.")}var AUTH_ERR=[[/wait a minute/i,"auth.msg.cooldown","인증코드는 1분 뒤에 다시 요청할 수 있습니다."],[/too many requests|요청이 너무 잦/i,"auth.msg.tooMany","요청이 너무 많습니다. 잠시 후 다시 시도하십시오."],[/^invalid email$/i,"auth.msg.badEmail","이메일 형식이 올바르지 않습니다."],[/code save failed/i,"auth.msg.saveFail","인증코드를 저장하지 못했습니다. 잠시 후 다시 시도하십시오."],[/^(method|invalid purpose)$/i,"auth.msg.badRequest","잘못된 요청입니다."],[/인증코드 발송에 실패/,"auth.msg.sendRetry","인증코드 발송에 실패했습니다. 잠시 후 다시 시도하십시오."]];function authError(r,fallback){var s=r&&r.error?String(r.error):"";if(r&&r.netfail)return s||fallback;if(/외부 메일 도메인|허용되지 않는 도메인|not permitted|domain/i.test(s))return domainDeniedMsg();for(var i=0;i<AUTH_ERR.length;i++){if(AUTH_ERR[i][0].test(s))return t(AUTH_ERR[i][1],AUTH_ERR[i][2])}var lang=window.TWI18N&&window.TWI18N.getLang?window.TWI18N.getLang():"ko";if(s&&/^[\x20-\x7E]+$/.test(s)&&lang!=="en")return fallback;return s||fallback}function errSlot(input){var id=input.getAttribute("aria-describedby");return id?document.getElementById(id):null}function clearField(input){input.removeAttribute("aria-invalid");var e=errSlot(input);if(e)e.textContent=""}function clearFields(form){[].forEach.call(form.querySelectorAll("input[aria-describedby]"),clearField)}[].forEach.call(document.querySelectorAll(".auth-form input[aria-describedby]"),function(inp){inp.addEventListener("input",function(){if(inp.hasAttribute("aria-invalid"))clearField(inp)})});function reportFields(form,errs){clearFields(form);if(!errs.length)return true;errs.forEach(function(x){x[0].setAttribute("aria-invalid","true");var e=errSlot(x[0]);if(e)e.textContent=x[1]});show(errs[0][1],"err");try{errs[0][0].focus()}catch(_){}return false}function collect(pairs){var out=[];pairs.forEach(function(p){var m=p[1](p[0]);if(m)out.push([p[0],m])});return out}var EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]+$/;function vEmail(i){var v=i.value.trim();if(!v)return t("auth.err.emailRequired","이메일을 입력하십시오.");return EMAIL_RE.test(v)?"":t("auth.msg.emailFormat","이메일 형식을 확인하십시오.")}function vCode(i){var v=i.value.trim();if(!v)return t("auth.err.codeRequired","인증코드를 입력하십시오.");return/^[0-9]{6}$/.test(v)?"":t("auth.err.codeFormat","인증코드는 숫자 6자리입니다.")}function vPwRequired(i){return i.value?"":t("auth.err.pwRequired","비밀번호를 입력하십시오.")}var TABS=[].slice.call(document.querySelectorAll(".auth-tab"));function selectTab(t,focus){TABS.forEach(function(x){var on=x===t;x.classList.toggle("active",on);x.setAttribute("aria-selected",on?"true":"false");x.tabIndex=on?0:-1});clearMsg();["login","signup","reset"].forEach(function(k){var f=document.getElementById("f-"+k);clearFields(f);f.hidden=k!==t.dataset.tab});if(focus)t.focus()}TABS.forEach(function(t,i){t.addEventListener("click",function(){selectTab(t,false)});t.addEventListener("keydown",function(e){var d=e.key==="ArrowRight"?1:e.key==="ArrowLeft"?-1:0;if(d){e.preventDefault();selectTab(TABS[(i+d+TABS.length)%TABS.length],true);return}if(e.key==="Home"){e.preventDefault();selectTab(TABS[0],true)}if(e.key==="End"){e.preventDefault();selectTab(TABS[TABS.length-1],true)}})});function markLegalLinks(){var M=window.TWLEGALMODAL;if(!M||typeof M.open!=="function")return false;[].forEach.call(document.querySelectorAll(".auth-consent-links a[data-legal-modal]"),function(a){a.setAttribute("aria-haspopup","dialog");[].forEach.call(a.querySelectorAll('.sr-only[data-i18n="legal.newTab"]'),function(s){s.hidden=true})});return true}if(!markLegalLinks())document.addEventListener("DOMContentLoaded",markLegalLinks);function bindMeter(formId,meterId){var f=document.getElementById(formId),box=document.getElementById(meterId);var input=f.querySelector('input[name="password"]');var bar=box.querySelector(".pw-bar"),fill=box.querySelector(".pw-bar span"),lab=box.querySelector(".pw-label");input.addEventListener("input",function(){var v=input.value;box.hidden=!v;var s=A.pwStrength(v);fill.style.width=s.score*20+"%";fill.style.background=s.color;var text=t("auth.pw.strengthLabel","강도: ")+t(s.key,s.label)+(s.checks.special?"":t("auth.pw.needSpecial"," · 특수문자 필요"));if(lab.textContent!==text)lab.textContent=text;lab.style.color=s.txt;bar.setAttribute("aria-valuenow",String(s.score));bar.setAttribute("aria-valuetext",text);box.querySelectorAll(".pw-checks li").forEach(function(li){li.classList.toggle("on",!!s.checks[li.dataset.k])})})}bindMeter("f-signup","pw-signup");bindMeter("f-reset","pw-reset");document.querySelectorAll("[data-send]").forEach(function(btn){btn.addEventListener("click",function(){var form=btn.closest("form");var login=form.login.value.trim();var m=vEmail(form.login);if(m){reportFields(form,[[form.login,m]]);return}if(btn._cdIv){clearInterval(btn._cdIv);btn._cdIv=null}btn.disabled=true;btn.textContent=t("auth.sending","발송중…");var send=btn.dataset.send==="reset"?A.resetSendCode(login):A.signupSendCode(login);function idle(){if(btn._cdIv){clearInterval(btn._cdIv);btn._cdIv=null}btn.setAttribute("data-i18n","auth.getcode");btn.disabled=false;btn.textContent=t("auth.getcode","인증코드 받기")}function cooldown(){var n=30;btn.removeAttribute("data-i18n");btn.textContent=t("auth.resend","재발송(%s)").replace("%s",n);btn._cdIv=setInterval(function(){n--;btn.textContent=t("auth.resend","재발송(%s)").replace("%s",n);if(n<=0)idle()},1e3)}send.then(function(r){if(r&&r.ok){show(t("auth.msg.codeSent","인증코드를 메일로 보냈습니다. 30분 내 입력하십시오."),"ok");cooldown()}else{show(authError(r,t("auth.msg.sendFail","발송 실패")),"err");idle()}},function(){show(t("auth.msg.sendFail","발송 실패"),"err");idle()})})});(function showReason(){var why=new URLSearchParams(location.search).get("reason");if(!why||why==="manual")return;if(why==="consent"){show(t("consent.ot.loggedOut","개인정보 국외 이전에 동의하지 않아 로그아웃되었습니다. 서비스를 이용하시려면 다시 로그인한 뒤 동의해 주십시오."),"err");return}var k=why==="expired"?"auth.msg.expired":"auth.msg.idle";var ko=why==="expired"?"로그인 유효시간이 끝나 로그아웃되었습니다. 다시 로그인해 주십시오.":"일정 시간 사용이 없어 자동으로 로그아웃되었습니다. 다시 로그인해 주십시오.";show(t(k,ko),"err")})();(function bindTabOnly(){var c=document.getElementById("tabOnly");if(!c||!A.tabOnly)return;c.checked=A.tabOnly();c.addEventListener("change",function(){A.setTabOnly(c.checked)})})();document.getElementById("f-login").addEventListener("submit",function(e){e.preventDefault();clearMsg();var f=e.target;if(!reportFields(f,collect([[f.login,vEmail],[f.password,vPwRequired]])))return;var hd=window.TWUI&&TWUI.hold?TWUI.hold(f.querySelector("[type=submit]"),"auth.login"):null;function done(){if(hd)hd.end()}if(A.setTabOnly){var cb=document.getElementById("tabOnly");if(cb)A.setTabOnly(cb.checked)}A.login(f.login.value.trim(),f.password.value).then(function(r){done();if(r&&r.ok){show(t("auth.msg.loginOk","로그인 성공. 이동합니다…"),"ok");var next="index.html";try{var raw=new URLSearchParams(location.search).get("next");if(raw){var u=new URL(raw,location.href),file=u.pathname.split("/").pop();if(u.origin===location.origin&&/^(index|insight|berth|vessel|cargo|clp|route|rail|rate|schedule|status|admin|analytics)\.html$/.test(file)&&(r.role==="admin"||!/^(status|admin|analytics)\.html$/.test(file)))next=file+u.hash}}catch(_){}setTimeout(function(){location.replace(next)},500)}else{var em=r&&r.error?r.error:t("auth.msg.loginFail","로그인 실패");if(r&&r.code==="term"){em=r.term==="not_started"?String(t("auth.msg.termNotStarted","사용 기간이 아직 시작되지 않았습니다. 시작일: {d}")).replace("{d}",function(){return String(r.valid_from||"—")}):t("auth.msg.termExpired","사용 기간이 끝난 계정입니다. 관리자에게 문의하십시오.")}show(em,"err")}},done)});document.getElementById("f-signup").addEventListener("submit",function(e){e.preventDefault();clearMsg();var f=e.target;var errs=collect([[f.login,vEmail],[f.code,vCode],[f.password,vPwRequired]]);if(!errs.length){if(!A.pwStrength(f.password.value).ok)errs.push([f.password,t("auth.msg.pwRule","비밀번호는 8자 이상 + 특수문자를 포함해야 합니다.")]);if(f.password.value!==f.password2.value)errs.push([f.password2,t("auth.msg.pwMismatch","비밀번호 확인이 일치하지 않습니다.")])}if(f.agree&&!f.agree.checked)errs.push([f.agree,t("legal.consent.err","이용약관에 동의해야 가입을 신청할 수 있습니다.")]);if(f.agreeOt&&!f.agreeOt.checked)errs.push([f.agreeOt,t("consent.ot.err","개인정보 국외 이전에 동의해야 가입을 신청할 수 있습니다.")]);if(!reportFields(f,errs))return;var hd=window.TWUI&&TWUI.hold?TWUI.hold(e.target.querySelector("[type=submit]"),"auth.signup"):null;function done(){if(hd)hd.end()}setTimeout(done,12e3);var signupEmail=f.login.value.trim();var otAgreed=!!(f.agreeOt&&f.agreeOt.checked);A.signup(signupEmail,f.password.value,f.code.value.trim(),f.name.value.trim()).then(function(r){if(r&&r.ok){show(t("auth.msg.signupOk","가입 신청 완료! 관리자 승인 후 로그인할 수 있습니다."),"ok");f.reset();if(otAgreed&&A.consentAgreeSignup)A.consentAgreeSignup(signupEmail).then(null,function(){});if(A.signupNotifyAdmin){A.signupNotifyAdmin(signupEmail).then(function(mail){if(!mail||!mail.ok){show(t("auth.msg.signupMailFail","가입 신청은 완료됐지만 관리자 알림 메일 발송에 실패했습니다. IT 담당자에게 알려 주십시오."),"err")}},function(){show(t("auth.msg.signupMailFail","가입 신청은 완료됐지만 관리자 알림 메일 발송에 실패했습니다. IT 담당자에게 알려 주십시오."),"err")})}}else{show(authError(r,t("auth.msg.signupFail","가입 실패")),"err")}})});document.getElementById("f-reset").addEventListener("submit",function(e){e.preventDefault();clearMsg();var f=e.target;var errs=collect([[f.login,vEmail],[f.code,vCode],[f.password,vPwRequired]]);if(!errs.length&&!A.pwStrength(f.password.value).ok)errs.push([f.password,t("auth.msg.pwRule","비밀번호는 8자 이상 + 특수문자를 포함해야 합니다.")]);if(!reportFields(f,errs))return;var hd=window.TWUI&&TWUI.hold?TWUI.hold(e.target.querySelector("[type=submit]"),"auth.reset"):null;function done(){if(hd)hd.end()}setTimeout(done,12e3);A.reset(f.login.value.trim(),f.code.value.trim(),f.password.value).then(function(r){if(r&&r.ok){show(t("auth.msg.resetOk","비밀번호가 재설정되었습니다. 로그인해 주십시오."),"ok");document.querySelector('.auth-tab[data-tab="login"]').click()}else{show(authError(r,t("auth.msg.resetFail","재설정 실패")),"err")}})})})();</script>
+</body>
+</html>
