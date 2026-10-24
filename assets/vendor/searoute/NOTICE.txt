@@ -1,0 +1,12 @@
+PHAROS maritime route comparison
+
+Network: Eurostat SeaRoute marnet, distributed with searoute 1.6.0.
+Network origin: https://github.com/eurostat/searoute
+Network license: EUPL-1.2. See LICENSE-EUPL-1.2.txt.
+Python reference package: https://github.com/genthalili/searoute-py
+Python reference license: Apache-2.0. See LICENSE-Apache-2.0.txt.
+
+The JavaScript compatibility engine uses the existing PHAROS searoute-compatible
+implementation, tested against Python searoute 1.6.0. The maritime network is
+exported without changing its node positions, edge weights or passage labels.
+This is an advisory distance/route model, not a ship navigation service.
