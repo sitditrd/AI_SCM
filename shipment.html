@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https://server.arcgisonline.com; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://kvmyiualdodcvreoqfin.supabase.co https://server.arcgisonline.com; frame-src 'none'; form-action 'none';">
+  <meta name="robots" content="noindex,nofollow">
+  
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <style>@media (prefers-reduced-motion: no-preference) { @view-transition { navigation: auto; } }</style>
+  <meta name="theme-color" content="#f4f6fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0f1e" media="(prefers-color-scheme: dark)">
+  <title>화물 운송 현황 | PHAROS</title>
+  <link rel="icon" href="assets/twl_logo.ico">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://kvmyiualdodcvreoqfin.supabase.co">
+  <link rel="preconnect" href="https://server.arcgisonline.com" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css?v=rel68-cc1">
+  <link rel="stylesheet" href="js/vendor/leaflet/leaflet.css?v=rel62">
+  <link rel="stylesheet" href="css/cargo.css?v=rel68-cc1">
+  <link rel="stylesheet" href="css/shipment.css?v=rel62">
+  
+  <script src="js/shipment-boot.js?v=rel62"></script>
+</head>
+<body class="cargo-page shp-page">
+  <a class="skip-link" href="#main-content" data-i18n="ld.a11y.skip">본문으로 건너뛰기</a>
+  <header class="site-header">
+    <div class="header-inner">
+      
+      <span class="logo-slot"></span>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" type="button" aria-label="테마 전환"></button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" class="shp-main" tabindex="-1">
+    <div class="container">
+      
+      <div class="shp-pv-host" id="shpPv" hidden></div>
+      <div class="shp-view" id="shpView" aria-live="polite" aria-busy="true"></div>
+      <noscript>
+        <p class="shp-noscript">이 화면은 JavaScript 가 켜져 있어야 볼 수 있습니다. · <span lang="en">JavaScript is required to view this page.</span></p>
+      </noscript>
+      <footer class="shp-foot" id="shpFoot"></footer>
+    </div>
+  </main>
+
+  <script defer src="js/icons.js?v=rel63-sec1"></script>
+  <script defer src="js/common.js?v=rel63-ft1"></script>
+  <script defer src="js/i18n.js?v=rel68-eg1"></script>
+  
+  <script defer src="js/data.js?v=rel63-sec1"></script>
+  <script defer src="js/port-combo.js?v=rel63"></script>
+  <script defer src="js/vendor/leaflet/leaflet.js?v=rel62"></script>
+  <script defer src="js/basemap.js?v=rel62"></script>
+  <script defer src="js/cargo-events.js?v=rel63-rv2"></script>
+  <script defer src="js/cargo-map.js?v=rel67-m3"></script>
+  <script defer src="js/shipment.js?v=rel62"></script>
+</body>
+</html>

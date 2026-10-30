@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "updated": "2026-10-23",
+  "maxAgeDays": 21,
+  "advisories": [
+    {
+      "id": "redsea-babelmandeb",
+      "scope": "passage",
+      "key": "babalmandab",
+      "also": ["suez"],
+      "kind": "avoid",
+      "title": "홍해·바브엘만데브 해상보안 — 희망봉 우회 권고",
+      "source": { "name": "UKMTO 항행경보", "url": "https://www.ukmto.org/" },
+      "asof": "2026-10-23",
+      "note": "해상보안 상황에 따른 선사 희망봉 우회. 선사별 적용 여부는 상이하므로 공표 일정과 함께 확인.",
+      "i18n": {
+        "en": {
+          "title": "Red Sea / Bab-el-Mandeb security — Cape of Good Hope diversion advised",
+          "source": "UKMTO maritime advisories",
+          "note": "Carriers divert via the Cape of Good Hope due to the maritime security situation. Practice differs by carrier, so check against published schedules."
+        }
+      }
+    },
+    {
+      "id": "panama-draft",
+      "scope": "passage",
+      "key": "panama",
+      "kind": "delay",
+      "hours": 48,
+      "title": "파나마 운하 흘수·통항 슬롯 제한",
+      "source": { "name": "파나마운하청(ACP) Advisory to Shipping", "url": "https://pancanal.com/en/advisories-to-shipping/" },
+      "asof": "2026-10-23",
+      "note": "2026년 물 수위 하락으로 흘수 제한 강화 — Neopanamax 최대 흘수 약 48피트(14.63m)로 축소, 추가 축소 진행(ACP·외신 확인). 슬롯 대기·감속 통항을 반영한 통과 지연 보수적 추정 48h 를 통과 경로 리드타임에 가산한다(체크 해제 시 미적용). 실제 대기는 슬롯 경매·날짜에 따라 달라지므로 참고값이다.",
+      "i18n": {
+        "en": {
+          "title": "Panama Canal draft and transit-slot restrictions",
+          "source": "Panama Canal Authority (ACP) Advisory to Shipping",
+          "note": "Low 2026 water levels tightened draft limits (Neopanamax max. draft cut to about 48 ft / 14.63 m, with further cuts under way). A conservative 48 h transit delay for slot waits and slow passage is added to lead times via Panama (not applied when unticked). Actual waits vary with slot auctions and dates, so treat it as a reference value."
+        }
+      }
+    }
+  ]
+}
